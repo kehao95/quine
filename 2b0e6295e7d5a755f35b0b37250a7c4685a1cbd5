@@ -1,0 +1,78 @@
+Artifacts/quine-zero/README.md
+  a5b70de49a93c04e 16
+  5884e2bbd73dd83a 26,28-33,45,48,50,54-60,74-78
+Artifacts/quine-zero/internal-model.md
+  5884e2bbd73dd83a 4,73,82,115,117-122
+Artifacts/quine-zero/axioms/axiom-07-tape-as-file.md
+  5884e2bbd73dd83a 1-2,4,6,8,10,14,16,18-19,25-26,28,33
+  238c62e715e4480e 3,5,7,9,11-13,15,17,20-24,27,29-32,34
+Artifacts/quine-zero/engineering/system-prompt.md
+  5884e2bbd73dd83a 80,95
+Artifacts/quine-zero/axioms/axiom-03-stdout-as-deliverable.md
+  238c62e715e4480e 3,5,7,9-13,15-17,19,21-24
+  5884e2bbd73dd83a 1-2,4,6,8,14,18,20
+Artifacts/quine-zero/axioms/axiom-06-exit-as-judgment.md
+  238c62e715e4480e 3,5,7,9,11-13,15,17-21,23
+  5884e2bbd73dd83a 1-2,4,6,8,10,14,16,22
+Artifacts/quine-zero/axioms/axiom-05-recursion-as-strategy.md
+  238c62e715e4480e 3,5,7,9,11-13,15,17-19,22,24-25
+  5884e2bbd73dd83a 1,20
+Artifacts/quine-zero/axioms/axiom-01-agent-as-process.md
+  238c62e715e4480e 3,5,7,9,11-15,17,19-24,26,28
+Artifacts/README.md
+  5884e2bbd73dd83a 49,64-66
+Artifacts/quine-zero/axioms/axiom-04-stderr-as-gradient.md
+  238c62e715e4480e 3,5-13,15,17-25,27-29
+  5884e2bbd73dd83a 1
+Artifacts/quine-zero/manifesto.md
+  5884e2bbd73dd83a 102
+Artifacts/quine-zero/axioms/axiom-02-stdin-as-context.md
+  238c62e715e4480e 3,5,7,9,11-14,16,18,20,23
+  5884e2bbd73dd83a 1-2,4,6,8,10,15,17,19,21-22,24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "2b0e6295e7d5a755f35b0b37250a7c4685a1cbd5",
+  "prompts": {
+    "238c62e715e4480e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c58dbf6bffeJHWhkPfGsvzy0K",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 187,
+      "total_deletions": 661,
+      "accepted_lines": 117,
+      "overriden_lines": 0
+    },
+    "5884e2bbd73dd83a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c59a70a7ffe63a9nDxof9rX2X",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 703,
+      "total_deletions": 372,
+      "accepted_lines": 106,
+      "overriden_lines": 0
+    },
+    "a5b70de49a93c04e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c5a38da3ffe7T3FnxHuDFMOL1",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 56,
+      "total_deletions": 57,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
