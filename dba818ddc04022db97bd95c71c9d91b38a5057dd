@@ -1,0 +1,31 @@
+Artifacts/README.md
+  967c804e6fb45d09 37-44,56-57
+Artifacts/experiments/README.md
+  967c804e6fb45d09 1-227
+Artifacts/engineering/spec.md
+  967c804e6fb45d09 598
+Artifacts/engineering/experimental-results.md
+  967c804e6fb45d09 4-5,7,41,46,53,58,65,88,99,110
+README.md
+  967c804e6fb45d09 136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "dba818ddc04022db97bd95c71c9d91b38a5057dd",
+  "prompts": {
+    "967c804e6fb45d09": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c254902bffet5l8JQ59GIJDqt",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 255,
+      "total_deletions": 20,
+      "accepted_lines": 250,
+      "overriden_lines": 0
+    }
+  }
+}
