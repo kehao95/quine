@@ -1,0 +1,67 @@
+Artifacts/quine-zero/axioms/axiom-04-stderr-as-gradient.md
+  e4fedace285287ef 27,29-39
+Artifacts/quine-zero/engineering/spec.md
+  477713686d5c35de 269,502,552,554-557,559-563,567,588,592,594,598,605,609-611,615,617,621-628,632,636,638,644-645,650-651,655,657,665-667,671,673-694
+  e4fedace285287ef 405-407,695-711,714-716
+Artifacts/quine-zero/engineering/system-prompt.md
+  e4fedace285287ef 75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "bae4fe416525a253c93e18a431c0c0397f06ed1f",
+  "prompts": {
+    "248938ccc94e167f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c541e6ecffeBiI2LmsZ4FYeX3",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 225,
+      "total_deletions": 22,
+      "accepted_lines": 212,
+      "overriden_lines": 0
+    },
+    "477713686d5c35de": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c4f7fe41ffeILXuplQCq1hWgz",
+        "model": "github-copilot/gpt-5-mini"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 70,
+      "total_deletions": 32,
+      "accepted_lines": 66,
+      "overriden_lines": 0
+    },
+    "a34d0fa6b2c8749c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c5132c63ffeS8JXFKkIi9mCeI",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 4,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    },
+    "e4fedace285287ef": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c61bb95affeDs5rE4bPWF3rpb",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 44,
+      "total_deletions": 8,
+      "accepted_lines": 39,
+      "overriden_lines": 0
+    }
+  }
+}
