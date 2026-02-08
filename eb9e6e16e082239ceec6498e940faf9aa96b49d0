@@ -1,0 +1,29 @@
+Artifacts/README.md
+  0b6a1d457d5303e0 51-54,98-102,105-107,110-112
+Artifacts/quine-zero/engineering/system-prompt.md
+  0b6a1d457d5303e0 7,15-16,22-25,27-30,32,43,57,64,75-76,78,81,83-100,103-104,110-111,113-114,116,119,128-129,131
+Artifacts/quine-zero/engineering/spec.md
+  0b6a1d457d5303e0 1-41,43-681
+Artifacts/quine-zero/README.md
+  0b6a1d457d5303e0 35-38,49-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "eb9e6e16e082239ceec6498e940faf9aa96b49d0",
+  "prompts": {
+    "0b6a1d457d5303e0": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c57e9338ffeWLPk9ElyYn5eNp",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 755,
+      "total_deletions": 24,
+      "accepted_lines": 754,
+      "overriden_lines": 1
+    }
+  }
+}
