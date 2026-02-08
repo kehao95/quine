@@ -1,0 +1,29 @@
+Artifacts/quine-zero/engineering/results/test-2.1-babel-run2.md
+  90be87749f7a2e29 1-209
+internal/runtime/prompt_test.go
+  90be87749f7a2e29 57-58
+internal/runtime/prompt.go
+  90be87749f7a2e29 25-67
+Artifacts/quine-zero/engineering/results/test-2.1-babel-run1.md
+  90be87749f7a2e29 1-153
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "312750d89e24dbe342dc6c7a9e96ea09bf4b9065",
+  "prompts": {
+    "90be87749f7a2e29": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c48f9f74ffekkVo06NX6xWU4E",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 407,
+      "total_deletions": 10,
+      "accepted_lines": 407,
+      "overriden_lines": 0
+    }
+  }
+}
