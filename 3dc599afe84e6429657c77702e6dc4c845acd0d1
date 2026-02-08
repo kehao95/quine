@@ -1,0 +1,29 @@
+Artifacts/experiments/bxq.1-needles-haystack/README.md
+  618168290bad26d3 4,207-304
+internal/runtime/runtime_test.go
+  618168290bad26d3 388-389,397-408,434,438,440-441,447,452,460-471,497,500-501
+internal/runtime/runtime.go
+  618168290bad26d3 279-285
+internal/tape/tape.go
+  618168290bad26d3 113-121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "3dc599afe84e6429657c77702e6dc4c845acd0d1",
+  "prompts": {
+    "618168290bad26d3": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c1c2d575ffe51zIeUBrRzPQVw",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 152,
+      "total_deletions": 22,
+      "accepted_lines": 152,
+      "overriden_lines": 0
+    }
+  }
+}
