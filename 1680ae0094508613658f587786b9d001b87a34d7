@@ -1,0 +1,23 @@
+Artifacts/experiments/bxq.1-needles-haystack/run_S.sh
+  77ea7663179fd264 1-119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "1680ae0094508613658f587786b9d001b87a34d7",
+  "prompts": {
+    "77ea7663179fd264": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c229865cffehVS5IlmokPI6wc",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 119,
+      "total_deletions": 0,
+      "accepted_lines": 119,
+      "overriden_lines": 0
+    }
+  }
+}
