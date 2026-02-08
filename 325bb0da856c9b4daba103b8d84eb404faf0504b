@@ -1,0 +1,50 @@
+web/src/components/AgentNode.tsx
+  2a1cec8c5545a5b6 9,11-15,28,37,40,46,49,51-52,54-58,60,63-67,71-77,79-80,82-83,86-87,89,92,94-95,100-123,127-137,139
+internal/tools/tools.go
+  2a1cec8c5545a5b6 6,39,46-50,52-59,65,103-104,124-128,134-135,183-195
+web/src/components/NeuralTerminal.tsx
+  2a1cec8c5545a5b6 3-9,12,27-40,43-91,108,132,161,176-178,182,184-185,188-189,191,193-195,199,207-316,318-324
+Artifacts/quine-zero/engineering/results/test-11.4-bomb.md
+  248938ccc94e167f 1-171
+internal/tape/persist.go
+  2a1cec8c5545a5b6 11-13,17,20-21,30,34-35,43-49,52,58-59
+internal/tools/tools_test.go
+  2a1cec8c5545a5b6 350,355-357,361-390
+web/src/lib/types.ts
+  2a1cec8c5545a5b6 32-35,70-106
+Artifacts/quine-zero/engineering/results/test-11.5-fractal.md
+  248938ccc94e167f 1-139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "325bb0da856c9b4daba103b8d84eb404faf0504b",
+  "prompts": {
+    "248938ccc94e167f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c541e6ecffeBiI2LmsZ4FYeX3",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 310,
+      "total_deletions": 0,
+      "accepted_lines": 310,
+      "overriden_lines": 0
+    },
+    "2a1cec8c5545a5b6": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c49c4177ffeiOsGsXoU63KNrd",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 442,
+      "total_deletions": 144,
+      "accepted_lines": 424,
+      "overriden_lines": 0
+    }
+  }
+}
