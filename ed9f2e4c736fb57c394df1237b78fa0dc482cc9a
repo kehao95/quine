@@ -1,0 +1,53 @@
+Artifacts/quine-neuro/hypotheses/hypothesis-01-synaptic-emergence.md
+  27302873e0341296 8
+Artifacts/quine-neuro/axioms/axiom-00-minimal-anthropic-principle.md
+  27302873e0341296 19
+Artifacts/quine-neuro/axioms/axiom-02-unrestricted-instrumentality.md
+  27302873e0341296 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "ed9f2e4c736fb57c394df1237b78fa0dc482cc9a",
+  "prompts": {
+    "248938ccc94e167f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c541e6ecffeBiI2LmsZ4FYeX3",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 1104,
+      "total_deletions": 9,
+      "accepted_lines": 1101,
+      "overriden_lines": 0
+    },
+    "27302873e0341296": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c538d7caffeaMqJtxdxQtfGa9",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 45,
+      "total_deletions": 31,
+      "accepted_lines": 35,
+      "overriden_lines": 0
+    },
+    "71c2568919f31751": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c56527ecffe14spXykcDplDTO",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 148,
+      "total_deletions": 0,
+      "accepted_lines": 148,
+      "overriden_lines": 0
+    }
+  }
+}
