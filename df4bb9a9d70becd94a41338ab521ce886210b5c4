@@ -1,0 +1,38 @@
+internal/config/config.go
+  90be87749f7a2e29 29,92,184
+internal/config/config_test.go
+  90be87749f7a2e29 130-131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "df4bb9a9d70becd94a41338ab521ce886210b5c4",
+  "prompts": {
+    "210cb20140a8656e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c4783f23ffeCMSWOUNaOCQVWV",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 12,
+      "total_deletions": 38,
+      "accepted_lines": 145,
+      "overriden_lines": 0
+    },
+    "90be87749f7a2e29": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c48f9f74ffekkVo06NX6xWU4E",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 5,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
