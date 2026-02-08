@@ -1,0 +1,41 @@
+internal/llm/anthropic.go
+  618168290bad26d3 43
+Artifacts/experiments/bxq.1-needles-haystack/README.md
+  60fe96d2bd54e144 554-609
+  618168290bad26d3 382-465
+Artifacts/experiments/bxq.1-needles-haystack/run_M_analysis.md
+  60fe96d2bd54e144 1-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "8bb7a7c8200a35e0160a95e404028820ceddd5ad",
+  "prompts": {
+    "60fe96d2bd54e144": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c183a1abffeFpADVDVMLzMSYP",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 111,
+      "total_deletions": 1,
+      "accepted_lines": 110,
+      "overriden_lines": 0
+    },
+    "618168290bad26d3": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c1c2d575ffe51zIeUBrRzPQVw",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 85,
+      "total_deletions": 1,
+      "accepted_lines": 85,
+      "overriden_lines": 0
+    }
+  }
+}
