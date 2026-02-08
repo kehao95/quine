@@ -1,0 +1,25 @@
+Artifacts/experiments/2.1-babel/README.md
+  967c804e6fb45d09 1-45
+AGENTS.md
+  967c804e6fb45d09 15-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "f1912f5c7510374b8434afb0b73513c7ee2a5a47",
+  "prompts": {
+    "967c804e6fb45d09": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c254902bffet5l8JQ59GIJDqt",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 97,
+      "total_deletions": 0,
+      "accepted_lines": 97,
+      "overriden_lines": 0
+    }
+  }
+}
