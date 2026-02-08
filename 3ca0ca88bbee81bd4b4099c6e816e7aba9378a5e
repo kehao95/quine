@@ -1,0 +1,36 @@
+Artifacts/quine-zero/manifesto.md
+  ea4b3199688dc259 86,88,100-104,108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "3ca0ca88bbee81bd4b4099c6e816e7aba9378a5e",
+  "prompts": {
+    "89f217511dc81248": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c55f325effeqRlkidvM6OcXk3",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 25,
+      "total_deletions": 0,
+      "accepted_lines": 25,
+      "overriden_lines": 0
+    },
+    "ea4b3199688dc259": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c56442c4ffepM4oXOGq8JRlzu",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 4,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}
