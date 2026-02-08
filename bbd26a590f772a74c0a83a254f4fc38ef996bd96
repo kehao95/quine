@@ -1,0 +1,153 @@
+internal/runtime/runtime_test.go
+  248938ccc94e167f 60,65-69,256,258
+.gitignore
+  31db2312f7a96f7e 6,8-12
+Artifacts/quine-zero/manifesto.md
+  d2e61362e4c28b4a 100,102,104-108,110-114,116,120,122-124,128,130,132,136,140-142
+  8c279220de4e585f 126-127
+internal/tape/reader_test.go
+  31db2312f7a96f7e 1-204
+cmd/quine/integration_test.go
+  f3c5b38ff5d54bc3 312,332-333,359-369,422-424
+Artifacts/quine-zero/internal-model.md
+  8c279220de4e585f 115-123
+internal/models/registry.go
+  f3c5b38ff5d54bc3 1-149,151-170
+web/src/lib/types.ts
+  31db2312f7a96f7e 1-65
+Artifacts/quine-zero/engineering/results/test-11.2-amnesia.md
+  248938ccc94e167f 1-128
+web/src/app/page.tsx
+  31db2312f7a96f7e 1,3-9,11-23,25-29,31-37,39-42,44-77,79-85
+internal/tape/reader.go
+  31db2312f7a96f7e 1-170
+web/src/app/layout.tsx
+  31db2312f7a96f7e 2,5,10,16-17,26,28
+internal/llm/google.go
+  31db2312f7a96f7e 44-48
+  f3c5b38ff5d54bc3 24,38
+web/src/components/TelemetryHUD.tsx
+  31db2312f7a96f7e 1-88
+web/src/app/globals.css
+  31db2312f7a96f7e 2,5-16,20-21,26-27,31-122
+web/src/lib/usePanopticon.ts
+  31db2312f7a96f7e 1-112
+web/src/components/Dendrogram.tsx
+  31db2312f7a96f7e 1-164
+web/src/components/NeuralTerminal.tsx
+  31db2312f7a96f7e 1-180
+Artifacts/quine-zero/engineering/panopticon.md
+  bb3ee2a4d1941444 1-180
+internal/llm/bedrock.go
+  f3c5b38ff5d54bc3 31,69,75-79
+Artifacts/quine-zero/engineering/results/test-11.1-survival.md
+  248938ccc94e167f 1-77
+Makefile
+  31db2312f7a96f7e 5-8,16,23-32,51
+internal/config/config.go
+  f3c5b38ff5d54bc3 10-11,21-23,34,53-114,116-152,156,162-163,165,241-259,272,287-314
+  248938ccc94e167f 43,46
+internal/runtime/runtime.go
+  248938ccc94e167f 76-82,91,94,96-103,108-110,113-115,153-155,169-172,367-368,373,385,396
+Artifacts/quine-zero/engineering/spec.md
+  bb3ee2a4d1941444 25,700,702,704,706-718
+  8c279220de4e585f 354-360,364-365,369-371,373,375
+internal/llm/llm.go
+  f3c5b38ff5d54bc3 31-32
+web/src/components/AgentNode.tsx
+  31db2312f7a96f7e 1-112
+Artifacts/quine-zero/engineering/results/test-11.3-resilience.md
+  248938ccc94e167f 1-109
+internal/llm/openai.go
+  f3c5b38ff5d54bc3 24,38,44-48
+internal/config/config_test.go
+  f3c5b38ff5d54bc3 26-35,38,62,156,175-177,184,226-227,229-234,236-240,246-248,264,270-272,279,394-397,441-454
+  248938ccc94e167f 154,158-160,162-163
+internal/llm/anthropic.go
+  f3c5b38ff5d54bc3 29,44,50-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "bbd26a590f772a74c0a83a254f4fc38ef996bd96",
+  "prompts": {
+    "248938ccc94e167f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c541e6ecffeBiI2LmsZ4FYeX3",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 373,
+      "total_deletions": 17,
+      "accepted_lines": 370,
+      "overriden_lines": 0
+    },
+    "31db2312f7a96f7e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c4c5be60ffeER47DIVJfW8pgh",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 2230,
+      "total_deletions": 77,
+      "accepted_lines": 2229,
+      "overriden_lines": 0
+    },
+    "8c279220de4e585f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c4bf7f9fffe0Bn0SjRXT8bNMA",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 41,
+      "total_deletions": 28,
+      "accepted_lines": 25,
+      "overriden_lines": 0
+    },
+    "bb3ee2a4d1941444": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c4d6222bffeLfVl51Ljp0g7Y2",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 203,
+      "total_deletions": 0,
+      "accepted_lines": 203,
+      "overriden_lines": 0
+    },
+    "d2e61362e4c28b4a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c4e1f45cffeCVG0o5S3mAgmoh",
+        "model": "github-copilot/gpt-5-mini"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 37,
+      "total_deletions": 21,
+      "accepted_lines": 30,
+      "overriden_lines": 0
+    },
+    "f3c5b38ff5d54bc3": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c4c24869ffetpwFrEZZQ7qKCj",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 493,
+      "total_deletions": 107,
+      "accepted_lines": 427,
+      "overriden_lines": 0
+    }
+  }
+}
