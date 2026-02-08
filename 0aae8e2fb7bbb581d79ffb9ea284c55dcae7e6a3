@@ -1,0 +1,52 @@
+internal/tape/reader_test.go
+  cd6c7958eeb92d0d 205-269
+internal/tape/reader.go
+  cd6c7958eeb92d0d 61-66
+internal/tools/tools.go
+  cd6c7958eeb92d0d 46-50,60-68,74,112-116,139,141-143
+internal/config/config_test.go
+  cd6c7958eeb92d0d 382-386,402
+Artifacts/experiments/bxq.1-needles-haystack/run_S.sh
+  77ea7663179fd264 71-76
+internal/tools/tools_test.go
+  cd6c7958eeb92d0d 350-354,358-359,363-367,371-382,386-387,440-442,446-447
+internal/config/config.go
+  cd6c7958eeb92d0d 265-269
+AGENTS.md
+  cd6c7958eeb92d0d 82-128
+cmd/quine/integration_test.go
+  cd6c7958eeb92d0d 404-408
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "0aae8e2fb7bbb581d79ffb9ea284c55dcae7e6a3",
+  "prompts": {
+    "77ea7663179fd264": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c229865cffehVS5IlmokPI6wc",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 3,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    },
+    "cd6c7958eeb92d0d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c21a53cdffeDwnwzbYkBvFgVE",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 200,
+      "total_deletions": 95,
+      "accepted_lines": 191,
+      "overriden_lines": 0
+    }
+  }
+}
