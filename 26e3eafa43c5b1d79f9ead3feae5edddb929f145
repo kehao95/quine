@@ -1,0 +1,51 @@
+Artifacts/quine-zero/engineering/test-suite.md
+  42eec1e7ed4f9618 1-283
+internal/runtime/prompt.go
+  aafafc456e1da611 76-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "26e3eafa43c5b1d79f9ead3feae5edddb929f145",
+  "prompts": {
+    "42eec1e7ed4f9618": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c48c7975ffepluJqaeIabmdRa",
+        "model": "github-copilot/gpt-5-mini"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 283,
+      "total_deletions": 0,
+      "accepted_lines": 283,
+      "overriden_lines": 0
+    },
+    "90be87749f7a2e29": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c48f9f74ffekkVo06NX6xWU4E",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 636,
+      "total_deletions": 26,
+      "accepted_lines": 615,
+      "overriden_lines": 0
+    },
+    "aafafc456e1da611": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c4626572ffe8z80Qj5rwFLbSi",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 162,
+      "total_deletions": 9,
+      "accepted_lines": 159,
+      "overriden_lines": 0
+    }
+  }
+}
