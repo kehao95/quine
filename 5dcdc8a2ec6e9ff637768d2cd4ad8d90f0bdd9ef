@@ -1,0 +1,27 @@
+Artifacts/README.md
+  78994578fffb990b 3,10-15,20-38
+Artifacts/manifesto.md
+  78994578fffb990b 89,93,97-114,116-117
+Artifacts/axioms/guarantees.md
+  78994578fffb990b 1-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "5dcdc8a2ec6e9ff637768d2cd4ad8d90f0bdd9ef",
+  "prompts": {
+    "78994578fffb990b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bd37b0d0ffeE4SCEbpiXVfrQE",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 77,
+      "total_deletions": 122,
+      "accepted_lines": 71,
+      "overriden_lines": 1
+    }
+  }
+}
