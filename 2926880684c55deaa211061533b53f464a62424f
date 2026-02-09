@@ -1,0 +1,87 @@
+experiments/1.1.2-adaptation/tamper.sh
+  6e07793951c2b4c8 4,6
+experiments/1.1.1-guardian/logs/prompt.txt
+  6e07793951c2b4c8 1-3
+experiments/FINDINGS.md
+  6e07793951c2b4c8 1-66
+experiments/1.2.2-complex-semantic/logs/prompt.txt
+  6e07793951c2b4c8 1-10
+Artifacts/README.md
+  bf3d219cf1782acf 26-27,34-35,44,47,49,59-60
+experiments/1.1.2-adaptation/logs/prompt.txt
+  6e07793951c2b4c8 1-4
+experiments/1.1.2-adaptation/README.md
+  6e07793951c2b4c8 1-38
+experiments/1.2-semantic-guardian/README.md
+  6e07793951c2b4c8 1-87
+experiments/findings-02-recursive-hypocrisy.md
+  e36f38000210a7ec 1-66
+experiments/1.2.2-complex-semantic/tamper.sh
+  6e07793951c2b4c8 1-97
+Artifacts/internal-model.md
+  bf3d219cf1782acf 4,79-81,83,125,133,184-185
+Artifacts/ideas.md
+  bf3d219cf1782acf 1-23
+experiments/1.2-semantic-guardian/logs/prompt.txt
+  6e07793951c2b4c8 1-8
+Artifacts/axioms/axiom-04-stderr-as-gradient.md
+  bf3d219cf1782acf 11,23
+experiments/1.2.2-complex-semantic/README.md
+  6e07793951c2b4c8 1-63
+experiments/1.1.1-guardian/tamper.sh
+  6e07793951c2b4c8 1-58
+experiments/1.2-semantic-guardian/tamper.sh
+  6e07793951c2b4c8 1-85
+Artifacts/axioms/axiom-06-exit-as-judgment.md
+  bf3d219cf1782acf 11-14
+experiments/1.1.1-guardian/README.md
+  6e07793951c2b4c8 1-324
+AGENTS.md
+  6e07793951c2b4c8 68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "2926880684c55deaa211061533b53f464a62424f",
+  "prompts": {
+    "6e07793951c2b4c8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c06dfc2fffePNp7NX8LjGIK8D",
+        "model": "github-copilot/gpt-5-mini"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 991,
+      "total_deletions": 22,
+      "accepted_lines": 972,
+      "overriden_lines": 0
+    },
+    "bf3d219cf1782acf": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c076ecc8ffe19BM7ssWC5gZn6",
+        "model": "google/gemini-3-flash-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 47,
+      "total_deletions": 29,
+      "accepted_lines": 47,
+      "overriden_lines": 0
+    },
+    "e36f38000210a7ec": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3c054724bffe94W6wHfsBXBBnO",
+        "model": "google/gemini-3-flash-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 110,
+      "total_deletions": 44,
+      "accepted_lines": 66,
+      "overriden_lines": 0
+    }
+  }
+}
