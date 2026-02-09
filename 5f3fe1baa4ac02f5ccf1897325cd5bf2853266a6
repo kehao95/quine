@@ -1,0 +1,41 @@
+.gitignore
+  983e8b8c3dfa1ee2 17-18
+experiments/Containerfile
+  983e8b8c3dfa1ee2 1-41
+AGENTS.md
+  983e8b8c3dfa1ee2 19,26-27,29-39,44-78,81-84,99-108,111,115-116,120-123,125,127,130-133,135-138,140-142,144-145,147-149,151,154,156,158-164
+  825e3b2a3a6af660 25,28,40-41,80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "5f3fe1baa4ac02f5ccf1897325cd5bf2853266a6",
+  "prompts": {
+    "825e3b2a3a6af660": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bb9ddc7cffeONL3yIJ45LCX9r",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 31,
+      "total_deletions": 20,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    },
+    "983e8b8c3dfa1ee2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bb953b98ffeJt5mc3vCWjQauS",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 149,
+      "total_deletions": 112,
+      "accepted_lines": 148,
+      "overriden_lines": 0
+    }
+  }
+}
