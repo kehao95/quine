@@ -1,0 +1,23 @@
+.gitignore
+  5fe920e73d5c1467 15-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "883c03c51e3b27246956b17109cd89a549f6c848",
+  "prompts": {
+    "5fe920e73d5c1467": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bf894504ffeexBE4Q560Gr6dJ",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 1,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
