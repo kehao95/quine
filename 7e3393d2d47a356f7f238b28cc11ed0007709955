@@ -1,0 +1,39 @@
+experiments/ch5-emergent-behavior/3.1-js-quine/README.md
+  5fe920e73d5c1467 1-275
+experiments/ch5-emergent-behavior/3.1-js-quine/run-v3.sh
+  5fe920e73d5c1467 1-87
+experiments/ch5-emergent-behavior/3.1-js-quine/logs/prompt.txt
+  5fe920e73d5c1467 1-17
+experiments/ch5-emergent-behavior/3.1-js-quine/run-v3b.sh
+  5fe920e73d5c1467 1-91
+experiments/ch5-emergent-behavior/3.1-js-quine/run-v2.sh
+  5fe920e73d5c1467 1-85
+experiments/ch5-emergent-behavior/3.1-js-quine/logs/prompt-v3.txt
+  5fe920e73d5c1467 1-10
+experiments/ch5-emergent-behavior/3.1-js-quine/logs/prompt-v2.txt
+  5fe920e73d5c1467 1-12
+experiments/ch5-emergent-behavior/3.1-js-quine/run.sh
+  5fe920e73d5c1467 1-75
+experiments/ch5-emergent-behavior/3.1-js-quine/logs/prompt-v3b.txt
+  5fe920e73d5c1467 1-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "7e3393d2d47a356f7f238b28cc11ed0007709955",
+  "prompts": {
+    "5fe920e73d5c1467": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bf894504ffeexBE4Q560Gr6dJ",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 719,
+      "total_deletions": 53,
+      "accepted_lines": 666,
+      "overriden_lines": 0
+    }
+  }
+}
