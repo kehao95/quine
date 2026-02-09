@@ -1,0 +1,73 @@
+Artifacts/axioms/axiom-12-env-as-genetics.md
+  bad80db89e6a56be 1-58
+Artifacts/README.md
+  1a43fc2f1b822afd 18-41
+Artifacts/implementation.md
+  bad80db89e6a56be 53,55,57-60,62-66,68-69,92-114
+  fd66700cab7cb6e6 51
+Artifacts/manifesto.md
+  1a43fc2f1b822afd 172-183
+Artifacts/axioms/axiom-11-signal-as-intervention.md
+  bad80db89e6a56be 1-46
+Artifacts/evaluation.md
+  1a43fc2f1b822afd 5-21,84,86,88,90-127
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "b8fc827c6d3f38f902fc894ca8635483254e1172",
+  "prompts": {
+    "1a43fc2f1b822afd": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bc5c9431ffe4Auq5mug4sxbaq",
+        "model": "google/gemini-3-flash-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 108,
+      "total_deletions": 32,
+      "accepted_lines": 94,
+      "overriden_lines": 0
+    },
+    "70699614d57e1f7a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bc137e09ffeuqtDdf34Cc0dZZ",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 18,
+      "total_deletions": 0,
+      "accepted_lines": 18,
+      "overriden_lines": 0
+    },
+    "bad80db89e6a56be": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bc30255cffem2pdHEqZp9VTZp",
+        "model": "google/gemini-3-flash-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 485,
+      "total_deletions": 0,
+      "accepted_lines": 481,
+      "overriden_lines": 0
+    },
+    "fd66700cab7cb6e6": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bc13cd41ffeOWu3D8v5OI6Fg7",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 35,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
