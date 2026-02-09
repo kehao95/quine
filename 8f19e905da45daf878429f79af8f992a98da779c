@@ -1,0 +1,27 @@
+experiments/ch5-emergent-behavior/3.1-js-quine/README.md
+  5fe920e73d5c1467 276-338
+experiments/ch5-emergent-behavior/3.1-js-quine/logs/prompt-v4.txt
+  5fe920e73d5c1467 1-10
+experiments/ch5-emergent-behavior/3.1-js-quine/run-v4.sh
+  5fe920e73d5c1467 1-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "8f19e905da45daf878429f79af8f992a98da779c",
+  "prompts": {
+    "5fe920e73d5c1467": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bf894504ffeexBE4Q560Gr6dJ",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 159,
+      "total_deletions": 0,
+      "accepted_lines": 159,
+      "overriden_lines": 0
+    }
+  }
+}
