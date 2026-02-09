@@ -1,0 +1,27 @@
+experiments/ch6-scale-validation/gaia-benchmark/README.md
+  5fe920e73d5c1467 1-234
+cmd/quine/internal/runtime/prompt.go
+  5fe920e73d5c1467 47-74,76
+experiments/ch6-scale-validation/gaia-benchmark/run_experiment.py
+  5fe920e73d5c1467 1-228
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "62ad4508b3d4cb0488b646af87642b6cfe8ffe31",
+  "prompts": {
+    "5fe920e73d5c1467": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bf894504ffeexBE4Q560Gr6dJ",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 522,
+      "total_deletions": 32,
+      "accepted_lines": 491,
+      "overriden_lines": 0
+    }
+  }
+}
