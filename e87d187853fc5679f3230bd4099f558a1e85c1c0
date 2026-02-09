@@ -1,0 +1,49 @@
+Artifacts/axioms/axiom-09-tape-as-context.md
+  7f08267b92739ea5 37
+Artifacts/experiments/phase-2-sociology/idea-telepath.md
+  7f08267b92739ea5 1,3-7,9-17,19-78
+Artifacts/implementation.md
+  7f08267b92739ea5 5,7,9-10,12,14,22,24,26-30,32,34-37,39-40,44-45,47,49,51-53
+  f1cbc900fed41566 3,16,18-20,42-43
+Artifacts/axioms/axiom-07-exit-as-judgment.md
+  7f08267b92739ea5 12-22
+Artifacts/evaluation.md
+  7f08267b92739ea5 23,32-60,78,96,112
+Artifacts/axioms/axiom-05-stdout-as-deliverable.md
+  7f08267b92739ea5 9-13
+cmd/quine/internal/runtime/prompt.go
+  f1cbc900fed41566 27,36,43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "e87d187853fc5679f3230bd4099f558a1e85c1c0",
+  "prompts": {
+    "7f08267b92739ea5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bbfe2f21ffefaPBcU8O2mmf3d",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 233,
+      "total_deletions": 211,
+      "accepted_lines": 167,
+      "overriden_lines": 0
+    },
+    "f1cbc900fed41566": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bbdc16e7ffeT1QZJsshCvw1Mz",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 12,
+      "total_deletions": 22,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}
