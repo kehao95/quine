@@ -1,0 +1,38 @@
+cmd/quine/internal/llm/anthropic.go
+  922d92440daf52b8 87,95-96,214,228
+cmd/quine/internal/runtime/system_prompt.md
+  eb009d16e17bf94f 10,14-16,19,74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "406eb072451baac1c42fd3becf25959a0c5bc090",
+  "prompts": {
+    "922d92440daf52b8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bba49d7fffe5dYlQ62CUx7u9D",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 9,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    },
+    "eb009d16e17bf94f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bbb10917ffeoLg6FBf4wLNGe4",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 2,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
