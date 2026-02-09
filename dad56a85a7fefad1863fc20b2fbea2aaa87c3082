@@ -1,0 +1,73 @@
+engineering/panopticon.md
+  78994578fffb990b 15
+engineering/experimental-results.md
+  78994578fffb990b 38,43,48,55,60
+Artifacts/axioms/axiom-08-recursion-as-strategy.md
+  78994578fffb990b 1
+Artifacts/axioms/guarantees.md
+  78994578fffb990b 5,7,12-15,17-18,22-25,27,32-35
+  8b3d70b57362aa9d 8-11,16,19-21,26,28
+Artifacts/implementation.md
+  78994578fffb990b 77,93
+Artifacts/axioms/axiom-02-agent-as-process.md
+  78994578fffb990b 1
+Artifacts/axioms/axiom-05-stdout-as-deliverable.md
+  78994578fffb990b 1
+Artifacts/axioms/axiom-06-stderr-as-gradient.md
+  78994578fffb990b 1
+TODO.md
+  78994578fffb990b 41
+Artifacts/axioms/axiom-07-exit-as-judgment.md
+  78994578fffb990b 1,48
+Artifacts/axioms/axiom-03-filesystem-as-state.md
+  78994578fffb990b 1
+Artifacts/axioms/axiom-01-os-as-world.md
+  78994578fffb990b 1
+Artifacts/manifesto.md
+  78994578fffb990b 103,105,107,109
+Artifacts/genealogy.md
+  78994578fffb990b 14,21,28
+  8b3d70b57362aa9d 5-13,15-20,22-27,29-31,98
+Artifacts/axioms/axiom-09-tape-as-file.md
+  78994578fffb990b 1
+Artifacts/axioms/axiom-04-stdin-as-context.md
+  78994578fffb990b 1
+engineering/internal-model.md
+  78994578fffb990b 125-133
+Artifacts/README.md
+  8b3d70b57362aa9d 28-29,31,37,39-41,46,48
+  78994578fffb990b 1,30,34-36,38,42-45,47,51-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "dad56a85a7fefad1863fc20b2fbea2aaa87c3082",
+  "prompts": {
+    "78994578fffb990b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bd37b0d0ffeE4SCEbpiXVfrQE",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 79,
+      "total_deletions": 82,
+      "accepted_lines": 66,
+      "overriden_lines": 0
+    },
+    "8b3d70b57362aa9d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bd2b5c4cffe5w1cHB6VGV53Nq",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 83,
+      "total_deletions": 24,
+      "accepted_lines": 47,
+      "overriden_lines": 0
+    }
+  }
+}
