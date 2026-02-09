@@ -1,0 +1,29 @@
+experiments/Containerfile
+  983e8b8c3dfa1ee2 5,30
+experiments/p1-physics/1.1-insurance/run.sh
+  983e8b8c3dfa1ee2 1-169
+experiments/p1-physics/1.1-insurance/prompt.md
+  983e8b8c3dfa1ee2 1-11
+experiments/p1-physics/1.1-insurance/README.md
+  983e8b8c3dfa1ee2 1-74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "5bd6298ff41a0770ecd82ee65e15e100d0e31f7a",
+  "prompts": {
+    "983e8b8c3dfa1ee2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bb953b98ffeJt5mc3vCWjQauS",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 257,
+      "total_deletions": 3,
+      "accepted_lines": 256,
+      "overriden_lines": 0
+    }
+  }
+}
