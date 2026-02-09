@@ -1,0 +1,64 @@
+Artifacts/README.md
+  1c59e287883ba164 12,21,29,43,53-54
+Artifacts/implementation.md
+  31f6d95d490305d3 53,55-57,59-63,65-81
+  3904d9c460cad932 52,131
+Artifacts/axioms/axiom-04-stdin-as-intent.md
+  1c59e287883ba164 1,3,7,9-10,13,16-19,21-24,26-29,37-38
+Artifacts/axioms/axiom-09-tape-as-context.md
+  1c59e287883ba164 1,3,7,9-10,14,16-23,25,27-28,32-37,39-46,48,51-52,55
+Artifacts/axioms/guarantees.md
+  1c59e287883ba164 1,5,22,33-36
+Artifacts/evaluation.md
+  3904d9c460cad932 12
+Artifacts/manifesto.md
+  1c59e287883ba164 131
+Artifacts/axioms/axiom-10-scarcity-as-selection.md
+  1c59e287883ba164 1-74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "3baa5d2fbc2094dbe29f572fe3f1aac665da9f7d",
+  "prompts": {
+    "1c59e287883ba164": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bc6c5564ffe3EU5LctlwqygAW",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 235,
+      "total_deletions": 36,
+      "accepted_lines": 220,
+      "overriden_lines": 0
+    },
+    "31f6d95d490305d3": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bc758479ffe79h7pGoLuXOph8",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 221,
+      "total_deletions": 349,
+      "accepted_lines": 101,
+      "overriden_lines": 5
+    },
+    "3904d9c460cad932": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bc95b6c6ffeXOlt0dmgiHu2Oq",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 39,
+      "total_deletions": 32,
+      "accepted_lines": 3,
+      "overriden_lines": 10
+    }
+  }
+}
