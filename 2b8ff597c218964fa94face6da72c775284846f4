@@ -1,0 +1,23 @@
+Artifacts/manifesto.md
+  03d09b8573a33f16 75-76,79,86-91,93-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "2b8ff597c218964fa94face6da72c775284846f4",
+  "prompts": {
+    "03d09b8573a33f16": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bbbb717dffeCix77w0goVFgo5",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 12,
+      "total_deletions": 11,
+      "accepted_lines": 12,
+      "overriden_lines": 0
+    }
+  }
+}
