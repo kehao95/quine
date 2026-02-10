@@ -1,0 +1,67 @@
+Paper/sections/01-introduction.md
+  f35f5607fa132720 7,30
+Paper/sections/00-abstract.md
+  f35f5607fa132720 10-16
+Paper/sections/06-discussion-conclusion.md
+  47944b8976dd2da5 9,21-23,34,45,47,52
+Paper/metadata.yaml
+  826b471e951d7c8d 7-8
+Paper/Makefile
+  826b471e951d7c8d 1-63
+Paper/sections/03-architecture.md
+  47944b8976dd2da5 11,27,29,38,43-45
+Paper/sections/07-references.md
+  47944b8976dd2da5 3-11
+Paper/sections/02-background.md
+  47944b8976dd2da5 10,13,23,26,30
+Paper/sections/05-case-study.md
+  47944b8976dd2da5 9,27,32,44-46,62
+Paper/sections/04-implementation.md
+  47944b8976dd2da5 14,21-22,27,31-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "f7ca2ce0f981218623d8675bbb9c96553556aca3",
+  "prompts": {
+    "47944b8976dd2da5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b74da6b8ffegZSEZuSW5iQ06p",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 99,
+      "total_deletions": 101,
+      "accepted_lines": 42,
+      "overriden_lines": 0
+    },
+    "826b471e951d7c8d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b7c1af23ffezaNw5Ak07OhAdJ",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 79,
+      "total_deletions": 17,
+      "accepted_lines": 66,
+      "overriden_lines": 0
+    },
+    "f35f5607fa132720": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b747371affeMs8Sxu64jMdd6K",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 3,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    }
+  }
+}
