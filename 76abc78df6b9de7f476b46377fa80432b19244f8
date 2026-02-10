@@ -1,0 +1,38 @@
+cmd/quine/internal/runtime/prompt_test.go
+  6e3adecda4c21c29 75,79-80
+cmd/quine/internal/runtime/system_prompt.md
+  6e3adecda4c21c29 1-2,4,11,13-15,18,21,23-27,29-34,42-52,57,59,65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "76abc78df6b9de7f476b46377fa80432b19244f8",
+  "prompts": {
+    "6e3adecda4c21c29": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3baa88b72ffef7pAHSSa2vIy4c",
+        "model": "amazon-bedrock/us.anthropic.claude-opus-4-6-v1"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 38,
+      "total_deletions": 41,
+      "accepted_lines": 38,
+      "overriden_lines": 0
+    },
+    "788393c0bfe7da45": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ba7b1d4affeNIO0MUkLLY7rt2",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 10,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}
