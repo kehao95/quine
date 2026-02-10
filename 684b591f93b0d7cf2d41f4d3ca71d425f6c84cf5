@@ -1,0 +1,37 @@
+cmd/quine/internal/tools/schemas.go
+  c72ec0267e5c2476 21-24
+cmd/quine/internal/runtime/system_prompt.md
+  c72ec0267e5c2476 7,19
+cmd/quine/internal/tools/tools_test.go
+  c72ec0267e5c2476 49,142,156,194,219,242,354,382,441,507-628
+cmd/quine/internal/runtime/runtime.go
+  c72ec0267e5c2476 100-103,453-462,465-469,472
+Artifacts/implementation.md
+  c72ec0267e5c2476 32-52,56
+cmd/quine/internal/llm/llm_test.go
+  c72ec0267e5c2476 92
+cmd/quine/internal/tools/tools.go
+  c72ec0267e5c2476 40-44,123-129,135,167-177,210-218
+Artifacts/axioms/axiom-05-stdout-as-deliverable.md
+  c72ec0267e5c2476 14,20,34-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "684b591f93b0d7cf2d41f4d3ca71d425f6c84cf5",
+  "prompts": {
+    "c72ec0267e5c2476": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b83e750fffeA8Fl2MN9IYfRB4",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 187,
+      "total_deletions": 13,
+      "accepted_lines": 244,
+      "overriden_lines": 0
+    }
+  }
+}
