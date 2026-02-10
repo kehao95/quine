@@ -1,0 +1,23 @@
+cmd/quine/internal/runtime/runtime.go
+  bd6c40c0337d2658 395-404,528-539
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "5d0be247c093e7478a3ed860869bd39336fc523a",
+  "prompts": {
+    "bd6c40c0337d2658": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ba96bdfdffe1viFnyfzjb3R1i",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 22,
+      "overriden_lines": 0
+    }
+  }
+}
