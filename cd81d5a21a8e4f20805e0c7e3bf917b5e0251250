@@ -1,0 +1,67 @@
+Paper/revised_sections/04-implementation.md
+  826b471e951d7c8d 1-42
+Paper/revised_sections/03-architecture.md
+  826b471e951d7c8d 1-78
+Paper/revised_sections/02-background.md
+  826b471e951d7c8d 1-32
+experiments/p3-metaphysics/3.2-functional-quine/prompt.md
+  8fc319b71e5b705c 2,7,9,18,20-21
+experiments/p3-metaphysics/3.2-functional-quine/run.sh
+  8fc319b71e5b705c 1,3,5,7-14,16-19,21,23-36,38-40,42-50,56-87
+Paper/revised_sections/06-discussion-conclusion.md
+  826b471e951d7c8d 1-33,35-55
+Paper/revised_sections/05-case-study.md
+  826b471e951d7c8d 1-66
+Paper/revised_sections/01-introduction.md
+  826b471e951d7c8d 1-30
+experiments/p3-metaphysics/3.2-functional-quine/README.md
+  8fc319b71e5b705c 1-293
+Paper/revised_sections/00-abstract.md
+  826b471e951d7c8d 1-5,7-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "cd81d5a21a8e4f20805e0c7e3bf917b5e0251250",
+  "prompts": {
+    "826b471e951d7c8d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b7c1af23ffezaNw5Ak07OhAdJ",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 393,
+      "total_deletions": 81,
+      "accepted_lines": 310,
+      "overriden_lines": 2
+    },
+    "8fc319b71e5b705c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b78cacaeffe7vzSF7p4CuXC6O",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 794,
+      "total_deletions": 258,
+      "accepted_lines": 482,
+      "overriden_lines": 15
+    },
+    "bc5f459c660a0d20": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b7dca59dffe3871jK7ecYmK5T",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 286,
+      "total_deletions": 8,
+      "accepted_lines": 278,
+      "overriden_lines": 0
+    }
+  }
+}
