@@ -1,0 +1,27 @@
+Paper/sections/07-references.md
+  826b471e951d7c8d 1-14
+Paper/metadata.yaml
+  826b471e951d7c8d 1-17
+Paper/sections/00-abstract.md
+  826b471e951d7c8d 1,3,10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "ca3cb64a031237ce764f2d2d3688bae7a52afc48",
+  "prompts": {
+    "826b471e951d7c8d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b7c1af23ffezaNw5Ak07OhAdJ",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 44,
+      "total_deletions": 12,
+      "accepted_lines": 34,
+      "overriden_lines": 0
+    }
+  }
+}
