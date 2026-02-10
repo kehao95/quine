@@ -1,0 +1,23 @@
+cmd/quine/internal/runtime/system_prompt.md
+  6e3adecda4c21c29 40-48,53,58,64-66,79,81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "6e0de7edacc9a680674d1650c10e47c8e23ac7bf",
+  "prompts": {
+    "6e3adecda4c21c29": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3baa88b72ffef7pAHSSa2vIy4c",
+        "model": "amazon-bedrock/us.anthropic.claude-opus-4-6-v1"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 18,
+      "total_deletions": 32,
+      "accepted_lines": 16,
+      "overriden_lines": 0
+    }
+  }
+}
