@@ -1,0 +1,79 @@
+Artifacts/manifesto.md
+  0d4c94b0a5b6c9aa 139-141
+  05db83bb49c74544 130-138,142-149,153,176,183
+experiments/p1-physics/1.7-jq/README.md
+  6d3e449412cadf71 4,8,27,187,389,391,393,395,397-403,406,408,410-415,417,538,542-545,548,551-552,554,556,558,560,562,564-566,569,571-585,587-589,591-598,600,602-609,612-619,621,625-754,776,801,803-816,822,826,837-838
+  3bde0b27f90ba828 10-16,48,78,82,108,110,145,147,443-447
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "2200b3a5e6b3784c89d193586fe9a45022f5920b",
+  "prompts": {
+    "05db83bb49c74544": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bb24f1c1ffed3VrfiicX8KaDf",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 798,
+      "total_deletions": 5,
+      "accepted_lines": 797,
+      "overriden_lines": 0
+    },
+    "0d4c94b0a5b6c9aa": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b9d01f58ffedlQhlIsBioS3aE",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 69,
+      "total_deletions": 619,
+      "accepted_lines": 66,
+      "overriden_lines": 0
+    },
+    "3bde0b27f90ba828": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b9c1162fffeZijcCerbPvp7UP",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 20,
+      "total_deletions": 14,
+      "accepted_lines": 20,
+      "overriden_lines": 0
+    },
+    "3e391972250874f8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ba033facffeqz7T0FsX7bIp6b",
+        "model": "amazon-bedrock/us.anthropic.claude-opus-4-6-v1"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 38,
+      "total_deletions": 24,
+      "accepted_lines": 37,
+      "overriden_lines": 0
+    },
+    "6d3e449412cadf71": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ba15c361ffeNImz0G2kqRr9L5",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 248,
+      "total_deletions": 94,
+      "accepted_lines": 241,
+      "overriden_lines": 0
+    }
+  }
+}
