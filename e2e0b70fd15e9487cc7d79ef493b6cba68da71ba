@@ -1,0 +1,161 @@
+experiments/p2-sociology/2.2-rosetta-stone/run.sh
+  493e56b00c2a2d7e 1-135
+experiments/p1-physics/1.3-parricide/prompt.md
+  8c3ab212580c28fc 1-18
+experiments/p1-physics/1.5-compiler/run.sh
+  ff0978fe577478b8 1-63
+experiments/p3-metaphysics/3.1-implement-yourself/run.sh
+  ff0978fe577478b8 1-52
+.gitignore
+  7cf92357bbd8b914 5-7
+experiments/p1-physics/1.6-c-compiler/run.sh
+  ff0978fe577478b8 1-99
+experiments/p2-sociology/2.3-prison-break/prompt_alice.md
+  493e56b00c2a2d7e 1-32
+experiments/p2-sociology/2.2-rosetta-stone/prompt.md
+  493e56b00c2a2d7e 1-25
+experiments/p2-sociology/2.1-telepath/README.md
+  8c3ab212580c28fc 1-90
+experiments/p1-physics/1.6-c-compiler/entrypoint.sh
+  ff0978fe577478b8 1-10
+experiments/p2-sociology/2.1-telepath/prompt-minimal.md
+  8c3ab212580c28fc 1-12
+experiments/p1-physics/1.5-compiler/prompt-delegation.md
+  ff0978fe577478b8 1-136
+experiments/p2-sociology/2.3-prison-break/prompt_bob.md
+  493e56b00c2a2d7e 1-28
+experiments/p1-physics/1.4-surgeon/run.sh
+  8c3ab212580c28fc 1-174
+Artifacts/experiments-design/phase-1-physics/idea-state-contamination.md
+  ca38b91e15cd20f5 1-37
+experiments/p1-physics/1.4-surgeon/README.md
+  8c3ab212580c28fc 1-79
+experiments/p1-physics/1.3.1-parricide-suicide/README.md
+  8c3ab212580c28fc 1-63
+experiments/p2-sociology/2.2-rosetta-stone/README.md
+  493e56b00c2a2d7e 1-107
+experiments/p2-sociology/2.1-great-escape/run.sh
+  493e56b00c2a2d7e 1-67,70-76,80-147
+experiments/p1-physics/1.6-c-compiler/README.md
+  ff0978fe577478b8 1-222
+experiments/p1-physics/1.5-compiler/README.md
+  ff0978fe577478b8 1-187
+experiments/p2-sociology/2.2-battle-royale/run.sh
+  8c3ab212580c28fc 1-225
+experiments/p3-metaphysics/3.1-implement-yourself/README.md
+  ff0978fe577478b8 1-205
+experiments/FINDINGS.md
+  ff0978fe577478b8 1-173
+experiments/p3-metaphysics/3.1-implement-yourself/prompt.md
+  ff0978fe577478b8 1
+experiments/p2-sociology/2.2-battle-royale/prompt.md
+  8c3ab212580c28fc 1-17
+experiments/p2-sociology/2.1-great-escape/prompt.md
+  493e56b00c2a2d7e 1-21
+experiments/p2-sociology/2.1-telepath/prompt.md
+  8c3ab212580c28fc 1-23
+experiments/p1-physics/1.6-c-compiler/Dockerfile
+  ff0978fe577478b8 1-27
+experiments/p2-sociology/2.3-prison-break/run.sh
+  493e56b00c2a2d7e 1-155
+experiments/p2-sociology/2.1-great-escape/README.md
+  493e56b00c2a2d7e 1-120
+experiments/p1-physics/1.3.1-parricide-suicide/prompt.md
+  8c3ab212580c28fc 1-23
+experiments/p1-physics/1.4-surgeon/prompt.md
+  8c3ab212580c28fc 1-23
+experiments/p1-physics/1.6-c-compiler/prompt.md
+  ff0978fe577478b8 1-286
+experiments/p2-sociology/2.3-prison-break/README.md
+  493e56b00c2a2d7e 1-90
+experiments/p1-physics/1.3-parricide/run.sh
+  8c3ab212580c28fc 1-181
+experiments/p2-sociology/2.1-telepath/run.sh
+  8c3ab212580c28fc 1-162
+experiments/p1-physics/1.3.1-parricide-suicide/run.sh
+  8c3ab212580c28fc 1-170
+experiments/p1-physics/1.5-compiler/prompt.md
+  ff0978fe577478b8 1-101
+experiments/p1-physics/1.3-parricide/README.md
+  8c3ab212580c28fc 1-78
+experiments/p2-sociology/2.2-battle-royale/README.md
+  8c3ab212580c28fc 1-76
+Artifacts/experiments-design/phase-1-physics/idea-cost-of-lies.md
+  ca38b91e15cd20f5 1-42
+experiments/p1-physics/1.5-compiler/run-no-quine.sh
+  ff0978fe577478b8 1-70
+experiments/p2-sociology/2.3-prison-break/prompt.md
+  493e56b00c2a2d7e 1-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "e2e0b70fd15e9487cc7d79ef493b6cba68da71ba",
+  "prompts": {
+    "493e56b00c2a2d7e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bb5baea0ffeUKc8Q69FopI3iv",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 979,
+      "total_deletions": 76,
+      "accepted_lines": 896,
+      "overriden_lines": 5
+    },
+    "7cf92357bbd8b914": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3baae06cbffeKXjDELyx1cnRPX",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 2,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "8c3ab212580c28fc": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bb4c009fffeDO7AEZSjJOQFRN",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 1129,
+      "total_deletions": 27,
+      "accepted_lines": 1414,
+      "overriden_lines": 0
+    },
+    "ca38b91e15cd20f5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bb413a83ffeDl8HZq3hq5BfYd",
+        "model": "google/gemini-2.5-pro"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 79,
+      "total_deletions": 0,
+      "accepted_lines": 79,
+      "overriden_lines": 0
+    },
+    "ff0978fe577478b8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3bb195d60ffel3JeKezeKK7Jqw",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 1969,
+      "total_deletions": 337,
+      "accepted_lines": 1632,
+      "overriden_lines": 0
+    }
+  }
+}
