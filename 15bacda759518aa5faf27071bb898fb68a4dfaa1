@@ -1,0 +1,36 @@
+Artifacts/README.md
+  c27a08e235a78690 34-35,38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "15bacda759518aa5faf27071bb898fb68a4dfaa1",
+  "prompts": {
+    "c27a08e235a78690": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b9ba91c8ffe5RtKn5TmibYOq4",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 3,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "c72ec0267e5c2476": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b83e750fffeA8Fl2MN9IYfRB4",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 57,
+      "total_deletions": 7,
+      "accepted_lines": 57,
+      "overriden_lines": 0
+    }
+  }
+}
