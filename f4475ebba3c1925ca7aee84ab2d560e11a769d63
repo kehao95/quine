@@ -1,0 +1,36 @@
+experiments/p1-physics/1.7-jq/README.md
+  6e3adecda4c21c29 65,352,354-472,479-481,483,487-489,495,497,499,501,503,505,524-527
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "f4475ebba3c1925ca7aee84ab2d560e11a769d63",
+  "prompts": {
+    "6e3adecda4c21c29": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3baa88b72ffef7pAHSSa2vIy4c",
+        "model": "amazon-bedrock/us.anthropic.claude-opus-4-6-v1"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 140,
+      "total_deletions": 24,
+      "accepted_lines": 140,
+      "overriden_lines": 0
+    },
+    "ba0777a05e16c6a5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ba4ce907ffeAfGho6eoYN4Q3r",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
