@@ -1,0 +1,98 @@
+Paper/metadata.yaml
+  c3246b43c054cc53 8-9
+Paper/02_background.md
+  c3246b43c054cc53 1-2,4-6,8,10-12,14-16,18-20,22-24,26-28,30-38,40-65,67-71,73,75-79,81-90,92-106,112-119
+experiments/p3-mrcr/3.3-introspective-quine/README.md
+  bfdd04d3b12c5f9f 213-216
+experiments/p3-mrcr/3.4-blind-quine/README.md
+  f1429aa785c866c9 1-163
+Paper/06_conclusion.md
+  c3246b43c054cc53 1-2,4-6,8-20,22-24,26-28,30-32,39,41,43-45,47,49,51-86,88-90,92-98,100-105
+experiments/p3-mrcr/3.3-introspective-quine/ANALYSIS.md
+  bfdd04d3b12c5f9f 1-87
+Paper/05_experiments.md
+  c3246b43c054cc53 1-2,4-17,19-80,82-85,87-126,128-170,172-175
+Paper/07_references.md
+  c3246b43c054cc53 1-62,64-87
+experiments/p3-mrcr/3.4-blind-quine/run.sh
+  f1429aa785c866c9 1-156
+Paper/08_acknowledgements.md
+  54c02271dc4523d5 1-2,4-5
+Paper/Makefile
+  54c02271dc4523d5 17-18
+  c3246b43c054cc53 12,15,33
+experiments/p3-mrcr/3.4-blind-quine/prompt.md
+  f1429aa785c866c9 1-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "f9968546760b86ad58fb67b4b0473571f55ba9b1",
+  "prompts": {
+    "54c02271dc4523d5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b1e2454fffeZ1O1uNrreJPJty",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 1,
+      "accepted_lines": 6,
+      "overriden_lines": 1
+    },
+    "bfdd04d3b12c5f9f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b21b2f8bffeq2lSV7ahhruIMx",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 91,
+      "overriden_lines": 0
+    },
+    "bffc3b7cb9323c79": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b26aa801ffezklpjmteZSovHq",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "c3246b43c054cc53": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b1f2fdfaffe3zWAhwE6Lk3Xej",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 1015,
+      "total_deletions": 11,
+      "accepted_lines": 499,
+      "overriden_lines": 95
+    },
+    "f1429aa785c866c9": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b2859fadffeYjmJ7Crxq7PoIP",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 329,
+      "overriden_lines": 0
+    }
+  }
+}
