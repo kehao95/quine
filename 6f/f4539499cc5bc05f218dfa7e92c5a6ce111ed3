@@ -1,0 +1,37 @@
+cmd/quine/internal/tools/schemas.go
+  f2e9affdd3deb28b 80-103,133
+cmd/quine/internal/runtime/runtime.go
+  f2e9affdd3deb28b 6,25,231-233,240-244,386-388,525-573
+cmd/quine/material_test.go
+  f2e9affdd3deb28b 4,59,85-86,88,91-93,96-107,117,143-144,146,153-158,171,193-194,196,200,202-204,208,234-235,237-242,245-247,249-254,258,284-285,287,292-297
+cmd/quine/internal/tools/read.go
+  f2e9affdd3deb28b 1-183
+cmd/quine/internal/runtime/runtime_test.go
+  f2e9affdd3deb28b 94,139
+cmd/quine/main.go
+  f2e9affdd3deb28b 54-57,69,73-82,85,88,90,93-98,100,103-104,107-114,116-122,125-132
+cmd/quine/internal/runtime/system_prompt.md
+  f2e9affdd3deb28b 30
+cmd/quine/internal/tools/schemas_test.go
+  f2e9affdd3deb28b 9-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "6ff4539499cc5bc05f218dfa7e92c5a6ce111ed3",
+  "prompts": {
+    "f2e9affdd3deb28b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b50a4a1effe7DO9iEfHkkCev6",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 400,
+      "total_deletions": 69,
+      "accepted_lines": 398,
+      "overriden_lines": 0
+    }
+  }
+}
