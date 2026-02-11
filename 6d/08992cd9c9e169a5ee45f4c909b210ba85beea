@@ -1,0 +1,38 @@
+cmd/quine/internal/tape/tape_test.go
+  79681ca0e364bc4d 93,95,100-120,128-129,277
+cmd/quine/internal/runtime/prompt_test.go
+  79681ca0e364bc4d 57-58,67-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "6d08992cd9c9e169a5ee45f4c909b210ba85beea",
+  "prompts": {
+    "79681ca0e364bc4d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b2cbe950ffePCvsfnwNoUuriT",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 32,
+      "total_deletions": 10,
+      "accepted_lines": 30,
+      "overriden_lines": 0
+    },
+    "f2e9affdd3deb28b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b50a4a1effe7DO9iEfHkkCev6",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
