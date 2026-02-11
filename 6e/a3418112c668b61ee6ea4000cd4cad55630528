@@ -1,0 +1,27 @@
+cmd/quine/internal/models/registry.go
+  79681ca0e364bc4d 10,22,99-100,102,105,110-113,115,120-133,136,163,165,186
+cmd/quine/internal/llm/openai.go
+  79681ca0e364bc4d 154-162
+cmd/quine/internal/config/config.go
+  79681ca0e364bc4d 71-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "6ea3418112c668b61ee6ea4000cd4cad55630528",
+  "prompts": {
+    "79681ca0e364bc4d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b2cbe950ffePCvsfnwNoUuriT",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 49,
+      "total_deletions": 13,
+      "accepted_lines": 49,
+      "overriden_lines": 0
+    }
+  }
+}
