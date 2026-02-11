@@ -1,0 +1,25 @@
+cmd/quine/main.go
+  f2e9affdd3deb28b 5,18-24,28-53,65,76-78,80,92,113-117,122,133-157
+cmd/quine/material_test.go
+  f2e9affdd3deb28b 85-86,143-144,193-194,234-235,284-285,300-444
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "bfe30f94cc5013e26ae29bfc26ef757f3d57b0e4",
+  "prompts": {
+    "f2e9affdd3deb28b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b50a4a1effe7DO9iEfHkkCev6",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 274,
+      "total_deletions": 65,
+      "accepted_lines": 274,
+      "overriden_lines": 0
+    }
+  }
+}
