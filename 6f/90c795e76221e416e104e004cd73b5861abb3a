@@ -1,0 +1,62 @@
+Artifacts/axioms/guarantees.md
+  80ca7e57140d5921 21-24,32-34,37,41-43
+cmd/quine/internal/tools/exit_test.go
+  f2e9affdd3deb28b 78,134
+cmd/quine/internal/tools/schemas.go
+  f2e9affdd3deb28b 84-86
+cmd/quine/internal/tools/fork.go
+  f2e9affdd3deb28b 141-142,150,152
+cmd/quine/internal/tools/tools.go
+  f2e9affdd3deb28b 40-43,171-176
+cmd/quine/internal/runtime/runtime.go
+  f2e9affdd3deb28b 226-230,232,235,258-259,267-270,273,279-282,434,442
+cmd/quine/internal/tools/exec.go
+  f2e9affdd3deb28b 73,81-82,96,99-102,105
+cmd/quine/internal/runtime/prompt_test.go
+  f2e9affdd3deb28b 24,26,73
+cmd/quine/internal/runtime/prompt.go
+  f2e9affdd3deb28b 16-17,26-28,37
+cmd/quine/internal/runtime/runtime_test.go
+  f2e9affdd3deb28b 726,749
+cmd/quine/main.go
+  f2e9affdd3deb28b 8,11,29-36,38-42,44-45,49-61,70,74-130
+cmd/quine/material_test.go
+  f2e9affdd3deb28b 1-256
+cmd/quine/internal/runtime/system_prompt.md
+  f2e9affdd3deb28b 4-14,21,29-30,35,39,52,58-60
+cmd/quine/internal/tools/exit.go
+  f2e9affdd3deb28b 34-36,59-61,81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "6f90c795e76221e416e104e004cd73b5861abb3a",
+  "prompts": {
+    "80ca7e57140d5921": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b516df6dffeiDWDneEQNhsKIk",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 12,
+      "total_deletions": 10,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    },
+    "f2e9affdd3deb28b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b50a4a1effe7DO9iEfHkkCev6",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 449,
+      "total_deletions": 353,
+      "accepted_lines": 436,
+      "overriden_lines": 0
+    }
+  }
+}
