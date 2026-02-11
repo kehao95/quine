@@ -1,0 +1,129 @@
+Artifacts/02_axioms/axiom-11-exit-as-judgment.md
+  43e33abf0b064191 1
+Artifacts/02_axioms/axiom-08-stderr-as-gradient.md
+  7e1713d86e38e0d1 7,11-14
+  43e33abf0b064191 1
+Artifacts/README.md
+  43e33abf0b064191 30
+  f92b47a113ed07be 15,35-36
+Artifacts/01_manifesto.md
+  43e33abf0b064191 42,44,95-103,105,156,320
+  7e1713d86e38e0d1 88-94,294,296,298-300
+  bffc3b7cb9323c79 26,71,149
+  aff71383dd24edf2 160-176,178-179,181,183-194,196-205,207-291
+Artifacts/02_axioms/axiom-07-stdout-as-deliverable.md
+  43e33abf0b064191 1
+Artifacts/02_axioms/axiom-09-signal-as-intervention.md
+  43e33abf0b064191 1
+Artifacts/03_implementation.md
+  7e1713d86e38e0d1 92,94-98
+Artifacts/04_case_study.md
+  f92b47a113ed07be 1-12,14-58
+Artifacts/02_axioms/guarantees.md
+  43e33abf0b064191 1
+Artifacts/02_axioms/axiom-12-scarcity-as-selection.md
+  43e33abf0b064191 1
+  bffc3b7cb9323c79 11,13-19
+Artifacts/02_axioms/axiom-10-recursion-as-metabolism.md
+  43e33abf0b064191 1
+Artifacts/05_genealogy.md
+  aff71383dd24edf2 79-104,137-152,155-196
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "b7f8b0b6f9d9019d93bffd86982bd6ad04ffc6fa",
+  "prompts": {
+    "43e33abf0b064191": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b2421876ffe7QrmGe23gEBNkb",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 39,
+      "total_deletions": 35,
+      "accepted_lines": 22,
+      "overriden_lines": 0
+    },
+    "7e1713d86e38e0d1": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b2361600ffez8ATMDolondben",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 29,
+      "total_deletions": 31,
+      "accepted_lines": 24,
+      "overriden_lines": 0
+    },
+    "aff71383dd24edf2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b20fe1cfffe38epmfX4Es257P",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 215,
+      "total_deletions": 39,
+      "accepted_lines": 214,
+      "overriden_lines": 0
+    },
+    "bfdd04d3b12c5f9f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b21b2f8bffeq2lSV7ahhruIMx",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 91,
+      "total_deletions": 0,
+      "accepted_lines": 91,
+      "overriden_lines": 0
+    },
+    "bffc3b7cb9323c79": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b26aa801ffezklpjmteZSovHq",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 29,
+      "total_deletions": 15,
+      "accepted_lines": 32,
+      "overriden_lines": 0
+    },
+    "f1429aa785c866c9": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b2859fadffeYjmJ7Crxq7PoIP",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 50,
+      "total_deletions": 1,
+      "accepted_lines": 329,
+      "overriden_lines": 0
+    },
+    "f92b47a113ed07be": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b214f552ffeUAqxjVIBvUlsxh",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 61,
+      "total_deletions": 3,
+      "accepted_lines": 60,
+      "overriden_lines": 1
+    }
+  }
+}
