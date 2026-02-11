@@ -1,0 +1,131 @@
+Artifacts/axioms/axiom-02-agent-as-process.md
+  52314b0b1f07f410 29-62
+Artifacts/axioms/axiom-06-stderr-as-gradient.md
+  52314b0b1f07f410 11-13,15,17,19-20,22,26
+Artifacts/axioms/axiom-04-argv-as-mission.md
+  52314b0b1f07f410 38,40,42-44,46,50,52-55,57
+  af22e17613bf5765 1,12,19-20,25-29,33,36
+Artifacts/axioms/axiom-08-context-as-ram.md
+  e7a7e503cb001ed1 1
+  52314b0b1f07f410 43-51
+Artifacts/axioms/axiom-13-scarcity-as-selection.md
+  e7a7e503cb001ed1 1,46
+Artifacts/axioms/axiom-10-env-as-wisdom.md
+  52314b0b1f07f410 15,17,19-21,23,25,27-28,30
+  e7a7e503cb001ed1 1,3
+Artifacts/axioms/axiom-05-stdout-as-deliverable.md
+  52314b0b1f07f410 18-20,22,24,26-27,29
+Artifacts/axioms/axiom-11-recursion-as-metabolism.md
+  e7a7e503cb001ed1 1,3
+  52314b0b1f07f410 16,18,20-22,24-26,28,30,32-34,36,38-39
+Artifacts/axioms/guarantees.md
+  e7a7e503cb001ed1 5,22,27-31,33-35,40-42
+  52314b0b1f07f410 32
+Artifacts/genealogy.md
+  e7a7e503cb001ed1 7,21,28
+Artifacts/manifesto.md
+  0dc6ef4fd76d0fc7 26,74,78-79,82
+  d7ae2796e0fc05e4 108-111,117
+  af22e17613bf5765 112-116
+  e7a7e503cb001ed1 136
+Artifacts/axioms/axiom-09-tape-as-log.md
+  52314b0b1f07f410 11,13,15-16,18,20,22-23,25,27,29-30
+  e7a7e503cb001ed1 9
+Artifacts/axioms/axiom-12-signal-as-intervention.md
+  e7a7e503cb001ed1 1
+Artifacts/implementation.md
+  d7ae2796e0fc05e4 24,28-30,34,36,38-43,59-84,96-99,101,103,105,109,111-116,118-124,139-145
+  af22e17613bf5765 100,102,104,106-108,110,117,125-138
+  74067d92512cd51a 31
+Artifacts/axioms/axiom-03-filesystem-as-state.md
+  e7a7e503cb001ed1 3
+  52314b0b1f07f410 14-23
+Artifacts/README.md
+  e7a7e503cb001ed1 12-13,28-30,46,65,69-79
+  af22e17613bf5765 27,60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "879df0faf49e20cc19b376f29e6a1065e8fafc70",
+  "prompts": {
+    "0dc6ef4fd76d0fc7": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b56554c9ffetRjPw77EYeGKfI",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 60,
+      "total_deletions": 14,
+      "accepted_lines": 59,
+      "overriden_lines": 0
+    },
+    "52314b0b1f07f410": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b555e0b6ffeyPU8wwCsy06YxK",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 121,
+      "total_deletions": 216,
+      "accepted_lines": 121,
+      "overriden_lines": 0
+    },
+    "74067d92512cd51a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b56ba5c8ffezCm967W5bCjk58",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 2,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "af22e17613bf5765": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b58e2b1effey1eQyEtY275aEm",
+        "model": "openrouter/google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 251,
+      "total_deletions": 206,
+      "accepted_lines": 151,
+      "overriden_lines": 0
+    },
+    "d7ae2796e0fc05e4": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b59f9500ffeGEcmGlt6JNkHui",
+        "model": "openrouter/google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 226,
+      "total_deletions": 89,
+      "accepted_lines": 99,
+      "overriden_lines": 0
+    },
+    "e7a7e503cb001ed1": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b560cb74ffevgneqwPFbpImH6",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 46,
+      "total_deletions": 34,
+      "accepted_lines": 45,
+      "overriden_lines": 0
+    }
+  }
+}
