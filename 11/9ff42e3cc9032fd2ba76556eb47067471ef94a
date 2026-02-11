@@ -1,0 +1,67 @@
+cmd/quine/main.go
+  f2e9affdd3deb28b 121-130
+cmd/quine/internal/config/config.go
+  f2e9affdd3deb28b 20-21,38,41-47,82-84,161-163,249-251,339,344,359,431-443
+cmd/quine/internal/llm/openai.go
+  f2e9affdd3deb28b 36
+cmd/quine/internal/runtime/runtime.go
+  f2e9affdd3deb28b 242-255
+cmd/quine/internal/tools/read.go
+  f2e9affdd3deb28b 10,16-32,36,40,46,48-49,55-80
+cmd/quine/internal/tools/tools_test.go
+  f2e9affdd3deb28b 728,768-772,780-793,820-886
+cmd/quine/internal/llm/bedrock.go
+  f2e9affdd3deb28b 66
+cmd/quine/internal/llm/google.go
+  f2e9affdd3deb28b 36
+cmd/quine/internal/tools/exec.go
+  f2e9affdd3deb28b 69-72,99,103-108,112
+cmd/quine/internal/llm/anthropic.go
+  f2e9affdd3deb28b 42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "119ff42e3cc9032fd2ba76556eb47067471ef94a",
+  "prompts": {
+    "473766a644af6432": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b28e93d8ffe00Jl2tJ5IUcfUQ",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 124,
+      "overriden_lines": 0
+    },
+    "d0425931f3e7f5b5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b274d06affekUkQop2ExUNo71",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 132,
+      "total_deletions": 33,
+      "accepted_lines": 257,
+      "overriden_lines": 0
+    },
+    "f2e9affdd3deb28b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b50a4a1effe7DO9iEfHkkCev6",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 211,
+      "overriden_lines": 0
+    }
+  }
+}
