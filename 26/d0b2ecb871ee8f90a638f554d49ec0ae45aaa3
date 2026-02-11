@@ -1,0 +1,68 @@
+experiments/p3-mrcr/3.3-introspective-quine/generated-source/main.go
+  d0425931f3e7f5b5 1-961
+experiments/p3-mrcr/3.3-introspective-quine/README.md
+  f1429aa785c866c9 1-212
+experiments/p3-mrcr/3.3-introspective-quine/prompt.md
+  f1429aa785c866c9 1-84
+experiments/p3-mrcr/3.3-introspective-quine/run.sh
+  f1429aa785c866c9 1-116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "26d0b2ecb871ee8f90a638f554d49ec0ae45aaa3",
+  "prompts": {
+    "473766a644af6432": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b28e93d8ffe00Jl2tJ5IUcfUQ",
+        "model": "github-copilot/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 127,
+      "overriden_lines": 0
+    },
+    "d0425931f3e7f5b5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b274d06affekUkQop2ExUNo71",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 1108,
+      "total_deletions": 117,
+      "accepted_lines": 1105,
+      "overriden_lines": 0
+    },
+    "f1429aa785c866c9": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b2859fadffeYjmJ7Crxq7PoIP",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 450,
+      "total_deletions": 38,
+      "accepted_lines": 412,
+      "overriden_lines": 0
+    },
+    "f2e9affdd3deb28b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b50a4a1effe7DO9iEfHkkCev6",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 211,
+      "overriden_lines": 0
+    }
+  }
+}
