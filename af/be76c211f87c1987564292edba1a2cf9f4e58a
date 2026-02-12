@@ -1,0 +1,69 @@
+Paper/sections/00_abstract.md
+  569093eb82253622 13,17,19
+  c68852c1da022273 8,10,12
+experiments/p3-mrcr/3.2-mixed-needle/prompt_exec.md
+  57dc2b50f68b959f 1-123
+experiments/p3-mrcr/3.2-mixed-needle/create_single_source_samples.py
+  57dc2b50f68b959f 1-226
+experiments/p3-mrcr/3.2-mixed-needle/run_exec.sh
+  57dc2b50f68b959f 1-146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.2",
+  "base_commit_sha": "afbe76c211f87c1987564292edba1a2cf9f4e58a",
+  "prompts": {
+    "569093eb82253622": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3acda14b4ffeK13ot5FoCXKYpj",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 11,
+      "accepted_lines": 5,
+      "overriden_lines": 2
+    },
+    "57dc2b50f68b959f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ad233b97ffehEmI5iLG1GHZLf",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 607,
+      "total_deletions": 112,
+      "accepted_lines": 495,
+      "overriden_lines": 0
+    },
+    "c68852c1da022273": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3acce25f9ffeffr34QQ27h4ElT",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 5,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "e3e24030a9b8753f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ad24f42fffeRFOFJBcMlrQm2a",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 6,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
