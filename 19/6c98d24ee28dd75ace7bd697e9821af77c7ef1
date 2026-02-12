@@ -1,0 +1,29 @@
+cmd/quine/internal/runtime/runtime.go
+  57dc2b50f68b959f 248-251
+experiments/p3-mrcr/3.2-mixed-needle/README.md
+  57dc2b50f68b959f 5,128,136,148,157,160,165,167,169,171-173,177,184-190
+cmd/quine/internal/tools/read.go
+  57dc2b50f68b959f 51,63
+cmd/quine/internal/config/config.go
+  57dc2b50f68b959f 35,223-227,309,370
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.2",
+  "base_commit_sha": "196c98d24ee28dd75ace7bd697e9821af77c7ef1",
+  "prompts": {
+    "57dc2b50f68b959f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ad233b97ffehEmI5iLG1GHZLf",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 36,
+      "total_deletions": 15,
+      "accepted_lines": 36,
+      "overriden_lines": 0
+    }
+  }
+}
