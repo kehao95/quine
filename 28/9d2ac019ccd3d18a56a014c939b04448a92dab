@@ -1,0 +1,23 @@
+experiments/p3-mrcr/3.2-mixed-needle/README.md
+  57dc2b50f68b959f 185-216
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.2",
+  "base_commit_sha": "289d2ac019ccd3d18a56a014c939b04448a92dab",
+  "prompts": {
+    "57dc2b50f68b959f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ad233b97ffehEmI5iLG1GHZLf",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 32,
+      "total_deletions": 0,
+      "accepted_lines": 32,
+      "overriden_lines": 0
+    }
+  }
+}
