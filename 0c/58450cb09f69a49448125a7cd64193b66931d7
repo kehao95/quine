@@ -1,0 +1,125 @@
+Paper/sections/12_appendix_c.md
+  925309707597717d 1-169
+Paper/sections/00_abstract.md
+  f886d5cc20651aad 11,13-15,19-20
+Paper/sections/03_implementation.md
+  afdc0b20c68fb915 16,22-26,28-29
+Paper/Makefile
+  ca0e73a084b3d468 65,70
+  925309707597717d 12-24
+  afdc0b20c68fb915 43
+Paper/sections/14_appendix_e.md
+  925309707597717d 1-46
+Paper/sections/10_appendix_a.md
+  925309707597717d 3,5,7,43,91,134-150
+Paper/sections/11_appendix_b.md
+  925309707597717d 1,3,5,13,26,30,42,55,59,67,96
+Paper/metadata.yaml
+  afdc0b20c68fb915 15-16
+Paper/sections/01_introduction.md
+  925309707597717d 3,5,7,9,11,13-14,21,24,26,30-32,34,36,38-40,42
+  f886d5cc20651aad 1
+  719a72ef5bda074d 15-19
+Paper/sections/13_appendix_d.md
+  925309707597717d 1-65
+Paper/sections/15_appendix_f.md
+  925309707597717d 1-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.2",
+  "base_commit_sha": "0c58450cb09f69a49448125a7cd64193b66931d7",
+  "prompts": {
+    "5d9a217158f0c664": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b03fef3dffef20mLTIVb9gkAy",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "719a72ef5bda074d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ad49e4e9ffe2dUNXv17JQc1lq",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 5,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    },
+    "925309707597717d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3b04c00a8ffetleB2G0nrVAKy2",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 713,
+      "total_deletions": 665,
+      "accepted_lines": 631,
+      "overriden_lines": 0
+    },
+    "a086c23b8cc5d485": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3adce8009ffeQp1baz11ShjD7C",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 2,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "afdc0b20c68fb915": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3adc043e9ffeBjNLYKUvv34zA4",
+        "model": "google/gemini-3-pro-preview"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 9,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    },
+    "ca0e73a084b3d468": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ad7fa48dffeRb1LTtEuG3BJco",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    },
+    "f886d5cc20651aad": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ad47cb7fffettI3iFibIXSptA",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 2,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}
