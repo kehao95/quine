@@ -1,0 +1,71 @@
+experiments/p3-mrcr/3.1-needle-retrieval/eval/run_baseline_batch.py
+  1069dd0fefb39aa2 1-18,20-129
+  57dc2b50f68b959f 19
+experiments/p3-mrcr/3.1-needle-retrieval/run_batch.sh
+  1069dd0fefb39aa2 1-94
+experiments/p3-mrcr/3.1-needle-retrieval/eval/baseline.py
+  1069dd0fefb39aa2 9,14,26-36,52-54,64,109-111,113-120,134-138,143,147-148,150-151,164-166,173
+experiments/p3-mrcr/3.1-needle-retrieval/run.sh
+  57dc2b50f68b959f 82
+experiments/p3-mrcr/3.1-needle-retrieval/README.md
+  57dc2b50f68b959f 3,5-6,114-116,118-140,142,150,157,163,226,262,264,266-267,269-272,283,291-293,295-297
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.2",
+  "base_commit_sha": "62bd9286f198cb74e00581110ed139113ddb42f4",
+  "prompts": {
+    "1069dd0fefb39aa2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ad3b42d4ffeWWrai8KAPk16sM",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 418,
+      "total_deletions": 20,
+      "accepted_lines": 395,
+      "overriden_lines": 7
+    },
+    "57dc2b50f68b959f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ad233b97ffehEmI5iLG1GHZLf",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 59,
+      "total_deletions": 69,
+      "accepted_lines": 52,
+      "overriden_lines": 0
+    },
+    "89e0e5e10a160a57": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ad3c8579ffevWu0RvPo4zb0h4",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 143,
+      "total_deletions": 69,
+      "accepted_lines": 124,
+      "overriden_lines": 0
+    },
+    "e3e24030a9b8753f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ad24f42fffeRFOFJBcMlrQm2a",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 7,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}
