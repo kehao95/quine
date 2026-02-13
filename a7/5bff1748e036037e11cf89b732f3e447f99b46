@@ -1,0 +1,23 @@
+tests/e2e.sh
+  f311b49a9e632aa8 1-631
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.3",
+  "base_commit_sha": "a75bff1748e036037e11cf89b732f3e447f99b46",
+  "prompts": {
+    "f311b49a9e632aa8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3a727e594ffer5eMOzEWHcLIVn",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 635,
+      "total_deletions": 4,
+      "accepted_lines": 631,
+      "overriden_lines": 0
+    }
+  }
+}
