@@ -1,0 +1,32 @@
+# Private lab data (not for public repo)
+.beads/
+experiments/
+Paper/
+AGENTS.md
+
+# bv (beads viewer) local config and caches
+.bv/
+.quine/
+.env
+# Ignore quine binaries anywhere, but keep cmd/quine/ source and experiment quine/ dirs
+quine
+!cmd/quine/
+!experiments/**/runs/**/quine/
+quine-*
+/panopticon
+coverage.out
+.DS_Store
+# Frontend
+web/node_modules/
+web/.next/
+web/.env.local
+__pycache__/
+# Stray experiment artifacts (agents create dirs in project root)
+quines/
+# Experiment run data (large, selectively committed)
+# experiments/**/runs/
+Paper/*/output
+data
+# arXiv submission artifacts
+arxiv_submission
+arxiv_submission.tar.gz
