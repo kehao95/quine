@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/kehao95/quine/cmd/quine/internal/config"
+	"github.com/kehao95/quine/internal/config"
 )
 
 //go:embed system_prompt.md

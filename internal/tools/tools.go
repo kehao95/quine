@@ -10,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kehao95/quine/cmd/quine/internal/config"
-	"github.com/kehao95/quine/cmd/quine/internal/tape"
+	"github.com/kehao95/quine/internal/config"
+	"github.com/kehao95/quine/internal/tape"
 )
 
 // shellInit defines helper shell functions that are prepended to every command.

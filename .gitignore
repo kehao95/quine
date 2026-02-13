@@ -6,7 +6,9 @@ Paper/
 # bv (beads viewer) local config and caches
 .bv/
 .quine/
+.env.*
 .env
+!.env.example
 # Ignore quine binaries anywhere, but keep cmd/quine/ source and experiment quine/ dirs
 quine
 !cmd/quine/

@@ -1,6 +1,6 @@
 package tools
 
-import "github.com/kehao95/quine/cmd/quine/internal/llm"
+import "github.com/kehao95/quine/internal/llm"
 
 // ShToolSchema returns the JSON Schema for the sh tool.
 func ShToolSchema() llm.ToolSchema {

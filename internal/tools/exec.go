@@ -5,8 +5,8 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/kehao95/quine/cmd/quine/internal/config"
-	"github.com/kehao95/quine/cmd/quine/internal/tape"
+	"github.com/kehao95/quine/internal/config"
+	"github.com/kehao95/quine/internal/tape"
 )
 
 // ExecRequest represents the parsed arguments from an exec tool call.
