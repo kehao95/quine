@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Hao"
+  given-names: "Ke"
+  alias: "kehao95"
+title: "Project Quine: Autopoietic Intelligence via Recursive POSIX Processes"
+version: 0.1.0
+date-released: 2026-02-09
+url: "https://github.com/kehao95/quine"
+abstract: "Quine maps cognition to Unix primitives: an Agent is a process, stdin is context, stdout is the deliverable, stderr is the gradient, fork is strategy, exit is judgment, and the filesystem is memory."
+keywords:
+  - agent-framework
+  - posix
+  - llm
+  - recursive-agents
+  - unix-philosophy
+license: MIT
