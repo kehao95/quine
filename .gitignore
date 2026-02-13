@@ -2,7 +2,6 @@
 .beads/
 experiments/
 Paper/
-AGENTS.md
 
 # bv (beads viewer) local config and caches
 .bv/
