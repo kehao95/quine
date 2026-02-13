@@ -25,9 +25,6 @@ var envVars = []string{
 	"QUINE_SHELL",
 	"QUINE_MAX_TURNS",
 	"QUINE_CONTEXT_WINDOW",
-	// Provider-specific API keys (auto-detected fallbacks)
-	"ANTHROPIC_API_KEY",
-	"OPENAI_API_KEY",
 }
 
 // clearEnv unsets all managed env vars and returns a restore function.
@@ -51,17 +48,18 @@ func clearEnv(t *testing.T) {
 	})
 }
 
-// setMinimal sets the minimum env vars needed for a Claude model.
-func setMinimal(t *testing.T) {
+// setRequired sets the 4 required env vars.
+func setRequired(t *testing.T) {
 	t.Helper()
 	os.Setenv("QUINE_MODEL_ID", "claude-sonnet-4-20250514")
-	os.Setenv("ANTHROPIC_API_KEY", "sk-test-key")
+	os.Setenv("QUINE_API_TYPE", "anthropic")
+	os.Setenv("QUINE_API_BASE", "https://api.anthropic.com")
+	os.Setenv("QUINE_API_KEY", "sk-test-key")
 }
 
 func TestHappyPath(t *testing.T) {
 	clearEnv(t)
-	setMinimal(t)
-	os.Setenv("QUINE_API_BASE", "https://api.example.com")
+	setRequired(t)
 	os.Setenv("QUINE_MAX_DEPTH", "10")
 	os.Setenv("QUINE_DEPTH", "3")
 	os.Setenv("QUINE_SESSION_ID", "my-session")
@@ -85,7 +83,7 @@ func TestHappyPath(t *testing.T) {
 	}{
 		{"ModelID", c.ModelID, "claude-sonnet-4-20250514"},
 		{"APIKey", c.APIKey, "sk-test-key"},
-		{"APIBase", c.APIBase, "https://api.example.com"},
+		{"APIBase", c.APIBase, "https://api.anthropic.com"},
 		{"Provider", c.Provider, "anthropic"},
 		{"MaxDepth", c.MaxDepth, 10},
 		{"Depth", c.Depth, 3},
@@ -107,7 +105,7 @@ func TestHappyPath(t *testing.T) {
 
 func TestDefaults(t *testing.T) {
 	clearEnv(t)
-	setMinimal(t)
+	setRequired(t)
 
 	c, err := Load()
 	if err != nil {
@@ -138,178 +136,76 @@ func TestDefaults(t *testing.T) {
 	if c.MaxTurns != 20 {
 		t.Errorf("MaxTurns = %d, want 20", c.MaxTurns)
 	}
+	if c.ContextWindow != 128_000 {
+		t.Errorf("ContextWindow = %d, want 128000", c.ContextWindow)
+	}
 	if c.SessionID == "" {
 		t.Error("SessionID should be auto-generated, got empty")
 	}
-	// Validate UUID format: 8-4-4-4-12 hex chars
 	if len(c.SessionID) != 36 {
 		t.Errorf("SessionID length = %d, want 36", len(c.SessionID))
 	}
 }
 
-func TestDefaultModelID(t *testing.T) {
-	clearEnv(t)
-	os.Setenv("ANTHROPIC_API_KEY", "sk-test")
+// --- Required field validation tests ---
 
-	c, err := Load()
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if c.ModelID != "claude-sonnet-4-5-20250929" {
-		t.Errorf("ModelID = %q, want %q", c.ModelID, "claude-sonnet-4-5-20250929")
-	}
-}
-
-func TestMissingAPIKey(t *testing.T) {
+func TestMissing_ModelID(t *testing.T) {
 	clearEnv(t)
-	os.Setenv("QUINE_MODEL_ID", "claude-sonnet-4-20250514")
+	os.Setenv("QUINE_API_TYPE", "openai")
+	os.Setenv("QUINE_API_BASE", "https://api.openai.com")
+	os.Setenv("QUINE_API_KEY", "sk-test")
 
 	_, err := Load()
 	if err == nil {
-		t.Fatal("expected error for missing API key")
+		t.Fatal("expected error for missing QUINE_MODEL_ID")
 	}
-	// Should mention how to set the key
-	if !strings.Contains(err.Error(), "API key required") {
-		t.Errorf("error should mention API key required, got: %v", err)
+	if !strings.Contains(err.Error(), "QUINE_MODEL_ID") {
+		t.Errorf("error should mention QUINE_MODEL_ID, got: %v", err)
 	}
 }
 
-func TestDepthExceeded(t *testing.T) {
+func TestMissing_APIType(t *testing.T) {
 	clearEnv(t)
-	setMinimal(t)
-	os.Setenv("QUINE_MAX_DEPTH", "3")
-	os.Setenv("QUINE_DEPTH", "3")
-
-	_, err := Load()
-	if !errors.Is(err, ErrDepthExceeded) {
-		t.Errorf("expected ErrDepthExceeded, got: %v", err)
-	}
-}
-
-func TestDepthExceeded_Greater(t *testing.T) {
-	clearEnv(t)
-	setMinimal(t)
-	os.Setenv("QUINE_MAX_DEPTH", "3")
-	os.Setenv("QUINE_DEPTH", "10")
-
-	_, err := Load()
-	if !errors.Is(err, ErrDepthExceeded) {
-		t.Errorf("expected ErrDepthExceeded, got: %v", err)
-	}
-}
-
-// --- Prefix auto-detection tests ---
-
-func TestPrefixAutoDetect(t *testing.T) {
-	cases := []struct {
-		model    string
-		provider string
-		envKey   string
-		envVal   string
-		apiBase  string
-	}{
-		{"claude-sonnet-4-20250514", "anthropic", "ANTHROPIC_API_KEY", "sk-test", "https://api.anthropic.com"},
-		{"claude-3-5-haiku-20241022", "anthropic", "ANTHROPIC_API_KEY", "sk-test", "https://api.anthropic.com"},
-		{"gpt-4o", "openai", "OPENAI_API_KEY", "sk-test", "https://api.openai.com"},
-		{"gpt-4-turbo", "openai", "OPENAI_API_KEY", "sk-test", "https://api.openai.com"},
-		{"o1-preview", "openai", "OPENAI_API_KEY", "sk-test", "https://api.openai.com"},
-		{"o3-mini", "openai", "OPENAI_API_KEY", "sk-test", "https://api.openai.com"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.model, func(t *testing.T) {
-			clearEnv(t)
-			os.Setenv("QUINE_MODEL_ID", tc.model)
-			os.Setenv(tc.envKey, tc.envVal)
-
-			c, err := Load()
-			if err != nil {
-				t.Fatalf("Load() error: %v", err)
-			}
-			if c.Provider != tc.provider {
-				t.Errorf("Provider = %q, want %q", c.Provider, tc.provider)
-			}
-			if c.APIBase != tc.apiBase {
-				t.Errorf("APIBase = %q, want %q", c.APIBase, tc.apiBase)
-			}
-		})
-	}
-}
-
-func TestUnknownModelRequiresExplicitConfig(t *testing.T) {
-	clearEnv(t)
-	os.Setenv("QUINE_MODEL_ID", "llama-3-70b")
+	os.Setenv("QUINE_MODEL_ID", "some-model")
+	os.Setenv("QUINE_API_BASE", "https://example.com")
+	os.Setenv("QUINE_API_KEY", "sk-test")
 
 	_, err := Load()
 	if err == nil {
-		t.Fatal("expected error for unknown model without explicit config")
+		t.Fatal("expected error for missing QUINE_API_TYPE")
 	}
 	if !strings.Contains(err.Error(), "QUINE_API_TYPE") {
 		t.Errorf("error should mention QUINE_API_TYPE, got: %v", err)
 	}
 }
 
-// --- Explicit override tests ---
-
-func TestExplicitOverride_AllFields(t *testing.T) {
+func TestMissing_APIBase(t *testing.T) {
 	clearEnv(t)
-	os.Setenv("QUINE_MODEL_ID", "moonshot-v1-8k")
+	os.Setenv("QUINE_MODEL_ID", "some-model")
 	os.Setenv("QUINE_API_TYPE", "openai")
-	os.Setenv("QUINE_API_BASE", "https://api.moonshot.ai/v1")
-	os.Setenv("QUINE_API_KEY", "sk-moonshot-test")
+	os.Setenv("QUINE_API_KEY", "sk-test")
 
-	c, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
+	_, err := Load()
+	if err == nil {
+		t.Fatal("expected error for missing QUINE_API_BASE")
 	}
-	if c.ModelID != "moonshot-v1-8k" {
-		t.Errorf("ModelID = %q, want moonshot-v1-8k", c.ModelID)
-	}
-	if c.Provider != "openai" {
-		t.Errorf("Provider = %q, want openai", c.Provider)
-	}
-	if c.APIBase != "https://api.moonshot.ai/v1" {
-		t.Errorf("APIBase = %q, want https://api.moonshot.ai/v1", c.APIBase)
-	}
-	if c.APIKey != "sk-moonshot-test" {
-		t.Errorf("APIKey = %q, want sk-moonshot-test", c.APIKey)
+	if !strings.Contains(err.Error(), "QUINE_API_BASE") {
+		t.Errorf("error should mention QUINE_API_BASE, got: %v", err)
 	}
 }
 
-func TestExplicitOverride_OverridesPrefixDetection(t *testing.T) {
+func TestMissing_APIKey(t *testing.T) {
 	clearEnv(t)
-	// Use a claude model but force openai protocol (e.g. through a proxy)
-	os.Setenv("QUINE_MODEL_ID", "claude-sonnet-4-20250514")
+	os.Setenv("QUINE_MODEL_ID", "some-model")
 	os.Setenv("QUINE_API_TYPE", "openai")
-	os.Setenv("QUINE_API_BASE", "https://my-proxy.example.com/v1")
-	os.Setenv("QUINE_API_KEY", "sk-proxy-key")
+	os.Setenv("QUINE_API_BASE", "https://example.com")
 
-	c, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
+	_, err := Load()
+	if err == nil {
+		t.Fatal("expected error for missing QUINE_API_KEY")
 	}
-	if c.Provider != "openai" {
-		t.Errorf("Provider = %q, want openai (explicit override)", c.Provider)
-	}
-	if c.APIBase != "https://my-proxy.example.com/v1" {
-		t.Errorf("APIBase = %q, want https://my-proxy.example.com/v1", c.APIBase)
-	}
-	if c.APIKey != "sk-proxy-key" {
-		t.Errorf("APIKey = %q, want sk-proxy-key", c.APIKey)
-	}
-}
-
-func TestExplicitAPIKey_ViaQUINE_API_KEY(t *testing.T) {
-	clearEnv(t)
-	os.Setenv("QUINE_MODEL_ID", "claude-sonnet-4-20250514")
-	os.Setenv("QUINE_API_KEY", "sk-explicit")
-	// Don't set ANTHROPIC_API_KEY — QUINE_API_KEY should be sufficient
-
-	c, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-	if c.APIKey != "sk-explicit" {
-		t.Errorf("APIKey = %q, want sk-explicit", c.APIKey)
+	if !strings.Contains(err.Error(), "QUINE_API_KEY") {
+		t.Errorf("error should mention QUINE_API_KEY, got: %v", err)
 	}
 }
 
@@ -329,25 +225,75 @@ func TestUnsupportedAPIType(t *testing.T) {
 	}
 }
 
-// --- Context window tests ---
+// --- Third-party provider test ---
 
-func TestContextWindow_AutoDetected(t *testing.T) {
+func TestThirdPartyProvider(t *testing.T) {
 	clearEnv(t)
-	setMinimal(t)
+	os.Setenv("QUINE_MODEL_ID", "kimi-k2.5")
+	os.Setenv("QUINE_API_TYPE", "openai")
+	os.Setenv("QUINE_API_BASE", "https://api.moonshot.ai/v1")
+	os.Setenv("QUINE_API_KEY", "sk-moonshot-test")
 
 	c, err := Load()
 	if err != nil {
 		t.Fatalf("Load() error: %v", err)
 	}
-	// claude- prefix should give 200,000
-	if c.ContextWindow != 200_000 {
-		t.Errorf("ContextWindow = %d, want 200000", c.ContextWindow)
+	if c.ModelID != "kimi-k2.5" {
+		t.Errorf("ModelID = %q, want kimi-k2.5", c.ModelID)
+	}
+	if c.Provider != "openai" {
+		t.Errorf("Provider = %q, want openai", c.Provider)
+	}
+	if c.APIBase != "https://api.moonshot.ai/v1" {
+		t.Errorf("APIBase = %q, want https://api.moonshot.ai/v1", c.APIBase)
+	}
+	if c.APIKey != "sk-moonshot-test" {
+		t.Errorf("APIKey = %q, want sk-moonshot-test", c.APIKey)
+	}
+}
+
+func TestDepthExceeded(t *testing.T) {
+	clearEnv(t)
+	setRequired(t)
+	os.Setenv("QUINE_MAX_DEPTH", "3")
+	os.Setenv("QUINE_DEPTH", "3")
+
+	_, err := Load()
+	if !errors.Is(err, ErrDepthExceeded) {
+		t.Errorf("expected ErrDepthExceeded, got: %v", err)
+	}
+}
+
+func TestDepthExceeded_Greater(t *testing.T) {
+	clearEnv(t)
+	setRequired(t)
+	os.Setenv("QUINE_MAX_DEPTH", "3")
+	os.Setenv("QUINE_DEPTH", "10")
+
+	_, err := Load()
+	if !errors.Is(err, ErrDepthExceeded) {
+		t.Errorf("expected ErrDepthExceeded, got: %v", err)
+	}
+}
+
+// --- Context window tests ---
+
+func TestContextWindow_Default(t *testing.T) {
+	clearEnv(t)
+	setRequired(t)
+
+	c, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error: %v", err)
+	}
+	if c.ContextWindow != 128_000 {
+		t.Errorf("ContextWindow = %d, want 128000", c.ContextWindow)
 	}
 }
 
 func TestContextWindow_ExplicitOverride(t *testing.T) {
 	clearEnv(t)
-	setMinimal(t)
+	setRequired(t)
 	os.Setenv("QUINE_CONTEXT_WINDOW", "500000")
 
 	c, err := Load()
@@ -359,28 +305,11 @@ func TestContextWindow_ExplicitOverride(t *testing.T) {
 	}
 }
 
-func TestContextWindow_Fallback(t *testing.T) {
-	clearEnv(t)
-	os.Setenv("QUINE_MODEL_ID", "custom-model")
-	os.Setenv("QUINE_API_TYPE", "openai")
-	os.Setenv("QUINE_API_BASE", "https://example.com")
-	os.Setenv("QUINE_API_KEY", "sk-test")
-
-	c, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-	// Unknown model, no QUINE_CONTEXT_WINDOW → fallback 128,000
-	if c.ContextWindow != 128_000 {
-		t.Errorf("ContextWindow = %d, want 128000", c.ContextWindow)
-	}
-}
-
 // --- ChildEnv / ExecEnv tests ---
 
 func TestChildEnv(t *testing.T) {
 	clearEnv(t)
-	setMinimal(t)
+	setRequired(t)
 	os.Setenv("QUINE_SESSION_ID", "parent-uuid")
 
 	c, err := Load()
@@ -418,24 +347,18 @@ func TestChildEnv(t *testing.T) {
 		t.Error("ChildEnv should NOT include QUINE_SESSION_ID (children generate their own)")
 	}
 
-	// Model inherited
+	// All 4 required fields passed through
 	if m["QUINE_MODEL_ID"] != "claude-sonnet-4-20250514" {
 		t.Errorf("QUINE_MODEL_ID = %q, want %q", m["QUINE_MODEL_ID"], "claude-sonnet-4-20250514")
 	}
-
-	// API type is passed through
 	if m["QUINE_API_TYPE"] != "anthropic" {
 		t.Errorf("QUINE_API_TYPE = %q, want anthropic", m["QUINE_API_TYPE"])
 	}
-
-	// API key is passed through explicitly
+	if m["QUINE_API_BASE"] != "https://api.anthropic.com" {
+		t.Errorf("QUINE_API_BASE = %q, want https://api.anthropic.com", m["QUINE_API_BASE"])
+	}
 	if m["QUINE_API_KEY"] != "sk-test-key" {
 		t.Errorf("QUINE_API_KEY = %q, want sk-test-key", m["QUINE_API_KEY"])
-	}
-
-	// Provider-specific key also passed through
-	if m["ANTHROPIC_API_KEY"] != "sk-test-key" {
-		t.Errorf("ANTHROPIC_API_KEY = %q, want %q", m["ANTHROPIC_API_KEY"], "sk-test-key")
 	}
 
 	// MaxTurns should be propagated
@@ -460,7 +383,7 @@ func TestChildEnv(t *testing.T) {
 
 func TestExecEnv(t *testing.T) {
 	clearEnv(t)
-	setMinimal(t)
+	setRequired(t)
 	os.Setenv("QUINE_SESSION_ID", "exec-parent-uuid")
 
 	c, err := Load()
@@ -497,7 +420,7 @@ func TestExecEnv(t *testing.T) {
 
 func TestUUIDFormat(t *testing.T) {
 	clearEnv(t)
-	setMinimal(t)
+	setRequired(t)
 
 	c, err := Load()
 	if err != nil {
@@ -512,11 +435,9 @@ func TestUUIDFormat(t *testing.T) {
 	if len(parts[0]) != 8 || len(parts[1]) != 4 || len(parts[2]) != 4 || len(parts[3]) != 4 || len(parts[4]) != 12 {
 		t.Errorf("UUID part lengths wrong: %q", c.SessionID)
 	}
-	// Version nibble should be '4'
 	if parts[2][0] != '4' {
 		t.Errorf("UUID version nibble = %c, want '4'", parts[2][0])
 	}
-	// Variant nibble should be 8, 9, a, or b
 	v := parts[3][0]
 	if v != '8' && v != '9' && v != 'a' && v != 'b' {
 		t.Errorf("UUID variant nibble = %c, want [89ab]", v)
@@ -525,9 +446,8 @@ func TestUUIDFormat(t *testing.T) {
 
 func TestWisdomLoading(t *testing.T) {
 	clearEnv(t)
-	setMinimal(t)
+	setRequired(t)
 
-	// Set some wisdom env vars
 	os.Setenv("QUINE_WISDOM_SUMMARY", "User prefers concise answers")
 	os.Setenv("QUINE_WISDOM_CONTEXT", "Working on Go project")
 	t.Cleanup(func() {
@@ -540,7 +460,6 @@ func TestWisdomLoading(t *testing.T) {
 		t.Fatalf("Load() error: %v", err)
 	}
 
-	// Check wisdom is loaded
 	if len(c.Wisdom) != 2 {
 		t.Errorf("Wisdom length = %d, want 2", len(c.Wisdom))
 	}
@@ -554,14 +473,13 @@ func TestWisdomLoading(t *testing.T) {
 
 func TestWisdomEmpty(t *testing.T) {
 	clearEnv(t)
-	setMinimal(t)
+	setRequired(t)
 
 	c, err := Load()
 	if err != nil {
 		t.Fatalf("Load() error: %v", err)
 	}
 
-	// Wisdom should be empty but not nil
 	if c.Wisdom == nil {
 		t.Error("Wisdom should not be nil")
 	}
@@ -572,9 +490,8 @@ func TestWisdomEmpty(t *testing.T) {
 
 func TestWisdomChildEnv(t *testing.T) {
 	clearEnv(t)
-	setMinimal(t)
+	setRequired(t)
 
-	// Set wisdom env vars
 	os.Setenv("QUINE_WISDOM_STATE", "processing chunk 5")
 	t.Cleanup(func() {
 		os.Unsetenv("QUINE_WISDOM_STATE")
@@ -590,7 +507,6 @@ func TestWisdomChildEnv(t *testing.T) {
 		t.Fatalf("ChildEnv() error: %v", err)
 	}
 
-	// Check wisdom is passed through
 	found := false
 	for _, e := range env {
 		if e == "QUINE_WISDOM_STATE=processing chunk 5" {
@@ -605,9 +521,8 @@ func TestWisdomChildEnv(t *testing.T) {
 
 func TestWisdomIgnoresEmptyValues(t *testing.T) {
 	clearEnv(t)
-	setMinimal(t)
+	setRequired(t)
 
-	// Set wisdom with empty value
 	os.Setenv("QUINE_WISDOM_EMPTY", "")
 	os.Setenv("QUINE_WISDOM_VALID", "has value")
 	t.Cleanup(func() {
@@ -620,7 +535,6 @@ func TestWisdomIgnoresEmptyValues(t *testing.T) {
 		t.Fatalf("Load() error: %v", err)
 	}
 
-	// Empty values should be ignored
 	if len(c.Wisdom) != 1 {
 		t.Errorf("Wisdom length = %d, want 1 (empty values ignored)", len(c.Wisdom))
 	}

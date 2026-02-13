@@ -308,7 +308,7 @@ func TestBombTestDepthLimit(t *testing.T) {
 	// Save and restore environment variables.
 	envVars := []string{
 		"QUINE_DEPTH", "QUINE_MAX_DEPTH", "QUINE_MODEL_ID",
-		"QUINE_API_TYPE", "ANTHROPIC_API_KEY",
+		"QUINE_API_TYPE", "QUINE_API_BASE", "QUINE_API_KEY",
 	}
 	saved := make(map[string]string)
 	for _, key := range envVars {
@@ -329,8 +329,9 @@ func TestBombTestDepthLimit(t *testing.T) {
 	os.Setenv("QUINE_MAX_DEPTH", "5")
 	// Required fields to avoid earlier validation errors
 	os.Setenv("QUINE_MODEL_ID", "claude-sonnet-4-20250514")
-	os.Setenv("ANTHROPIC_API_KEY", "test-key")
 	os.Setenv("QUINE_API_TYPE", "anthropic")
+	os.Setenv("QUINE_API_BASE", "https://api.anthropic.com")
+	os.Setenv("QUINE_API_KEY", "test-key")
 
 	_, err := config.Load()
 	if err == nil {
@@ -355,17 +356,6 @@ func TestBombTestDepthLimit(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestContextIsolation(t *testing.T) {
-	// Save and set ANTHROPIC_API_KEY for the test
-	savedKey := os.Getenv("ANTHROPIC_API_KEY")
-	os.Setenv("ANTHROPIC_API_KEY", "test-key")
-	t.Cleanup(func() {
-		if savedKey == "" {
-			os.Unsetenv("ANTHROPIC_API_KEY")
-		} else {
-			os.Setenv("ANTHROPIC_API_KEY", savedKey)
-		}
-	})
-
 	parentCfg := &config.Config{
 		ModelID:        "claude-test",
 		APIKey:         "test-key",
@@ -415,9 +405,9 @@ func TestContextIsolation(t *testing.T) {
 	if got := envMap["QUINE_MODEL_ID"]; got != parentCfg.ModelID {
 		t.Errorf("QUINE_MODEL_ID = %q, want %q", got, parentCfg.ModelID)
 	}
-	// API key is passed through provider-specific env var
-	if got := envMap["ANTHROPIC_API_KEY"]; got != parentCfg.APIKey {
-		t.Errorf("ANTHROPIC_API_KEY = %q, want %q", got, parentCfg.APIKey)
+	// API key is passed through QUINE_API_KEY
+	if got := envMap["QUINE_API_KEY"]; got != parentCfg.APIKey {
+		t.Errorf("QUINE_API_KEY = %q, want %q", got, parentCfg.APIKey)
 	}
 	if got := envMap["QUINE_MAX_DEPTH"]; got != "5" {
 		t.Errorf("QUINE_MAX_DEPTH = %q, want %q", got, "5")
