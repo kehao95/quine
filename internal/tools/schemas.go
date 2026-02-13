@@ -85,19 +85,19 @@ func ExitToolSchema() llm.ToolSchema {
 	return llm.ToolSchema{
 		Name: "exit",
 		Description: "Finish your work and terminate. " +
-			"Three modes: success (task complete), failure (task failed), progress (partial work done). " +
+			"Two modes: success (task complete), failure (task failed). " +
 			"NOTE: This tool does NOT output to stdout. Use sh to write output to /dev/stdout.",
 		Parameters: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
 				"status": map[string]any{
 					"type":        "string",
-					"enum":        []string{"success", "failure", "progress"},
-					"description": "Task outcome. \"success\" = complete. \"failure\" = failed. \"progress\" = partial work done but couldn't finish.",
+					"enum":        []string{"success", "failure"},
+					"description": "Task outcome. \"success\" = complete. \"failure\" = failed.",
 				},
 				"stderr": map[string]any{
 					"type":        "string",
-					"description": "Why the task failed or is incomplete. Required on failure and progress. Must NOT be set on success.",
+					"description": "Why the task failed. Required on failure. Must NOT be set on success.",
 				},
 			},
 			"required": []string{"status"},

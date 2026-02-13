@@ -643,8 +643,8 @@ func TestSuccessWithStderrIsRejected(t *testing.T) {
 	}
 }
 
-func TestProgressExit(t *testing.T) {
-	// Agent exits with progress — partial completion with reason. Exit code 2.
+func TestProgressStatusIsRejected(t *testing.T) {
+	// "progress" status was removed. Agent tries it, gets parse error, exit code 1.
 	mock := &mockProvider{
 		responses: []tape.Message{
 			{
@@ -682,97 +682,19 @@ func TestProgressExit(t *testing.T) {
 	rErr.Close()
 	rt.stderr = oldStderr
 
-	if exitCode != 2 {
-		t.Errorf("expected exit code 2 (progress), got %d", exitCode)
-	}
-
-	if mock.callCount != 1 {
-		t.Errorf("expected 1 LLM call, got %d", mock.callCount)
+	// "progress" is now an invalid status — parsed as failure (exit code 1)
+	if exitCode != 1 {
+		t.Errorf("expected exit code 1 (invalid status treated as failure), got %d", exitCode)
 	}
 
 	stderr := string(errBuf[:nErr])
-	if stderr != "context window at 90%, delegating remaining work" {
-		t.Errorf("expected stderr %q, got %q", "context window at 90%, delegating remaining work", stderr)
+	if !strings.Contains(stderr, "invalid exit args") {
+		t.Errorf("expected stderr to contain 'invalid exit args', got %q", stderr)
 	}
 }
 
-func TestProgressWithoutReasonIsRejected(t *testing.T) {
-	// Agent tries progress without stderr. Rejected. Retries correctly.
-	mock := &mockProvider{
-		responses: []tape.Message{
-			{
-				Role: tape.RoleAssistant,
-				ToolCalls: []tape.ToolCall{
-					{
-						ID:   "call_1",
-						Name: "exit",
-						Arguments: map[string]any{
-							"status": "progress",
-							// no stderr — should be rejected
-						},
-					},
-				},
-			},
-			{
-				Role: tape.RoleAssistant,
-				ToolCalls: []tape.ToolCall{
-					{
-						ID:   "call_2",
-						Name: "exit",
-						Arguments: map[string]any{
-							"status": "progress",
-							"stderr": "context window running low",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	cfg := testCfg(t)
-	rt := NewWithProvider(cfg, mock)
-	silenceRuntime(rt)
-
-	oldStderr := rt.stderr
-	rErr, wErr, _ := os.Pipe()
-	rt.stderr = wErr
-	rt.log = func(format string, args ...any) {}
-	rt.logError = func(format string, args ...any) {}
-
-	exitCode := rt.Run("task that partially completes", "Begin.")
-
-	wErr.Close()
-	errBuf := make([]byte, 4096)
-	nErr, _ := rErr.Read(errBuf)
-	rErr.Close()
-	rt.stderr = oldStderr
-
-	if mock.callCount != 2 {
-		t.Errorf("expected 2 LLM calls (rejection + retry), got %d", mock.callCount)
-	}
-
-	if exitCode != 2 {
-		t.Errorf("expected exit code 2 (progress), got %d", exitCode)
-	}
-
-	stderr := string(errBuf[:nErr])
-	if stderr != "context window running low" {
-		t.Errorf("expected stderr %q, got %q", "context window running low", stderr)
-	}
-
-	// Verify rejection tool result in tape
-	msgs := rt.tape.Messages()
-	foundRejection := false
-	for _, m := range msgs {
-		if m.Role == tape.RoleToolResult && strings.Contains(m.Content, "Exit rejected") {
-			foundRejection = true
-			break
-		}
-	}
-	if !foundRejection {
-		t.Error("expected a rejection tool result in the tape, found none")
-	}
-}
+// TestProgressWithoutReasonIsRejected is removed — "progress" status no longer exists.
+// The equivalent behavior is tested by TestProgressStatusIsRejected above.
 
 // ---------------------------------------------------------------------------
 // SIGALRM / Panic Mode tests (§2.2)
@@ -899,7 +821,7 @@ func TestPanicModeAllowsExitToolCall(t *testing.T) {
 						ID:   "call_1",
 						Name: "exit",
 						Arguments: map[string]any{
-							"status": "progress",
+							"status": "failure",
 							"stderr": "interrupted by SIGALRM",
 						},
 					},
@@ -928,8 +850,8 @@ func TestPanicModeAllowsExitToolCall(t *testing.T) {
 	rErr.Close()
 	rt.stderr = oldStderr
 
-	if exitCode != 2 {
-		t.Errorf("expected exit code 2 (progress), got %d", exitCode)
+	if exitCode != 1 {
+		t.Errorf("expected exit code 1 (failure), got %d", exitCode)
 	}
 
 	stderr := string(errBuf[:nErr])
