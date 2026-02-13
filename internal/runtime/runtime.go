@@ -55,6 +55,25 @@ type Runtime struct {
 	activeProcess atomic.Pointer[os.Process]
 }
 
+// SetStdout overrides the Runtime's stdout (fd 3 delivery channel).
+// Must be called before Run(). Used by tests to capture deliverables.
+func (r *Runtime) SetStdout(f *os.File) {
+	r.stdout = f
+	r.sh.Stdout = f
+}
+
+// SetStderr overrides the Runtime's stderr (failure signal channel).
+// Must be called before Run(). Used by tests to capture error output.
+func (r *Runtime) SetStderr(f *os.File) {
+	r.stderr = f
+}
+
+// SetStdin overrides the Runtime's stdin (fd 4 material channel).
+// Must be called before Run(). Used by tests to provide piped input.
+func (r *Runtime) SetStdin(f *os.File) {
+	r.sh.Stdin = f
+}
+
 // New creates a Runtime from config. Call Run() to start the loop.
 func New(cfg *config.Config) (*Runtime, error) {
 	provider, err := llm.NewProvider(cfg)
