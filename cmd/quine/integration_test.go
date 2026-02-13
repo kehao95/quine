@@ -10,10 +10,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/kehao95/quine/cmd/quine/internal/config"
-	"github.com/kehao95/quine/cmd/quine/internal/llm"
-	"github.com/kehao95/quine/cmd/quine/internal/runtime"
-	"github.com/kehao95/quine/cmd/quine/internal/tape"
+	"github.com/kehao95/quine/internal/config"
+	"github.com/kehao95/quine/internal/llm"
+	"github.com/kehao95/quine/internal/runtime"
+	"github.com/kehao95/quine/internal/tape"
 )
 
 // ---------------------------------------------------------------------------
@@ -308,7 +308,7 @@ func TestBombTestDepthLimit(t *testing.T) {
 	// Save and restore environment variables.
 	envVars := []string{
 		"QUINE_DEPTH", "QUINE_MAX_DEPTH", "QUINE_MODEL_ID",
-		"QUINE_PROVIDER", "ANTHROPIC_API_KEY",
+		"QUINE_API_TYPE", "ANTHROPIC_API_KEY",
 	}
 	saved := make(map[string]string)
 	for _, key := range envVars {
@@ -330,7 +330,7 @@ func TestBombTestDepthLimit(t *testing.T) {
 	// Required fields to avoid earlier validation errors
 	os.Setenv("QUINE_MODEL_ID", "claude-sonnet-4-20250514")
 	os.Setenv("ANTHROPIC_API_KEY", "test-key")
-	os.Setenv("QUINE_PROVIDER", "anthropic")
+	os.Setenv("QUINE_API_TYPE", "anthropic")
 
 	_, err := config.Load()
 	if err == nil {
@@ -422,7 +422,7 @@ func TestContextIsolation(t *testing.T) {
 	if got := envMap["QUINE_MAX_DEPTH"]; got != "5" {
 		t.Errorf("QUINE_MAX_DEPTH = %q, want %q", got, "5")
 	}
-	if got := envMap["QUINE_PROVIDER"]; got != parentCfg.Provider {
-		t.Errorf("QUINE_PROVIDER = %q, want %q", got, parentCfg.Provider)
+	if got := envMap["QUINE_API_TYPE"]; got != parentCfg.Provider {
+		t.Errorf("QUINE_API_TYPE = %q, want %q", got, parentCfg.Provider)
 	}
 }

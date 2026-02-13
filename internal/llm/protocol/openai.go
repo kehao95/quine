@@ -1,72 +1,20 @@
-package llm
+package protocol
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
 	"time"
 
-	"github.com/kehao95/quine/cmd/quine/internal/config"
-	"github.com/kehao95/quine/cmd/quine/internal/tape"
+	"github.com/kehao95/quine/internal/tape"
 )
 
-const defaultOpenAIBase = "https://api.openai.com"
-
-// openaiProvider implements Provider for OpenAI's Chat Completions API.
-type openaiProvider struct {
-	apiKey        string
-	apiBase       string
-	modelID       string
-	client        *http.Client
-	contextWindow int // from registry, 0 means use default
-}
-
-func newOpenAIProvider(cfg *config.Config) *openaiProvider {
-	base := cfg.APIBase
-	if base == "" {
-		base = defaultOpenAIBase
-	}
-	base = strings.TrimRight(base, "/")
-	return &openaiProvider{
-		apiKey:        cfg.APIKey,
-		apiBase:       base,
-		modelID:       cfg.APIModelID(),
-		client:        &http.Client{Timeout: 5 * time.Minute},
-		contextWindow: cfg.ContextWindow,
-	}
-}
-
-// ContextWindowSize returns the context window for the configured model.
-func (p *openaiProvider) ContextWindowSize() int {
-	// Use registry value if available
-	if p.contextWindow > 0 {
-		return p.contextWindow
-	}
-	// Fallback to defaults
-	m := strings.ToLower(p.modelID)
-	switch {
-	case strings.HasPrefix(m, "o1"),
-		strings.HasPrefix(m, "o3"),
-		strings.HasPrefix(m, "o4"):
-		return 200_000
-	case strings.HasPrefix(m, "gpt-4o"):
-		return 128_000
-	case strings.HasPrefix(m, "gpt-4-turbo"):
-		return 128_000
-	case strings.HasPrefix(m, "gpt-4"):
-		return 8_192
-	case strings.HasPrefix(m, "gpt-3.5-turbo"):
-		return 16_385
-	default:
-		return 128_000
-	}
-}
+// OpenAIProtocol implements Protocol for OpenAI's Chat Completions API.
+// This is also compatible with OpenRouter, Azure OpenAI, and other OpenAI-compatible APIs.
+type OpenAIProtocol struct{}
 
 // ---------------------------------------------------------------------------
-// OpenAI API request/response types
+// API request/response types
 // ---------------------------------------------------------------------------
 
 type openaiRequest struct {
@@ -132,74 +80,70 @@ type openaiError struct {
 }
 
 // ---------------------------------------------------------------------------
-// Generate – main entry point
+// Protocol implementation
 // ---------------------------------------------------------------------------
 
-func (p *openaiProvider) Generate(messages []tape.Message, tools []ToolSchema) (tape.Message, Usage, error) {
-	apiMsgs := openaiConvertMessages(messages)
-	apiTools := openaiConvertTools(tools)
+func (p *OpenAIProtocol) ContentType() string {
+	return "application/json"
+}
 
-	reqBody := openaiRequest{
-		Model:    p.modelID,
+func (p *OpenAIProtocol) EndpointPath() string {
+	return "/v1/chat/completions"
+}
+
+func (p *OpenAIProtocol) EncodeRequest(messages []tape.Message, tools []ToolSchema, model string, maxTokens int) ([]byte, error) {
+	apiMsgs := convertOpenAIMessages(messages)
+	apiTools := convertOpenAITools(tools)
+
+	req := openaiRequest{
+		Model:    model,
 		Messages: apiMsgs,
 		Tools:    apiTools,
 	}
 
-	bodyBytes, err := json.Marshal(reqBody)
-	if err != nil {
-		return tape.Message{}, Usage{}, fmt.Errorf("marshalling request: %w", err)
-	}
+	return json.Marshal(req)
+}
 
-	resp, err := retryWithBackoff(5, func() (*http.Response, error) {
-		// Build endpoint URL. If apiBase already ends with /v1, just append /chat/completions
-		// Otherwise append /v1/chat/completions (for OpenAI-style base URLs like https://api.openai.com)
-		var endpoint string
-		if strings.HasSuffix(p.apiBase, "/v1") {
-			endpoint = p.apiBase + "/chat/completions"
-		} else {
-			endpoint = p.apiBase + "/v1/chat/completions"
-		}
-		req, err := http.NewRequest("POST", endpoint, bytes.NewReader(bodyBytes))
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Authorization", "Bearer "+p.apiKey)
-		req.Header.Set("Content-Type", "application/json")
-		return p.client.Do(req)
-	})
-	if err != nil {
-		return tape.Message{}, Usage{}, err
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return tape.Message{}, Usage{}, fmt.Errorf("reading response body: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return tape.Message{}, Usage{}, openaiClassifyError(resp.StatusCode, respBody)
-	}
-
-	var apiResp openaiResponse
-	if err := json.Unmarshal(respBody, &apiResp); err != nil {
+func (p *OpenAIProtocol) DecodeResponse(body []byte) (tape.Message, Usage, error) {
+	var resp openaiResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
 		return tape.Message{}, Usage{}, fmt.Errorf("unmarshalling response: %w", err)
 	}
 
-	msg := openaiParseResponse(apiResp)
+	msg := parseOpenAIResponse(resp)
 	usage := Usage{
-		InputTokens:  apiResp.Usage.PromptTokens,
-		OutputTokens: apiResp.Usage.CompletionTokens,
+		InputTokens:  resp.Usage.PromptTokens,
+		OutputTokens: resp.Usage.CompletionTokens,
 	}
 
 	return msg, usage, nil
+}
+
+func (p *OpenAIProtocol) ClassifyError(statusCode int, body []byte) error {
+	switch {
+	case statusCode == 401 || statusCode == 403:
+		return ErrAuth
+	default:
+		var oe openaiError
+		if json.Unmarshal(body, &oe) == nil {
+			msg := strings.ToLower(oe.Error.Message)
+			code := strings.ToLower(oe.Error.Code)
+			if strings.Contains(msg, "context") || strings.Contains(msg, "too many tokens") ||
+				strings.Contains(msg, "maximum context length") ||
+				(strings.Contains(msg, "token") && strings.Contains(msg, "exceed")) ||
+				code == "context_length_exceeded" {
+				return ErrContextOverflow
+			}
+		}
+		return fmt.Errorf("openai API error (HTTP %d): %s", statusCode, string(body))
+	}
 }
 
 // ---------------------------------------------------------------------------
 // Message conversion: tape → OpenAI
 // ---------------------------------------------------------------------------
 
-func openaiConvertMessages(msgs []tape.Message) []openaiMessage {
+func convertOpenAIMessages(msgs []tape.Message) []openaiMessage {
 	var out []openaiMessage
 
 	for _, m := range msgs {
@@ -246,8 +190,7 @@ func openaiConvertMessages(msgs []tape.Message) []openaiMessage {
 	return out
 }
 
-// openaiConvertTools maps ToolSchema values to OpenAI function-calling format.
-func openaiConvertTools(tools []ToolSchema) []openaiTool {
+func convertOpenAITools(tools []ToolSchema) []openaiTool {
 	if len(tools) == 0 {
 		return nil
 	}
@@ -273,7 +216,7 @@ func openaiConvertTools(tools []ToolSchema) []openaiTool {
 // Response parsing: OpenAI → tape
 // ---------------------------------------------------------------------------
 
-func openaiParseResponse(resp openaiResponse) tape.Message {
+func parseOpenAIResponse(resp openaiResponse) tape.Message {
 	if len(resp.Choices) == 0 {
 		return tape.Message{
 			Role:      tape.RoleAssistant,
@@ -299,29 +242,5 @@ func openaiParseResponse(resp openaiResponse) tape.Message {
 		Content:   choice.Message.Content,
 		ToolCalls: toolCalls,
 		Timestamp: time.Now().UnixMilli(),
-	}
-}
-
-// ---------------------------------------------------------------------------
-// Error classification
-// ---------------------------------------------------------------------------
-
-func openaiClassifyError(statusCode int, body []byte) error {
-	switch {
-	case statusCode == 401 || statusCode == 403:
-		return ErrAuth
-	default:
-		var oe openaiError
-		if json.Unmarshal(body, &oe) == nil {
-			msg := strings.ToLower(oe.Error.Message)
-			code := strings.ToLower(oe.Error.Code)
-			if strings.Contains(msg, "context") || strings.Contains(msg, "too many tokens") ||
-				strings.Contains(msg, "maximum context length") ||
-				(strings.Contains(msg, "token") && strings.Contains(msg, "exceed")) ||
-				code == "context_length_exceeded" {
-				return ErrContextOverflow
-			}
-		}
-		return fmt.Errorf("openai API error (HTTP %d): %s", statusCode, string(body))
 	}
 }

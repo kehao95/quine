@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kehao95/quine/cmd/quine/internal/config"
+	"github.com/kehao95/quine/internal/config"
 )
 
 func testConfig() *config.Config {

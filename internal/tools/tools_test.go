@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kehao95/quine/cmd/quine/internal/config"
-	"github.com/kehao95/quine/cmd/quine/internal/tape"
+	"github.com/kehao95/quine/internal/config"
+	"github.com/kehao95/quine/internal/tape"
 )
 
 // testExecutor returns a ShExecutor with test-friendly defaults.

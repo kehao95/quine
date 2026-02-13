@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kehao95/quine/cmd/quine/internal/config"
-	"github.com/kehao95/quine/cmd/quine/internal/llm"
-	"github.com/kehao95/quine/cmd/quine/internal/tape"
+	"github.com/kehao95/quine/internal/config"
+	"github.com/kehao95/quine/internal/llm"
+	"github.com/kehao95/quine/internal/tape"
 )
 
 // mockProvider is a test double that returns pre-programmed responses.

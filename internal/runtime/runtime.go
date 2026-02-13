@@ -11,10 +11,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kehao95/quine/cmd/quine/internal/config"
-	"github.com/kehao95/quine/cmd/quine/internal/llm"
-	"github.com/kehao95/quine/cmd/quine/internal/tape"
-	"github.com/kehao95/quine/cmd/quine/internal/tools"
+	"github.com/kehao95/quine/internal/config"
+	"github.com/kehao95/quine/internal/llm"
+	"github.com/kehao95/quine/internal/tape"
+	"github.com/kehao95/quine/internal/tools"
 )
 
 // Runtime orchestrates the agent's execution loop.

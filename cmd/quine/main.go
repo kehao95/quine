@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kehao95/quine/cmd/quine/internal/config"
-	"github.com/kehao95/quine/cmd/quine/internal/runtime"
+	"github.com/kehao95/quine/internal/config"
+	"github.com/kehao95/quine/internal/runtime"
 )
 
 // stdinMode represents the expected stdin input type

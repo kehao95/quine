@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kehao95/quine/cmd/quine/internal/config"
+	"github.com/kehao95/quine/internal/config"
 )
 
 // TestHandleStdin_TextMode tests default text/streaming mode
