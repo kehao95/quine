@@ -1,0 +1,60 @@
+Paper/sections/01_introduction.md
+  e467d84a9f1e1c8d 29
+Paper/sections/00_abstract.md
+  e467d84a9f1e1c8d 15
+Paper/metadata.yaml
+  fa84c21e60f8b427 2
+Paper/Makefile
+  e467d84a9f1e1c8d 103,130
+  664c49acc57dc7b0 111,117,120-122,124,128-129,131-132
+Paper/sections/04_observations.md
+  fa84c21e60f8b427 34
+Paper/sections/12_appendix_c.md
+  fa84c21e60f8b427 59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.3",
+  "base_commit_sha": "1a3efe1ed31d0e542790e43da92725181d33b99e",
+  "prompts": {
+    "664c49acc57dc7b0": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3acb85884ffeefp0xE00PkhtXf",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 7,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    },
+    "e467d84a9f1e1c8d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3acaaff22ffeA50B9zcotOZCHE",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 6,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    },
+    "fa84c21e60f8b427": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3ac9c3689ffeYGNpsjiAUSwNCQ",
+        "model": "github-copilot/claude-opus-4.5"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 3,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
