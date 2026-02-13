@@ -1,0 +1,27 @@
+Artifacts/05_case_study.md
+  f311b49a9e632aa8 229,232,299,308
+Artifacts/04_implementation.md
+  f311b49a9e632aa8 29-30,40,45,47-57,85
+AGENTS.md
+  f311b49a9e632aa8 231-302
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.3",
+  "base_commit_sha": "07c19614a88fcf04a941f4d42819e2b8acddcd1b",
+  "prompts": {
+    "f311b49a9e632aa8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3a727e594ffer5eMOzEWHcLIVn",
+        "model": "github-copilot/claude-opus-4.6"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 93,
+      "total_deletions": 11,
+      "accepted_lines": 92,
+      "overriden_lines": 0
+    }
+  }
+}
