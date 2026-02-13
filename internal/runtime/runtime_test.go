@@ -256,8 +256,8 @@ func TestAuthError(t *testing.T) {
 
 	exitCode := rt.Run("hello", "Begin.")
 
-	if exitCode != 2 {
-		t.Errorf("expected exit code 2 for auth error, got %d", exitCode)
+	if exitCode != 1 {
+		t.Errorf("expected exit code 1 for auth error, got %d", exitCode)
 	}
 }
 

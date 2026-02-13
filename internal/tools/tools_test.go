@@ -6,24 +6,24 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/kehao95/quine/internal/config"
 )
 
 // testExecutor returns a ShExecutor with test-friendly defaults.
+// The caller should defer b.Close() to shut down the persistent shell.
 func testExecutor() *ShExecutor {
 	return &ShExecutor{
-		Shell:          "/bin/sh",
-		DefaultTimeout: 10 * time.Second,
-		MaxOutput:      20480,
-		ShellInit:      shellInit,
+		Shell:     "/bin/sh",
+		MaxOutput: 20480,
+		ShellInit: shellInit,
 	}
 }
 
 func TestSimpleCommandExecution(t *testing.T) {
 	b := testExecutor()
-	result := b.Execute("tool-1", "echo hello", 0)
+	defer b.Close()
+	result := b.Execute("tool-1", "echo hello")
 
 	if result.ToolID != "tool-1" {
 		t.Errorf("ToolID = %q, want %q", result.ToolID, "tool-1")
@@ -41,7 +41,23 @@ func TestSimpleCommandExecution(t *testing.T) {
 
 func TestNonZeroExitCode(t *testing.T) {
 	b := testExecutor()
-	result := b.Execute("tool-2", "exit 42", 0)
+	defer b.Close()
+	// Use a command that returns non-zero WITHOUT `exit` (which would kill the shell)
+	result := b.Execute("tool-2", "false")
+
+	if !result.IsError {
+		t.Errorf("IsError = false, want true for non-zero exit")
+	}
+	if !strings.Contains(result.Content, "[EXIT CODE] 1") {
+		t.Errorf("expected exit code 1, got:\n%s", result.Content)
+	}
+}
+
+func TestNonZeroExitCodeFromCommand(t *testing.T) {
+	b := testExecutor()
+	defer b.Close()
+	// sh -c "exit 42" returns 42 without killing the persistent shell
+	result := b.Execute("tool-2b", "sh -c 'exit 42'")
 
 	if !result.IsError {
 		t.Errorf("IsError = false, want true for non-zero exit")
@@ -53,7 +69,8 @@ func TestNonZeroExitCode(t *testing.T) {
 
 func TestStderrCapture(t *testing.T) {
 	b := testExecutor()
-	result := b.Execute("tool-3", "echo errormsg >&2", 0)
+	defer b.Close()
+	result := b.Execute("tool-3", "echo errormsg >&2")
 
 	if !strings.Contains(result.Content, "errormsg") {
 		t.Errorf("expected stderr to contain 'errormsg', got:\n%s", result.Content)
@@ -68,55 +85,13 @@ func TestStderrCapture(t *testing.T) {
 	}
 }
 
-func TestTimeoutEnforcement(t *testing.T) {
-	b := testExecutor()
-	b.DefaultTimeout = 5 * time.Second // safety ceiling
-
-	start := time.Now()
-	result := b.Execute("tool-4", "sleep 30", 1)
-	elapsed := time.Since(start)
-
-	if !result.IsError {
-		t.Errorf("IsError = false, want true for timed-out command")
-	}
-	if !strings.Contains(result.Content, "[EXIT CODE]") {
-		t.Errorf("result missing exit code:\n%s", result.Content)
-	}
-	// The exit code should be non-zero (either -1 or 137 from SIGKILL)
-	if strings.Contains(result.Content, "[EXIT CODE] 0") {
-		t.Errorf("exit code should be non-zero for killed process, got:\n%s", result.Content)
-	}
-	// Should complete within ~2 seconds (1s timeout + buffer)
-	if elapsed > 3*time.Second {
-		t.Errorf("timeout took %v, expected ~1s", elapsed)
-	}
-}
-
-func TestTimeoutUsesMinimum(t *testing.T) {
-	b := testExecutor()
-	b.DefaultTimeout = 1 * time.Second
-
-	start := time.Now()
-	// Provide a large timeout arg, but DefaultTimeout is smaller — it should
-	// use the minimum (DefaultTimeout = 1s).
-	result := b.Execute("tool-5", "sleep 30", 60)
-	elapsed := time.Since(start)
-
-	if !result.IsError {
-		t.Errorf("IsError = false, want true for timed-out command")
-	}
-	if elapsed > 3*time.Second {
-		t.Errorf("should have used DefaultTimeout (1s), but took %v", elapsed)
-	}
-	_ = result
-}
-
 func TestOutputTruncation(t *testing.T) {
 	b := testExecutor()
+	defer b.Close()
 	b.MaxOutput = 100 // very small limit for testing
 
 	// Generate output larger than MaxOutput
-	result := b.Execute("tool-6", "python3 -c \"print('A' * 500)\"", 0)
+	result := b.Execute("tool-6", "python3 -c \"print('A' * 500)\"")
 
 	if !strings.Contains(result.Content, "...[Output Truncated,") {
 		t.Errorf("expected truncation notice, got:\n%s", result.Content)
@@ -128,9 +103,10 @@ func TestOutputTruncation(t *testing.T) {
 
 func TestOutputTruncationStderr(t *testing.T) {
 	b := testExecutor()
+	defer b.Close()
 	b.MaxOutput = 100
 
-	result := b.Execute("tool-6b", "python3 -c \"import sys; sys.stderr.write('B' * 500)\"", 0)
+	result := b.Execute("tool-6b", "python3 -c \"import sys; sys.stderr.write('B' * 500)\"")
 
 	// The STDERR section should contain truncation
 	parts := strings.SplitN(result.Content, "[STDERR]", 2)
@@ -144,7 +120,8 @@ func TestOutputTruncationStderr(t *testing.T) {
 
 func TestResultFormatExact(t *testing.T) {
 	b := testExecutor()
-	result := b.Execute("tool-7", "echo out; echo err >&2", 0)
+	defer b.Close()
+	result := b.Execute("tool-7", "echo out; echo err >&2")
 
 	expected := "[EXIT CODE] 0\n[STDOUT]\nout\n\n[STDERR]\nerr\n"
 	if result.Content != expected {
@@ -154,7 +131,8 @@ func TestResultFormatExact(t *testing.T) {
 
 func TestResultFormatEmptyOutput(t *testing.T) {
 	b := testExecutor()
-	result := b.Execute("tool-8", "true", 0)
+	defer b.Close()
+	result := b.Execute("tool-8", "true")
 
 	expected := "[EXIT CODE] 0\n[STDOUT]\n\n[STDERR]\n"
 	if result.Content != expected {
@@ -167,8 +145,9 @@ func TestHelperWriteFile(t *testing.T) {
 	testFile := filepath.Join(tmpDir, "sub", "test.txt")
 
 	b := testExecutor()
+	defer b.Close()
 	cmd := fmt.Sprintf(`write_file %q "hello world"`, testFile)
-	result := b.Execute("tool-9", cmd, 0)
+	result := b.Execute("tool-9", cmd)
 
 	if result.IsError {
 		t.Fatalf("write_file failed:\n%s", result.Content)
@@ -192,8 +171,9 @@ func TestHelperReadFile(t *testing.T) {
 	}
 
 	b := testExecutor()
+	defer b.Close()
 	cmd := fmt.Sprintf(`read_file %q`, testFile)
-	result := b.Execute("tool-10", cmd, 0)
+	result := b.Execute("tool-10", cmd)
 
 	if result.IsError {
 		t.Fatalf("read_file failed:\n%s", result.Content)
@@ -215,14 +195,106 @@ func TestHelperWriteReadRoundtrip(t *testing.T) {
 	testFile := filepath.Join(tmpDir, "roundtrip.txt")
 
 	b := testExecutor()
+	defer b.Close()
 	cmd := fmt.Sprintf(`write_file %q "alpha beta gamma" && read_file %q`, testFile, testFile)
-	result := b.Execute("tool-11", cmd, 0)
+	result := b.Execute("tool-11", cmd)
 
 	if result.IsError {
 		t.Fatalf("roundtrip failed:\n%s", result.Content)
 	}
 	if !strings.Contains(result.Content, "alpha beta gamma") {
 		t.Errorf("expected roundtrip content, got:\n%s", result.Content)
+	}
+}
+
+// Test that the persistent shell maintains working directory across Execute calls
+func TestPersistentShellCd(t *testing.T) {
+	tmpDir := t.TempDir()
+	b := testExecutor()
+	defer b.Close()
+
+	// cd to tmpDir
+	result1 := b.Execute("tool-cd-1", fmt.Sprintf("cd %q", tmpDir))
+	if result1.IsError {
+		t.Fatalf("cd failed:\n%s", result1.Content)
+	}
+
+	// pwd should show tmpDir
+	result2 := b.Execute("tool-cd-2", "pwd")
+	if result2.IsError {
+		t.Fatalf("pwd failed:\n%s", result2.Content)
+	}
+	if !strings.Contains(result2.Content, tmpDir) {
+		t.Errorf("expected pwd to be %q, got:\n%s", tmpDir, result2.Content)
+	}
+}
+
+// Test that the persistent shell preserves exported variables across Execute() calls
+func TestPersistentShellExport(t *testing.T) {
+	b := testExecutor()
+	defer b.Close()
+
+	// Export a variable
+	result1 := b.Execute("tool-export-1", "export MY_VAR=hello_world")
+	if result1.IsError {
+		t.Fatalf("export failed:\n%s", result1.Content)
+	}
+
+	// Verify it persists in a subsequent call
+	result2 := b.Execute("tool-export-2", "echo $MY_VAR")
+	if result2.IsError {
+		t.Fatalf("echo failed:\n%s", result2.Content)
+	}
+	if !strings.Contains(result2.Content, "hello_world") {
+		t.Errorf("expected MY_VAR=hello_world to persist, got:\n%s", result2.Content)
+	}
+}
+
+// Test that shell variables (not exported) persist across Execute() calls
+func TestPersistentShellVariables(t *testing.T) {
+	b := testExecutor()
+	defer b.Close()
+
+	// Set a shell variable (no export)
+	result1 := b.Execute("tool-var-1", "MY_LOCAL=42")
+	if result1.IsError {
+		t.Fatalf("set variable failed:\n%s", result1.Content)
+	}
+
+	// Verify it persists
+	result2 := b.Execute("tool-var-2", "echo $MY_LOCAL")
+	if result2.IsError {
+		t.Fatalf("echo failed:\n%s", result2.Content)
+	}
+	if !strings.Contains(result2.Content, "42") {
+		t.Errorf("expected MY_LOCAL=42 to persist, got:\n%s", result2.Content)
+	}
+}
+
+// Test that `exit N` inside a brace group kills the persistent shell,
+// and crash recovery auto-restarts it on the next Execute() call.
+func TestExitCrashRecovery(t *testing.T) {
+	b := testExecutor()
+	defer b.Close()
+
+	// exit 1 inside { } will kill the persistent shell
+	result1 := b.Execute("tool-exit-1", "exit 1")
+
+	// Should get a shell error (crash detected via EOF without sentinel)
+	if !result1.IsError {
+		t.Fatalf("expected error from exit, got success:\n%s", result1.Content)
+	}
+	if !strings.Contains(result1.Content, "SHELL ERROR") {
+		t.Errorf("expected SHELL ERROR in result, got:\n%s", result1.Content)
+	}
+
+	// Next call should auto-restart and work
+	result2 := b.Execute("tool-exit-2", "echo recovered")
+	if result2.IsError {
+		t.Fatalf("expected recovery after crash, got error:\n%s", result2.Content)
+	}
+	if !strings.Contains(result2.Content, "recovered") {
+		t.Errorf("expected 'recovered' in output, got:\n%s", result2.Content)
 	}
 }
 
@@ -269,11 +341,12 @@ func TestMergeEnvOverlaysChildVars(t *testing.T) {
 func TestEnvPropagationViash(t *testing.T) {
 	// Verify that spawned commands can see QUINE_* env vars
 	b := testExecutor()
+	defer b.Close()
 	b.Env = MergeEnv(os.Environ(), []string{
 		"QUINE_DEPTH=3",
 	})
 
-	result := b.Execute("tool-env-1", "echo $QUINE_DEPTH", 0)
+	result := b.Execute("tool-env-1", "echo $QUINE_DEPTH")
 	if result.IsError {
 		t.Fatalf("command failed:\n%s", result.Content)
 	}
@@ -285,7 +358,7 @@ func TestEnvPropagationViash(t *testing.T) {
 	// Each ./quine child process generates its own unique session ID
 	// via config.Load(), ensuring multiple children spawned from one
 	// sh command don't collide on the same tape file.
-	result2 := b.Execute("tool-env-2", "echo \"SESSION_ID=${QUINE_SESSION_ID:-unset}\"", 0)
+	result2 := b.Execute("tool-env-2", "echo \"SESSION_ID=${QUINE_SESSION_ID:-unset}\"")
 	if result2.IsError {
 		t.Fatalf("command failed:\n%s", result2.Content)
 	}
@@ -317,14 +390,14 @@ func TestChildEnvDepthIncrement(t *testing.T) {
 
 	// Build a ShExecutor with the child env and verify QUINE_DEPTH
 	b := &ShExecutor{
-		Shell:          "/bin/sh",
-		DefaultTimeout: 10 * time.Second,
-		MaxOutput:      20480,
-		ShellInit:      shellInit,
-		Env:            MergeEnv(os.Environ(), childEnv),
+		Shell:     "/bin/sh",
+		MaxOutput: 20480,
+		ShellInit: shellInit,
+		Env:       MergeEnv(os.Environ(), childEnv),
 	}
+	defer b.Close()
 
-	result := b.Execute("tool-depth", "echo $QUINE_DEPTH", 0)
+	result := b.Execute("tool-depth", "echo $QUINE_DEPTH")
 	if result.IsError {
 		t.Fatalf("command failed:\n%s", result.Content)
 	}
@@ -333,7 +406,7 @@ func TestChildEnvDepthIncrement(t *testing.T) {
 	}
 
 	// Verify QUINE_PARENT_SESSION is set to the parent's session ID
-	result2 := b.Execute("tool-parent", "echo $QUINE_PARENT_SESSION", 0)
+	result2 := b.Execute("tool-parent", "echo $QUINE_PARENT_SESSION")
 	if result2.IsError {
 		t.Fatalf("command failed:\n%s", result2.Content)
 	}
@@ -343,7 +416,7 @@ func TestChildEnvDepthIncrement(t *testing.T) {
 
 	// Verify QUINE_SESSION_ID is NOT set in the child env
 	// (each ./quine child generates its own via config.Load)
-	result3 := b.Execute("tool-session", "echo \"SID=${QUINE_SESSION_ID:-unset}\"", 0)
+	result3 := b.Execute("tool-session", "echo \"SID=${QUINE_SESSION_ID:-unset}\"")
 	if result3.IsError {
 		t.Fatalf("command failed:\n%s", result3.Content)
 	}
@@ -373,9 +446,10 @@ func TestNewshExecutorWithChildEnv(t *testing.T) {
 	}
 
 	b := NewShExecutor(cfg, childEnv)
+	defer b.Close()
 
 	// Verify QUINE_DEPTH is 2 (parent depth 1 + 1) in the executor's env
-	result := b.Execute("tool-ctor", "echo $QUINE_DEPTH", 0)
+	result := b.Execute("tool-ctor", "echo $QUINE_DEPTH")
 	if result.IsError {
 		t.Fatalf("command failed:\n%s", result.Content)
 	}
@@ -384,7 +458,7 @@ func TestNewshExecutorWithChildEnv(t *testing.T) {
 	}
 
 	// PATH should still work (system tools accessible)
-	result2 := b.Execute("tool-path", "which echo", 0)
+	result2 := b.Execute("tool-path", "which echo")
 	if result2.IsError {
 		t.Fatalf("'which echo' failed — PATH not propagated:\n%s", result2.Content)
 	}
