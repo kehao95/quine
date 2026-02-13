@@ -226,10 +226,10 @@ To validate this, we gave the agent a single mission: *"Output a binary that is 
 
 The constraints were designed to isolate the System Prompt as the sole source of architectural knowledge:
 
-1.  **DNA Available:** The agent's System Prompt (~2000 words) describes the Quine architecture in full: the Quad-Channel Protocol (stdin/stdout/stderr/argv), the tool interface (sh, read, fork, exec, exit), the thermodynamic model (turns as energy, context as entropy), and the mortality conditions.
+1.  **DNA Available:** The agent's System Prompt (~2000 words) describes the Quine architecture in full: the Quad-Channel Protocol (stdin/stdout/stderr/argv), the tool interface (sh, fork, exec, exit), the thermodynamic model (turns as energy, context as entropy), and the mortality conditions.
 2.  **Body Available (but opaque):** The agent's own compiled binary (`./quine`, 8.8MB Mach-O arm64) was present in the workspace--but as a binary blob, not source code.
 3.  **No External Knowledge:** No Go source files, no documentation, no internet access.
-4.  **Binary Output Required:** The deliverable must be an executable binary written to stdout via `sh(stdout: true)`.
+4.  **Binary Output Required:** The deliverable must be an executable binary written to stdout via `>&3` in an `sh` command.
 
 The experiment creates a precise information-theoretic question: **Is the System Prompt a sufficient specification to reconstruct a working runtime?**
 
@@ -296,7 +296,7 @@ timeout 30 ./q "What is 2+2? Reply with just the number."
 # → 4
 ```
 
-**Phase 5 — Binary Output (Turn 10):** Having verified the offspring, the agent used `sh(stdout: true)` to emit the raw binary to stdout, then called `exit(success)`.
+**Phase 5 — Binary Output (Turn 10):** Having verified the offspring, the agent used `cat /tmp/quine-build/q >&3` to emit the raw binary to stdout, then called `exit(success)`.
 
 ### 3. Structural Analysis: What Was Preserved, What Was Shed
 
@@ -305,13 +305,13 @@ The generated binary reveals, by its structure, what the architecture's **fixed 
 | Component | Original (8.8 MB) | Offspring (5.4 MB) | Structural Role |
 |-----------|-------------------|-------------------|-----------------|
 | `callAPI()` → LLM inference | ✓ | ✓ | **The Cognitive Core** |
-| `executeShell()` → Tool dispatch | ✓ (5 tools) | ✓ (sh only) | **The Effector** |
+| `executeShell()` → Tool dispatch | ✓ (4 tools) | ✓ (sh only) | **The Effector** |
 | Turn loop with tool result feedback | ✓ | ✓ | **The Sensorimotor Cycle** |
 | `argv` → mission, `stdout` → output | ✓ | ✓ | **The I/O Contract** |
 | `QUINE_MODEL_ID` from env | ✓ | ✓ | **Environmental Adaptation** |
 | JSONL tape logging | ✓ | ✗ | Observability (accidental) |
 | Multi-provider support | ✓ | ✗ | Portability (accidental) |
-| fork/exec/read tools | ✓ | ✗ | Recursion (accidental for minimal viability) |
+| fork/exec tools | ✓ | ✗ | Recursion (accidental for minimal viability) |
 | Signal handling, depth tracking | ✓ | ✗ | Infrastructure (accidental) |
 
 The offspring is not a copy--it is a **distillation**. It preserves the `while(true) { perceive → think → act }` loop and discards everything else. This empirically identifies the architecture's fixed point: **an LLM wired to tools in a feedback loop, reading its mission from argv and writing its output to stdout.**

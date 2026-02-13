@@ -26,8 +26,8 @@ Quine enforces a **Quad-Channel Protocol** to decouple Intent, Data, Execution, 
 | Channel | Stream | Content | Consumer |
 | :--- | :--- | :--- | :--- |
 | **Intent** | `argv` | Instructions / Prompt (Text) | `quine` Runtime (System Prompt) |
-| **Material** | `stdin` | Data Stream (Bytes) | Agent (via `/dev/stdin`) |
-| **Deliverable** | `stdout` | Pure Output (Bytes) | Downstream Process (`\|`) |
+| **Material** | `stdin` | Data Stream (Bytes) | Agent (via `cat /dev/stdin` in `sh`) |
+| **Deliverable** | `stdout` | Pure Output (Bytes, via `>&3`) | Downstream Process (`\|`) |
 | **Signal** | `stderr` | Failure Gradient (Post-Mortem) | Parent Process / Supervisor |
 | **Audit** | `Tape` | Full Event Log (JSONL) | Human / UI / Debugger (Forensics) |
 
@@ -37,14 +37,24 @@ The Agent has four specialized tools, mapping directly to POSIX primitives:
 
 | Tool | Purpose | POSIX Equivalent | Use Case |
 | :--- | :--- | :--- | :--- |
-| **`sh`** | Execute command | `system()` | Interacting with the OS (File I/O, Network) |
+| **`sh`** | Execute command | `system()` | Interacting with the OS (File I/O, Network, stdin/stdout) |
 | **`fork`** | Horizontal Scaling | `fork()` + `exec()` | Exploration (Spawns Child with **Cloned Context** + New Intent) |
 | **`exec`** | Vertical Scaling | `exec()` | Detox (Replaces Self with **Empty Context** + New Intent) |
 | **`exit`** | Terminate | `exit()` | Judgment / Completion |
 
-### 2.2 Stdout Passthrough (`sh` with `stdout: true`)
+### 2.2 The fd 3 Stdout Mechanism
 
-By default, `sh` captures the child command's stdout into the tool result. Setting `stdout: true` wires the child's stdout directly to the process's fd 1, enabling binary output without context pollution.
+Each `sh` command spawns an isolated shell process. The child process has access to:
+
+*   **fd 0 (stdin):** The process's real stdin, wired via `cmd.Stdin`. The agent reads piped input data with `cat /dev/stdin`.
+*   **fd 1 (stdout):** Captured into a buffer. The content appears in the tool result for the agent's context window.
+*   **fd 2 (stderr):** Captured into a buffer. Also appears in the tool result.
+*   **fd 3 (real stdout):** The process's real stdout, passed via `cmd.ExtraFiles[0]`. The agent writes deliverables with `echo "result" >&3` or `cat file.txt >&3`.
+
+This separation serves two purposes:
+
+1.  **Context Visibility:** Regular command output (fd 1) is captured and returned to the agent, so it can observe what happened.
+2.  **Output Purity:** Deliverables written to fd 3 flow directly to the parent process's stdout without polluting the context window. This enables binary output, large file streaming, and pipeline composition.
 
 ## 3. Process Management
 
@@ -72,7 +82,7 @@ Used for **Vertical Scaling** and **Context Detox**.
     3.  **Tape is Reset** (Empty file).
     4.  **Context is Reset** (Zero Entropy).
     5.  `context` arg is injected to bootstrap the new instance.
-*   **Continuity:** Inherits file descriptors (including `stdin` cursor position).
+*   **Continuity:** Inherits file descriptors (stdin remains available to the new process image).
 *   **Use Case:** "I have finished processing this chunk. Reincarnate me with a clean brain (but keep the wisdom) to process the next chunk."
 
 ### 3.3 Session Lineage

@@ -228,6 +228,78 @@ git checkout main
 
 ---
 
+## Ad-hoc Testing Quine
+
+For quick one-off testing (not formal experiments), build and run quine directly.
+
+### Build
+
+```bash
+go build -o /tmp/quine ./cmd/quine/
+```
+
+### Run Patterns
+
+```bash
+# Load API credentials first
+source .env.kimi   # or .env.claude
+
+# Text stdin → stdout
+echo "hello world" | QUINE_MAX_TURNS=5 /tmp/quine 'Read stdin, echo it to >&3' \
+  2>/tmp/test-stderr.txt > /tmp/test-stdout.txt
+
+# Binary stdin → stdout (stream mode)
+cat input.bin | QUINE_MAX_TURNS=5 /tmp/quine 'cat /dev/stdin >&3' \
+  2>/tmp/test-stderr.txt > /tmp/test-output.bin
+
+# Binary stdin → stdout (-b flag, save-to-file mode)
+cat input.bin | QUINE_MAX_TURNS=5 /tmp/quine -b 'cat the binary file path to >&3' \
+  2>/tmp/test-stderr.txt > /tmp/test-output.bin
+
+# No stdin (TTY mode)
+/tmp/quine 'printf "\x89PNG" >&3' < /dev/null \
+  2>/tmp/test-stderr.txt > /tmp/test-output.bin
+```
+
+Useful env overrides: `QUINE_MAX_TURNS=5`, `QUINE_SH_TIMEOUT=30`.
+
+### Verifying Output
+
+```bash
+# Text
+cat /tmp/test-stdout.txt
+
+# Binary integrity
+md5 /tmp/test-output.bin
+diff input.bin /tmp/test-output.bin && echo "IDENTICAL"
+xxd /tmp/test-output.bin | head
+```
+
+### Reading Logs
+
+Logs default to `.quine/` in the working directory. Each session produces two files:
+
+- **`<session-id>.log`** — Human-readable summary: mission, material, reasoning, tool calls, outcome.
+- **`<session-id>.jsonl`** — Full tape: every message (system, user, assistant, tool_result) plus meta and outcome records.
+
+```bash
+# Find the most recent session
+ls -lt .quine/*.log | head -3
+
+# Read the log (quick overview)
+cat .quine/<session-id>.log
+
+# Read the tape (full detail, structured JSON)
+cat .quine/<session-id>.jsonl | python3 -m json.tool --no-ensure-ascii
+```
+
+**What to look for in logs:**
+- `material:` line — confirms which stdin mode was used (`"Begin."` / `"Input is piped..."` / `"User sent a binary file at ..."`)
+- `tool_result` with `[STDOUT]\n\n` (empty) — confirms data went to fd 3, not fd 1
+- `turn_count` and `tokens` in outcome — efficiency check
+
+---
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
