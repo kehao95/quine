@@ -77,9 +77,10 @@ func main() {
 	}
 
 	// Handle stdin:
-	// - TTY (no pipe): material = "Begin.", stdinReader = nil
-	// - Piped data: requires --stdin-mode flag to specify handling
-	material, stdinReader, err := handleStdin(cfg, mode)
+	// - TTY (no pipe): material = "Begin."
+	// - Piped text: material tells agent stdin is available via /dev/stdin
+	// - Piped binary (-b): material references saved file
+	material, err := handleStdin(cfg, mode)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "quine: reading stdin: %v\n", err)
 		os.Exit(2)
@@ -91,62 +92,52 @@ func main() {
 		os.Exit(1)
 	}
 
-	exitCode := rt.Run(mission, material, stdinReader)
+	exitCode := rt.Run(mission, material)
 	os.Exit(exitCode)
 }
 
-// handleStdin determines how to handle stdin and returns:
-//   - material: the initial User Message content
-//   - stdinReader: io.Reader for streaming (nil if no stdin pipe or binary mode)
-//   - error: if handling fails
+// handleStdin determines how to handle stdin and returns the initial User
+// Message content (material).
 //
 // The mode parameter controls behavior:
-//   - stdinModeText: treat stdin as text, enable streaming (default)
-//   - stdinModeBinary: treat stdin as binary, save to file (-b flag)
+//   - stdinModeText: tell the agent that stdin data is available via /dev/stdin
+//   - stdinModeBinary: read all stdin and save to a file (-b flag)
 //
-// When stdin is TTY (no pipe): material="Begin.", reader=nil (mode ignored)
-func handleStdin(cfg *config.Config, mode stdinMode) (material string, stdinReader io.Reader, err error) {
+// When stdin is TTY (no pipe): material="Begin." (mode ignored)
+func handleStdin(cfg *config.Config, mode stdinMode) (material string, err error) {
 	stat, err := os.Stdin.Stat()
 	if err != nil {
-		return "", nil, fmt.Errorf("stat stdin: %w", err)
+		return "", fmt.Errorf("stat stdin: %w", err)
 	}
 
 	// TTY (no piped data) — no mode needed
 	if (stat.Mode() & os.ModeCharDevice) != 0 {
-		return "Begin.", nil, nil
+		return "Begin.", nil
 	}
 
 	// Stdin is piped
 	if mode == stdinModeText {
-		// If resuming after exec and stdin is seekable, seek to the saved position
-		// This handles the case where bufio had pre-read data that we need to re-read
-		if cfg.StdinOffset > 0 {
-			_, err := os.Stdin.Seek(cfg.StdinOffset, io.SeekStart)
-			if err != nil {
-				// Seek failed (probably a pipe) — this is expected for pipes
-				// For pipes, exec preserves the position but loses bufio's buffer
-				// The countingReader tracks what's been pulled from the kernel
-			}
-		}
-		return "Streaming input available. Use the `read` tool to read lines from stdin. Read until EOF.", os.Stdin, nil
+		// The agent can read stdin directly via sh commands (e.g., cat /dev/stdin).
+		// Real stdin is wired to sh subprocesses via cmd.Stdin.
+		return "Input is piped to stdin. Read it with `cat /dev/stdin` or similar sh commands.", nil
 	}
 
 	// Binary mode: read all and save to file
 	allData, err := io.ReadAll(os.Stdin)
 	if err != nil {
-		return "", nil, fmt.Errorf("read binary stdin: %w", err)
+		return "", fmt.Errorf("read binary stdin: %w", err)
 	}
 	if len(allData) == 0 {
-		return "Begin.", nil, nil
+		return "Begin.", nil
 	}
 
 	os.MkdirAll(cfg.DataDir, 0o755)
 	binaryPath := filepath.Join(cfg.DataDir, fmt.Sprintf("stdin-%s.bin", cfg.SessionID))
 	if err := os.WriteFile(binaryPath, allData, 0o644); err != nil {
-		return "", nil, fmt.Errorf("write binary stdin: %w", err)
+		return "", fmt.Errorf("write binary stdin: %w", err)
 	}
 
-	return fmt.Sprintf("User sent a binary file at %s", binaryPath), nil, nil
+	return fmt.Sprintf("User sent a binary file at %s", binaryPath), nil
 }
 
 // depthFromEnv reads QUINE_DEPTH from environment for error reporting.

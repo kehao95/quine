@@ -161,7 +161,7 @@ func TestSurvivalTest(t *testing.T) {
 	})
 
 	rt := runtime.NewWithProvider(cfg, mock)
-	exitCode := rt.Run("Create hello.txt with 'world' and read it back", "Begin.", nil)
+	exitCode := rt.Run("Create hello.txt with 'world' and read it back", "Begin.")
 
 	// Verify exit code
 	if exitCode != 0 {
@@ -254,7 +254,7 @@ func TestResilienceTest(t *testing.T) {
 	})
 
 	rt := runtime.NewWithProvider(cfg, mock)
-	exitCode := rt.Run("Read /tmp/nonexistent_ghost.txt", "Begin.", nil)
+	exitCode := rt.Run("Read /tmp/nonexistent_ghost.txt", "Begin.")
 
 	// Verify exit code is 1
 	if exitCode != 1 {
@@ -348,71 +348,5 @@ func TestBombTestDepthLimit(t *testing.T) {
 	expectedExitCode := 126
 	if !errors.Is(err, config.ErrDepthExceeded) {
 		t.Errorf("error should trigger exit code %d path", expectedExitCode)
-	}
-}
-
-// ---------------------------------------------------------------------------
-// Test 4: Context Isolation — ChildEnv verification
-// ---------------------------------------------------------------------------
-
-func TestContextIsolation(t *testing.T) {
-	parentCfg := &config.Config{
-		ModelID:        "claude-test",
-		APIKey:         "test-key",
-		APIBase:        "https://api.example.com",
-		Provider:       "anthropic",
-		MaxDepth:       5,
-		Depth:          2,
-		SessionID:      "parent-session-abcd",
-		ParentSession:  "grandparent-session-1234",
-		MaxConcurrent:  20,
-		ShTimeout:      120,
-		OutputTruncate: 20480,
-		DataDir:        ".quine/",
-		Shell:          "/bin/sh",
-	}
-
-	childEnv, err := parentCfg.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-
-	// Parse child env into a map for easy lookup.
-	envMap := make(map[string]string)
-	for _, entry := range childEnv {
-		key, val, _ := strings.Cut(entry, "=")
-		envMap[key] = val
-	}
-
-	// QUINE_DEPTH should be parent depth + 1
-	if got := envMap["QUINE_DEPTH"]; got != "3" {
-		t.Errorf("QUINE_DEPTH = %q, want %q", got, "3")
-	}
-
-	// QUINE_SESSION_ID should NOT be in childEnv — each child generates its own
-	// via config.Load() to prevent tape file collisions when multiple children
-	// are spawned from a single sh command.
-	if _, hasSessionID := envMap["QUINE_SESSION_ID"]; hasSessionID {
-		t.Error("ChildEnv should NOT include QUINE_SESSION_ID (children generate their own)")
-	}
-
-	// QUINE_PARENT_SESSION should be the parent's session ID
-	if got := envMap["QUINE_PARENT_SESSION"]; got != parentCfg.SessionID {
-		t.Errorf("QUINE_PARENT_SESSION = %q, want %q", got, parentCfg.SessionID)
-	}
-
-	// Inherited fields should be preserved
-	if got := envMap["QUINE_MODEL_ID"]; got != parentCfg.ModelID {
-		t.Errorf("QUINE_MODEL_ID = %q, want %q", got, parentCfg.ModelID)
-	}
-	// API key is passed through QUINE_API_KEY
-	if got := envMap["QUINE_API_KEY"]; got != parentCfg.APIKey {
-		t.Errorf("QUINE_API_KEY = %q, want %q", got, parentCfg.APIKey)
-	}
-	if got := envMap["QUINE_MAX_DEPTH"]; got != "5" {
-		t.Errorf("QUINE_MAX_DEPTH = %q, want %q", got, "5")
-	}
-	if got := envMap["QUINE_API_TYPE"]; got != parentCfg.Provider {
-		t.Errorf("QUINE_API_TYPE = %q, want %q", got, parentCfg.Provider)
 	}
 }

@@ -29,11 +29,9 @@ type Config struct {
 	DataDir        string            // QUINE_DATA_DIR (default ".quine/")
 	Shell          string            // QUINE_SHELL (default "/bin/sh")
 	MaxTurns       int               // QUINE_MAX_TURNS (default 20, 0 = unlimited)
-	MaxReadLines   int               // QUINE_MAX_READ_LINES (default 500)
 	ContextWindow  int               // QUINE_CONTEXT_WINDOW (default 128000)
 	Wisdom         map[string]string // QUINE_WISDOM_* env vars (key without prefix -> value)
 	OriginalIntent string            // QUINE_ORIGINAL_INTENT (preserved across exec for mission continuity)
-	StdinOffset    int64             // QUINE_STDIN_OFFSET (preserved across exec for stdin position continuity)
 }
 
 // APIModelID returns the model ID to use in API calls.
@@ -118,11 +116,6 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	c.MaxReadLines, err = envInt("QUINE_MAX_READ_LINES", 500)
-	if err != nil {
-		return nil, err
-	}
-
 	// --- Depth check ---
 	if c.Depth >= c.MaxDepth {
 		return nil, ErrDepthExceeded
@@ -155,9 +148,6 @@ func Load() (*Config, error) {
 	// --- Original Intent (preserved across exec for mission continuity) ---
 	c.OriginalIntent = os.Getenv("QUINE_ORIGINAL_INTENT")
 
-	// --- Stdin Offset (preserved across exec for stdin position continuity) ---
-	c.StdinOffset, _ = envInt64("QUINE_STDIN_OFFSET", 0)
-
 	return c, nil
 }
 
@@ -179,7 +169,6 @@ func (c *Config) baseEnv(depth int, parentSession string) []string {
 		"QUINE_DATA_DIR=" + c.DataDir,
 		"QUINE_SHELL=" + c.Shell,
 		"QUINE_MAX_TURNS=" + strconv.Itoa(c.MaxTurns),
-		"QUINE_MAX_READ_LINES=" + strconv.Itoa(c.MaxReadLines),
 		"QUINE_CONTEXT_WINDOW=" + strconv.Itoa(c.ContextWindow),
 	}
 
@@ -210,16 +199,14 @@ func (c *Config) ChildEnv() ([]string, error) {
 //   - DEPTH is NOT incremented (fresh context = restart)
 //   - PARENT_SESSION tracks lineage to the pre-exec session
 //   - ORIGINAL_INTENT is set to preserve the mission
-//   - STDIN_OFFSET preserves the position in the input stream
 //   - All QUINE_WISDOM_* vars are preserved (learned insights survive)
 //
 // Note: QUINE_SESSION_ID is intentionally NOT included. The new process
 // generates its own unique session ID via config.Load().
-func (c *Config) ExecEnv(originalIntent string, stdinOffset int64) ([]string, error) {
+func (c *Config) ExecEnv(originalIntent string) ([]string, error) {
 	env := c.baseEnv(0, c.SessionID)
 	env = append(env,
 		"QUINE_ORIGINAL_INTENT="+originalIntent,
-		"QUINE_STDIN_OFFSET="+strconv.FormatInt(stdinOffset, 10),
 	)
 	return env, nil
 }
@@ -231,19 +218,6 @@ func envInt(key string, def int) (int, error) {
 		return def, nil
 	}
 	n, err := strconv.Atoi(v)
-	if err != nil {
-		return 0, fmt.Errorf("parsing %s=%q: %w", key, v, err)
-	}
-	return n, nil
-}
-
-// envInt64 reads an environment variable as int64, returning def if unset.
-func envInt64(key string, def int64) (int64, error) {
-	v := os.Getenv(key)
-	if v == "" {
-		return def, nil
-	}
-	n, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("parsing %s=%q: %w", key, v, err)
 	}

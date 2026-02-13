@@ -66,10 +66,6 @@ type ExecExecutor struct {
 
 	// OriginalIntent is the original input from stdin that must be preserved.
 	OriginalIntent string
-
-	// StdinOffset is a function that returns the current stdin position.
-	// This is called just before exec to capture the position for the new process.
-	StdinOffset func() int64
 }
 
 // NewExecExecutor creates an ExecExecutor from config.
@@ -96,20 +92,11 @@ func NewExecExecutor(cfg *config.Config, originalIntent string) *ExecExecutor {
 //   - New wisdom from the exec call merged in (overwrites existing keys)
 //   - QUINE_PARENT_SESSION set for lineage tracking
 //   - QUINE_DEPTH reset to 0 (fresh brain, not deeper recursion)
-//   - QUINE_STDIN_OFFSET set to preserve position in stdin stream
 //
 // Returns a ToolResult only on failure (exec syscall failed).
 func (e *ExecExecutor) Execute(toolID string, req ExecRequest) tape.ToolResult {
-	// Get current stdin offset if available
-	var stdinOffset int64
-	if e.StdinOffset != nil {
-		stdinOffset = e.StdinOffset()
-	}
-
 	// Build environment for the new process
-	// Note: We do NOT pass QUINE_ORIGINAL_INTENT via env anymore,
-	// the mission is passed via argv (the original startup argv)
-	execEnv, err := e.Cfg.ExecEnv(e.OriginalIntent, stdinOffset)
+	execEnv, err := e.Cfg.ExecEnv(e.OriginalIntent)
 	if err != nil {
 		return tape.ToolResult{
 			ToolID:  toolID,

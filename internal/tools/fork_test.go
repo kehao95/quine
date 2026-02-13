@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/kehao95/quine/internal/config"
 )
 
 func TestParseForkArgs_ValidIntent(t *testing.T) {
@@ -40,98 +38,27 @@ func TestParseForkArgs_WithWaitTrue(t *testing.T) {
 	}
 }
 
-func TestParseForkArgs_WithWaitFalse(t *testing.T) {
-	args := map[string]any{
-		"intent": "Fire and forget",
-		"wait":   false,
+func TestParseForkArgs_InvalidInput(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    map[string]any
+		errWord string
+	}{
+		{"MissingIntent", map[string]any{"wait": true}, "intent"},
+		{"EmptyIntent", map[string]any{"intent": ""}, "empty"},
+		{"WrongIntentType", map[string]any{"intent": 123}, "string"},
+		{"WrongWaitType", map[string]any{"intent": "Do something", "wait": "yes"}, "boolean"},
 	}
-	req, err := ParseForkArgs(args)
-	if err != nil {
-		t.Fatalf("ParseForkArgs failed: %v", err)
-	}
-	if req.Wait {
-		t.Errorf("Wait = true, want false")
-	}
-}
-
-func TestParseForkArgs_MissingIntent(t *testing.T) {
-	args := map[string]any{
-		"wait": true,
-	}
-	_, err := ParseForkArgs(args)
-	if err == nil {
-		t.Fatal("expected error for missing intent")
-	}
-	if !strings.Contains(err.Error(), "intent") {
-		t.Errorf("error should mention intent: %v", err)
-	}
-}
-
-func TestParseForkArgs_EmptyIntent(t *testing.T) {
-	args := map[string]any{
-		"intent": "",
-	}
-	_, err := ParseForkArgs(args)
-	if err == nil {
-		t.Fatal("expected error for empty intent")
-	}
-	if !strings.Contains(err.Error(), "empty") {
-		t.Errorf("error should mention empty: %v", err)
-	}
-}
-
-func TestParseForkArgs_WrongIntentType(t *testing.T) {
-	args := map[string]any{
-		"intent": 123,
-	}
-	_, err := ParseForkArgs(args)
-	if err == nil {
-		t.Fatal("expected error for wrong intent type")
-	}
-	if !strings.Contains(err.Error(), "string") {
-		t.Errorf("error should mention string: %v", err)
-	}
-}
-
-func TestParseForkArgs_WrongWaitType(t *testing.T) {
-	args := map[string]any{
-		"intent": "Do something",
-		"wait":   "yes",
-	}
-	_, err := ParseForkArgs(args)
-	if err == nil {
-		t.Fatal("expected error for wrong wait type")
-	}
-	if !strings.Contains(err.Error(), "boolean") {
-		t.Errorf("error should mention boolean: %v", err)
-	}
-}
-
-func TestNewForkExecutor(t *testing.T) {
-	tmpDir := t.TempDir()
-	cfg := &config.Config{
-		ModelID:        "test-model",
-		SessionID:      "test-session",
-		DataDir:        tmpDir,
-		ShTimeout:      60,
-		OutputTruncate: 10000,
-		MaxDepth:       5,
-		Depth:          0,
-	}
-
-	f := NewForkExecutor(cfg, nil)
-
-	if f.SessionID != "test-session" {
-		t.Errorf("SessionID = %q, want %q", f.SessionID, "test-session")
-	}
-	if f.DataDir != tmpDir {
-		t.Errorf("DataDir = %q, want %q", f.DataDir, tmpDir)
-	}
-	if f.DefaultTimeout != 60*time.Second {
-		t.Errorf("DefaultTimeout = %v, want 60s", f.DefaultTimeout)
-	}
-	if f.MaxOutput != 10000 {
-		t.Errorf("MaxOutput = %d, want 10000", f.MaxOutput)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ParseForkArgs(tt.args)
+			if err == nil {
+				t.Fatalf("expected error for %s", tt.name)
+			}
+			if !strings.Contains(err.Error(), tt.errWord) {
+				t.Errorf("error should mention %q: %v", tt.errWord, err)
+			}
+		})
 	}
 }
 

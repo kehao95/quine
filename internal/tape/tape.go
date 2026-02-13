@@ -24,11 +24,12 @@ type ToolCall struct {
 
 // Message is a single turn in the conversation tape.
 type Message struct {
-	Role      Role       `json:"role"`
-	Content   string     `json:"content"`
-	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
-	ToolID    string     `json:"tool_id,omitempty"`
-	Timestamp int64      `json:"timestamp"`
+	Role             Role       `json:"role"`
+	Content          string     `json:"content"`
+	ReasoningContent string     `json:"reasoning_content,omitempty"`
+	ToolCalls        []ToolCall `json:"tool_calls,omitempty"`
+	ToolID           string     `json:"tool_id,omitempty"`
+	Timestamp        int64      `json:"timestamp"`
 }
 
 // TerminationMode describes how a session ended.

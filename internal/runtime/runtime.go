@@ -3,7 +3,6 @@ package runtime
 import (
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -22,7 +21,6 @@ type Runtime struct {
 	cfg        *config.Config
 	provider   llm.Provider
 	sh         *tools.ShExecutor
-	read       *tools.ReadExecutor
 	fork       *tools.ForkExecutor
 	exec       *tools.ExecExecutor
 	tape       *tape.Tape
@@ -106,8 +104,9 @@ func newRuntime(cfg *config.Config, provider llm.Provider) *Runtime {
 		logFile:   logFile,
 	}
 
-	// Wire the process's real stdout to the sh executor so that
-	// passthrough mode can deliver binary output directly.
+	// Wire the process's real stdin/stdout to the sh executor so that
+	// commands can read from /dev/stdin and write to /dev/stdout.
+	r.sh.Stdin = os.Stdin
 	r.sh.Stdout = r.stdout
 
 	// Wire process tracking callbacks so SIGINT can be forwarded to
@@ -229,35 +228,12 @@ func (r *Runtime) gracefulShutdown(exitCode int) {
 // Parameters:
 //   - mission: The task/goal from argv (goes into system prompt)
 //   - material: The initial user message (describes input mode)
-//   - stdinReader: Optional io.Reader for streaming input (nil if no stdin pipe)
-func (r *Runtime) Run(mission, material string, stdinReader io.Reader) int {
+func (r *Runtime) Run(mission, material string) int {
 	r.startTime = time.Now()
 	r.originalInput = mission
 
 	// Initialize exec executor now that we have the original input
 	r.exec = tools.NewExecExecutor(r.cfg, mission)
-
-	// Initialize read executor if stdin streaming is available
-	if stdinReader != nil {
-		// Use offset-aware constructor if resuming after exec
-		if r.cfg.StdinOffset > 0 {
-			r.read = tools.NewReadExecutorWithOffset(stdinReader, 60*time.Second, r.cfg.StdinOffset)
-		} else {
-			r.read = tools.NewReadExecutor(stdinReader, 60*time.Second)
-		}
-		// Apply configured max lines limit
-		if r.cfg.MaxReadLines > 0 {
-			r.read.MaxLines = r.cfg.MaxReadLines
-		}
-
-		// Wire stdin offset callback to exec executor
-		r.exec.StdinOffset = func() int64 {
-			if r.read != nil {
-				return r.read.BytesConsumed()
-			}
-			return 0
-		}
-	}
 
 	// Close the operational log file when Run exits.
 	if r.logFile != nil {
@@ -344,6 +320,10 @@ func (r *Runtime) Run(mission, material string, stdinReader io.Reader) int {
 		r.tape.Append(assistantMsg)
 		r.writeTapeEntry(tape.MessageEntry(assistantMsg))
 
+		// Log assistant's reasoning if present (truncated to avoid log bloat)
+		if assistantMsg.ReasoningContent != "" {
+			r.log("turn %d: reasoning: %s", r.tape.TurnCount, truncateStr(assistantMsg.ReasoningContent, 500))
+		}
 		// Log assistant's text response if present (truncated to avoid log bloat)
 		if assistantMsg.Content != "" {
 			r.log("turn %d: assistant: %s", r.tape.TurnCount, truncateStr(assistantMsg.Content, 2000))
@@ -397,9 +377,6 @@ func (r *Runtime) Run(mission, material string, stdinReader io.Reader) int {
 					r.writeTapeEntry(r.tape.OutcomeEntry())
 					return 1
 				}
-
-			case "read":
-				r.handleRead(tc)
 
 			case "fork":
 				r.handleFork(tc)
@@ -508,26 +485,12 @@ func (r *Runtime) handleSh(tc tape.ToolCall) bool {
 		}
 	}
 
-	// Extract optional stdout passthrough flag.
-	// When true, the command's stdout is wired directly to the process's
-	// real stdout — enabling binary output without context pollution.
-	passthrough := false
-	if v, ok := tc.Arguments["stdout"]; ok {
-		if vb, ok := v.(bool); ok {
-			passthrough = vb
-		}
-	}
-
 	// Log the call
 	argSummary := truncateStr(command, 60)
-	if passthrough {
-		r.log("turn %d: assistant called %s(\"%s\", stdout=passthrough)", turnNum, "sh", argSummary)
-	} else {
-		r.log("turn %d: assistant called %s(\"%s\")", turnNum, "sh", argSummary)
-	}
+	r.log("turn %d: assistant called %s(\"%s\")", turnNum, "sh", argSummary)
 
 	// Execute
-	result := r.sh.Execute(tc.ID, command, timeout, passthrough)
+	result := r.sh.Execute(tc.ID, command, timeout)
 
 	// Log completion
 	r.log("turn %d: sh completed (exit=%d, %d bytes)", turnNum, exitCodeFromResult(result), len(result.Content))
@@ -545,55 +508,6 @@ func (r *Runtime) handleSh(tc tape.ToolCall) bool {
 		return true // Signal to terminate
 	}
 	return false
-}
-
-// handleRead processes a read tool call and appends the result to the tape.
-func (r *Runtime) handleRead(tc tape.ToolCall) {
-	turnNum := r.tape.TurnCount
-
-	// Check if streaming input is available
-	if r.read == nil {
-		errMsg := tape.Message{
-			Role:    tape.RoleToolResult,
-			Content: "[READ ERROR] No streaming input available. The read tool only works when stdin is piped.",
-			ToolID:  tc.ID,
-		}
-		r.tape.Append(errMsg)
-		r.writeTapeEntry(tape.MessageEntry(errMsg))
-		r.log("turn %d: read rejected - no stdin stream", turnNum)
-		return
-	}
-
-	// Parse read arguments
-	readReq, err := tools.ParseReadArgs(tc.Arguments)
-	if err != nil {
-		r.log("turn %d: read parse error: %v", turnNum, err)
-		errMsg := tape.Message{
-			Role:    tape.RoleToolResult,
-			Content: fmt.Sprintf("[READ ERROR] %v", err),
-			ToolID:  tc.ID,
-		}
-		r.tape.Append(errMsg)
-		r.writeTapeEntry(tape.MessageEntry(errMsg))
-		return
-	}
-
-	// Log the call
-	r.log("turn %d: assistant called read(lines=%d, timeout=%d)", turnNum, readReq.Lines, readReq.Timeout)
-
-	// Execute
-	result := r.read.Execute(tc.ID, readReq)
-
-	// Log completion
-	r.log("turn %d: read completed (eof=%v)", turnNum, r.read.EOF())
-
-	// Append tool result to tape
-	r.tape.Append(tape.Message{
-		Role:    tape.RoleToolResult,
-		Content: result.Content,
-		ToolID:  result.ToolID,
-	})
-	r.writeTapeEntry(tape.ToolResultEntry(result))
 }
 
 // handleFork processes a fork tool call and appends the result to the tape.

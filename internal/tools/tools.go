@@ -41,9 +41,8 @@ type ShExecutor struct {
 	// via sh can read from this to access the data stream (Material channel).
 	Stdin *os.File
 
-	// Stdout is the process's real stdout file descriptor. When a command
-	// is executed with passthrough=true, the child's stdout is wired directly
-	// to this file instead of being captured — enabling binary output.
+	// Stdout is the process's real stdout file descriptor. Commands can
+	// write to /dev/stdout to deliver output directly to the parent process.
 	Stdout *os.File
 
 	// ProcessStarted is called when a child process starts. The caller can
@@ -125,22 +124,17 @@ func MergeEnv(osEnv []string, childEnv []string) []string {
 
 // Execute runs a shell command and returns a ToolResult.
 //
-// When passthrough is true and the command succeeds (exit code 0), stdout is
-// flushed to the process's real stdout (b.Stdout). This enables binary output
-// that flows from the child command to the parent's fd 1 without string
-// conversion, truncation, or context pollution.
-//
-// IMPORTANT: stdout is always captured first into a buffer. Only on success
-// is it flushed to real stdout. This prevents partial output on failure —
-// e.g., if a shell command outputs some content before encountering a syntax
-// error, that partial output won't pollute the real stdout.
+// The child process inherits the parent's real stdin and stdout file
+// descriptors so that commands can read from /dev/stdin and write to
+// /dev/stdout directly. Command stdout is still captured into the tool
+// result for context.
 //
 // QUINE_SESSION_ID is intentionally NOT set in the child environment.
 // Each child ./quine process generates its own unique session ID via
 // config.Load(). This is necessary because a single sh command can
 // spawn multiple ./quine children (e.g. via & backgrounding), and each
 // must write to its own tape file.
-func (b *ShExecutor) Execute(toolID string, command string, timeout int, passthrough bool) tape.ToolResult {
+func (b *ShExecutor) Execute(toolID string, command string, timeout int) tape.ToolResult {
 	// Determine effective timeout: use the smaller of the provided timeout
 	// and DefaultTimeout. If timeout arg is 0, use DefaultTimeout.
 	effectiveTimeout := b.DefaultTimeout
@@ -176,6 +170,14 @@ func (b *ShExecutor) Execute(toolID string, command string, timeout int, passthr
 	// This allows commands like `cat` or `./quine` to read the data stream.
 	if b.Stdin != nil {
 		cmd.Stdin = b.Stdin
+	}
+
+	// Pass the process's real stdout as an extra file descriptor (fd 3).
+	// The child can write deliverables to >&3 (or /dev/fd/3), which flows
+	// to the parent's stdout. Regular command stdout (fd 1) is still
+	// captured to the buffer for the tool result.
+	if b.Stdout != nil {
+		cmd.ExtraFiles = []*os.File{b.Stdout}
 	}
 
 	var stdoutBuf bytes.Buffer
@@ -216,25 +218,8 @@ func (b *ShExecutor) Execute(toolID string, command string, timeout int, passthr
 
 	stderr := b.truncate(stderrBuf.Bytes())
 
-	var content string
-	if passthrough && b.Stdout != nil {
-		// Passthrough mode: only flush to real stdout if command succeeded.
-		// This prevents partial output on failure (e.g., shell quoting errors
-		// that output some content before failing).
-		if exitCode == 0 {
-			b.Stdout.Write(stdoutBuf.Bytes())
-			content = fmt.Sprintf("[EXIT CODE] %d\n[STDOUT] (passthrough)\n[STDERR]\n%s", exitCode, stderr)
-		} else {
-			// Command failed — report the captured output in the tool result
-			// instead of sending to real stdout. This allows the agent to see
-			// what went wrong and retry with a different approach.
-			stdout := b.truncate(stdoutBuf.Bytes())
-			content = fmt.Sprintf("[EXIT CODE] %d\n[STDOUT]\n%s\n[STDERR]\n%s", exitCode, stdout, stderr)
-		}
-	} else {
-		stdout := b.truncate(stdoutBuf.Bytes())
-		content = fmt.Sprintf("[EXIT CODE] %d\n[STDOUT]\n%s\n[STDERR]\n%s", exitCode, stdout, stderr)
-	}
+	stdout := b.truncate(stdoutBuf.Bytes())
+	content := fmt.Sprintf("[EXIT CODE] %d\n[STDOUT]\n%s\n[STDERR]\n%s", exitCode, stdout, stderr)
 
 	return tape.ToolResult{
 		ToolID:  toolID,

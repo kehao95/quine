@@ -24,10 +24,11 @@ type openaiRequest struct {
 }
 
 type openaiMessage struct {
-	Role       string           `json:"role"`
-	Content    string           `json:"content,omitempty"`
-	ToolCalls  []openaiToolCall `json:"tool_calls,omitempty"`
-	ToolCallID string           `json:"tool_call_id,omitempty"`
+	Role             string           `json:"role"`
+	Content          string           `json:"content,omitempty"`
+	ReasoningContent string           `json:"reasoning_content,omitempty"`
+	ToolCalls        []openaiToolCall `json:"tool_calls,omitempty"`
+	ToolCallID       string           `json:"tool_call_id,omitempty"`
 }
 
 type openaiToolCall struct {
@@ -66,9 +67,10 @@ type openaiChoice struct {
 }
 
 type openaiResponseMessage struct {
-	Role      string           `json:"role"`
-	Content   string           `json:"content"`
-	ToolCalls []openaiToolCall `json:"tool_calls,omitempty"`
+	Role             string           `json:"role"`
+	Content          string           `json:"content"`
+	ReasoningContent string           `json:"reasoning_content,omitempty"`
+	ToolCalls        []openaiToolCall `json:"tool_calls,omitempty"`
 }
 
 type openaiError struct {
@@ -162,8 +164,9 @@ func convertOpenAIMessages(msgs []tape.Message) []openaiMessage {
 
 		case tape.RoleAssistant:
 			msg := openaiMessage{
-				Role:    "assistant",
-				Content: m.Content,
+				Role:             "assistant",
+				Content:          m.Content,
+				ReasoningContent: m.ReasoningContent,
 			}
 			for _, tc := range m.ToolCalls {
 				argsJSON, _ := json.Marshal(tc.Arguments)
@@ -238,9 +241,10 @@ func parseOpenAIResponse(resp openaiResponse) tape.Message {
 	}
 
 	return tape.Message{
-		Role:      tape.RoleAssistant,
-		Content:   choice.Message.Content,
-		ToolCalls: toolCalls,
-		Timestamp: time.Now().UnixMilli(),
+		Role:             tape.RoleAssistant,
+		Content:          choice.Message.Content,
+		ReasoningContent: choice.Message.ReasoningContent,
+		ToolCalls:        toolCalls,
+		Timestamp:        time.Now().UnixMilli(),
 	}
 }

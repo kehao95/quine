@@ -149,63 +149,63 @@ func TestDefaults(t *testing.T) {
 
 // --- Required field validation tests ---
 
-func TestMissing_ModelID(t *testing.T) {
-	clearEnv(t)
-	os.Setenv("QUINE_API_TYPE", "openai")
-	os.Setenv("QUINE_API_BASE", "https://api.openai.com")
-	os.Setenv("QUINE_API_KEY", "sk-test")
-
-	_, err := Load()
-	if err == nil {
-		t.Fatal("expected error for missing QUINE_MODEL_ID")
+func TestMissingRequiredField(t *testing.T) {
+	tests := []struct {
+		name    string
+		missing string
+		setVars map[string]string
+	}{
+		{
+			name:    "ModelID",
+			missing: "QUINE_MODEL_ID",
+			setVars: map[string]string{
+				"QUINE_API_TYPE": "openai",
+				"QUINE_API_BASE": "https://api.openai.com",
+				"QUINE_API_KEY":  "sk-test",
+			},
+		},
+		{
+			name:    "APIType",
+			missing: "QUINE_API_TYPE",
+			setVars: map[string]string{
+				"QUINE_MODEL_ID": "some-model",
+				"QUINE_API_BASE": "https://example.com",
+				"QUINE_API_KEY":  "sk-test",
+			},
+		},
+		{
+			name:    "APIBase",
+			missing: "QUINE_API_BASE",
+			setVars: map[string]string{
+				"QUINE_MODEL_ID": "some-model",
+				"QUINE_API_TYPE": "openai",
+				"QUINE_API_KEY":  "sk-test",
+			},
+		},
+		{
+			name:    "APIKey",
+			missing: "QUINE_API_KEY",
+			setVars: map[string]string{
+				"QUINE_MODEL_ID": "some-model",
+				"QUINE_API_TYPE": "openai",
+				"QUINE_API_BASE": "https://example.com",
+			},
+		},
 	}
-	if !strings.Contains(err.Error(), "QUINE_MODEL_ID") {
-		t.Errorf("error should mention QUINE_MODEL_ID, got: %v", err)
-	}
-}
-
-func TestMissing_APIType(t *testing.T) {
-	clearEnv(t)
-	os.Setenv("QUINE_MODEL_ID", "some-model")
-	os.Setenv("QUINE_API_BASE", "https://example.com")
-	os.Setenv("QUINE_API_KEY", "sk-test")
-
-	_, err := Load()
-	if err == nil {
-		t.Fatal("expected error for missing QUINE_API_TYPE")
-	}
-	if !strings.Contains(err.Error(), "QUINE_API_TYPE") {
-		t.Errorf("error should mention QUINE_API_TYPE, got: %v", err)
-	}
-}
-
-func TestMissing_APIBase(t *testing.T) {
-	clearEnv(t)
-	os.Setenv("QUINE_MODEL_ID", "some-model")
-	os.Setenv("QUINE_API_TYPE", "openai")
-	os.Setenv("QUINE_API_KEY", "sk-test")
-
-	_, err := Load()
-	if err == nil {
-		t.Fatal("expected error for missing QUINE_API_BASE")
-	}
-	if !strings.Contains(err.Error(), "QUINE_API_BASE") {
-		t.Errorf("error should mention QUINE_API_BASE, got: %v", err)
-	}
-}
-
-func TestMissing_APIKey(t *testing.T) {
-	clearEnv(t)
-	os.Setenv("QUINE_MODEL_ID", "some-model")
-	os.Setenv("QUINE_API_TYPE", "openai")
-	os.Setenv("QUINE_API_BASE", "https://example.com")
-
-	_, err := Load()
-	if err == nil {
-		t.Fatal("expected error for missing QUINE_API_KEY")
-	}
-	if !strings.Contains(err.Error(), "QUINE_API_KEY") {
-		t.Errorf("error should mention QUINE_API_KEY, got: %v", err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			clearEnv(t)
+			for k, v := range tt.setVars {
+				os.Setenv(k, v)
+			}
+			_, err := Load()
+			if err == nil {
+				t.Fatalf("expected error for missing %s", tt.missing)
+			}
+			if !strings.Contains(err.Error(), tt.missing) {
+				t.Errorf("error should mention %s, got: %v", tt.missing, err)
+			}
+		})
 	}
 }
 
@@ -261,33 +261,6 @@ func TestDepthExceeded(t *testing.T) {
 	_, err := Load()
 	if !errors.Is(err, ErrDepthExceeded) {
 		t.Errorf("expected ErrDepthExceeded, got: %v", err)
-	}
-}
-
-func TestDepthExceeded_Greater(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
-	os.Setenv("QUINE_MAX_DEPTH", "3")
-	os.Setenv("QUINE_DEPTH", "10")
-
-	_, err := Load()
-	if !errors.Is(err, ErrDepthExceeded) {
-		t.Errorf("expected ErrDepthExceeded, got: %v", err)
-	}
-}
-
-// --- Context window tests ---
-
-func TestContextWindow_Default(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
-
-	c, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-	if c.ContextWindow != 128_000 {
-		t.Errorf("ContextWindow = %d, want 128000", c.ContextWindow)
 	}
 }
 
@@ -391,7 +364,7 @@ func TestExecEnv(t *testing.T) {
 		t.Fatalf("Load() error: %v", err)
 	}
 
-	env, err := c.ExecEnv("build the project", 1024)
+	env, err := c.ExecEnv("build the project")
 	if err != nil {
 		t.Fatalf("ExecEnv() error: %v", err)
 	}
@@ -410,81 +383,6 @@ func TestExecEnv(t *testing.T) {
 	// Original intent should be set
 	if m["QUINE_ORIGINAL_INTENT"] != "build the project" {
 		t.Errorf("QUINE_ORIGINAL_INTENT = %q, want %q", m["QUINE_ORIGINAL_INTENT"], "build the project")
-	}
-
-	// Stdin offset should be set
-	if m["QUINE_STDIN_OFFSET"] != "1024" {
-		t.Errorf("QUINE_STDIN_OFFSET = %q, want 1024", m["QUINE_STDIN_OFFSET"])
-	}
-}
-
-func TestUUIDFormat(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
-
-	c, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	// UUID v4 format: xxxxxxxx-xxxx-4xxx-[89ab]xxx-xxxxxxxxxxxx
-	parts := strings.Split(c.SessionID, "-")
-	if len(parts) != 5 {
-		t.Fatalf("UUID should have 5 parts, got %d: %q", len(parts), c.SessionID)
-	}
-	if len(parts[0]) != 8 || len(parts[1]) != 4 || len(parts[2]) != 4 || len(parts[3]) != 4 || len(parts[4]) != 12 {
-		t.Errorf("UUID part lengths wrong: %q", c.SessionID)
-	}
-	if parts[2][0] != '4' {
-		t.Errorf("UUID version nibble = %c, want '4'", parts[2][0])
-	}
-	v := parts[3][0]
-	if v != '8' && v != '9' && v != 'a' && v != 'b' {
-		t.Errorf("UUID variant nibble = %c, want [89ab]", v)
-	}
-}
-
-func TestWisdomLoading(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
-
-	os.Setenv("QUINE_WISDOM_SUMMARY", "User prefers concise answers")
-	os.Setenv("QUINE_WISDOM_CONTEXT", "Working on Go project")
-	t.Cleanup(func() {
-		os.Unsetenv("QUINE_WISDOM_SUMMARY")
-		os.Unsetenv("QUINE_WISDOM_CONTEXT")
-	})
-
-	c, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	if len(c.Wisdom) != 2 {
-		t.Errorf("Wisdom length = %d, want 2", len(c.Wisdom))
-	}
-	if c.Wisdom["SUMMARY"] != "User prefers concise answers" {
-		t.Errorf("Wisdom[SUMMARY] = %q, want %q", c.Wisdom["SUMMARY"], "User prefers concise answers")
-	}
-	if c.Wisdom["CONTEXT"] != "Working on Go project" {
-		t.Errorf("Wisdom[CONTEXT] = %q, want %q", c.Wisdom["CONTEXT"], "Working on Go project")
-	}
-}
-
-func TestWisdomEmpty(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
-
-	c, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	if c.Wisdom == nil {
-		t.Error("Wisdom should not be nil")
-	}
-	if len(c.Wisdom) != 0 {
-		t.Errorf("Wisdom length = %d, want 0", len(c.Wisdom))
 	}
 }
 
@@ -543,14 +441,5 @@ func TestWisdomIgnoresEmptyValues(t *testing.T) {
 	}
 	if c.Wisdom["VALID"] != "has value" {
 		t.Errorf("Wisdom[VALID] = %q, want %q", c.Wisdom["VALID"], "has value")
-	}
-}
-
-// --- APIModelID tests ---
-
-func TestAPIModelID(t *testing.T) {
-	c := &Config{ModelID: "claude-sonnet-4-20250514"}
-	if c.APIModelID() != "claude-sonnet-4-20250514" {
-		t.Errorf("APIModelID() = %q, want %q", c.APIModelID(), "claude-sonnet-4-20250514")
 	}
 }

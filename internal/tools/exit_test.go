@@ -57,72 +57,43 @@ func TestParseExitArgs_Progress(t *testing.T) {
 	}
 }
 
-func TestParseExitArgs_StatusOnly(t *testing.T) {
-	args := map[string]any{
-		"status": "success",
+func TestParseExitArgs_InvalidInput(t *testing.T) {
+	tests := []struct {
+		name string
+		args map[string]any
+	}{
+		{"MissingStatus", map[string]any{"stderr": "error"}},
+		{"InvalidStatusType", map[string]any{"status": true}},
+		{"InvalidStatusValue", map[string]any{"status": "partial"}},
 	}
-	req, err := ParseExitArgs(args)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if req.Status != StatusSuccess {
-		t.Errorf("Status = %q, want %q", req.Status, StatusSuccess)
-	}
-	if req.Stderr != "" {
-		t.Errorf("Stderr = %q, want empty", req.Stderr)
-	}
-}
-
-func TestParseExitArgs_MissingStatus(t *testing.T) {
-	args := map[string]any{
-		"stderr": "error",
-	}
-	_, err := ParseExitArgs(args)
-	if err == nil {
-		t.Fatal("expected error for missing status, got nil")
-	}
-}
-
-func TestParseExitArgs_InvalidStatusType(t *testing.T) {
-	args := map[string]any{
-		"status": true, // bool, not string
-	}
-	_, err := ParseExitArgs(args)
-	if err == nil {
-		t.Fatal("expected error for invalid status type, got nil")
-	}
-}
-
-func TestParseExitArgs_InvalidStatusValue(t *testing.T) {
-	args := map[string]any{
-		"status": "partial", // not in enum
-	}
-	_, err := ParseExitArgs(args)
-	if err == nil {
-		t.Fatal("expected error for invalid status value, got nil")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ParseExitArgs(tt.args)
+			if err == nil {
+				t.Fatalf("expected error for %s, got nil", tt.name)
+			}
+		})
 	}
 }
 
 // --- ExitCode tests ---
 
-func TestExitCode_Success(t *testing.T) {
-	req := ExitRequest{Status: StatusSuccess}
-	if req.ExitCode() != 0 {
-		t.Errorf("ExitCode() = %d, want 0", req.ExitCode())
+func TestExitCode(t *testing.T) {
+	tests := []struct {
+		status string
+		want   int
+	}{
+		{StatusSuccess, 0},
+		{StatusFailure, 1},
+		{StatusProgress, 2},
 	}
-}
-
-func TestExitCode_Failure(t *testing.T) {
-	req := ExitRequest{Status: StatusFailure, Stderr: "reason"}
-	if req.ExitCode() != 1 {
-		t.Errorf("ExitCode() = %d, want 1", req.ExitCode())
-	}
-}
-
-func TestExitCode_Progress(t *testing.T) {
-	req := ExitRequest{Status: StatusProgress, Stderr: "reason"}
-	if req.ExitCode() != 2 {
-		t.Errorf("ExitCode() = %d, want 2", req.ExitCode())
+	for _, tt := range tests {
+		t.Run(tt.status, func(t *testing.T) {
+			req := ExitRequest{Status: tt.status, Stderr: "reason"}
+			if got := req.ExitCode(); got != tt.want {
+				t.Errorf("ExitCode() = %d, want %d", got, tt.want)
+			}
+		})
 	}
 }
 
