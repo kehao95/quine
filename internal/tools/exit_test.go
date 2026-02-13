@@ -40,20 +40,14 @@ func TestParseExitArgs_Failure(t *testing.T) {
 	}
 }
 
-func TestParseExitArgs_Progress(t *testing.T) {
+func TestParseExitArgs_ProgressRejected(t *testing.T) {
 	args := map[string]any{
 		"status": "progress",
 		"stderr": "context window running low",
 	}
-	req, err := ParseExitArgs(args)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if req.Status != StatusProgress {
-		t.Errorf("Status = %q, want %q", req.Status, StatusProgress)
-	}
-	if req.Stderr != "context window running low" {
-		t.Errorf("Stderr = %q, want %q", req.Stderr, "context window running low")
+	_, err := ParseExitArgs(args)
+	if err == nil {
+		t.Fatal("expected error for invalid status 'progress', got nil")
 	}
 }
 
@@ -85,7 +79,6 @@ func TestExitCode(t *testing.T) {
 	}{
 		{StatusSuccess, 0},
 		{StatusFailure, 1},
-		{StatusProgress, 2},
 	}
 	for _, tt := range tests {
 		t.Run(tt.status, func(t *testing.T) {
@@ -132,23 +125,5 @@ func TestValidate_FailureWithoutReason_Rejected(t *testing.T) {
 	}
 	if !errors.Is(err, ErrFailureWithoutReason) {
 		t.Errorf("expected ErrFailureWithoutReason, got: %v", err)
-	}
-}
-
-func TestValidate_ProgressWithStderr_OK(t *testing.T) {
-	req := ExitRequest{Status: StatusProgress, Stderr: "context window running low"}
-	if err := req.Validate(); err != nil {
-		t.Errorf("progress with stderr should be valid, got: %v", err)
-	}
-}
-
-func TestValidate_ProgressWithoutReason_Rejected(t *testing.T) {
-	req := ExitRequest{Status: StatusProgress}
-	err := req.Validate()
-	if err == nil {
-		t.Fatal("progress without reason should be rejected, got nil")
-	}
-	if !errors.Is(err, ErrProgressWithoutReason) {
-		t.Errorf("expected ErrProgressWithoutReason, got: %v", err)
 	}
 }

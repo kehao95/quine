@@ -46,7 +46,7 @@ func main() {
 		if errors.Is(err, config.ErrDepthExceeded) {
 			fmt.Fprintf(os.Stderr, "quine: max recursion depth exceeded (%d/%d)\n",
 				depthFromEnv(), maxDepthFromEnv())
-			os.Exit(126)
+			os.Exit(1)
 		}
 		fmt.Fprintf(os.Stderr, "quine: %v\n", err)
 		os.Exit(2)

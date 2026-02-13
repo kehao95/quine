@@ -7,9 +7,8 @@ import (
 
 // Exit status values.
 const (
-	StatusSuccess  = "success"
-	StatusFailure  = "failure"
-	StatusProgress = "progress"
+	StatusSuccess = "success"
+	StatusFailure = "failure"
 )
 
 // Validation errors for exit tool.
@@ -17,17 +16,12 @@ var (
 	// ErrSuccessWithStderr is returned when status="success" but stderr is set.
 	// Success means the task is done — there's nothing to explain.
 	ErrSuccessWithStderr = errors.New(
-		"success exit must not include stderr — stderr is only for failure/progress. " +
-			"If the task isn't fully done, use status=\"progress\"")
+		"success exit must not include stderr — stderr is only for failure. " +
+			"If the task failed, use status=\"failure\"")
 
 	// ErrFailureWithoutReason is returned when status="failure" but stderr is empty.
 	ErrFailureWithoutReason = errors.New(
 		"failure exit must include a reason in stderr")
-
-	// ErrProgressWithoutReason is returned when status="progress" but stderr is empty.
-	// Progress means "not done yet" — you must explain why.
-	ErrProgressWithoutReason = errors.New(
-		"progress exit must include stderr explaining why the task is incomplete")
 )
 
 // ExitRequest represents the parsed arguments from an exit tool call.
@@ -35,20 +29,17 @@ var (
 // via sh commands (e.g., echo "result" > /dev/stdout). This separation
 // ensures binary output is not polluted by text from exit.
 type ExitRequest struct {
-	Status string // "success", "failure", or "progress"
+	Status string // "success" or "failure"
 	Stderr string
 }
 
-// ExitCode maps the three-state status to a POSIX exit code:
-//   - success  → 0
-//   - failure  → 1
-//   - progress → 2
+// ExitCode maps the status to a POSIX exit code:
+//   - success → 0
+//   - failure → 1
 func (r ExitRequest) ExitCode() int {
 	switch r.Status {
 	case StatusSuccess:
 		return 0
-	case StatusProgress:
-		return 2
 	default:
 		return 1
 	}
@@ -58,7 +49,6 @@ func (r ExitRequest) ExitCode() int {
 //
 //	success:  stderr forbidden
 //	failure:  stderr required
-//	progress: stderr required
 func (r ExitRequest) Validate() error {
 	switch r.Status {
 	case StatusSuccess:
@@ -68,10 +58,6 @@ func (r ExitRequest) Validate() error {
 	case StatusFailure:
 		if r.Stderr == "" {
 			return ErrFailureWithoutReason
-		}
-	case StatusProgress:
-		if r.Stderr == "" {
-			return ErrProgressWithoutReason
 		}
 	}
 	return nil
@@ -91,11 +77,11 @@ func ParseExitArgs(args map[string]any) (ExitRequest, error) {
 	}
 
 	switch status {
-	case StatusSuccess, StatusFailure, StatusProgress:
+	case StatusSuccess, StatusFailure:
 		// valid
 	default:
-		return ExitRequest{}, fmt.Errorf("status must be one of %q, %q, %q; got %q",
-			StatusSuccess, StatusFailure, StatusProgress, status)
+		return ExitRequest{}, fmt.Errorf("status must be one of %q, %q; got %q",
+			StatusSuccess, StatusFailure, status)
 	}
 
 	req := ExitRequest{Status: status}

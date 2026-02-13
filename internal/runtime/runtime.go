@@ -160,9 +160,11 @@ func newRuntime(cfg *config.Config, provider llm.Provider) *Runtime {
 //     group (letting e.g. python handle Ctrl+C). If no tool is running, triggers
 //     graceful shutdown (same as SIGTERM).
 //   - SIGTERM: Flushes the Tape to disk and exits with code 143.
+//   - SIGPIPE: Downstream pipe closed. Flushes the Tape and exits with code 141.
+//   - SIGHUP: Terminal hangup. Flushes the Tape and exits with code 129.
 func (r *Runtime) setupSignalHandler() {
 	sigCh := make(chan os.Signal, 2)
-	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM, syscall.SIGALRM)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM, syscall.SIGALRM, syscall.SIGPIPE, syscall.SIGHUP)
 
 	go func() {
 		for sig := range sigCh {
@@ -185,6 +187,14 @@ func (r *Runtime) setupSignalHandler() {
 				r.log("SIGINT received, no active tool, shutting down")
 				r.gracefulShutdown(130) // 128 + 2
 
+			case syscall.SIGHUP:
+				r.log("SIGHUP received, terminal hangup")
+				r.gracefulShutdown(129) // 128 + 1
+
+			case syscall.SIGPIPE:
+				r.log("SIGPIPE received, downstream pipe closed")
+				r.gracefulShutdown(141) // 128 + 13
+
 			case syscall.SIGTERM:
 				r.log("SIGTERM received, shutting down")
 				r.gracefulShutdown(143) // 128 + 15
@@ -195,6 +205,12 @@ func (r *Runtime) setupSignalHandler() {
 
 // gracefulShutdown flushes the tape, closes the log file, and exits.
 func (r *Runtime) gracefulShutdown(exitCode int) {
+	// Kill active child process to prevent orphans.
+	// Use negative PID to kill the entire process group (children use Setpgid: true).
+	if proc := r.activeProcess.Load(); proc != nil {
+		_ = syscall.Kill(-proc.Pid, syscall.SIGKILL)
+	}
+
 	// Set session outcome if tape is initialized
 	if r.tape != nil {
 		duration := time.Since(r.startTime)
