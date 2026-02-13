@@ -1,12 +1,15 @@
 package tools
 
 import (
-	"bytes"
-	"context"
+	"bufio"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -14,7 +17,8 @@ import (
 	"github.com/kehao95/quine/internal/tape"
 )
 
-// shellInit defines helper shell functions that are prepended to every command.
+// shellInit defines helper shell functions that are run once when the
+// persistent shell starts.
 const shellInit = `
 write_file() {
     local path="$1"
@@ -29,27 +33,35 @@ read_file() {
 
 `
 
-// ShExecutor runs shell commands and returns structured results.
+// ShExecutor runs shell commands via a persistent /bin/sh process.
+// Commands are written to the shell's stdin pipe, and output is read
+// until a sentinel marker is detected.
 type ShExecutor struct {
-	Shell          string
-	DefaultTimeout time.Duration
-	MaxOutput      int
-	ShellInit      string   // Shell initialization script (helper functions)
-	Env            []string // Base environment variables (without QUINE_SESSION_ID)
+	Shell     string
+	MaxOutput int
+	ShellInit string   // Shell initialization script (helper functions)
+	Env       []string // Base environment variables (without QUINE_SESSION_ID)
 
-	// Stdin is the process's real stdin file descriptor. Commands executed
-	// via sh can read from this to access the data stream (Material channel).
+	// Stdin is the material stdin file descriptor. With the persistent shell,
+	// this is passed as fd 4 (ExtraFiles[1]) so the agent can read it via
+	// /dev/fd/4 or cat <&4.
 	Stdin *os.File
 
-	// Stdout is the process's real stdout file descriptor. Commands can
-	// write to /dev/stdout to deliver output directly to the parent process.
+	// Stdout is the deliverable stdout file descriptor. Passed as fd 3
+	// (ExtraFiles[0]) so commands can write to >&3.
 	Stdout *os.File
 
-	// ProcessStarted is called when a child process starts. The caller can
-	// use this to track the active process (e.g., for SIGINT forwarding).
-	// ProcessEnded is called when the process exits (or fails to start).
+	// ProcessStarted is called when the persistent shell starts.
 	ProcessStarted func(*os.Process)
-	ProcessEnded   func()
+	// ProcessEnded is called when the persistent shell exits.
+	ProcessEnded func()
+
+	// Persistent shell process
+	cmd        *exec.Cmd
+	stdinPipe  io.WriteCloser // Go writes commands here
+	stdoutPipe io.ReadCloser  // Go reads output+sentinel here
+	mu         sync.Mutex     // Serializes Execute() calls
+	started    bool
 }
 
 // NewShExecutor creates a ShExecutor from config with the given child
@@ -81,11 +93,10 @@ func NewShExecutor(cfg *config.Config, childEnv []string) *ShExecutor {
 	}
 
 	return &ShExecutor{
-		Shell:          cfg.Shell,
-		DefaultTimeout: time.Duration(cfg.ShTimeout) * time.Second,
-		MaxOutput:      cfg.OutputTruncate,
-		ShellInit:      shellInit,
-		Env:            MergeEnv(filteredOsEnv, filteredChildEnv),
+		Shell:     cfg.Shell,
+		MaxOutput: cfg.OutputTruncate,
+		ShellInit: shellInit,
+		Env:       MergeEnv(filteredOsEnv, filteredChildEnv),
 	}
 }
 
@@ -122,104 +133,279 @@ func MergeEnv(osEnv []string, childEnv []string) []string {
 	return result
 }
 
-// Execute runs a shell command and returns a ToolResult.
-//
-// The child process inherits the parent's real stdin and stdout file
-// descriptors so that commands can read from /dev/stdin and write to
-// /dev/stdout directly. Command stdout is still captured into the tool
-// result for context.
-//
-// QUINE_SESSION_ID is intentionally NOT set in the child environment.
-// Each child ./quine process generates its own unique session ID via
-// config.Load(). This is necessary because a single sh command can
-// spawn multiple ./quine children (e.g. via & backgrounding), and each
-// must write to its own tape file.
-func (b *ShExecutor) Execute(toolID string, command string, timeout int) tape.ToolResult {
-	// Determine effective timeout: use the smaller of the provided timeout
-	// and DefaultTimeout. If timeout arg is 0, use DefaultTimeout.
-	effectiveTimeout := b.DefaultTimeout
-	if timeout > 0 {
-		provided := time.Duration(timeout) * time.Second
-		if provided < effectiveTimeout {
-			effectiveTimeout = provided
-		}
+// generateNonce returns a random 16-character hex string for sentinel markers.
+func generateNonce() string {
+	var b [8]byte
+	rand.Read(b[:])
+	return hex.EncodeToString(b[:])
+}
+
+// Start spawns the persistent /bin/sh process. It is safe to call Start
+// multiple times; subsequent calls are no-ops if the shell is already running.
+func (b *ShExecutor) Start() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.startLocked()
+}
+
+// startLocked spawns the persistent shell. Caller must hold b.mu.
+func (b *ShExecutor) startLocked() error {
+	if b.started {
+		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), effectiveTimeout)
-	defer cancel()
+	shell := b.Shell
+	if shell == "" {
+		shell = "/bin/sh"
+	}
 
-	// Prepend shell init functions to the command.
-	fullCommand := b.ShellInit + command
+	b.cmd = exec.Command(shell)
 
-	cmd := exec.CommandContext(ctx, b.Shell, "-c", fullCommand)
-
-	// Set environment for child processes. This includes the full OS
-	// environment merged with QUINE_* overrides so that:
-	// - Regular commands (ls, cat, etc.) work because PATH etc. are present
-	// - Recursive ./quine invocations get incremented DEPTH, PARENT_SESSION, etc.
-	// - Non-quine commands simply ignore the QUINE_* vars
-	// Note: QUINE_SESSION_ID is absent — each ./quine generates its own.
+	// Set environment
 	if len(b.Env) > 0 {
-		cmd.Env = b.Env
+		b.cmd.Env = b.Env
 	}
 
-	// Ensure child processes are killed on timeout by using a process group.
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	// Process group for signal forwarding
+	b.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
-	// Connect the child's stdin to the process's real stdin (Material channel).
-	// This allows commands like `cat` or `./quine` to read the data stream.
-	if b.Stdin != nil {
-		cmd.Stdin = b.Stdin
-	}
-
-	// Pass the process's real stdout as an extra file descriptor (fd 3).
-	// The child can write deliverables to >&3 (or /dev/fd/3), which flows
-	// to the parent's stdout. Regular command stdout (fd 1) is still
-	// captured to the buffer for the tool result.
+	// Set up extra file descriptors:
+	// fd 3 = b.Stdout (deliverable stdout)
+	// fd 4 = b.Stdin  (material stdin)
+	var extraFiles []*os.File
 	if b.Stdout != nil {
-		cmd.ExtraFiles = []*os.File{b.Stdout}
+		extraFiles = append(extraFiles, b.Stdout)
+	}
+	if b.Stdin != nil {
+		extraFiles = append(extraFiles, b.Stdin)
+	}
+	if len(extraFiles) > 0 {
+		b.cmd.ExtraFiles = extraFiles
 	}
 
-	var stdoutBuf bytes.Buffer
-	var stderrBuf bytes.Buffer
+	// Shell stderr → discard (per-command stderr goes to temp files)
+	b.cmd.Stderr = io.Discard
 
-	// Always capture stdout first, even in passthrough mode.
-	// We only flush to real stdout on success to prevent partial output on failure.
-	cmd.Stdout = &stdoutBuf
-	cmd.Stderr = &stderrBuf
+	// Set up pipes for command I/O
+	var err error
+	b.stdinPipe, err = b.cmd.StdinPipe()
+	if err != nil {
+		return fmt.Errorf("creating stdin pipe: %w", err)
+	}
 
-	err := cmd.Start()
-	if err == nil {
-		// Notify caller that a child process is running.
-		if b.ProcessStarted != nil {
-			b.ProcessStarted(cmd.Process)
+	b.stdoutPipe, err = b.cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("creating stdout pipe: %w", err)
+	}
+
+	// Start the shell process
+	if err := b.cmd.Start(); err != nil {
+		return fmt.Errorf("starting shell: %w", err)
+	}
+
+	b.started = true
+
+	// Notify caller that the persistent shell is running
+	if b.ProcessStarted != nil {
+		b.ProcessStarted(b.cmd.Process)
+	}
+
+	// Run shellInit to define helper functions, consuming its output.
+	// We write the init script followed by a sentinel echo. The init
+	// script defines functions (which produce no output), so we just
+	// need to consume until the sentinel appears.
+	if b.ShellInit != "" {
+		initNonce := generateNonce()
+		sentinel := fmt.Sprintf("___QUINE_DONE_%s", initNonce)
+		// Write init commands directly (not wrapped in { }) since they
+		// contain function definitions with their own braces.
+		initCmd := b.ShellInit + fmt.Sprintf("\necho \"%s_0___\"\n", sentinel)
+		if _, err := io.WriteString(b.stdinPipe, initCmd); err != nil {
+			b.closeLocked()
+			return fmt.Errorf("writing shell init: %w", err)
 		}
-		err = cmd.Wait()
+
+		// Consume init output until sentinel
+		scanner := bufio.NewScanner(b.stdoutPipe)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.HasPrefix(line, sentinel+"_") && strings.HasSuffix(line, "___") {
+				break
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			b.closeLocked()
+			return fmt.Errorf("reading shell init output: %w", err)
+		}
 	}
 
-	// Notify caller that the child process has exited.
+	return nil
+}
+
+// Close shuts down the persistent shell process gracefully.
+func (b *ShExecutor) Close() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.closeLocked()
+}
+
+// closeLocked shuts down the persistent shell. Caller must hold b.mu.
+func (b *ShExecutor) closeLocked() error {
+	if !b.started {
+		return nil
+	}
+
+	b.started = false
+
+	// Close stdin pipe — shell will exit when it reads EOF
+	if b.stdinPipe != nil {
+		b.stdinPipe.Close()
+	}
+
+	// Wait for process to finish with a short deadline
+	done := make(chan error, 1)
+	go func() {
+		done <- b.cmd.Wait()
+	}()
+
+	select {
+	case <-done:
+		// Process exited cleanly
+	case <-time.After(2 * time.Second):
+		// Force kill the process group
+		if b.cmd.Process != nil {
+			_ = syscall.Kill(-b.cmd.Process.Pid, syscall.SIGKILL)
+		}
+		<-done // Wait for Wait() to return after kill
+	}
+
+	// Close stdout pipe
+	if b.stdoutPipe != nil {
+		b.stdoutPipe.Close()
+	}
+
+	// Notify caller that the persistent shell has exited
 	if b.ProcessEnded != nil {
 		b.ProcessEnded()
 	}
 
-	exitCode := 0
-	if err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			exitCode = exitErr.ExitCode()
-		} else {
-			// Context deadline exceeded or other error — send SIGKILL to
-			// the entire process group to clean up orphans.
-			if cmd.Process != nil {
-				_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+	return nil
+}
+
+// handleCrash cleans up after the persistent shell has crashed.
+// Caller must hold b.mu.
+func (b *ShExecutor) handleCrash() {
+	b.started = false
+
+	if b.stdinPipe != nil {
+		b.stdinPipe.Close()
+	}
+	if b.stdoutPipe != nil {
+		b.stdoutPipe.Close()
+	}
+	if b.cmd != nil && b.cmd.Process != nil {
+		_ = syscall.Kill(-b.cmd.Process.Pid, syscall.SIGKILL)
+		b.cmd.Wait()
+	}
+
+	// Notify caller that the shell died
+	if b.ProcessEnded != nil {
+		b.ProcessEnded()
+	}
+}
+
+// Execute runs a shell command in the persistent shell and returns a ToolResult.
+//
+// The persistent shell has these file descriptors:
+//   - fd 0 (stdin): pipe from Go (for receiving commands)
+//   - fd 1 (stdout): pipe to Go (for sending output + sentinel)
+//   - fd 3: deliverable stdout (b.Stdout, via ExtraFiles[0])
+//   - fd 4: material stdin (b.Stdin, via ExtraFiles[1])
+func (b *ShExecutor) Execute(toolID string, command string) tape.ToolResult {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	// Auto-start if not started (or if previously crashed)
+	if !b.started {
+		if err := b.startLocked(); err != nil {
+			return tape.ToolResult{
+				ToolID:  toolID,
+				Content: fmt.Sprintf("[SHELL ERROR] %v", err),
+				IsError: true,
 			}
-			exitCode = -1
 		}
 	}
 
-	stderr := b.truncate(stderrBuf.Bytes())
+	// Generate unique nonce for this command
+	nonce := generateNonce()
 
-	stdout := b.truncate(stdoutBuf.Bytes())
-	content := fmt.Sprintf("[EXIT CODE] %d\n[STDOUT]\n%s\n[STDERR]\n%s", exitCode, stdout, stderr)
+	// Build wrapped command:
+	// - Run the user's command in a brace group { ...; } so it executes in
+	//   the current shell context (cd, export, variables all persist)
+	// - Redirect stderr to a nonce-named temp file for clean capture
+	// - Echo a sentinel line with the exit code
+	//
+	// Risk: if the user command calls `exit N`, it kills the persistent shell.
+	// This is handled by crash recovery (handleCrash → auto-restart on next call).
+	// The system prompt instructs the agent not to use bare `exit` in sh commands.
+	stderrFile := fmt.Sprintf("/tmp/__quine_stderr_%s", nonce)
+	sentinel := fmt.Sprintf("___QUINE_DONE_%s", nonce)
+	wrappedCmd := fmt.Sprintf(
+		"{ %s\n} 2>\"%s\"; echo \"%s_${?}___\"\n",
+		command, stderrFile, sentinel,
+	)
+
+	// Write command to shell stdin
+	if _, err := io.WriteString(b.stdinPipe, wrappedCmd); err != nil {
+		// Shell probably died
+		b.handleCrash()
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: "[SHELL ERROR] Shell process died. State lost. Retrying on next call.",
+			IsError: true,
+		}
+	}
+
+	// Read stdout until sentinel
+	var stdout strings.Builder
+	scanner := bufio.NewScanner(b.stdoutPipe)
+	// Increase scanner buffer for large outputs (1MB max per line)
+	scanner.Buffer(make([]byte, 64*1024), 1024*1024)
+	exitCode := 0
+	foundSentinel := false
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		// Check if this line IS the sentinel: ___QUINE_DONE_{nonce}_{exitcode}___
+		if strings.HasPrefix(line, sentinel+"_") && strings.HasSuffix(line, "___") {
+			// Parse exit code
+			codeStr := line[len(sentinel)+1 : len(line)-3]
+			fmt.Sscanf(codeStr, "%d", &exitCode)
+			foundSentinel = true
+			break
+		}
+		stdout.WriteString(line)
+		stdout.WriteString("\n")
+	}
+
+	if !foundSentinel {
+		// EOF without sentinel — shell crashed
+		b.handleCrash()
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: "[SHELL ERROR] Shell process terminated unexpectedly. State lost.",
+			IsError: true,
+		}
+	}
+
+	// Read stderr from temp file
+	stderrBytes, _ := os.ReadFile(stderrFile)
+	os.Remove(stderrFile) // Clean up
+
+	// Truncate and format output
+	stdoutStr := b.truncate([]byte(stdout.String()))
+	stderrStr := b.truncate(stderrBytes)
+	content := fmt.Sprintf("[EXIT CODE] %d\n[STDOUT]\n%s\n[STDERR]\n%s", exitCode, stdoutStr, stderrStr)
 
 	return tape.ToolResult{
 		ToolID:  toolID,

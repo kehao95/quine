@@ -14,10 +14,6 @@ func ShToolSchema() llm.ToolSchema {
 					"type":        "string",
 					"description": "The shell command to execute",
 				},
-				"timeout": map[string]any{
-					"type":        "integer",
-					"description": "Optional timeout in seconds",
-				},
 			},
 			"required": []string{"command"},
 		},

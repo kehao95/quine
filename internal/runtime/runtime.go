@@ -228,6 +228,11 @@ func (r *Runtime) gracefulShutdown(exitCode int) {
 		}
 	}
 
+	// Close persistent shell before exit.
+	if r.sh != nil {
+		r.sh.Close()
+	}
+
 	// Close log file before exit (deferred close won't run after os.Exit).
 	if r.logFile != nil {
 		r.logFile.Close()
@@ -250,6 +255,9 @@ func (r *Runtime) Run(mission, material string) int {
 
 	// Initialize exec executor now that we have the original input
 	r.exec = tools.NewExecExecutor(r.cfg, mission)
+
+	// Close the persistent shell when Run exits.
+	defer r.sh.Close()
 
 	// Close the operational log file when Run exits.
 	if r.logFile != nil {
@@ -493,20 +501,12 @@ func (r *Runtime) handleSh(tc tape.ToolCall) bool {
 	// Extract command from arguments
 	command, _ := tc.Arguments["command"].(string)
 
-	// Extract optional timeout
-	timeout := 0
-	if t, ok := tc.Arguments["timeout"]; ok {
-		if tf, ok := t.(float64); ok {
-			timeout = int(tf)
-		}
-	}
-
 	// Log the call
 	argSummary := truncateStr(command, 60)
 	r.log("turn %d: assistant called %s(\"%s\")", turnNum, "sh", argSummary)
 
 	// Execute
-	result := r.sh.Execute(tc.ID, command, timeout)
+	result := r.sh.Execute(tc.ID, command)
 
 	// Log completion
 	r.log("turn %d: sh completed (exit=%d, %d bytes)", turnNum, exitCodeFromResult(result), len(result.Content))
@@ -679,13 +679,13 @@ func (r *Runtime) handleError(err error) int {
 	if errors.Is(err, llm.ErrAuth) {
 		r.logError("authentication failed: %v", err)
 		r.tape.SetOutcome(tape.SessionOutcome{
-			ExitCode:        2,
+			ExitCode:        1,
 			Stderr:          err.Error(),
 			DurationMs:      duration.Milliseconds(),
 			TerminationMode: tape.TermExit,
 		})
 		r.writeTapeEntry(r.tape.OutcomeEntry())
-		return 2
+		return 1
 	}
 
 	if errors.Is(err, llm.ErrContextOverflow) {
