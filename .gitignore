@@ -31,3 +31,4 @@ data
 # arXiv submission artifacts
 arxiv_submission
 arxiv_submission.tar.gz
+opencode.jsonc

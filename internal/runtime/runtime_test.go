@@ -91,7 +91,7 @@ func TestSimpleExit(t *testing.T) {
 	rt := NewWithProvider(cfg, mock)
 	silenceRuntime(rt)
 
-	exitCode := rt.Run("say hello", "Begin.", nil)
+	exitCode := rt.Run("say hello", "Begin.")
 
 	if exitCode != 0 {
 		t.Errorf("expected exit code 0, got %d", exitCode)
@@ -136,7 +136,7 @@ func TestShThenExit(t *testing.T) {
 	rt := NewWithProvider(cfg, mock)
 	silenceRuntime(rt)
 
-	exitCode := rt.Run("run echo hi then exit", "Begin.", nil)
+	exitCode := rt.Run("run echo hi then exit", "Begin.")
 
 	if exitCode != 0 {
 		t.Errorf("expected exit code 0, got %d", exitCode)
@@ -187,7 +187,7 @@ func TestTextOnlyResponseContinuesLoop(t *testing.T) {
 	rt := NewWithProvider(cfg, mock)
 	silenceRuntime(rt)
 
-	exitCode := rt.Run("do something", "Begin.", nil)
+	exitCode := rt.Run("do something", "Begin.")
 
 	if exitCode != 0 {
 		t.Errorf("expected exit code 0, got %d", exitCode)
@@ -229,7 +229,7 @@ func TestNonZeroExit(t *testing.T) {
 	rt.log = func(format string, args ...any) {}
 	rt.logError = func(format string, args ...any) {}
 
-	exitCode := rt.Run("fail please", "Begin.", nil)
+	exitCode := rt.Run("fail please", "Begin.")
 
 	w.Close()
 	buf := make([]byte, 4096)
@@ -254,7 +254,7 @@ func TestAuthError(t *testing.T) {
 	rt := NewWithProvider(cfg, provider)
 	silenceRuntime(rt)
 
-	exitCode := rt.Run("hello", "Begin.", nil)
+	exitCode := rt.Run("hello", "Begin.")
 
 	if exitCode != 2 {
 		t.Errorf("expected exit code 2 for auth error, got %d", exitCode)
@@ -268,7 +268,7 @@ func TestContextOverflowError(t *testing.T) {
 	rt := NewWithProvider(cfg, provider)
 	silenceRuntime(rt)
 
-	exitCode := rt.Run("hello", "Begin.", nil)
+	exitCode := rt.Run("hello", "Begin.")
 
 	if exitCode != 1 {
 		t.Errorf("expected exit code 1 for context overflow, got %d", exitCode)
@@ -333,7 +333,7 @@ func TestTurnLimitKillsProcess(t *testing.T) {
 	rt := NewWithProvider(cfg, mock)
 	silenceRuntime(rt)
 
-	exitCode := rt.Run("do something", "Begin.", nil)
+	exitCode := rt.Run("do something", "Begin.")
 
 	if exitCode != 1 {
 		t.Errorf("expected exit code 1 for turn exhaustion, got %d", exitCode)
@@ -392,7 +392,7 @@ func TestTurnLimitFeedbackMessages(t *testing.T) {
 	rt := NewWithProvider(cfg, mock)
 	silenceRuntime(rt)
 
-	exitCode := rt.Run("do something", "Begin.", nil)
+	exitCode := rt.Run("do something", "Begin.")
 	if exitCode != 0 {
 		t.Errorf("expected exit code 0, got %d", exitCode)
 	}
@@ -458,7 +458,7 @@ func TestTurnLimitZeroMeansUnlimited(t *testing.T) {
 	rt := NewWithProvider(cfg, mock)
 	silenceRuntime(rt)
 
-	exitCode := rt.Run("do something", "Begin.", nil)
+	exitCode := rt.Run("do something", "Begin.")
 	if exitCode != 0 {
 		t.Errorf("expected exit code 0, got %d", exitCode)
 	}
@@ -478,85 +478,6 @@ func TestTurnLimitZeroMeansUnlimited(t *testing.T) {
 	}
 	if !foundContext {
 		t.Error("expected [CONTEXT USED] in tool result even when MaxTurns=0")
-	}
-}
-
-func TestSignalHandlerSetup(t *testing.T) {
-	// Compilation test: verify that setupSignalHandler is callable on a Runtime.
-	// We don't actually send signals here — that is covered by integration tests (§11).
-	mock := &mockProvider{
-		responses: []tape.Message{
-			{
-				Role: tape.RoleAssistant,
-				ToolCalls: []tape.ToolCall{
-					{
-						ID:   "call_1",
-						Name: "exit",
-						Arguments: map[string]any{
-							"status": "success",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	cfg := testCfg(t)
-	rt := NewWithProvider(cfg, mock)
-	silenceRuntime(rt)
-
-	// Run exercises setupSignalHandler internally; if it panics the test fails.
-	exitCode := rt.Run("test signal handler setup", "Begin.", nil)
-	if exitCode != 0 {
-		t.Errorf("expected exit code 0, got %d", exitCode)
-	}
-}
-
-func TestSignalTerminationMode(t *testing.T) {
-	// Verify that TermSignal is correctly used in SessionOutcome construction.
-	tp := tape.NewTape("sig-test", "", 0, "test-model")
-	tp.AddUsage(500, 100)
-
-	outcome := tape.SessionOutcome{
-		ExitCode:        130,
-		Stderr:          "terminated by signal: interrupt",
-		DurationMs:      1234,
-		TerminationMode: tape.TermSignal,
-	}
-	tp.SetOutcome(outcome)
-
-	if tp.Outcome == nil {
-		t.Fatal("expected outcome to be set")
-	}
-	if tp.Outcome.TerminationMode != tape.TermSignal {
-		t.Errorf("expected termination mode %q, got %q",
-			tape.TermSignal, tp.Outcome.TerminationMode)
-	}
-	if tp.Outcome.ExitCode != 130 {
-		t.Errorf("expected exit code 130, got %d", tp.Outcome.ExitCode)
-	}
-	if tp.Outcome.TokensIn != 500 {
-		t.Errorf("expected tokens_in 500, got %d", tp.Outcome.TokensIn)
-	}
-	if tp.Outcome.TokensOut != 100 {
-		t.Errorf("expected tokens_out 100, got %d", tp.Outcome.TokensOut)
-	}
-
-	// Verify SIGTERM exit code convention
-	outcome143 := tape.SessionOutcome{
-		ExitCode:        143,
-		Stderr:          "terminated by signal: terminated",
-		DurationMs:      5678,
-		TerminationMode: tape.TermSignal,
-	}
-	tp.SetOutcome(outcome143)
-
-	if tp.Outcome.ExitCode != 143 {
-		t.Errorf("expected exit code 143 for SIGTERM, got %d", tp.Outcome.ExitCode)
-	}
-	if tp.Outcome.TerminationMode != tape.TermSignal {
-		t.Errorf("expected termination mode %q, got %q",
-			tape.TermSignal, tp.Outcome.TerminationMode)
 	}
 }
 
@@ -606,7 +527,7 @@ func TestFailureWithoutReasonIsRejected(t *testing.T) {
 	rt.log = func(format string, args ...any) {}
 	rt.logError = func(format string, args ...any) {}
 
-	exitCode := rt.Run("do something that fails", "Begin.", nil)
+	exitCode := rt.Run("do something that fails", "Begin.")
 
 	w.Close()
 	buf := make([]byte, 4096)
@@ -687,7 +608,7 @@ func TestSuccessWithStderrIsRejected(t *testing.T) {
 	rt.log = func(format string, args ...any) {}
 	rt.logError = func(format string, args ...any) {}
 
-	exitCode := rt.Run("task that incorrectly claims success", "Begin.", nil)
+	exitCode := rt.Run("task that incorrectly claims success", "Begin.")
 
 	w.Close()
 	buf := make([]byte, 4096)
@@ -753,7 +674,7 @@ func TestProgressExit(t *testing.T) {
 	rt.log = func(format string, args ...any) {}
 	rt.logError = func(format string, args ...any) {}
 
-	exitCode := rt.Run("find all needles", "Begin.", nil)
+	exitCode := rt.Run("find all needles", "Begin.")
 
 	wErr.Close()
 	errBuf := make([]byte, 4096)
@@ -818,7 +739,7 @@ func TestProgressWithoutReasonIsRejected(t *testing.T) {
 	rt.log = func(format string, args ...any) {}
 	rt.logError = func(format string, args ...any) {}
 
-	exitCode := rt.Run("task that partially completes", "Begin.", nil)
+	exitCode := rt.Run("task that partially completes", "Begin.")
 
 	wErr.Close()
 	errBuf := make([]byte, 4096)
@@ -884,7 +805,7 @@ func TestPanicModeInjectsOverrideMessage(t *testing.T) {
 	// Simulate SIGALRM: set panic mode before Run starts the loop
 	rt.panicMode.Store(true)
 
-	exitCode := rt.Run("some task", "Begin.", nil)
+	exitCode := rt.Run("some task", "Begin.")
 	if exitCode != 0 {
 		t.Errorf("expected exit code 0, got %d", exitCode)
 	}
@@ -944,7 +865,7 @@ func TestPanicModeRejectsNonExitToolCalls(t *testing.T) {
 	// Set panic mode
 	rt.panicMode.Store(true)
 
-	exitCode := rt.Run("some task", "Begin.", nil)
+	exitCode := rt.Run("some task", "Begin.")
 	if exitCode != 0 {
 		t.Errorf("expected exit code 0, got %d", exitCode)
 	}
@@ -999,7 +920,7 @@ func TestPanicModeAllowsExitToolCall(t *testing.T) {
 	rt.logError = func(format string, args ...any) {}
 
 	rt.panicMode.Store(true)
-	exitCode := rt.Run("task under time pressure", "Begin.", nil)
+	exitCode := rt.Run("task under time pressure", "Begin.")
 
 	wErr.Close()
 	errBuf := make([]byte, 4096)
@@ -1057,7 +978,7 @@ func TestProcessTrackingCallbacks(t *testing.T) {
 	rt := NewWithProvider(cfg, mock)
 	silenceRuntime(rt)
 
-	exitCode := rt.Run("test process tracking", "Begin.", nil)
+	exitCode := rt.Run("test process tracking", "Begin.")
 	if exitCode != 0 {
 		t.Errorf("expected exit code 0, got %d", exitCode)
 	}

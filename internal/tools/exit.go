@@ -31,9 +31,9 @@ var (
 )
 
 // ExitRequest represents the parsed arguments from an exit tool call.
-// Note: stdout is NOT included here. All stdout output must go through
-// sh with stdout:true (passthrough mode). This separation ensures binary
-// output is not polluted by text from exit.
+// Note: stdout is NOT included here. All stdout output should be written
+// via sh commands (e.g., echo "result" > /dev/stdout). This separation
+// ensures binary output is not polluted by text from exit.
 type ExitRequest struct {
 	Status string // "success", "failure", or "progress"
 	Stderr string

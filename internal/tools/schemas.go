@@ -18,10 +18,6 @@ func ShToolSchema() llm.ToolSchema {
 					"type":        "integer",
 					"description": "Optional timeout in seconds",
 				},
-				"stdout": map[string]any{
-					"type":        "boolean",
-					"description": "If true, pipe command stdout directly to the process stdout (passthrough). Use for delivering binary output or large artifacts. Command output will NOT appear in the tool result — it goes straight to the parent process.",
-				},
 			},
 			"required": []string{"command"},
 		},
@@ -84,38 +80,13 @@ func ExecToolSchema() llm.ToolSchema {
 	}
 }
 
-// ReadToolSchema returns the JSON Schema for the read tool.
-func ReadToolSchema() llm.ToolSchema {
-	return llm.ToolSchema{
-		Name: "read",
-		Description: "Read lines from stdin (streaming input). Use this to process input incrementally. " +
-			"Each call reads up to 500 lines (capped to prevent context overflow). " +
-			"Call repeatedly until EOF. If you see [TRUNCATED], more data is available — " +
-			"consider using exec with wisdom to reset context while preserving progress.",
-		Parameters: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"lines": map[string]any{
-					"type":        "integer",
-					"description": "Number of lines to read. Default 1. Set to 0 to read a batch (up to 500 lines). Capped at 500 per call.",
-				},
-				"timeout": map[string]any{
-					"type":        "integer",
-					"description": "Timeout in seconds for blocking read. Default is 60 seconds.",
-				},
-			},
-			"required": []string{},
-		},
-	}
-}
-
 // ExitToolSchema returns the JSON Schema for the exit tool.
 func ExitToolSchema() llm.ToolSchema {
 	return llm.ToolSchema{
 		Name: "exit",
 		Description: "Finish your work and terminate. " +
 			"Three modes: success (task complete), failure (task failed), progress (partial work done). " +
-			"NOTE: This tool does NOT output to stdout. All stdout must go through sh with stdout:true.",
+			"NOTE: This tool does NOT output to stdout. Use sh to write output to /dev/stdout.",
 		Parameters: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -138,7 +109,6 @@ func ExitToolSchema() llm.ToolSchema {
 func AllToolSchemas() []llm.ToolSchema {
 	return []llm.ToolSchema{
 		ShToolSchema(),
-		ReadToolSchema(),
 		ForkToolSchema(),
 		ExecToolSchema(),
 		ExitToolSchema(),
