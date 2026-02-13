@@ -15,10 +15,10 @@ var ErrDepthExceeded = errors.New("max recursion depth exceeded")
 // Config holds all runtime configuration for Quine.
 // Every field is populated from environment variables by Load().
 type Config struct {
-	ModelID        string            // QUINE_MODEL_ID (required) - model name for API calls
-	APIKey         string            // QUINE_API_KEY or auto-detected from OPENAI_API_KEY / ANTHROPIC_API_KEY
-	APIBase        string            // QUINE_API_BASE (optional override, auto-detected from model prefix)
-	Provider       string            // QUINE_API_TYPE or auto-detected: "openai" or "anthropic"
+	ModelID        string            // QUINE_MODEL_ID (required)
+	APIKey         string            // QUINE_API_KEY (required)
+	APIBase        string            // QUINE_API_BASE (required)
+	Provider       string            // QUINE_API_TYPE (required): "openai" or "anthropic"
 	MaxDepth       int               // QUINE_MAX_DEPTH (default 5)
 	Depth          int               // QUINE_DEPTH (default 0)
 	SessionID      string            // QUINE_SESSION_ID (default auto UUID v4)
@@ -30,7 +30,7 @@ type Config struct {
 	Shell          string            // QUINE_SHELL (default "/bin/sh")
 	MaxTurns       int               // QUINE_MAX_TURNS (default 20, 0 = unlimited)
 	MaxReadLines   int               // QUINE_MAX_READ_LINES (default 500)
-	ContextWindow  int               // QUINE_CONTEXT_WINDOW or auto-detected from model prefix
+	ContextWindow  int               // QUINE_CONTEXT_WINDOW (default 128000)
 	Wisdom         map[string]string // QUINE_WISDOM_* env vars (key without prefix -> value)
 	OriginalIntent string            // QUINE_ORIGINAL_INTENT (preserved across exec for mission continuity)
 	StdinOffset    int64             // QUINE_STDIN_OFFSET (preserved across exec for stdin position continuity)
@@ -41,128 +41,40 @@ func (c *Config) APIModelID() string {
 	return c.ModelID
 }
 
-// prefixEntry defines auto-detection rules for a known model prefix.
-type prefixEntry struct {
-	apiType       string // "openai" or "anthropic"
-	apiBase       string // default base URL
-	apiKeyEnv     string // environment variable for API key
-	contextWindow int    // default context window
-}
-
-// knownPrefixes maps model name prefixes to their default configuration.
-// When only QUINE_MODEL_ID is set, the model name is matched against these
-// prefixes (longest match wins) to auto-detect API type, base URL, and key.
-type knownPrefix struct {
-	prefix string
-	entry  prefixEntry
-}
-
-var knownPrefixes = []knownPrefix{
-	{"claude-", prefixEntry{apiType: "anthropic", apiBase: "https://api.anthropic.com", apiKeyEnv: "ANTHROPIC_API_KEY", contextWindow: 200_000}},
-	{"gpt-", prefixEntry{apiType: "openai", apiBase: "https://api.openai.com", apiKeyEnv: "OPENAI_API_KEY", contextWindow: 128_000}},
-	{"o1-", prefixEntry{apiType: "openai", apiBase: "https://api.openai.com", apiKeyEnv: "OPENAI_API_KEY", contextWindow: 200_000}},
-	{"o3-", prefixEntry{apiType: "openai", apiBase: "https://api.openai.com", apiKeyEnv: "OPENAI_API_KEY", contextWindow: 200_000}},
-	{"o4-", prefixEntry{apiType: "openai", apiBase: "https://api.openai.com", apiKeyEnv: "OPENAI_API_KEY", contextWindow: 200_000}},
-}
-
-// detectFromPrefix tries to auto-detect configuration from the model name.
-// Returns the matching prefixEntry and true if found, or zero value and false.
-func detectFromPrefix(model string) (prefixEntry, bool) {
-	for _, kp := range knownPrefixes {
-		if strings.HasPrefix(model, kp.prefix) {
-			return kp.entry, true
-		}
-	}
-	return prefixEntry{}, false
-}
-
 // Load reads all configuration from environment variables and returns
 // a validated Config. It returns an error if required variables are
 // missing or if depth is exceeded.
 //
-// Configuration uses a 4-field explicit model:
-//   - QUINE_MODEL_ID:   Model name (e.g. "claude-sonnet-4-5-20250929", "gpt-4o")
-//   - QUINE_API_TYPE:   Wire protocol: "openai" or "anthropic" (auto-detected from model prefix if unset)
-//   - QUINE_API_BASE:   API base URL (auto-detected from model prefix if unset)
-//   - QUINE_API_KEY:    API key (falls back to OPENAI_API_KEY or ANTHROPIC_API_KEY based on API type)
-//
-// For known model prefixes (claude-, gpt-, o1-, o3-, o4-), only QUINE_MODEL_ID
-// and the appropriate API key env var are required. Everything else is auto-detected.
-//
-// For custom/third-party providers (Moonshot, Together, Ollama, vLLM, etc.),
-// set all four explicitly.
+// Four variables are required:
+//   - QUINE_MODEL_ID:   Model name (e.g. "claude-sonnet-4-5-20250929", "gpt-4o", "kimi-k2.5")
+//   - QUINE_API_TYPE:   Wire protocol: "openai" or "anthropic"
+//   - QUINE_API_BASE:   API base URL (e.g. "https://api.anthropic.com", "https://api.openai.com")
+//   - QUINE_API_KEY:    API key
 func Load() (*Config, error) {
 	c := &Config{}
 
-	// --- Model ID (default: claude-sonnet-4-5-20250929) ---
+	// --- 4 required fields ---
 	c.ModelID = os.Getenv("QUINE_MODEL_ID")
 	if c.ModelID == "" {
-		c.ModelID = "claude-sonnet-4-5-20250929"
+		return nil, fmt.Errorf("QUINE_MODEL_ID is required")
 	}
-
-	// --- Resolve API type, base, and key ---
-	// Priority: explicit env vars > prefix auto-detection
 
 	c.Provider = os.Getenv("QUINE_API_TYPE")
-	c.APIBase = os.Getenv("QUINE_API_BASE")
-	c.APIKey = os.Getenv("QUINE_API_KEY")
-
-	// Try prefix-based auto-detection for any field not explicitly set
-	detected, found := detectFromPrefix(c.ModelID)
-	if found {
-		if c.Provider == "" {
-			c.Provider = detected.apiType
-		}
-		if c.APIBase == "" {
-			c.APIBase = detected.apiBase
-		}
-		if c.APIKey == "" {
-			c.APIKey = os.Getenv(detected.apiKeyEnv)
-		}
-		c.ContextWindow = detected.contextWindow
-	}
-
-	// If API key still empty, try well-known env vars based on resolved API type
-	if c.APIKey == "" {
-		switch c.Provider {
-		case "anthropic":
-			c.APIKey = os.Getenv("ANTHROPIC_API_KEY")
-		case "openai":
-			c.APIKey = os.Getenv("OPENAI_API_KEY")
-		}
-	}
-
-	// Context window from env overrides auto-detected value
-	if cwStr := os.Getenv("QUINE_CONTEXT_WINDOW"); cwStr != "" {
-		cw, err := strconv.Atoi(cwStr)
-		if err != nil {
-			return nil, fmt.Errorf("parsing QUINE_CONTEXT_WINDOW=%q: %w", cwStr, err)
-		}
-		c.ContextWindow = cw
-	}
-	if c.ContextWindow == 0 {
-		c.ContextWindow = 128_000 // safe fallback
-	}
-
-	// Validate required fields
 	if c.Provider == "" {
-		return nil, fmt.Errorf("cannot detect API type for model %q: set QUINE_API_TYPE=openai or QUINE_API_TYPE=anthropic", c.ModelID)
+		return nil, fmt.Errorf("QUINE_API_TYPE is required (\"openai\" or \"anthropic\")")
 	}
 	if c.Provider != "openai" && c.Provider != "anthropic" {
 		return nil, fmt.Errorf("unsupported QUINE_API_TYPE=%q: must be \"openai\" or \"anthropic\"", c.Provider)
 	}
-	if c.APIKey == "" {
-		keyHint := "QUINE_API_KEY"
-		switch c.Provider {
-		case "anthropic":
-			keyHint = "QUINE_API_KEY or ANTHROPIC_API_KEY"
-		case "openai":
-			keyHint = "QUINE_API_KEY or OPENAI_API_KEY"
-		}
-		return nil, fmt.Errorf("API key required: set %s", keyHint)
-	}
+
+	c.APIBase = os.Getenv("QUINE_API_BASE")
 	if c.APIBase == "" {
-		return nil, fmt.Errorf("API base URL required for model %q: set QUINE_API_BASE", c.ModelID)
+		return nil, fmt.Errorf("QUINE_API_BASE is required")
+	}
+
+	c.APIKey = os.Getenv("QUINE_API_KEY")
+	if c.APIKey == "" {
+		return nil, fmt.Errorf("QUINE_API_KEY is required")
 	}
 
 	// --- Optional string fields ---
@@ -170,6 +82,12 @@ func Load() (*Config, error) {
 
 	// --- Integer fields with defaults ---
 	var err error
+
+	c.ContextWindow, err = envInt("QUINE_CONTEXT_WINDOW", 128_000)
+	if err != nil {
+		return nil, err
+	}
+
 	c.MaxDepth, err = envInt("QUINE_MAX_DEPTH", 5)
 	if err != nil {
 		return nil, err
@@ -263,19 +181,6 @@ func (c *Config) baseEnv(depth int, parentSession string) []string {
 		"QUINE_MAX_TURNS=" + strconv.Itoa(c.MaxTurns),
 		"QUINE_MAX_READ_LINES=" + strconv.Itoa(c.MaxReadLines),
 		"QUINE_CONTEXT_WINDOW=" + strconv.Itoa(c.ContextWindow),
-	}
-
-	// Also pass through the well-known provider-specific API key env vars
-	// so that child processes can also auto-detect from them.
-	switch c.Provider {
-	case "anthropic":
-		if key := os.Getenv("ANTHROPIC_API_KEY"); key != "" {
-			env = append(env, "ANTHROPIC_API_KEY="+key)
-		}
-	case "openai":
-		if key := os.Getenv("OPENAI_API_KEY"); key != "" {
-			env = append(env, "OPENAI_API_KEY="+key)
-		}
 	}
 
 	// Pass through QUINE_WISDOM_* env vars for state transfer across exec boundaries
