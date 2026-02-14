@@ -140,6 +140,34 @@ func TestResultFormatEmptyOutput(t *testing.T) {
 	}
 }
 
+func TestOutputWithoutTrailingNewline(t *testing.T) {
+	b := testExecutor()
+	defer b.Close()
+
+	// printf without \n — this is the exact pattern that caused the
+	// sentinel-detection deadlock (e.g. "head -c 200 binaryfile").
+	result := b.Execute("tool-nonl", `printf 'no-newline-here'`)
+
+	if result.IsError {
+		t.Fatalf("unexpected error:\n%s", result.Content)
+	}
+	if !strings.Contains(result.Content, "[EXIT CODE] 0") {
+		t.Errorf("expected exit code 0, got:\n%s", result.Content)
+	}
+	if !strings.Contains(result.Content, "no-newline-here") {
+		t.Errorf("expected stdout to contain 'no-newline-here', got:\n%s", result.Content)
+	}
+
+	// Verify a subsequent command still works (shell not deadlocked)
+	result2 := b.Execute("tool-after", "echo alive")
+	if result2.IsError {
+		t.Fatalf("post-recovery command failed:\n%s", result2.Content)
+	}
+	if !strings.Contains(result2.Content, "alive") {
+		t.Errorf("expected 'alive' in output, got:\n%s", result2.Content)
+	}
+}
+
 func TestHelperWriteFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "sub", "test.txt")

@@ -407,18 +407,65 @@ func (r *Runtime) Run(mission, material string) int {
 
 			case "sh":
 				if r.handleSh(tc) {
-					// Turn limit exhausted after this sh call
-					r.log("turn limit exhausted (%d/%d)", r.tape.TurnCount, r.cfg.MaxTurns)
-					r.logError("turn limit exhausted (%d/%d)", r.tape.TurnCount, r.cfg.MaxTurns)
-					duration := time.Since(r.startTime)
-					r.tape.SetOutcome(tape.SessionOutcome{
-						ExitCode:        1,
-						Stderr:          fmt.Sprintf("turn limit exhausted (%d/%d)", r.tape.TurnCount, r.cfg.MaxTurns),
-						DurationMs:      duration.Milliseconds(),
-						TerminationMode: tape.TermTurnExhaustion,
-					})
-					r.writeTapeEntry(r.tape.OutcomeEntry())
-					return 1
+					// Turn limit exhausted — give the agent a near-death experience.
+					// Inject a warning into the last tool result, then allow ONE final
+					// inference. If the agent calls exec, it survives. Otherwise it dies.
+					r.log("turn limit reached (%d/%d) — near-death warning issued", r.tape.TurnCount, r.cfg.MaxTurns)
+					if last := r.tape.LastMessage(); last != nil && last.Role == tape.RoleToolResult {
+						last.Content += "\n[RESOURCE EXHAUSTION IMMINENT] Process will be terminated after this response. To survive, call exec now with wisdom to preserve your state. This is your last chance."
+					}
+
+					// One final inference
+					if err := r.semaphore.Acquire(); err != nil {
+						r.log("semaphore acquire failed (near-death): %v", err)
+					}
+					finalMsg, finalUsage, err := r.provider.Generate(r.tape.Messages(), r.tools)
+					if releaseErr := r.semaphore.Release(); releaseErr != nil {
+						r.log("semaphore release failed (near-death): %v", releaseErr)
+					}
+					if err != nil {
+						return r.handleError(err)
+					}
+					r.tape.Append(finalMsg)
+					r.writeTapeEntry(tape.MessageEntry(finalMsg))
+					r.tape.AddUsage(finalUsage.InputTokens, finalUsage.OutputTokens)
+					if finalMsg.Content != "" {
+						r.log("near-death response: %s", truncateStr(finalMsg.Content, 2000))
+					}
+
+					// Check if the agent called exec in its final breath
+					execCalled := false
+					for _, lastTC := range finalMsg.ToolCalls {
+						if lastTC.Name == "exec" {
+							r.log("near-death exec — agent chose survival")
+							r.handleExec(lastTC)
+							execCalled = true
+							break // handleExec does not return (it calls syscall.Exec)
+						}
+						// Reject any non-exec tool call
+						rejectMsg := tape.Message{
+							Role:    tape.RoleToolResult,
+							Content: "Rejected: resource exhaustion. Only exec is accepted at this point.",
+							ToolID:  lastTC.ID,
+						}
+						r.tape.Append(rejectMsg)
+						r.writeTapeEntry(tape.MessageEntry(rejectMsg))
+						r.log("near-death: rejected tool call %q (only exec accepted)", lastTC.Name)
+					}
+
+					if !execCalled {
+						r.log("turn limit exhausted (%d/%d)", r.tape.TurnCount, r.cfg.MaxTurns)
+						r.logError("turn limit exhausted (%d/%d)", r.tape.TurnCount, r.cfg.MaxTurns)
+						duration := time.Since(r.startTime)
+						r.tape.SetOutcome(tape.SessionOutcome{
+							ExitCode:        1,
+							Stderr:          fmt.Sprintf("turn limit exhausted (%d/%d)", r.tape.TurnCount, r.cfg.MaxTurns),
+							DurationMs:      duration.Milliseconds(),
+							TerminationMode: tape.TermTurnExhaustion,
+						})
+						r.writeTapeEntry(r.tape.OutcomeEntry())
+						return 1
+					}
 				}
 
 			case "fork":

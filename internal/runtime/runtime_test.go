@@ -284,8 +284,9 @@ func TestContextOverflowError(t *testing.T) {
 }
 
 func TestTurnLimitKillsProcess(t *testing.T) {
-	// Set MaxTurns=2. Agent does sh (turn 1), then sh (turn 2), then
-	// at turn 3 the process should be killed before calling LLM.
+	// Set MaxTurns=2. Agent does sh (turn 1), then sh (turn 2).
+	// After turn 2, the near-death warning fires and the agent gets ONE
+	// final inference. If it doesn't call exec, it dies.
 	mock := &mockProvider{
 		responses: []tape.Message{
 			{
@@ -312,7 +313,7 @@ func TestTurnLimitKillsProcess(t *testing.T) {
 					},
 				},
 			},
-			// This third response should never be reached
+			// Near-death inference: agent calls exit (not exec), so it dies.
 			{
 				Role: tape.RoleAssistant,
 				ToolCalls: []tape.ToolCall{
@@ -339,8 +340,9 @@ func TestTurnLimitKillsProcess(t *testing.T) {
 		t.Errorf("expected exit code 1 for turn exhaustion, got %d", exitCode)
 	}
 
-	if mock.callCount != 2 {
-		t.Errorf("expected exactly 2 LLM calls before kill, got %d", mock.callCount)
+	// 3 LLM calls: turn 1 sh, turn 2 sh, near-death inference
+	if mock.callCount != 3 {
+		t.Errorf("expected exactly 3 LLM calls (2 turns + near-death), got %d", mock.callCount)
 	}
 
 	if rt.tape.Outcome == nil {
