@@ -24,6 +24,7 @@ type Config struct {
 	SessionID      string            // QUINE_SESSION_ID (default auto UUID v4)
 	ParentSession  string            // QUINE_PARENT_SESSION
 	MaxConcurrent  int               // QUINE_MAX_CONCURRENT (default 20)
+	MaxAgents      int               // QUINE_MAX_AGENTS (default 10, 0 = unlimited)
 	ShTimeout      int               // QUINE_SH_TIMEOUT in seconds (default 600)
 	OutputTruncate int               // QUINE_OUTPUT_TRUNCATE in bytes (default 20480)
 	DataDir        string            // QUINE_DATA_DIR (default ".quine/")
@@ -101,6 +102,11 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	c.MaxAgents, err = envInt("QUINE_MAX_AGENTS", 10)
+	if err != nil {
+		return nil, err
+	}
+
 	c.ShTimeout, err = envInt("QUINE_SH_TIMEOUT", 600)
 	if err != nil {
 		return nil, err
@@ -164,6 +170,7 @@ func (c *Config) baseEnv(depth int, parentSession string) []string {
 		"QUINE_DEPTH=" + strconv.Itoa(depth),
 		"QUINE_PARENT_SESSION=" + parentSession,
 		"QUINE_MAX_CONCURRENT=" + strconv.Itoa(c.MaxConcurrent),
+		"QUINE_MAX_AGENTS=" + strconv.Itoa(c.MaxAgents),
 		"QUINE_SH_TIMEOUT=" + strconv.Itoa(c.ShTimeout),
 		"QUINE_OUTPUT_TRUNCATE=" + strconv.Itoa(c.OutputTruncate),
 		"QUINE_DATA_DIR=" + c.DataDir,

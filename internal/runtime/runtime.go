@@ -18,18 +18,19 @@ import (
 
 // Runtime orchestrates the agent's execution loop.
 type Runtime struct {
-	cfg        *config.Config
-	provider   llm.Provider
-	sh         *tools.ShExecutor
-	fork       *tools.ForkExecutor
-	exec       *tools.ExecExecutor
-	tape       *tape.Tape
-	tapeWriter *tape.Writer
-	tools      []llm.ToolSchema
-	semaphore  *Semaphore
-	startTime  time.Time
-	log        func(format string, args ...any) // operational log → log file
-	logError   func(format string, args ...any) // failure signal → stderr
+	cfg           *config.Config
+	provider      llm.Provider
+	sh            *tools.ShExecutor
+	fork          *tools.ForkExecutor
+	exec          *tools.ExecExecutor
+	tape          *tape.Tape
+	tapeWriter    *tape.Writer
+	tools         []llm.ToolSchema
+	semaphore     *Semaphore
+	agentRegistry *AgentRegistry
+	startTime     time.Time
+	log           func(format string, args ...any) // operational log → log file
+	logError      func(format string, args ...any) // failure signal → stderr
 
 	// originalInput stores the user's input for this session.
 	// Needed for exec to preserve the mission.
@@ -112,15 +113,16 @@ func newRuntime(cfg *config.Config, provider llm.Provider) *Runtime {
 	logFile, _ := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 
 	r := &Runtime{
-		cfg:       cfg,
-		provider:  provider,
-		sh:        tools.NewShExecutor(cfg, childEnv),
-		fork:      tools.NewForkExecutor(cfg, childEnv),
-		tools:     tools.AllToolSchemas(),
-		semaphore: NewSemaphore(lockDir, cfg.MaxConcurrent, cfg.SessionID),
-		stdout:    os.Stdout,
-		stderr:    os.Stderr,
-		logFile:   logFile,
+		cfg:           cfg,
+		provider:      provider,
+		sh:            tools.NewShExecutor(cfg, childEnv),
+		fork:          tools.NewForkExecutor(cfg, childEnv),
+		tools:         tools.AllToolSchemas(),
+		semaphore:     NewSemaphore(lockDir, cfg.MaxConcurrent, cfg.SessionID),
+		agentRegistry: NewAgentRegistry(lockDir, cfg.MaxAgents, cfg.SessionID),
+		stdout:        os.Stdout,
+		stderr:        os.Stderr,
+		logFile:       logFile,
 	}
 
 	// Wire the process's real stdin/stdout to the sh executor so that
@@ -230,6 +232,11 @@ func (r *Runtime) gracefulShutdown(exitCode int) {
 		_ = syscall.Kill(-proc.Pid, syscall.SIGKILL)
 	}
 
+	// Deregister from agent registry
+	if r.agentRegistry != nil {
+		r.agentRegistry.Deregister()
+	}
+
 	// Set session outcome if tape is initialized
 	if r.tape != nil {
 		duration := time.Since(r.startTime)
@@ -271,6 +278,13 @@ func (r *Runtime) gracefulShutdown(exitCode int) {
 func (r *Runtime) Run(mission, material string) int {
 	r.startTime = time.Now()
 	r.originalInput = mission
+
+	// Register this agent in the global registry
+	if err := r.agentRegistry.Register(); err != nil {
+		r.logError("agent registration failed: %v", err)
+		return 1
+	}
+	defer r.agentRegistry.Deregister()
 
 	// Initialize exec executor now that we have the original input
 	r.exec = tools.NewExecExecutor(r.cfg, mission)
@@ -623,6 +637,19 @@ func (r *Runtime) handleFork(tc tape.ToolCall) {
 		return
 	}
 
+	// Check agent limit before forking
+	if !r.agentRegistry.CanSpawn() {
+		r.log("turn %d: fork rejected - agent limit reached (%d/%d)", turnNum, r.agentRegistry.Count(), r.cfg.MaxAgents)
+		errMsg := tape.Message{
+			Role:    tape.RoleToolResult,
+			Content: fmt.Sprintf("[FORK ERROR] Agent limit reached (%d/%d). Cannot spawn more children. Consider using fewer parallel forks or waiting for existing agents to complete.", r.agentRegistry.Count(), r.cfg.MaxAgents),
+			ToolID:  tc.ID,
+		}
+		r.tape.Append(errMsg)
+		r.writeTapeEntry(tape.MessageEntry(errMsg))
+		return
+	}
+
 	// Log the call
 	waitStr := "false"
 	if forkReq.Wait {
@@ -683,21 +710,17 @@ func (r *Runtime) handleExec(tc tape.ToolCall) {
 	}
 
 	// Log the call
-	reasonStr := ""
-	if execReq.Reason != "" {
-		reasonStr = fmt.Sprintf(", reason=%q", truncateStr(execReq.Reason, 40))
-	}
 	personaStr := ""
 	if execReq.Persona != "" {
 		personaStr = fmt.Sprintf(", persona=%q", execReq.Persona)
 	}
-	r.log("turn %d: assistant called exec(%s%s)", turnNum, reasonStr, personaStr)
+	r.log("turn %d: assistant called exec(%s)", turnNum, personaStr)
 
 	// Write outcome before exec (we're about to be replaced)
 	duration := time.Since(r.startTime)
 	r.tape.SetOutcome(tape.SessionOutcome{
 		ExitCode:        0,
-		Stderr:          fmt.Sprintf("exec: metamorphosis to fresh context (reason: %s)", execReq.Reason),
+		Stderr:          "exec: metamorphosis to fresh context",
 		DurationMs:      duration.Milliseconds(),
 		TerminationMode: tape.TermExec,
 	})

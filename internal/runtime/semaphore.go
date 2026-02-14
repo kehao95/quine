@@ -107,6 +107,11 @@ func (s *Semaphore) Count() int {
 	return s.countFiles()
 }
 
+// IsFull returns true if all slots are currently occupied.
+func (s *Semaphore) IsFull() bool {
+	return s.countFiles() >= s.maxSlots
+}
+
 // countFiles returns the number of .lock files in the lock directory.
 func (s *Semaphore) countFiles() int {
 	entries, err := os.ReadDir(s.lockDir)
@@ -120,4 +125,117 @@ func (s *Semaphore) countFiles() int {
 		}
 	}
 	return count
+}
+
+// AgentRegistry tracks the total number of agents in the process tree.
+// Each agent registers on startup and deregisters on shutdown.
+// Uses .agent files in the same lock directory as Semaphore.
+type AgentRegistry struct {
+	agentDir  string
+	maxAgents int
+	sessionID string
+	logWriter io.Writer
+
+	mu        sync.Mutex
+	agentFile string // path of this agent's registration file
+}
+
+// NewAgentRegistry creates an AgentRegistry.
+// agentDir is typically the same as Semaphore's lockDir.
+// maxAgents of 0 means unlimited.
+func NewAgentRegistry(agentDir string, maxAgents int, sessionID string) *AgentRegistry {
+	return &AgentRegistry{
+		agentDir:  agentDir,
+		maxAgents: maxAgents,
+		sessionID: sessionID,
+	}
+}
+
+// Register creates an .agent file for this process.
+// Returns an error if the agent limit would be exceeded.
+func (r *AgentRegistry) Register() error {
+	if r.maxAgents <= 0 {
+		return nil // unlimited
+	}
+
+	// Ensure agent directory exists.
+	if err := os.MkdirAll(r.agentDir, 0o755); err != nil {
+		return fmt.Errorf("agent registry: creating dir: %w", err)
+	}
+
+	// Check current count before registering
+	count := r.Count()
+	if count >= r.maxAgents {
+		return fmt.Errorf("agent limit exceeded (%d/%d)", count, r.maxAgents)
+	}
+
+	// Create agent file
+	agentPath := filepath.Join(r.agentDir, r.sessionID+".agent")
+	f, err := os.OpenFile(agentPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
+	if err != nil {
+		if os.IsExist(err) {
+			// Already registered (shouldn't happen, but be safe)
+			r.mu.Lock()
+			r.agentFile = agentPath
+			r.mu.Unlock()
+			return nil
+		}
+		return fmt.Errorf("agent registry: creating agent file: %w", err)
+	}
+	f.Close()
+
+	r.mu.Lock()
+	r.agentFile = agentPath
+	r.mu.Unlock()
+
+	return nil
+}
+
+// Deregister removes this agent's .agent file.
+func (r *AgentRegistry) Deregister() error {
+	r.mu.Lock()
+	path := r.agentFile
+	r.agentFile = ""
+	r.mu.Unlock()
+
+	if path == "" {
+		return nil
+	}
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("agent registry: removing agent file: %w", err)
+	}
+	return nil
+}
+
+// Count returns the current number of registered agents.
+func (r *AgentRegistry) Count() int {
+	entries, err := os.ReadDir(r.agentDir)
+	if err != nil {
+		return 0
+	}
+	count := 0
+	for _, e := range entries {
+		if !e.IsDir() && filepath.Ext(e.Name()) == ".agent" {
+			count++
+		}
+	}
+	return count
+}
+
+// IsFull returns true if the agent limit has been reached.
+// Returns false if maxAgents is 0 (unlimited).
+func (r *AgentRegistry) IsFull() bool {
+	if r.maxAgents <= 0 {
+		return false
+	}
+	return r.Count() >= r.maxAgents
+}
+
+// CanSpawn returns true if a new agent can be spawned (count < max).
+// Returns true if maxAgents is 0 (unlimited).
+func (r *AgentRegistry) CanSpawn() bool {
+	if r.maxAgents <= 0 {
+		return true
+	}
+	return r.Count() < r.maxAgents
 }
