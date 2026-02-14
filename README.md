@@ -106,9 +106,9 @@ To run the runtime yourself:
 
 ## 📚 Documentation
 
-To understand the 12 Axioms and 13 Guarantees:
+👉 **[Seven Misconceptions in Agentic Systems](./Artifacts/misconceptions.md)** — What we reject
 
-👉 **[Full Documentation & Theory](./Artifacts/README.md)**
+👉 **[The 12 Axioms & 13 Guarantees](./Artifacts/README.md)** — What we propose
 
 ## License
 
