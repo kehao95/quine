@@ -344,6 +344,9 @@ func (b *ShExecutor) Execute(toolID string, command string) tape.ToolResult {
 	//   the current shell context (cd, export, variables all persist)
 	// - Redirect stderr to a nonce-named temp file for clean capture
 	// - Echo a sentinel line with the exit code
+	// - An explicit `echo` before the sentinel ensures a leading newline,
+	//   so the sentinel always starts on a fresh line even if the command's
+	//   output does not end with a newline (e.g. `head -c 200 binaryfile`).
 	//
 	// Risk: if the user command calls `exit N`, it kills the persistent shell.
 	// This is handled by crash recovery (handleCrash → auto-restart on next call).
@@ -351,7 +354,7 @@ func (b *ShExecutor) Execute(toolID string, command string) tape.ToolResult {
 	stderrFile := fmt.Sprintf("/tmp/__quine_stderr_%s", nonce)
 	sentinel := fmt.Sprintf("___QUINE_DONE_%s", nonce)
 	wrappedCmd := fmt.Sprintf(
-		"{ %s\n} 2>\"%s\"; echo \"%s_${?}___\"\n",
+		"{ %s\n} 2>\"%s\"; __quine_ec=$?; echo; echo \"%s_${__quine_ec}___\"\n",
 		command, stderrFile, sentinel,
 	)
 
@@ -402,8 +405,15 @@ func (b *ShExecutor) Execute(toolID string, command string) tape.ToolResult {
 	stderrBytes, _ := os.ReadFile(stderrFile)
 	os.Remove(stderrFile) // Clean up
 
+	// The sentinel guard (echo before sentinel) adds a trailing empty line
+	// to stdout. Strip it so command output is faithfully reproduced.
+	stdoutRaw := stdout.String()
+	if strings.HasSuffix(stdoutRaw, "\n") {
+		stdoutRaw = stdoutRaw[:len(stdoutRaw)-1]
+	}
+
 	// Truncate and format output
-	stdoutStr := b.truncate([]byte(stdout.String()))
+	stdoutStr := b.truncate([]byte(stdoutRaw))
 	stderrStr := b.truncate(stderrBytes)
 	content := fmt.Sprintf("[EXIT CODE] %d\n[STDOUT]\n%s\n[STDERR]\n%s", exitCode, stdoutStr, stderrStr)
 
