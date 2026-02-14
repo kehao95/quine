@@ -2,6 +2,13 @@
 
 > **Autopoietic Intelligence via Recursive POSIX Processes**
 
+```sh
+$ ./quine "Output a binary that is an implementation of yourself." > q
+$ chmod +x q
+$ ./q "say hello to the world"
+Hello, World!
+```
+
 ## I. THE FAILURE OF IMAGINATION
 
 The current trajectory of Artificial Intelligence is haunted by a fundamental **Category Error**.
@@ -112,6 +119,6 @@ To understand the 12 Axioms and 13 Guarantees:
 **Quine is Free Software.**
 
 It is released under the **GPLv2**, the same license as the Linux Kernel.
-We chose this license to assert that the "physics" of AI agents—like the physics of the OS—must remain common infrastructure.
+I chose this license to assert that the "physics" of AI agents—like the physics of the OS—must remain common infrastructure.
 
 See [LICENSE](./LICENSE) for details.
