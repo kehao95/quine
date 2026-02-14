@@ -104,6 +104,46 @@ func TestSemaphoreMaxSlots(t *testing.T) {
 	}
 }
 
+func TestSemaphoreIsFull(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "locks")
+	maxSlots := 2
+
+	sem1 := NewSemaphore(dir, maxSlots, "session-1")
+	sem2 := NewSemaphore(dir, maxSlots, "session-2")
+
+	// Initially not full
+	if sem1.IsFull() {
+		t.Error("expected IsFull=false when no slots acquired")
+	}
+
+	// Acquire one slot
+	if err := sem1.Acquire(); err != nil {
+		t.Fatalf("Acquire 1 failed: %v", err)
+	}
+	if sem1.IsFull() {
+		t.Errorf("expected IsFull=false with 1/%d slots", maxSlots)
+	}
+
+	// Acquire second slot - now full
+	if err := sem2.Acquire(); err != nil {
+		t.Fatalf("Acquire 2 failed: %v", err)
+	}
+	if !sem1.IsFull() {
+		t.Error("expected IsFull=true when all slots acquired")
+	}
+
+	// Release one - no longer full
+	if err := sem1.Release(); err != nil {
+		t.Fatalf("Release 1 failed: %v", err)
+	}
+	if sem2.IsFull() {
+		t.Error("expected IsFull=false after releasing one slot")
+	}
+
+	// Clean up
+	sem2.Release()
+}
+
 func TestSemaphoreCreatesDirectory(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "nested", "deep", "locks")
 

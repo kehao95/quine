@@ -516,34 +516,9 @@ func TestParseExecArgs(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "with reason",
-			args: map[string]any{
-				"reason": "context too noisy",
-			},
-			want:    ExecRequest{Reason: "context too noisy"},
-			wantErr: false,
-		},
-		{
-			name: "with both",
-			args: map[string]any{
-				"persona": "coder",
-				"reason":  "need fresh brain",
-			},
-			want:    ExecRequest{Persona: "coder", Reason: "need fresh brain"},
-			wantErr: false,
-		},
-		{
 			name: "persona wrong type",
 			args: map[string]any{
 				"persona": 123,
-			},
-			want:    ExecRequest{},
-			wantErr: true,
-		},
-		{
-			name: "reason wrong type",
-			args: map[string]any{
-				"reason": []string{"wrong"},
 			},
 			want:    ExecRequest{},
 			wantErr: true,
@@ -560,9 +535,6 @@ func TestParseExecArgs(t *testing.T) {
 			if !tt.wantErr {
 				if got.Persona != tt.want.Persona {
 					t.Errorf("Persona = %q, want %q", got.Persona, tt.want.Persona)
-				}
-				if got.Reason != tt.want.Reason {
-					t.Errorf("Reason = %q, want %q", got.Reason, tt.want.Reason)
 				}
 			}
 		})

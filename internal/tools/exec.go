@@ -12,7 +12,6 @@ import (
 // ExecRequest represents the parsed arguments from an exec tool call.
 type ExecRequest struct {
 	Persona string            // Optional persona name
-	Reason  string            // Optional reason for exec (logging)
 	Wisdom  map[string]string // Key-value pairs to pass to the new instance
 }
 
@@ -26,14 +25,6 @@ func ParseExecArgs(args map[string]any) (ExecRequest, error) {
 			return ExecRequest{}, fmt.Errorf("persona must be a string, got %T", v)
 		}
 		req.Persona = s
-	}
-
-	if v, ok := args["reason"]; ok {
-		s, ok := v.(string)
-		if !ok {
-			return ExecRequest{}, fmt.Errorf("reason must be a string, got %T", v)
-		}
-		req.Reason = s
 	}
 
 	// Parse wisdom map

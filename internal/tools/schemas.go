@@ -62,10 +62,6 @@ func ExecToolSchema() llm.ToolSchema {
 						"type": "string",
 					},
 				},
-				"reason": map[string]any{
-					"type":        "string",
-					"description": "Why you're exec'ing — logged for debugging (e.g. 'context too noisy after reading 50K tokens')",
-				},
 				"persona": map[string]any{
 					"type":        "string",
 					"description": "Optional persona/system-prompt name to load (e.g. 'analyst', 'coder'). Looks for personas/{name}.md",
