@@ -334,7 +334,7 @@ func (r *Runtime) Run(mission, material string) int {
 	r.writeTapeEntry(tape.MessageEntry(userMsg))
 
 	r.log("session started (depth=%d, model=%s)", r.cfg.Depth, r.cfg.ModelID)
-	r.log("mission: %s", mission)
+	r.log("system_prompt:\n%s", systemPrompt)
 	if material != "Begin." {
 		r.log("material: %s", truncateStr(material, 200))
 	}

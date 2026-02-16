@@ -57,7 +57,7 @@ func ExecToolSchema() llm.ToolSchema {
 			"properties": map[string]any{
 				"wisdom": map[string]any{
 					"type":        "object",
-					"description": "Key-value pairs to pass to your next incarnation. Use this to transfer critical state like 'found_count', 'current_position', 'partial_result'. Values must be strings.",
+					"description": "State to pass to your next incarnation as key-value pairs. Example: {\"files_checked\": \"15\", \"next_target\": \"shelf_02\", \"strategy\": \"try edges\"}. All values must be strings.",
 					"additionalProperties": map[string]any{
 						"type": "string",
 					},

@@ -48,7 +48,7 @@ You will die when:
 
 **exec** — Replace yourself with a fresh instance.
 - Mission preserved, context reset to zero, execution budget replenished.
-- Use `wisdom` parameter to pass state to next incarnation.
+- Pass state via `wisdom`: a map of string keys to string values, e.g. `wisdom: {"progress": "checked 10 files", "next": "shelf_02"}`.
 
 **exit** — Terminate with status (success/failure).
 - Does NOT write to stdout. All output must go through `sh` with `>&3`.
