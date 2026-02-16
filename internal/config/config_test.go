@@ -22,6 +22,7 @@ var envVars = []string{
 	"QUINE_SH_TIMEOUT",
 	"QUINE_OUTPUT_TRUNCATE",
 	"QUINE_DATA_DIR",
+	"QUINE_CONFIG_DIR",
 	"QUINE_SHELL",
 	"QUINE_MAX_TURNS",
 	"QUINE_CONTEXT_WINDOW",
@@ -225,6 +226,19 @@ func TestUnsupportedAPIType(t *testing.T) {
 	}
 }
 
+func TestCodexOAuthAPIKeyAllowed(t *testing.T) {
+	clearEnv(t)
+	os.Setenv("QUINE_MODEL_ID", "gpt-5.2-codex")
+	os.Setenv("QUINE_API_TYPE", "openai-responses")
+	os.Setenv("QUINE_API_BASE", "https://api.openai.com")
+	os.Setenv("QUINE_API_KEY", "codex-oauth") // Special sentinel value triggers OAuth
+
+	_, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error: %v", err)
+	}
+}
+
 // --- Third-party provider test ---
 
 func TestThirdPartyProvider(t *testing.T) {
@@ -383,6 +397,40 @@ func TestExecEnv(t *testing.T) {
 	// Original intent should be set
 	if m["QUINE_ORIGINAL_INTENT"] != "build the project" {
 		t.Errorf("QUINE_ORIGINAL_INTENT = %q, want %q", m["QUINE_ORIGINAL_INTENT"], "build the project")
+	}
+
+	if _, ok := m["QUINE_CONFIG_DIR"]; ok {
+		t.Errorf("QUINE_CONFIG_DIR should not be set when empty")
+	}
+}
+
+func TestConfigDirPassthrough(t *testing.T) {
+	clearEnv(t)
+	setRequired(t)
+	os.Setenv("QUINE_CONFIG_DIR", "/tmp/quine-config")
+	t.Cleanup(func() {
+		os.Unsetenv("QUINE_CONFIG_DIR")
+	})
+
+	c, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error: %v", err)
+	}
+
+	env, err := c.ChildEnv()
+	if err != nil {
+		t.Fatalf("ChildEnv() error: %v", err)
+	}
+
+	found := false
+	for _, e := range env {
+		if e == "QUINE_CONFIG_DIR=/tmp/quine-config" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("QUINE_CONFIG_DIR should be passed through")
 	}
 }
 

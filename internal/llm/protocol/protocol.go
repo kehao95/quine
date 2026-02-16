@@ -40,13 +40,15 @@ type Protocol interface {
 }
 
 // For returns the Protocol implementation for a given API type.
-// Only "openai" and "anthropic" are supported.
+// Supported: "openai", "anthropic", "openai-responses".
 func For(apiType, model string) (Protocol, error) {
 	switch apiType {
 	case "anthropic":
 		return &AnthropicProtocol{}, nil
 	case "openai":
 		return &OpenAIProtocol{}, nil
+	case "openai-responses":
+		return &OpenAIResponsesProtocol{}, nil
 	default:
 		return nil, fmt.Errorf("unknown provider: %s", apiType)
 	}

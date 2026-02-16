@@ -19,13 +19,14 @@ source .env
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `QUINE_MODEL_ID` | ✓ | Model name sent to the API |
-| `QUINE_API_TYPE` | ✓ | Wire protocol: `openai` or `anthropic` |
+| `QUINE_API_TYPE` | ✓ | Wire protocol: `openai`, `anthropic`, or `openai-responses` |
 | `QUINE_API_BASE` | ✓ | API base URL |
-| `QUINE_API_KEY` | ✓ | API key |
+| `QUINE_API_KEY` | ✓ | API key (use `codex-oauth` to trigger OAuth flow for Codex) |
 | `QUINE_CONTEXT_WINDOW` | | Context window size in tokens (default 128000) |
 | `QUINE_MAX_DEPTH` | | Max recursion depth (default 5) |
 | `QUINE_MAX_TURNS` | | Max conversation turns, 0 = unlimited (default 20) |
 | `QUINE_DATA_DIR` | | Session log directory (default `.quine/`) |
+| `QUINE_CONFIG_DIR` | | Config directory for OAuth tokens (default `~/.config/quine/`) |
 
 > **Tip:** Every line in your `.env` must start with `export` so that `source .env` propagates variables to child processes.
 

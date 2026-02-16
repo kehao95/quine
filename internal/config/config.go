@@ -18,7 +18,7 @@ type Config struct {
 	ModelID        string            // QUINE_MODEL_ID (required)
 	APIKey         string            // QUINE_API_KEY (required)
 	APIBase        string            // QUINE_API_BASE (required)
-	Provider       string            // QUINE_API_TYPE (required): "openai" or "anthropic"
+	Provider       string            // QUINE_API_TYPE (required): "openai", "anthropic", or "openai-responses"
 	MaxDepth       int               // QUINE_MAX_DEPTH (default 5)
 	Depth          int               // QUINE_DEPTH (default 0)
 	SessionID      string            // QUINE_SESSION_ID (default auto UUID v4)
@@ -46,7 +46,7 @@ func (c *Config) APIModelID() string {
 //
 // Four variables are required:
 //   - QUINE_MODEL_ID:   Model name (e.g. "claude-sonnet-4-5-20250929", "gpt-4o", "kimi-k2.5")
-//   - QUINE_API_TYPE:   Wire protocol: "openai" or "anthropic"
+//   - QUINE_API_TYPE:   Wire protocol: "openai", "anthropic", or "codex-oauth"
 //   - QUINE_API_BASE:   API base URL (e.g. "https://api.anthropic.com", "https://api.openai.com")
 //   - QUINE_API_KEY:    API key
 func Load() (*Config, error) {
@@ -60,10 +60,10 @@ func Load() (*Config, error) {
 
 	c.Provider = os.Getenv("QUINE_API_TYPE")
 	if c.Provider == "" {
-		return nil, fmt.Errorf("QUINE_API_TYPE is required (\"openai\" or \"anthropic\")")
+		return nil, fmt.Errorf("QUINE_API_TYPE is required (\"openai\", \"anthropic\", or \"openai-responses\")")
 	}
-	if c.Provider != "openai" && c.Provider != "anthropic" {
-		return nil, fmt.Errorf("unsupported QUINE_API_TYPE=%q: must be \"openai\" or \"anthropic\"", c.Provider)
+	if c.Provider != "openai" && c.Provider != "anthropic" && c.Provider != "openai-responses" {
+		return nil, fmt.Errorf("unsupported QUINE_API_TYPE=%q: must be \"openai\", \"anthropic\", or \"openai-responses\"", c.Provider)
 	}
 
 	c.APIBase = os.Getenv("QUINE_API_BASE")
@@ -182,6 +182,10 @@ func (c *Config) baseEnv(depth int, parentSession string) []string {
 	// Pass through QUINE_WISDOM_* env vars for state transfer across exec boundaries
 	for key, value := range c.Wisdom {
 		env = append(env, wisdomPrefix+key+"="+value)
+	}
+
+	if configDir := os.Getenv("QUINE_CONFIG_DIR"); configDir != "" {
+		env = append(env, "QUINE_CONFIG_DIR="+configDir)
 	}
 
 	return env

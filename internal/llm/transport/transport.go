@@ -4,6 +4,8 @@ package transport
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/kehao95/quine/internal/config"
 )
 
 // Transport handles authentication for API requests.
@@ -13,8 +15,16 @@ type Transport interface {
 }
 
 // For returns the Transport implementation for a given API type.
-// Only "openai" and "anthropic" are supported.
-func For(apiType, apiKey string) (Transport, error) {
+// Supported: "openai", "anthropic", "openai-responses".
+//
+// Special case: if apiKey is "codex-oauth", OAuth transport is used
+// regardless of apiType (for Codex CLI integration).
+func For(apiType, apiKey string, cfg *config.Config) (Transport, error) {
+	// Special sentinel: "codex-oauth" API key triggers OAuth flow
+	if apiKey == "codex-oauth" {
+		return NewCodexOAuthTransport(cfg)
+	}
+
 	switch apiType {
 	case "anthropic":
 		return &APIKeyHeader{
@@ -24,7 +34,7 @@ func For(apiType, apiKey string) (Transport, error) {
 				"anthropic-version": "2023-06-01",
 			},
 		}, nil
-	case "openai":
+	case "openai", "openai-responses":
 		return &BearerToken{APIKey: apiKey}, nil
 	default:
 		return nil, fmt.Errorf("unknown provider: %s", apiType)

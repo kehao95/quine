@@ -1,6 +1,7 @@
 package llm
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -52,7 +53,7 @@ func NewProvider(cfg *config.Config) (Provider, error) {
 	}
 
 	// Get transport for this API type
-	trans, err := transport.For(cfg.Provider, cfg.APIKey)
+	trans, err := transport.For(cfg.Provider, cfg.APIKey, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +95,7 @@ func defaultAPIBase(apiType string) string {
 	switch apiType {
 	case "anthropic":
 		return "https://api.anthropic.com"
-	case "openai":
+	case "openai", "openai-responses":
 		return "https://api.openai.com"
 	default:
 		return ""
@@ -137,9 +138,20 @@ func (p *provider) Generate(messages []tape.Message, tools []ToolSchema) (tape.M
 	}
 	defer resp.Body.Close()
 
+	// Read the full response body
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return tape.Message{}, Usage{}, fmt.Errorf("reading response body: %w", err)
+	}
+
+	// Handle SSE streaming responses (used by OpenAI Responses API)
+	// Some servers (like ChatGPT) return SSE but with Content-Type: application/json
+	// so we detect SSE by looking for the "event: " prefix in the body
+	if bytes.HasPrefix(respBody, []byte("event: ")) {
+		respBody, err = extractSSECompletedResponse(bytes.NewReader(respBody))
+		if err != nil {
+			return tape.Message{}, Usage{}, fmt.Errorf("parsing SSE stream: %w", err)
+		}
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -156,4 +168,44 @@ func (p *provider) ContextWindowSize() int {
 	}
 	// Fallback defaults
 	return 128_000
+}
+
+// extractSSECompletedResponse parses an SSE stream and extracts the final
+// response.completed event's data payload. This is used for the OpenAI
+// Responses API which requires streaming.
+func extractSSECompletedResponse(r io.Reader) ([]byte, error) {
+	scanner := bufio.NewScanner(r)
+	// Increase buffer size for large SSE events
+	scanner.Buffer(make([]byte, 64*1024), 1024*1024)
+
+	var currentEvent string
+	var lastCompletedData []byte
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if strings.HasPrefix(line, "event: ") {
+			currentEvent = strings.TrimPrefix(line, "event: ")
+		} else if strings.HasPrefix(line, "data: ") {
+			data := strings.TrimPrefix(line, "data: ")
+			// We want the response.completed event which contains the full response
+			if currentEvent == "response.completed" {
+				lastCompletedData = []byte(data)
+			}
+		}
+		// Empty line marks end of event - reset for next event
+		if line == "" {
+			currentEvent = ""
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("scanning SSE stream: %w", err)
+	}
+
+	if lastCompletedData == nil {
+		return nil, fmt.Errorf("no response.completed event found in SSE stream")
+	}
+
+	return lastCompletedData, nil
 }

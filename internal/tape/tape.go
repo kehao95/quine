@@ -22,14 +22,22 @@ type ToolCall struct {
 	Arguments map[string]any `json:"arguments"`
 }
 
+// ReasoningItem captures reasoning output from models that expose it
+// (e.g., OpenAI Responses API with reasoning models).
+type ReasoningItem struct {
+	ID      string   `json:"id,omitempty"`
+	Summary []string `json:"summary,omitempty"` // High-level reasoning summary
+}
+
 // Message is a single turn in the conversation tape.
 type Message struct {
-	Role             Role       `json:"role"`
-	Content          string     `json:"content"`
-	ReasoningContent string     `json:"reasoning_content,omitempty"`
-	ToolCalls        []ToolCall `json:"tool_calls,omitempty"`
-	ToolID           string     `json:"tool_id,omitempty"`
-	Timestamp        int64      `json:"timestamp"`
+	Role             Role            `json:"role"`
+	Content          string          `json:"content"`
+	ReasoningContent string          `json:"reasoning_content,omitempty"` // For Chat Completions (e.g., o3)
+	ReasoningItems   []ReasoningItem `json:"reasoning_items,omitempty"`   // For Responses API reasoning output
+	ToolCalls        []ToolCall      `json:"tool_calls,omitempty"`
+	ToolID           string          `json:"tool_id,omitempty"`
+	Timestamp        int64           `json:"timestamp"`
 }
 
 // TerminationMode describes how a session ended.
