@@ -19,12 +19,21 @@ type OpenAIResponsesProtocol struct{}
 // ---------------------------------------------------------------------------
 
 type responsesRequest struct {
-	Model        string          `json:"model"`
-	Instructions string          `json:"instructions,omitempty"`
-	Input        []responsesItem `json:"input,omitempty"`
-	Tools        []responsesTool `json:"tools,omitempty"`
-	Store        bool            `json:"store"`  // Must be false for Codex models
-	Stream       bool            `json:"stream"` // Must be true for Codex models
+	Model        string              `json:"model"`
+	Instructions string              `json:"instructions,omitempty"`
+	Input        []responsesItem     `json:"input,omitempty"`
+	Tools        []responsesTool     `json:"tools,omitempty"`
+	Store        bool                `json:"store"`               // Must be false for Codex models
+	Stream       bool                `json:"stream"`              // Must be true for Codex models
+	Reasoning    *responsesReasoning `json:"reasoning,omitempty"` // Reasoning configuration
+}
+
+// responsesReasoning configures reasoning behavior for models that support it
+type responsesReasoning struct {
+	// Effort controls reasoning depth: none, minimal, low, medium, high, xhigh
+	Effort string `json:"effort,omitempty"`
+	// Summary controls reasoning summary output: auto, concise, detailed
+	Summary string `json:"summary,omitempty"`
 }
 
 // responsesTool uses the flat format required by Responses API
@@ -111,6 +120,9 @@ func (p *OpenAIResponsesProtocol) EncodeRequest(messages []tape.Message, tools [
 		Tools:        convertResponsesTools(tools),
 		Store:        false, // Required for Codex models
 		Stream:       true,  // Required for Codex models
+		Reasoning: &responsesReasoning{
+			Summary: "detailed", // Request detailed reasoning summaries
+		},
 	}
 
 	return json.Marshal(req)

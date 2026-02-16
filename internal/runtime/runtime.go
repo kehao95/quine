@@ -381,6 +381,12 @@ func (r *Runtime) Run(mission, material string) int {
 		if assistantMsg.ReasoningContent != "" {
 			r.log("turn %d: reasoning: %s", r.tape.TurnCount, truncateStr(assistantMsg.ReasoningContent, 500))
 		}
+		// Log Responses API reasoning items if present
+		for _, ri := range assistantMsg.ReasoningItems {
+			for _, s := range ri.Summary {
+				r.log("turn %d: reasoning: %s", r.tape.TurnCount, truncateStr(s, 500))
+			}
+		}
 		// Log assistant's text response if present (truncated to avoid log bloat)
 		if assistantMsg.Content != "" {
 			r.log("turn %d: assistant: %s", r.tape.TurnCount, truncateStr(assistantMsg.Content, 2000))
