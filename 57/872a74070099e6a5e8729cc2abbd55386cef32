@@ -1,0 +1,40 @@
+internal/runtime/runtime.go
+  911a77d125df8d1d 337
+internal/runtime/system_prompt.md
+  911a77d125df8d1d 51
+internal/tools/schemas.go
+  911a77d125df8d1d 60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.3",
+  "base_commit_sha": "57872a74070099e6a5e8729cc2abbd55386cef32",
+  "prompts": {
+    "911a77d125df8d1d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_397cd80aaffeXtUeP2oW5qbgjG",
+        "model": "unknown"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 4,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "9fadeaf26f57fb06": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_39909ea49ffeL7pSZoVkupy616",
+        "model": "unknown"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 505,
+      "total_deletions": 164,
+      "accepted_lines": 396,
+      "overriden_lines": 1
+    }
+  }
+}
