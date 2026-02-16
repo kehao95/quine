@@ -1,0 +1,25 @@
+internal/runtime/runtime.go
+  9fadeaf26f57fb06 384-389
+internal/llm/protocol/openai_responses.go
+  9fadeaf26f57fb06 28-36,123-125
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.3",
+  "base_commit_sha": "cf6fede820b02705abbf0cc253d85d4c5aaf580b",
+  "prompts": {
+    "9fadeaf26f57fb06": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_39909ea49ffeL7pSZoVkupy616",
+        "model": "unknown"
+      },
+      "human_author": "Hao Ke <kehao95@gmail.com>",
+      "messages": [],
+      "total_additions": 24,
+      "total_deletions": 6,
+      "accepted_lines": 18,
+      "overriden_lines": 0
+    }
+  }
+}
