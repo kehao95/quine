@@ -1,9 +1,6 @@
 package tools
 
 import (
-	"bufio"
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -17,51 +14,37 @@ import (
 	"github.com/kehao95/quine/internal/tape"
 )
 
-// shellInit defines helper shell functions that are run once when the
-// persistent shell starts.
-const shellInit = `
-write_file() {
-    local path="$1"
-    shift
-    mkdir -p "$(dirname "$path")"
-    printf '%s\n' "$*" > "$path"
-}
-
-read_file() {
-    cat -n "$1"
-}
-
-`
-
-// ShExecutor runs shell commands via a persistent /bin/sh process.
-// Commands are written to the shell's stdin pipe, and output is read
-// until a sentinel marker is detected.
+// ShExecutor runs shell commands via either ephemeral (anonymous) or persistent
+// (named session) shells.
+//
+// Anonymous mode: spawns a fresh /bin/sh, runs the command, collects output via
+// pipe EOF (no sentinels), kills the process group, returns.
+//
+// Named session mode: delegates to a SessionManager which maintains persistent
+// shells with control-pipe-based completion detection.
 type ShExecutor struct {
 	Shell     string
 	MaxOutput int
-	ShellInit string   // Shell initialization script (helper functions)
 	Env       []string // Base environment variables (without QUINE_SESSION_ID)
+	Timeout   time.Duration
 
-	// Stdin is the material stdin file descriptor. With the persistent shell,
-	// this is passed as fd 4 (ExtraFiles[1]) so the agent can read it via
-	// /dev/fd/4 or cat <&4.
+	// Stdin is the material stdin file descriptor. Passed as fd 4
+	// (ExtraFiles[1]) so the agent can read it via /dev/fd/4 or cat <&4.
 	Stdin *os.File
 
 	// Stdout is the deliverable stdout file descriptor. Passed as fd 3
 	// (ExtraFiles[0]) so commands can write to >&3.
 	Stdout *os.File
 
-	// ProcessStarted is called when the persistent shell starts.
+	// ProcessStarted is called when an anonymous shell starts.
 	ProcessStarted func(*os.Process)
-	// ProcessEnded is called when the persistent shell exits.
+	// ProcessEnded is called when an anonymous shell exits.
 	ProcessEnded func()
 
-	// Persistent shell process
-	cmd        *exec.Cmd
-	stdinPipe  io.WriteCloser // Go writes commands here
-	stdoutPipe io.ReadCloser  // Go reads output+sentinel here
-	mu         sync.Mutex     // Serializes Execute() calls
-	started    bool
+	// sessions manages named persistent shells.
+	sessions *SessionManager
+
+	mu sync.Mutex // Serializes anonymous Execute() calls
 }
 
 // NewShExecutor creates a ShExecutor from config with the given child
@@ -92,11 +75,18 @@ func NewShExecutor(cfg *config.Config, childEnv []string) *ShExecutor {
 		}
 	}
 
+	mergedEnv := MergeEnv(filteredOsEnv, filteredChildEnv)
+
+	timeout := time.Duration(cfg.ShTimeout) * time.Second
+	if timeout == 0 {
+		timeout = 600 * time.Second // default 10 minutes
+	}
+
 	return &ShExecutor{
 		Shell:     cfg.Shell,
 		MaxOutput: cfg.OutputTruncate,
-		ShellInit: shellInit,
-		Env:       MergeEnv(filteredOsEnv, filteredChildEnv),
+		Env:       mergedEnv,
+		Timeout:   timeout,
 	}
 }
 
@@ -133,45 +123,62 @@ func MergeEnv(osEnv []string, childEnv []string) []string {
 	return result
 }
 
-// generateNonce returns a random 16-character hex string for sentinel markers.
-func generateNonce() string {
-	var b [8]byte
-	rand.Read(b[:])
-	return hex.EncodeToString(b[:])
+// initSessions lazily creates the SessionManager on first named-session use.
+func (b *ShExecutor) initSessions() {
+	if b.sessions == nil {
+		var extraFiles []*os.File
+		if b.Stdout != nil {
+			extraFiles = append(extraFiles, b.Stdout)
+		}
+		if b.Stdin != nil {
+			extraFiles = append(extraFiles, b.Stdin)
+		}
+		b.sessions = NewSessionManager(b.Shell, b.Env, extraFiles)
+	}
 }
 
-// Start spawns the persistent /bin/sh process. It is safe to call Start
-// multiple times; subsequent calls are no-ops if the shell is already running.
-func (b *ShExecutor) Start() error {
+// Execute dispatches a shell command based on the presence of a session name.
+//
+// Three modes:
+//   - command only → anonymous ephemeral execution
+//   - command + session → execute in named session (error if busy)
+//   - session only → read accumulated output from named session
+func (b *ShExecutor) Execute(toolID string, command string, session string) tape.ToolResult {
+	if session == "" {
+		// Anonymous ephemeral mode
+		return b.executeAnonymous(toolID, command)
+	}
+
+	if command == "" {
+		// Read-only: return accumulated output from named session
+		return b.readSession(toolID, session)
+	}
+
+	// Named session: execute command in persistent shell
+	return b.executeSession(toolID, command, session)
+}
+
+// executeAnonymous spawns a fresh shell, runs the command, collects output
+// via pipe EOF (stdout+stderr combined), and kills the process group.
+// No sentinels, no temp files, no persistent state.
+func (b *ShExecutor) executeAnonymous(toolID string, command string) tape.ToolResult {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	return b.startLocked()
-}
-
-// startLocked spawns the persistent shell. Caller must hold b.mu.
-func (b *ShExecutor) startLocked() error {
-	if b.started {
-		return nil
-	}
 
 	shell := b.Shell
 	if shell == "" {
 		shell = "/bin/sh"
 	}
 
-	b.cmd = exec.Command(shell)
+	cmd := exec.Command(shell, "-c", command)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
-	// Set environment
 	if len(b.Env) > 0 {
-		b.cmd.Env = b.Env
+		cmd.Env = b.Env
 	}
 
-	// Process group for signal forwarding
-	b.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-
-	// Set up extra file descriptors:
-	// fd 3 = b.Stdout (deliverable stdout)
-	// fd 4 = b.Stdin  (material stdin)
+	// Set up extra file descriptors (same as old persistent shell):
+	// fd 3 = deliverable stdout, fd 4 = material stdin
 	var extraFiles []*os.File
 	if b.Stdout != nil {
 		extraFiles = append(extraFiles, b.Stdout)
@@ -180,240 +187,120 @@ func (b *ShExecutor) startLocked() error {
 		extraFiles = append(extraFiles, b.Stdin)
 	}
 	if len(extraFiles) > 0 {
-		b.cmd.ExtraFiles = extraFiles
+		cmd.ExtraFiles = extraFiles
 	}
 
-	// Shell stderr → discard (per-command stderr goes to temp files)
-	b.cmd.Stderr = io.Discard
-
-	// Set up pipes for command I/O
-	var err error
-	b.stdinPipe, err = b.cmd.StdinPipe()
+	// Capture stdout and stderr separately via pipes
+	stdoutR, stdoutW, err := os.Pipe()
 	if err != nil {
-		return fmt.Errorf("creating stdin pipe: %w", err)
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: fmt.Sprintf("[SHELL ERROR] creating stdout pipe: %v", err),
+			IsError: true,
+		}
 	}
-
-	b.stdoutPipe, err = b.cmd.StdoutPipe()
+	stderrR, stderrW, err := os.Pipe()
 	if err != nil {
-		return fmt.Errorf("creating stdout pipe: %w", err)
+		stdoutR.Close()
+		stdoutW.Close()
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: fmt.Sprintf("[SHELL ERROR] creating stderr pipe: %v", err),
+			IsError: true,
+		}
 	}
 
-	// Start the shell process
-	if err := b.cmd.Start(); err != nil {
-		return fmt.Errorf("starting shell: %w", err)
+	cmd.Stdout = stdoutW
+	cmd.Stderr = stderrW
+
+	// Start the shell
+	if err := cmd.Start(); err != nil {
+		stdoutR.Close()
+		stdoutW.Close()
+		stderrR.Close()
+		stderrW.Close()
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: fmt.Sprintf("[SHELL ERROR] %v", err),
+			IsError: true,
+		}
 	}
 
-	b.started = true
+	// Close write ends in parent (child has them)
+	stdoutW.Close()
+	stderrW.Close()
 
-	// Notify caller that the persistent shell is running
+	// Notify caller that an anonymous shell is running
 	if b.ProcessStarted != nil {
-		b.ProcessStarted(b.cmd.Process)
+		b.ProcessStarted(cmd.Process)
 	}
 
-	// Run shellInit to define helper functions, consuming its output.
-	// We write the init script followed by a sentinel echo. The init
-	// script defines functions (which produce no output), so we just
-	// need to consume until the sentinel appears.
-	if b.ShellInit != "" {
-		initNonce := generateNonce()
-		sentinel := fmt.Sprintf("___QUINE_DONE_%s", initNonce)
-		// Write init commands directly (not wrapped in { }) since they
-		// contain function definitions with their own braces.
-		initCmd := b.ShellInit + fmt.Sprintf("\necho \"%s_0___\"\n", sentinel)
-		if _, err := io.WriteString(b.stdinPipe, initCmd); err != nil {
-			b.closeLocked()
-			return fmt.Errorf("writing shell init: %w", err)
-		}
-
-		// Consume init output until sentinel
-		scanner := bufio.NewScanner(b.stdoutPipe)
-		for scanner.Scan() {
-			line := scanner.Text()
-			if strings.HasPrefix(line, sentinel+"_") && strings.HasSuffix(line, "___") {
-				break
-			}
-		}
-		if err := scanner.Err(); err != nil {
-			b.closeLocked()
-			return fmt.Errorf("reading shell init output: %w", err)
-		}
-	}
-
-	return nil
-}
-
-// Close shuts down the persistent shell process gracefully.
-func (b *ShExecutor) Close() error {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	return b.closeLocked()
-}
-
-// closeLocked shuts down the persistent shell. Caller must hold b.mu.
-func (b *ShExecutor) closeLocked() error {
-	if !b.started {
-		return nil
-	}
-
-	b.started = false
-
-	// Close stdin pipe — shell will exit when it reads EOF
-	if b.stdinPipe != nil {
-		b.stdinPipe.Close()
-	}
-
-	// Wait for process to finish with a short deadline
-	done := make(chan error, 1)
+	// Read stdout and stderr concurrently
+	var stdoutBytes, stderrBytes []byte
+	var readWg sync.WaitGroup
+	readWg.Add(2)
 	go func() {
-		done <- b.cmd.Wait()
+		defer readWg.Done()
+		stdoutBytes, _ = io.ReadAll(stdoutR)
+		stdoutR.Close()
+	}()
+	go func() {
+		defer readWg.Done()
+		stderrBytes, _ = io.ReadAll(stderrR)
+		stderrR.Close()
 	}()
 
+	// Wait for command with timeout
+	doneCh := make(chan error, 1)
+	go func() {
+		doneCh <- cmd.Wait()
+	}()
+
+	timeout := b.Timeout
+	if timeout == 0 {
+		timeout = 600 * time.Second
+	}
+
+	var exitCode int
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
 	select {
-	case <-done:
-		// Process exited cleanly
-	case <-time.After(2 * time.Second):
-		// Force kill the process group
-		if b.cmd.Process != nil {
-			_ = syscall.Kill(-b.cmd.Process.Pid, syscall.SIGKILL)
-		}
-		<-done // Wait for Wait() to return after kill
-	}
-
-	// Close stdout pipe
-	if b.stdoutPipe != nil {
-		b.stdoutPipe.Close()
-	}
-
-	// Notify caller that the persistent shell has exited
-	if b.ProcessEnded != nil {
-		b.ProcessEnded()
-	}
-
-	return nil
-}
-
-// handleCrash cleans up after the persistent shell has crashed.
-// Caller must hold b.mu.
-func (b *ShExecutor) handleCrash() {
-	b.started = false
-
-	if b.stdinPipe != nil {
-		b.stdinPipe.Close()
-	}
-	if b.stdoutPipe != nil {
-		b.stdoutPipe.Close()
-	}
-	if b.cmd != nil && b.cmd.Process != nil {
-		_ = syscall.Kill(-b.cmd.Process.Pid, syscall.SIGKILL)
-		b.cmd.Wait()
-	}
-
-	// Notify caller that the shell died
-	if b.ProcessEnded != nil {
-		b.ProcessEnded()
-	}
-}
-
-// Execute runs a shell command in the persistent shell and returns a ToolResult.
-//
-// The persistent shell has these file descriptors:
-//   - fd 0 (stdin): pipe from Go (for receiving commands)
-//   - fd 1 (stdout): pipe to Go (for sending output + sentinel)
-//   - fd 3: deliverable stdout (b.Stdout, via ExtraFiles[0])
-//   - fd 4: material stdin (b.Stdin, via ExtraFiles[1])
-func (b *ShExecutor) Execute(toolID string, command string) tape.ToolResult {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	// Auto-start if not started (or if previously crashed)
-	if !b.started {
-		if err := b.startLocked(); err != nil {
-			return tape.ToolResult{
-				ToolID:  toolID,
-				Content: fmt.Sprintf("[SHELL ERROR] %v", err),
-				IsError: true,
+	case err := <-doneCh:
+		if err != nil {
+			if exitErr, ok := err.(*exec.ExitError); ok {
+				exitCode = exitErr.ExitCode()
+			} else {
+				exitCode = 1
 			}
 		}
-	}
+	case <-timer.C:
+		// Timeout: kill process group
+		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		<-doneCh // wait for Wait() to return
+		readWg.Wait()
 
-	// Generate unique nonce for this command
-	nonce := generateNonce()
+		if b.ProcessEnded != nil {
+			b.ProcessEnded()
+		}
 
-	// Build wrapped command:
-	// - Run the user's command in a brace group { ...; } so it executes in
-	//   the current shell context (cd, export, variables all persist)
-	// - Redirect stderr to a nonce-named temp file for clean capture
-	// - Echo a sentinel line with the exit code
-	// - An explicit `echo` before the sentinel ensures a leading newline,
-	//   so the sentinel always starts on a fresh line even if the command's
-	//   output does not end with a newline (e.g. `head -c 200 binaryfile`).
-	//
-	// Risk: if the user command calls `exit N`, it kills the persistent shell.
-	// This is handled by crash recovery (handleCrash → auto-restart on next call).
-	// The system prompt instructs the agent not to use bare `exit` in sh commands.
-	stderrFile := fmt.Sprintf("/tmp/__quine_stderr_%s", nonce)
-	sentinel := fmt.Sprintf("___QUINE_DONE_%s", nonce)
-	wrappedCmd := fmt.Sprintf(
-		"{ %s\n} 2>\"%s\"; __quine_ec=$?; echo; echo \"%s_${__quine_ec}___\"\n",
-		command, stderrFile, sentinel,
-	)
-
-	// Write command to shell stdin
-	if _, err := io.WriteString(b.stdinPipe, wrappedCmd); err != nil {
-		// Shell probably died
-		b.handleCrash()
 		return tape.ToolResult{
 			ToolID:  toolID,
-			Content: "[SHELL ERROR] Shell process died. State lost. Retrying on next call.",
+			Content: fmt.Sprintf("[SHELL ERROR] command timed out after %v", timeout),
 			IsError: true,
 		}
 	}
 
-	// Read stdout until sentinel
-	var stdout strings.Builder
-	scanner := bufio.NewScanner(b.stdoutPipe)
-	// Increase scanner buffer for large outputs (1MB max per line)
-	scanner.Buffer(make([]byte, 64*1024), 1024*1024)
-	exitCode := 0
-	foundSentinel := false
+	// Wait for read goroutines to finish
+	readWg.Wait()
 
-	for scanner.Scan() {
-		line := scanner.Text()
-		// Check if this line IS the sentinel: ___QUINE_DONE_{nonce}_{exitcode}___
-		if strings.HasPrefix(line, sentinel+"_") && strings.HasSuffix(line, "___") {
-			// Parse exit code
-			codeStr := line[len(sentinel)+1 : len(line)-3]
-			fmt.Sscanf(codeStr, "%d", &exitCode)
-			foundSentinel = true
-			break
-		}
-		stdout.WriteString(line)
-		stdout.WriteString("\n")
+	// Notify caller that the anonymous shell has exited
+	if b.ProcessEnded != nil {
+		b.ProcessEnded()
 	}
 
-	if !foundSentinel {
-		// EOF without sentinel — shell crashed
-		b.handleCrash()
-		return tape.ToolResult{
-			ToolID:  toolID,
-			Content: "[SHELL ERROR] Shell process terminated unexpectedly. State lost.",
-			IsError: true,
-		}
-	}
-
-	// Read stderr from temp file
-	stderrBytes, _ := os.ReadFile(stderrFile)
-	os.Remove(stderrFile) // Clean up
-
-	// The sentinel guard (echo before sentinel) adds a trailing empty line
-	// to stdout. Strip it so command output is faithfully reproduced.
-	stdoutRaw := stdout.String()
-	if strings.HasSuffix(stdoutRaw, "\n") {
-		stdoutRaw = stdoutRaw[:len(stdoutRaw)-1]
-	}
-
-	// Truncate and format output
-	stdoutStr := b.truncate([]byte(stdoutRaw))
+	// Format output
+	stdoutStr := b.truncate(stdoutBytes)
 	stderrStr := b.truncate(stderrBytes)
 	content := fmt.Sprintf("[EXIT CODE] %d\n[STDOUT]\n%s\n[STDERR]\n%s", exitCode, stdoutStr, stderrStr)
 
@@ -422,6 +309,79 @@ func (b *ShExecutor) Execute(toolID string, command string) tape.ToolResult {
 		Content: content,
 		IsError: exitCode != 0,
 	}
+}
+
+// executeSession runs a command in a named persistent session.
+func (b *ShExecutor) executeSession(toolID string, command string, sessionName string) tape.ToolResult {
+	b.mu.Lock()
+	b.initSessions()
+	b.mu.Unlock()
+
+	sess, err := b.sessions.GetOrCreate(sessionName)
+	if err != nil {
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: fmt.Sprintf("[SESSION ERROR] creating session %q: %v", sessionName, err),
+			IsError: true,
+		}
+	}
+
+	timeout := b.Timeout
+	if timeout == 0 {
+		timeout = 600 * time.Second
+	}
+
+	exitCode, output, err := sess.Execute(command, timeout)
+	if err != nil {
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: fmt.Sprintf("[SESSION ERROR] %v", err),
+			IsError: true,
+		}
+	}
+
+	// Format output (named sessions combine stdout+stderr)
+	outputStr := b.truncate([]byte(output))
+	content := fmt.Sprintf("[EXIT CODE] %d\n[OUTPUT]\n%s", exitCode, outputStr)
+
+	return tape.ToolResult{
+		ToolID:  toolID,
+		Content: content,
+		IsError: exitCode != 0,
+	}
+}
+
+// readSession returns accumulated output from a named session without
+// executing a command. Always succeeds (returns empty if no output).
+func (b *ShExecutor) readSession(toolID string, sessionName string) tape.ToolResult {
+	b.mu.Lock()
+	b.initSessions()
+	b.mu.Unlock()
+
+	sess := b.sessions.Get(sessionName)
+	if sess == nil {
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: fmt.Sprintf("[SESSION ERROR] session %q not found", sessionName),
+			IsError: true,
+		}
+	}
+
+	output := sess.ReadOutput()
+	return tape.ToolResult{
+		ToolID:  toolID,
+		Content: fmt.Sprintf("[OUTPUT]\n%s", output),
+	}
+}
+
+// Close shuts down all sessions.
+func (b *ShExecutor) Close() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.sessions != nil {
+		return b.sessions.CloseAll()
+	}
+	return nil
 }
 
 // truncate returns the string representation of data, truncating it if it

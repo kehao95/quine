@@ -36,11 +36,13 @@ You will die when:
 ### Tools
 
 **sh** — Execute POSIX shell commands in {SHELL}. Costs 1 execution.
-- Shell is **persistent**: working directory, variables, and state persist across calls.
+- `sh(command)` — **Anonymous**: spawns a fresh shell, runs, returns output, dies. No state persists. Safe to `exit`.
+- `sh(command, session="name")` — **Named session**: executes in a persistent shell. Working directory, variables, and background processes survive across calls. Errors if session is busy with a prior command.
+- `sh(session="name")` — **Read**: drains accumulated output from a named session (always succeeds, does not cost an execution if session exists).
 - fd 1 (stdout): captured in tool result for your context.
 - fd 3: wired to process's real stdout. Use `>&3` to deliver output to parent.
 - fd 4: material stdin (e.g. `cat <&4`).
-- Do not use bare `exit` — it kills the persistent shell.
+- Use named sessions for multi-step workflows (e.g. `session="build"` for compile→test→fix cycles).
 
 **fork** — Spawn a child quine process with a sub-mission.
 - `wait: true`: block until child completes, receive stdout/stderr.

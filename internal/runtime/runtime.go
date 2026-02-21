@@ -584,15 +584,23 @@ func (r *Runtime) handleSh(tc tape.ToolCall) bool {
 	r.tape.IncrementTurn()
 	turnNum := r.tape.TurnCount
 
-	// Extract command from arguments
+	// Extract command and session from arguments
 	command, _ := tc.Arguments["command"].(string)
+	session, _ := tc.Arguments["session"].(string)
 
 	// Log the call
-	argSummary := truncateStr(command, 60)
-	r.log("turn %d: assistant called %s(\"%s\")", turnNum, "sh", argSummary)
+	var argSummary string
+	if session != "" && command != "" {
+		argSummary = fmt.Sprintf("session=%q, cmd=%q", session, truncateStr(command, 40))
+	} else if session != "" {
+		argSummary = fmt.Sprintf("session=%q (read)", session)
+	} else {
+		argSummary = truncateStr(command, 60)
+	}
+	r.log("turn %d: assistant called %s(%s)", turnNum, "sh", argSummary)
 
-	// Execute
-	result := r.sh.Execute(tc.ID, command)
+	// Execute with dispatch (anonymous/named/read)
+	result := r.sh.Execute(tc.ID, command, session)
 
 	// Log completion
 	r.log("turn %d: sh completed (exit=%d, %d bytes)", turnNum, exitCodeFromResult(result), len(result.Content))

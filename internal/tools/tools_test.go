@@ -11,19 +11,20 @@ import (
 )
 
 // testExecutor returns a ShExecutor with test-friendly defaults.
-// The caller should defer b.Close() to shut down the persistent shell.
+// The caller should defer b.Close() to shut down any sessions.
 func testExecutor() *ShExecutor {
 	return &ShExecutor{
 		Shell:     "/bin/sh",
 		MaxOutput: 20480,
-		ShellInit: shellInit,
 	}
 }
+
+// --- Anonymous (ephemeral) mode tests ---
 
 func TestSimpleCommandExecution(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
-	result := b.Execute("tool-1", "echo hello")
+	result := b.Execute("tool-1", "echo hello", "")
 
 	if result.ToolID != "tool-1" {
 		t.Errorf("ToolID = %q, want %q", result.ToolID, "tool-1")
@@ -42,8 +43,7 @@ func TestSimpleCommandExecution(t *testing.T) {
 func TestNonZeroExitCode(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
-	// Use a command that returns non-zero WITHOUT `exit` (which would kill the shell)
-	result := b.Execute("tool-2", "false")
+	result := b.Execute("tool-2", "false", "")
 
 	if !result.IsError {
 		t.Errorf("IsError = false, want true for non-zero exit")
@@ -56,8 +56,8 @@ func TestNonZeroExitCode(t *testing.T) {
 func TestNonZeroExitCodeFromCommand(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
-	// sh -c "exit 42" returns 42 without killing the persistent shell
-	result := b.Execute("tool-2b", "sh -c 'exit 42'")
+	// sh -c "exit 42" returns 42
+	result := b.Execute("tool-2b", "exit 42", "")
 
 	if !result.IsError {
 		t.Errorf("IsError = false, want true for non-zero exit")
@@ -70,7 +70,7 @@ func TestNonZeroExitCodeFromCommand(t *testing.T) {
 func TestStderrCapture(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
-	result := b.Execute("tool-3", "echo errormsg >&2")
+	result := b.Execute("tool-3", "echo errormsg >&2", "")
 
 	if !strings.Contains(result.Content, "errormsg") {
 		t.Errorf("expected stderr to contain 'errormsg', got:\n%s", result.Content)
@@ -91,7 +91,7 @@ func TestOutputTruncation(t *testing.T) {
 	b.MaxOutput = 100 // very small limit for testing
 
 	// Generate output larger than MaxOutput
-	result := b.Execute("tool-6", "python3 -c \"print('A' * 500)\"")
+	result := b.Execute("tool-6", "python3 -c \"print('A' * 500)\"", "")
 
 	if !strings.Contains(result.Content, "...[Output Truncated,") {
 		t.Errorf("expected truncation notice, got:\n%s", result.Content)
@@ -106,7 +106,7 @@ func TestOutputTruncationStderr(t *testing.T) {
 	defer b.Close()
 	b.MaxOutput = 100
 
-	result := b.Execute("tool-6b", "python3 -c \"import sys; sys.stderr.write('B' * 500)\"")
+	result := b.Execute("tool-6b", "python3 -c \"import sys; sys.stderr.write('B' * 500)\"", "")
 
 	// The STDERR section should contain truncation
 	parts := strings.SplitN(result.Content, "[STDERR]", 2)
@@ -121,7 +121,7 @@ func TestOutputTruncationStderr(t *testing.T) {
 func TestResultFormatExact(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
-	result := b.Execute("tool-7", "echo out; echo err >&2")
+	result := b.Execute("tool-7", "echo out; echo err >&2", "")
 
 	expected := "[EXIT CODE] 0\n[STDOUT]\nout\n\n[STDERR]\nerr\n"
 	if result.Content != expected {
@@ -132,7 +132,7 @@ func TestResultFormatExact(t *testing.T) {
 func TestResultFormatEmptyOutput(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
-	result := b.Execute("tool-8", "true")
+	result := b.Execute("tool-8", "true", "")
 
 	expected := "[EXIT CODE] 0\n[STDOUT]\n\n[STDERR]\n"
 	if result.Content != expected {
@@ -144,9 +144,10 @@ func TestOutputWithoutTrailingNewline(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
 
-	// printf without \n — this is the exact pattern that caused the
-	// sentinel-detection deadlock (e.g. "head -c 200 binaryfile").
-	result := b.Execute("tool-nonl", `printf 'no-newline-here'`)
+	// printf without \n — this used to cause sentinel-detection deadlock
+	// in the old nonce-based implementation. Anonymous mode handles it
+	// naturally via pipe EOF.
+	result := b.Execute("tool-nonl", `printf 'no-newline-here'`, "")
 
 	if result.IsError {
 		t.Fatalf("unexpected error:\n%s", result.Content)
@@ -157,25 +158,39 @@ func TestOutputWithoutTrailingNewline(t *testing.T) {
 	if !strings.Contains(result.Content, "no-newline-here") {
 		t.Errorf("expected stdout to contain 'no-newline-here', got:\n%s", result.Content)
 	}
+}
 
-	// Verify a subsequent command still works (shell not deadlocked)
-	result2 := b.Execute("tool-after", "echo alive")
+func TestAnonymousExitDoesNotCrash(t *testing.T) {
+	b := testExecutor()
+	defer b.Close()
+
+	// In anonymous mode, 'exit 1' just gives exit code 1 (no crash recovery needed)
+	result := b.Execute("tool-exit-1", "exit 1", "")
+	if !result.IsError {
+		t.Errorf("expected error from exit 1")
+	}
+	if !strings.Contains(result.Content, "[EXIT CODE] 1") {
+		t.Errorf("expected exit code 1, got:\n%s", result.Content)
+	}
+
+	// Subsequent calls still work (each is ephemeral)
+	result2 := b.Execute("tool-exit-2", "echo alive", "")
 	if result2.IsError {
-		t.Fatalf("post-recovery command failed:\n%s", result2.Content)
+		t.Fatalf("expected success after exit, got error:\n%s", result2.Content)
 	}
 	if !strings.Contains(result2.Content, "alive") {
 		t.Errorf("expected 'alive' in output, got:\n%s", result2.Content)
 	}
 }
 
-func TestHelperWriteFile(t *testing.T) {
+func TestWriteFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "sub", "test.txt")
 
 	b := testExecutor()
 	defer b.Close()
-	cmd := fmt.Sprintf(`write_file %q "hello world"`, testFile)
-	result := b.Execute("tool-9", cmd)
+	cmd := fmt.Sprintf(`mkdir -p "$(dirname %q)" && printf '%%s\n' "hello world" > %q`, testFile, testFile)
+	result := b.Execute("tool-9", cmd, "")
 
 	if result.IsError {
 		t.Fatalf("write_file failed:\n%s", result.Content)
@@ -191,7 +206,7 @@ func TestHelperWriteFile(t *testing.T) {
 	}
 }
 
-func TestHelperReadFile(t *testing.T) {
+func TestReadFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "read_test.txt")
 	if err := os.WriteFile(testFile, []byte("line1\nline2\n"), 0644); err != nil {
@@ -200,15 +215,11 @@ func TestHelperReadFile(t *testing.T) {
 
 	b := testExecutor()
 	defer b.Close()
-	cmd := fmt.Sprintf(`read_file %q`, testFile)
-	result := b.Execute("tool-10", cmd)
+	cmd := fmt.Sprintf(`cat -n %q`, testFile)
+	result := b.Execute("tool-10", cmd, "")
 
 	if result.IsError {
 		t.Fatalf("read_file failed:\n%s", result.Content)
-	}
-	// cat -n produces numbered lines
-	if !strings.Contains(result.Content, "1") && !strings.Contains(result.Content, "line1") {
-		t.Errorf("expected numbered output with 'line1', got:\n%s", result.Content)
 	}
 	if !strings.Contains(result.Content, "line1") {
 		t.Errorf("expected 'line1' in output, got:\n%s", result.Content)
@@ -218,14 +229,14 @@ func TestHelperReadFile(t *testing.T) {
 	}
 }
 
-func TestHelperWriteReadRoundtrip(t *testing.T) {
+func TestWriteReadRoundtrip(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "roundtrip.txt")
 
 	b := testExecutor()
 	defer b.Close()
-	cmd := fmt.Sprintf(`write_file %q "alpha beta gamma" && read_file %q`, testFile, testFile)
-	result := b.Execute("tool-11", cmd)
+	cmd := fmt.Sprintf(`printf '%%s\n' "alpha beta gamma" > %q && cat -n %q`, testFile, testFile)
+	result := b.Execute("tool-11", cmd, "")
 
 	if result.IsError {
 		t.Fatalf("roundtrip failed:\n%s", result.Content)
@@ -235,20 +246,21 @@ func TestHelperWriteReadRoundtrip(t *testing.T) {
 	}
 }
 
-// Test that the persistent shell maintains working directory across Execute calls
-func TestPersistentShellCd(t *testing.T) {
+// --- Named session (persistent) mode tests ---
+
+func TestNamedSessionPersistentCd(t *testing.T) {
 	tmpDir := t.TempDir()
 	b := testExecutor()
 	defer b.Close()
 
-	// cd to tmpDir
-	result1 := b.Execute("tool-cd-1", fmt.Sprintf("cd %q", tmpDir))
+	// cd to tmpDir in named session
+	result1 := b.Execute("tool-cd-1", fmt.Sprintf("cd %q", tmpDir), "test-cd")
 	if result1.IsError {
 		t.Fatalf("cd failed:\n%s", result1.Content)
 	}
 
-	// pwd should show tmpDir
-	result2 := b.Execute("tool-cd-2", "pwd")
+	// pwd should show tmpDir (state persists)
+	result2 := b.Execute("tool-cd-2", "pwd", "test-cd")
 	if result2.IsError {
 		t.Fatalf("pwd failed:\n%s", result2.Content)
 	}
@@ -257,19 +269,18 @@ func TestPersistentShellCd(t *testing.T) {
 	}
 }
 
-// Test that the persistent shell preserves exported variables across Execute() calls
-func TestPersistentShellExport(t *testing.T) {
+func TestNamedSessionPersistentExport(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
 
-	// Export a variable
-	result1 := b.Execute("tool-export-1", "export MY_VAR=hello_world")
+	// Export a variable in named session
+	result1 := b.Execute("tool-export-1", "export MY_VAR=hello_world", "test-export")
 	if result1.IsError {
 		t.Fatalf("export failed:\n%s", result1.Content)
 	}
 
-	// Verify it persists in a subsequent call
-	result2 := b.Execute("tool-export-2", "echo $MY_VAR")
+	// Verify it persists in a subsequent call to the same session
+	result2 := b.Execute("tool-export-2", "echo $MY_VAR", "test-export")
 	if result2.IsError {
 		t.Fatalf("echo failed:\n%s", result2.Content)
 	}
@@ -278,19 +289,18 @@ func TestPersistentShellExport(t *testing.T) {
 	}
 }
 
-// Test that shell variables (not exported) persist across Execute() calls
-func TestPersistentShellVariables(t *testing.T) {
+func TestNamedSessionPersistentVariables(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
 
 	// Set a shell variable (no export)
-	result1 := b.Execute("tool-var-1", "MY_LOCAL=42")
+	result1 := b.Execute("tool-var-1", "MY_LOCAL=42", "test-vars")
 	if result1.IsError {
 		t.Fatalf("set variable failed:\n%s", result1.Content)
 	}
 
 	// Verify it persists
-	result2 := b.Execute("tool-var-2", "echo $MY_LOCAL")
+	result2 := b.Execute("tool-var-2", "echo $MY_LOCAL", "test-vars")
 	if result2.IsError {
 		t.Fatalf("echo failed:\n%s", result2.Content)
 	}
@@ -299,30 +309,97 @@ func TestPersistentShellVariables(t *testing.T) {
 	}
 }
 
-// Test that `exit N` inside a brace group kills the persistent shell,
-// and crash recovery auto-restarts it on the next Execute() call.
-func TestExitCrashRecovery(t *testing.T) {
+func TestNamedSessionReadOutput(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
 
-	// exit 1 inside { } will kill the persistent shell
-	result1 := b.Execute("tool-exit-1", "exit 1")
-
-	// Should get a shell error (crash detected via EOF without sentinel)
-	if !result1.IsError {
-		t.Fatalf("expected error from exit, got success:\n%s", result1.Content)
-	}
-	if !strings.Contains(result1.Content, "SHELL ERROR") {
-		t.Errorf("expected SHELL ERROR in result, got:\n%s", result1.Content)
+	// Run a command that produces output
+	result1 := b.Execute("tool-r-1", "echo session-data", "test-read")
+	if result1.IsError {
+		t.Fatalf("command failed:\n%s", result1.Content)
 	}
 
-	// Next call should auto-restart and work
-	result2 := b.Execute("tool-exit-2", "echo recovered")
+	// Read-only (no command) should return empty since Execute already consumed
+	result2 := b.Execute("tool-r-2", "", "test-read")
 	if result2.IsError {
-		t.Fatalf("expected recovery after crash, got error:\n%s", result2.Content)
+		t.Fatalf("read failed:\n%s", result2.Content)
 	}
-	if !strings.Contains(result2.Content, "recovered") {
-		t.Errorf("expected 'recovered' in output, got:\n%s", result2.Content)
+	// Output should have been consumed by the Execute call, so read returns empty
+	if !strings.Contains(result2.Content, "[OUTPUT]") {
+		t.Errorf("expected [OUTPUT] section, got:\n%s", result2.Content)
+	}
+}
+
+func TestNamedSessionBusyError(t *testing.T) {
+	b := testExecutor()
+	defer b.Close()
+
+	// Create session and start a long-running command
+	_, err := b.sessions_getOrCreate("test-busy")
+	if err != nil {
+		// Manually init sessions for this test
+		b.mu.Lock()
+		b.initSessions()
+		b.mu.Unlock()
+	}
+
+	sess, err := b.sessions_getOrCreate("test-busy")
+	if err != nil {
+		t.Fatalf("creating session: %v", err)
+	}
+
+	// Simulate busy state
+	sess.mu.Lock()
+	sess.busy = true
+	sess.mu.Unlock()
+
+	// Trying to execute should fail with busy error
+	result := b.Execute("tool-busy", "echo test", "test-busy")
+	if !result.IsError {
+		t.Errorf("expected error for busy session, got success:\n%s", result.Content)
+	}
+	if !strings.Contains(result.Content, "busy") {
+		t.Errorf("expected 'busy' in error, got:\n%s", result.Content)
+	}
+
+	// Clean up: reset busy state
+	sess.mu.Lock()
+	sess.busy = false
+	sess.mu.Unlock()
+}
+
+func TestNamedSessionNonexistentRead(t *testing.T) {
+	b := testExecutor()
+	defer b.Close()
+
+	// Reading from a session that doesn't exist should error
+	result := b.Execute("tool-ne", "", "nonexistent")
+	if !result.IsError {
+		t.Errorf("expected error for nonexistent session, got success:\n%s", result.Content)
+	}
+	if !strings.Contains(result.Content, "not found") {
+		t.Errorf("expected 'not found' in error, got:\n%s", result.Content)
+	}
+}
+
+func TestNamedSessionOutputFormat(t *testing.T) {
+	b := testExecutor()
+	defer b.Close()
+
+	// Named session output uses [OUTPUT] (combined stdout+stderr) not [STDOUT]/[STDERR]
+	result := b.Execute("tool-fmt", "echo hello", "test-fmt")
+	if result.IsError {
+		t.Fatalf("command failed:\n%s", result.Content)
+	}
+
+	if !strings.Contains(result.Content, "[EXIT CODE] 0") {
+		t.Errorf("expected [EXIT CODE] 0, got:\n%s", result.Content)
+	}
+	if !strings.Contains(result.Content, "[OUTPUT]") {
+		t.Errorf("expected [OUTPUT] section, got:\n%s", result.Content)
+	}
+	if !strings.Contains(result.Content, "hello") {
+		t.Errorf("expected 'hello' in output, got:\n%s", result.Content)
 	}
 }
 
@@ -366,7 +443,7 @@ func TestMergeEnvOverlaysChildVars(t *testing.T) {
 	}
 }
 
-func TestEnvPropagationViash(t *testing.T) {
+func TestEnvPropagationViaSh(t *testing.T) {
 	// Verify that spawned commands can see QUINE_* env vars
 	b := testExecutor()
 	defer b.Close()
@@ -374,7 +451,7 @@ func TestEnvPropagationViash(t *testing.T) {
 		"QUINE_DEPTH=3",
 	})
 
-	result := b.Execute("tool-env-1", "echo $QUINE_DEPTH")
+	result := b.Execute("tool-env-1", "echo $QUINE_DEPTH", "")
 	if result.IsError {
 		t.Fatalf("command failed:\n%s", result.Content)
 	}
@@ -386,7 +463,7 @@ func TestEnvPropagationViash(t *testing.T) {
 	// Each ./quine child process generates its own unique session ID
 	// via config.Load(), ensuring multiple children spawned from one
 	// sh command don't collide on the same tape file.
-	result2 := b.Execute("tool-env-2", "echo \"SESSION_ID=${QUINE_SESSION_ID:-unset}\"")
+	result2 := b.Execute("tool-env-2", "echo \"SESSION_ID=${QUINE_SESSION_ID:-unset}\"", "")
 	if result2.IsError {
 		t.Fatalf("command failed:\n%s", result2.Content)
 	}
@@ -420,12 +497,11 @@ func TestChildEnvDepthIncrement(t *testing.T) {
 	b := &ShExecutor{
 		Shell:     "/bin/sh",
 		MaxOutput: 20480,
-		ShellInit: shellInit,
 		Env:       MergeEnv(os.Environ(), childEnv),
 	}
 	defer b.Close()
 
-	result := b.Execute("tool-depth", "echo $QUINE_DEPTH")
+	result := b.Execute("tool-depth", "echo $QUINE_DEPTH", "")
 	if result.IsError {
 		t.Fatalf("command failed:\n%s", result.Content)
 	}
@@ -434,7 +510,7 @@ func TestChildEnvDepthIncrement(t *testing.T) {
 	}
 
 	// Verify QUINE_PARENT_SESSION is set to the parent's session ID
-	result2 := b.Execute("tool-parent", "echo $QUINE_PARENT_SESSION")
+	result2 := b.Execute("tool-parent", "echo $QUINE_PARENT_SESSION", "")
 	if result2.IsError {
 		t.Fatalf("command failed:\n%s", result2.Content)
 	}
@@ -444,7 +520,7 @@ func TestChildEnvDepthIncrement(t *testing.T) {
 
 	// Verify QUINE_SESSION_ID is NOT set in the child env
 	// (each ./quine child generates its own via config.Load)
-	result3 := b.Execute("tool-session", "echo \"SID=${QUINE_SESSION_ID:-unset}\"")
+	result3 := b.Execute("tool-session", "echo \"SID=${QUINE_SESSION_ID:-unset}\"", "")
 	if result3.IsError {
 		t.Fatalf("command failed:\n%s", result3.Content)
 	}
@@ -453,7 +529,7 @@ func TestChildEnvDepthIncrement(t *testing.T) {
 	}
 }
 
-func TestNewshExecutorWithChildEnv(t *testing.T) {
+func TestNewShExecutorWithChildEnv(t *testing.T) {
 	cfg := &config.Config{
 		ModelID:        "claude-sonnet-4-20250514",
 		APIKey:         "test-key",
@@ -477,7 +553,7 @@ func TestNewshExecutorWithChildEnv(t *testing.T) {
 	defer b.Close()
 
 	// Verify QUINE_DEPTH is 2 (parent depth 1 + 1) in the executor's env
-	result := b.Execute("tool-ctor", "echo $QUINE_DEPTH")
+	result := b.Execute("tool-ctor", "echo $QUINE_DEPTH", "")
 	if result.IsError {
 		t.Fatalf("command failed:\n%s", result.Content)
 	}
@@ -486,7 +562,7 @@ func TestNewshExecutorWithChildEnv(t *testing.T) {
 	}
 
 	// PATH should still work (system tools accessible)
-	result2 := b.Execute("tool-path", "which echo")
+	result2 := b.Execute("tool-path", "which echo", "")
 	if result2.IsError {
 		t.Fatalf("'which echo' failed — PATH not propagated:\n%s", result2.Content)
 	}
@@ -609,4 +685,12 @@ func TestExecEnv(t *testing.T) {
 	if envMap["QUINE_MAX_DEPTH"] != "5" {
 		t.Errorf("QUINE_MAX_DEPTH = %q, want 5", envMap["QUINE_MAX_DEPTH"])
 	}
+}
+
+// sessions_getOrCreate is a test helper that exposes session creation.
+func (b *ShExecutor) sessions_getOrCreate(name string) (*Session, error) {
+	b.mu.Lock()
+	b.initSessions()
+	b.mu.Unlock()
+	return b.sessions.GetOrCreate(name)
 }

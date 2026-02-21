@@ -302,7 +302,7 @@ func TestStderr_SuccessSilent(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Persistent shell state
+// 4. Named session persistence
 // ---------------------------------------------------------------------------
 
 // TestPersistentShell_CdPersists verifies that cd in one sh call persists to the next.
@@ -312,8 +312,8 @@ func TestPersistentShell_CdPersists(t *testing.T) {
 	cfg := unixTestConfig(t, tapeDir)
 
 	mock := newMockProvider([]tape.Message{
-		assistantsh("c1", fmt.Sprintf("cd %q", tmpDir)),
-		assistantsh("c2", "pwd"),
+		assistantshSession("c1", fmt.Sprintf("cd %q", tmpDir), "main"),
+		assistantshSession("c2", "pwd", "main"),
 		assistantExit("e1", "success", "", ""),
 	})
 
@@ -343,8 +343,8 @@ func TestPersistentShell_CdPersists(t *testing.T) {
 // TestPersistentShell_ExportPersists verifies that export in one sh call persists to the next.
 func TestPersistentShell_ExportPersists(t *testing.T) {
 	_, entries := runWithMock(t, []tape.Message{
-		assistantsh("c1", "export QUINE_TEST_VAR=hello42"),
-		assistantsh("c2", "echo $QUINE_TEST_VAR"),
+		assistantshSession("c1", "export QUINE_TEST_VAR=hello42", "main"),
+		assistantshSession("c2", "echo $QUINE_TEST_VAR", "main"),
 		assistantExit("e1", "success", "", ""),
 	}, "check export persistence", "Begin.")
 
@@ -362,8 +362,8 @@ func TestPersistentShell_ExportPersists(t *testing.T) {
 // TestPersistentShell_ShellVarPersists verifies that shell variables persist.
 func TestPersistentShell_ShellVarPersists(t *testing.T) {
 	_, entries := runWithMock(t, []tape.Message{
-		assistantsh("c1", "MY_COUNT=99"),
-		assistantsh("c2", "echo $MY_COUNT"),
+		assistantshSession("c1", "MY_COUNT=99", "main"),
+		assistantshSession("c2", "echo $MY_COUNT", "main"),
 		assistantExit("e1", "success", "", ""),
 	}, "check variable persistence", "Begin.")
 
@@ -380,8 +380,8 @@ func TestPersistentShell_ShellVarPersists(t *testing.T) {
 // TestPersistentShell_FunctionPersists verifies that function definitions persist.
 func TestPersistentShell_FunctionPersists(t *testing.T) {
 	_, entries := runWithMock(t, []tape.Message{
-		assistantsh("c1", `greet() { echo "hi $1"; }`),
-		assistantsh("c2", `greet world`),
+		assistantshSession("c1", `greet() { echo "hi $1"; }`, "main"),
+		assistantshSession("c2", `greet world`, "main"),
 		assistantExit("e1", "success", "", ""),
 	}, "check function persistence", "Begin.")
 
@@ -396,51 +396,50 @@ func TestPersistentShell_FunctionPersists(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 5. Crash recovery
+// 5. Anonymous shell behavior
 // ---------------------------------------------------------------------------
 
-// TestCrashRecovery_ExitInShell verifies that `exit` in a brace-group
-// kills the shell, crash recovery detects it, and the next call auto-restarts.
+// TestAnonymousShell_ExitDoesNotCrash verifies that `exit` in anonymous mode
+// gives an exit code without crash/recovery (each call is ephemeral).
 func TestCrashRecovery_ExitInShell(t *testing.T) {
 	_, entries := runWithMock(t, []tape.Message{
-		assistantsh("c1", "exit 1"), // kills the shell
+		assistantsh("c1", "exit 1"), // in anonymous mode, just returns exit code 1
 		assistantsh("c2", "echo recovered"),
 		assistantExit("e1", "success", "", ""),
-	}, "test crash recovery", "Begin.")
+	}, "test anonymous exit", "Begin.")
 
 	results := findToolResults(t, entries)
 	if len(results) < 2 {
 		t.Fatalf("expected at least 2 tool results, got %d", len(results))
 	}
 
-	// First result should be a shell error
-	if !strings.Contains(results[0].Content, "SHELL ERROR") {
-		t.Errorf("crash result = %q, want SHELL ERROR", results[0].Content)
+	// First result should show exit code 1 (not a SHELL ERROR)
+	if !strings.Contains(results[0].Content, "[EXIT CODE] 1") {
+		t.Errorf("exit result = %q, want [EXIT CODE] 1", results[0].Content)
 	}
 
-	// Second result should show recovery
+	// Second result should work fine (ephemeral, no crash)
 	if !strings.Contains(results[1].Content, "recovered") {
 		t.Errorf("recovery result = %q, want 'recovered'", results[1].Content)
 	}
 }
 
-// TestCrashRecovery_StateLost verifies that state is lost after crash recovery.
+// TestAnonymousShell_StateNotShared verifies that state is not shared between anonymous calls.
 func TestCrashRecovery_StateLost(t *testing.T) {
 	_, entries := runWithMock(t, []tape.Message{
 		assistantsh("c1", "export EPHEMERAL=before_crash"),
-		assistantsh("c2", "exit 0"), // kills the shell
-		assistantsh("c3", `echo "val=${EPHEMERAL:-gone}"`),
+		assistantsh("c2", `echo "val=${EPHEMERAL:-gone}"`),
 		assistantExit("e1", "success", "", ""),
-	}, "test state loss after crash", "Begin.")
+	}, "test state isolation in anonymous mode", "Begin.")
 
 	results := findToolResults(t, entries)
-	if len(results) < 3 {
-		t.Fatalf("expected at least 3 tool results, got %d", len(results))
+	if len(results) < 2 {
+		t.Fatalf("expected at least 2 tool results, got %d", len(results))
 	}
 
-	// After crash recovery, EPHEMERAL should be gone
-	if !strings.Contains(results[2].Content, "val=gone") {
-		t.Errorf("after crash: %q, want val=gone (state should be lost)", results[2].Content)
+	// In anonymous mode, each call is ephemeral — EPHEMERAL should be gone
+	if !strings.Contains(results[1].Content, "val=gone") {
+		t.Errorf("anonymous mode: %q, want val=gone (state should not persist)", results[1].Content)
 	}
 }
 

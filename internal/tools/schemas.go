@@ -6,16 +6,19 @@ import "github.com/kehao95/quine/internal/llm"
 func ShToolSchema() llm.ToolSchema {
 	return llm.ToolSchema{
 		Name:        "sh",
-		Description: "Execute a POSIX shell command.",
+		Description: "Execute a POSIX shell command.\n\n- `sh(command)` — Anonymous ephemeral: spawn shell, run, return output, kill.\n- `sh(command, session=\"name\")` — Named persistent: execute in named session (error if busy).\n- `sh(session=\"name\")` — Read accumulated output from named session (always succeeds).",
 		Parameters: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
 				"command": map[string]any{
 					"type":        "string",
-					"description": "The shell command to execute",
+					"description": "The shell command to execute.",
+				},
+				"session": map[string]any{
+					"type":        "string",
+					"description": "Named session. Creates on first use, persists state (cd, vars, processes) across calls.",
 				},
 			},
-			"required": []string{"command"},
 		},
 	}
 }

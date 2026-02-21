@@ -87,6 +87,27 @@ func assistantsh(id, command string) tape.Message {
 	}
 }
 
+// assistantshSession returns a tape.Message that calls the sh tool in a named session.
+func assistantshSession(id, command, session string) tape.Message {
+	args := map[string]any{}
+	if command != "" {
+		args["command"] = command
+	}
+	if session != "" {
+		args["session"] = session
+	}
+	return tape.Message{
+		Role: tape.RoleAssistant,
+		ToolCalls: []tape.ToolCall{
+			{
+				ID:        id,
+				Name:      "sh",
+				Arguments: args,
+			},
+		},
+	}
+}
+
 // assistantExit returns a tape.Message that calls the exit tool.
 func assistantExit(id string, status string, output, errMsg string) tape.Message {
 	args := map[string]any{
