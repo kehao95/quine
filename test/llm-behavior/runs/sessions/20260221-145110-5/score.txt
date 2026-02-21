@@ -1,0 +1,14 @@
+── Scoring ──
+  PASS  C1: Anonymous execution
+  PASS  C2: Session creation
+  PASS  C3: Session persistence
+  PASS  C4: Session isolation
+  PASS  C5: Read-only mode
+  PASS  C6: Background + read
+  PASS  C7: Clean exit (no stderr)
+
+Result: 7/7 passed
+Turns: ~27
+Session: session ended (exit=0, 9 turns, 33.1s, 37065 tokens)
+
+Review: cat /Users/kehao95/Project/personal/quine/test/llm-behavior/runs/sessions/20260221-145110-5/tape.log

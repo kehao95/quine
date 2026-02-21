@@ -1,0 +1,6 @@
+usage: quine [-b] <mission>
+       echo <text> | quine <mission>
+       cat file.bin | quine -b <mission>
+
+flags:
+  -b	treat stdin as binary (save to file instead of streaming)
