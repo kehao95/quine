@@ -25,7 +25,7 @@ func testExecutor() *ShExecutor {
 func TestSimpleCommandExecution(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
-	result := b.Execute("tool-1", "echo hello", 0, 0)
+	result := b.Execute("tool-1", "echo hello", 0, 0, false)
 
 	if result.ToolID != "tool-1" {
 		t.Errorf("ToolID = %q, want %q", result.ToolID, "tool-1")
@@ -44,7 +44,7 @@ func TestSimpleCommandExecution(t *testing.T) {
 func TestNonZeroExitCode(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
-	result := b.Execute("tool-2", "false", 0, 0)
+	result := b.Execute("tool-2", "false", 0, 0, false)
 
 	if !result.IsError {
 		t.Errorf("IsError = false, want true for non-zero exit")
@@ -57,7 +57,7 @@ func TestNonZeroExitCode(t *testing.T) {
 func TestNonZeroExitCodeFromCommand(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
-	result := b.Execute("tool-2b", "exit 42", 0, 0)
+	result := b.Execute("tool-2b", "exit 42", 0, 0, false)
 
 	if !result.IsError {
 		t.Errorf("IsError = false, want true for non-zero exit")
@@ -70,7 +70,7 @@ func TestNonZeroExitCodeFromCommand(t *testing.T) {
 func TestStderrCapture(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
-	result := b.Execute("tool-3", "echo errormsg >&2", 0, 0)
+	result := b.Execute("tool-3", "echo errormsg >&2", 0, 0, false)
 
 	if !strings.Contains(result.Content, "errormsg") {
 		t.Errorf("expected stderr to contain 'errormsg', got:\n%s", result.Content)
@@ -91,7 +91,7 @@ func TestOutputTruncation(t *testing.T) {
 	b.MaxOutput = 100 // very small limit for testing
 
 	// Generate output larger than MaxOutput (natural completion, no budget)
-	result := b.Execute("tool-6", "python3 -c \"print('A' * 500)\"", 0, 0)
+	result := b.Execute("tool-6", "python3 -c \"print('A' * 500)\"", 0, 0, false)
 
 	if !strings.Contains(result.Content, "...[Output Truncated,") {
 		t.Errorf("expected truncation notice, got:\n%s", result.Content)
@@ -106,7 +106,7 @@ func TestOutputTruncationStderr(t *testing.T) {
 	defer b.Close()
 	b.MaxOutput = 100
 
-	result := b.Execute("tool-6b", "python3 -c \"import sys; sys.stderr.write('B' * 500)\"", 0, 0)
+	result := b.Execute("tool-6b", "python3 -c \"import sys; sys.stderr.write('B' * 500)\"", 0, 0, false)
 
 	// The STDERR section should contain truncation
 	parts := strings.SplitN(result.Content, "[STDERR]", 2)
@@ -121,7 +121,7 @@ func TestOutputTruncationStderr(t *testing.T) {
 func TestResultFormatExact(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
-	result := b.Execute("tool-7", "echo out; echo err >&2", 0, 0)
+	result := b.Execute("tool-7", "echo out; echo err >&2", 0, 0, false)
 
 	expected := "[EXIT CODE] 0\n[STDOUT]\nout\n\n[STDERR]\nerr\n"
 	if result.Content != expected {
@@ -132,7 +132,7 @@ func TestResultFormatExact(t *testing.T) {
 func TestResultFormatEmptyOutput(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
-	result := b.Execute("tool-8", "true", 0, 0)
+	result := b.Execute("tool-8", "true", 0, 0, false)
 
 	expected := "[EXIT CODE] 0\n[STDOUT]\n\n[STDERR]\n"
 	if result.Content != expected {
@@ -144,7 +144,7 @@ func TestOutputWithoutTrailingNewline(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
 
-	result := b.Execute("tool-nonl", `printf 'no-newline-here'`, 0, 0)
+	result := b.Execute("tool-nonl", `printf 'no-newline-here'`, 0, 0, false)
 
 	if result.IsError {
 		t.Fatalf("unexpected error:\n%s", result.Content)
@@ -162,7 +162,7 @@ func TestExitDoesNotCrash(t *testing.T) {
 	defer b.Close()
 
 	// Each sh call is ephemeral — exit 1 just gives exit code 1
-	result := b.Execute("tool-exit-1", "exit 1", 0, 0)
+	result := b.Execute("tool-exit-1", "exit 1", 0, 0, false)
 	if !result.IsError {
 		t.Errorf("expected error from exit 1")
 	}
@@ -171,7 +171,7 @@ func TestExitDoesNotCrash(t *testing.T) {
 	}
 
 	// Subsequent calls still work (each is ephemeral)
-	result2 := b.Execute("tool-exit-2", "echo alive", 0, 0)
+	result2 := b.Execute("tool-exit-2", "echo alive", 0, 0, false)
 	if result2.IsError {
 		t.Fatalf("expected success after exit, got error:\n%s", result2.Content)
 	}
@@ -187,7 +187,7 @@ func TestWriteFile(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
 	cmd := fmt.Sprintf(`mkdir -p "$(dirname %q)" && printf '%%s\n' "hello world" > %q`, testFile, testFile)
-	result := b.Execute("tool-9", cmd, 0, 0)
+	result := b.Execute("tool-9", cmd, 0, 0, false)
 
 	if result.IsError {
 		t.Fatalf("write_file failed:\n%s", result.Content)
@@ -213,7 +213,7 @@ func TestReadFile(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
 	cmd := fmt.Sprintf(`cat -n %q`, testFile)
-	result := b.Execute("tool-10", cmd, 0, 0)
+	result := b.Execute("tool-10", cmd, 0, 0, false)
 
 	if result.IsError {
 		t.Fatalf("read_file failed:\n%s", result.Content)
@@ -233,7 +233,7 @@ func TestWriteReadRoundtrip(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
 	cmd := fmt.Sprintf(`printf '%%s\n' "alpha beta gamma" > %q && cat -n %q`, testFile, testFile)
-	result := b.Execute("tool-11", cmd, 0, 0)
+	result := b.Execute("tool-11", cmd, 0, 0, false)
 
 	if result.IsError {
 		t.Fatalf("roundtrip failed:\n%s", result.Content)
@@ -251,7 +251,7 @@ func TestOutputLimitPausesJob(t *testing.T) {
 
 	// Generate lots of output with a small output_limit
 	// seq 1 1000 produces ~4000 bytes, limit to 100
-	result := b.Execute("tool-limit", "seq 1 1000", 0, 100)
+	result := b.Execute("tool-limit", "seq 1 1000", 0, 100, false)
 
 	if !strings.Contains(result.Content, "[PAUSED]") {
 		t.Errorf("expected [PAUSED] with output_limit=100, got:\n%s", result.Content)
@@ -275,7 +275,7 @@ func TestJobKill(t *testing.T) {
 	defer b.Close()
 
 	// Start a job with a small limit so it pauses
-	result := b.Execute("tool-killtest", "seq 1 10000", 0, 50)
+	result := b.Execute("tool-killtest", "seq 1 10000", 0, 50, false)
 	if !strings.Contains(result.Content, "[PAUSED]") {
 		t.Skipf("job completed before pause (output too small?): %s", result.Content)
 	}
@@ -305,7 +305,7 @@ func TestJobReadOutput(t *testing.T) {
 	b := testExecutor()
 	defer b.Close()
 
-	result := b.Execute("tool-readtest", "seq 1 5000", 0, 50)
+	result := b.Execute("tool-readtest", "seq 1 5000", 0, 50, false)
 	if !strings.Contains(result.Content, "[PAUSED]") {
 		t.Skipf("job completed before pause")
 	}
@@ -333,7 +333,7 @@ func TestJobResume(t *testing.T) {
 	defer b.Close()
 
 	// Pause at 100 bytes
-	result := b.Execute("tool-resume", "seq 1 10000", 0, 100)
+	result := b.Execute("tool-resume", "seq 1 10000", 0, 100, false)
 	if !strings.Contains(result.Content, "[PAUSED]") {
 		t.Skipf("job completed before pause")
 	}
@@ -370,7 +370,7 @@ func TestTimeoutPausesJob(t *testing.T) {
 
 	// Run a sleep command with 1 second timeout
 	start := time.Now()
-	result := b.Execute("tool-timeout", "sleep 10", 1*time.Second, 0)
+	result := b.Execute("tool-timeout", "sleep 10", 1*time.Second, 0, false)
 	elapsed := time.Since(start)
 
 	if !strings.Contains(result.Content, "[PAUSED]") {
@@ -428,7 +428,7 @@ func TestEnvPropagationViaSh(t *testing.T) {
 		"QUINE_DEPTH=3",
 	})
 
-	result := b.Execute("tool-env-1", "echo $QUINE_DEPTH", 0, 0)
+	result := b.Execute("tool-env-1", "echo $QUINE_DEPTH", 0, 0, false)
 	if result.IsError {
 		t.Fatalf("command failed:\n%s", result.Content)
 	}
@@ -436,7 +436,7 @@ func TestEnvPropagationViaSh(t *testing.T) {
 		t.Errorf("expected QUINE_DEPTH=3 in output, got:\n%s", result.Content)
 	}
 
-	result2 := b.Execute("tool-env-2", "echo \"SESSION_ID=${QUINE_SESSION_ID:-unset}\"", 0, 0)
+	result2 := b.Execute("tool-env-2", "echo \"SESSION_ID=${QUINE_SESSION_ID:-unset}\"", 0, 0, false)
 	if result2.IsError {
 		t.Fatalf("command failed:\n%s", result2.Content)
 	}
@@ -473,7 +473,7 @@ func TestChildEnvDepthIncrement(t *testing.T) {
 	}
 	defer b.Close()
 
-	result := b.Execute("tool-depth", "echo $QUINE_DEPTH", 0, 0)
+	result := b.Execute("tool-depth", "echo $QUINE_DEPTH", 0, 0, false)
 	if result.IsError {
 		t.Fatalf("command failed:\n%s", result.Content)
 	}
@@ -481,7 +481,7 @@ func TestChildEnvDepthIncrement(t *testing.T) {
 		t.Errorf("expected QUINE_DEPTH=3 (parent depth 2 + 1), got:\n%s", result.Content)
 	}
 
-	result2 := b.Execute("tool-parent", "echo $QUINE_PARENT_SESSION", 0, 0)
+	result2 := b.Execute("tool-parent", "echo $QUINE_PARENT_SESSION", 0, 0, false)
 	if result2.IsError {
 		t.Fatalf("command failed:\n%s", result2.Content)
 	}
@@ -489,7 +489,7 @@ func TestChildEnvDepthIncrement(t *testing.T) {
 		t.Errorf("expected QUINE_PARENT_SESSION=parent-session-id, got:\n%s", result2.Content)
 	}
 
-	result3 := b.Execute("tool-session", "echo \"SID=${QUINE_SESSION_ID:-unset}\"", 0, 0)
+	result3 := b.Execute("tool-session", "echo \"SID=${QUINE_SESSION_ID:-unset}\"", 0, 0, false)
 	if result3.IsError {
 		t.Fatalf("command failed:\n%s", result3.Content)
 	}
@@ -521,7 +521,7 @@ func TestNewShExecutorWithChildEnv(t *testing.T) {
 	b := NewShExecutor(cfg, childEnv)
 	defer b.Close()
 
-	result := b.Execute("tool-ctor", "echo $QUINE_DEPTH", 0, 0)
+	result := b.Execute("tool-ctor", "echo $QUINE_DEPTH", 0, 0, false)
 	if result.IsError {
 		t.Fatalf("command failed:\n%s", result.Content)
 	}
@@ -529,7 +529,7 @@ func TestNewShExecutorWithChildEnv(t *testing.T) {
 		t.Errorf("expected QUINE_DEPTH=2, got:\n%s", result.Content)
 	}
 
-	result2 := b.Execute("tool-path", "which echo", 0, 0)
+	result2 := b.Execute("tool-path", "which echo", 0, 0, false)
 	if result2.IsError {
 		t.Fatalf("'which echo' failed — PATH not propagated:\n%s", result2.Content)
 	}

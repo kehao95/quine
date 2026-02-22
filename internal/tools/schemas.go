@@ -24,6 +24,10 @@ func ShToolSchema() llm.ToolSchema {
 					"type":        "integer",
 					"description": "Maximum combined stdout+stderr bytes. When exceeded, the job is SIGSTOP'd and [PAUSED] is returned. Default: no limit.",
 				},
+				"interactive": map[string]any{
+					"type":        "boolean",
+					"description": "If true, allocates a pseudo-terminal (PTY) and connects stdin. Required for programs like ssh, apt, or python REPL that need interactive input. Introduces \\r\\n and echo side effects. Default: false.",
+				},
 			},
 			"required": []string{"command"},
 		},
@@ -57,6 +61,10 @@ func JobToolSchema() llm.ToolSchema {
 				"output_limit": map[string]any{
 					"type":        "integer",
 					"description": "New output budget in bytes (only meaningful with signal=\"cont\").",
+				},
+				"input": map[string]any{
+					"type":        "string",
+					"description": "Text to send to the job's stdin (requires interactive=true on the job). Appends to the stream. Will be sent before resuming.",
 				},
 			},
 			"required": []string{"id"},

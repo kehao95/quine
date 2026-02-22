@@ -30,8 +30,8 @@ func NewJobManager(shell string, env []string, extraFiles []*os.File) *JobManage
 }
 
 // Launch spawns a new job and registers it.
-func (m *JobManager) Launch(command string, timeout time.Duration, outputLimit int) (*Job, error) {
-	j, err := newJob(m.shell, command, m.env, m.extraFiles, timeout, outputLimit)
+func (m *JobManager) Launch(command string, timeout time.Duration, outputLimit int, interactive bool) (*Job, error) {
+	j, err := newJob(m.shell, command, m.env, m.extraFiles, timeout, outputLimit, interactive)
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +91,8 @@ type RunResult struct {
 
 // RunSync launches a job and blocks until it completes or pauses.
 // On pause it leaves the job registered; on completion it removes it.
-func (m *JobManager) RunSync(command string, timeout time.Duration, outputLimit int) (RunResult, error) {
-	j, err := m.Launch(command, timeout, outputLimit)
+func (m *JobManager) RunSync(command string, timeout time.Duration, outputLimit int, interactive bool) (RunResult, error) {
+	j, err := m.Launch(command, timeout, outputLimit, interactive)
 	if err != nil {
 		return RunResult{}, fmt.Errorf("launching job: %w", err)
 	}

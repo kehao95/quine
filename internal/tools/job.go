@@ -8,6 +8,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/creack/pty"
 )
 
 // JobState represents the current state of a job.
@@ -28,6 +30,10 @@ const (
 //
 // Output is accumulated across pause/resume cycles in a single SafeBuffer.
 // The agent can read partial output at any point via ReadOutput.
+//
+// In interactive (PTY) mode, ptyMaster is non-nil and is the single I/O stream
+// for both stdout and stderr (merged by the PTY). All output flows into stdout;
+// stderr remains empty.
 type Job struct {
 	// ID is the process group ID — the natural job identifier.
 	ID int
@@ -35,6 +41,11 @@ type Job struct {
 	cmd        *exec.Cmd
 	stdoutPipe io.ReadCloser
 	stderrPipe io.ReadCloser
+
+	// ptyMaster is non-nil only in interactive mode. It is the PTY master fd
+	// used as the sole I/O channel. Writing to it injects input; reading from
+	// it produces merged stdout+stderr output.
+	ptyMaster *os.File
 
 	stdout SafeBuffer
 	stderr SafeBuffer
@@ -66,9 +77,14 @@ type Job struct {
 //   - [0] = deliverable stdout (becomes fd 3 in child)
 //   - [1] = material stdin (becomes fd 4 in child)
 //
+// When interactive is true, a PTY is allocated. The PTY master fd becomes the
+// sole I/O channel (stdout+stderr merged); cmd.Stdin is wired to the PTY slave
+// so isatty(0)==true inside the child. In non-interactive mode the existing
+// pipe-based path is used unchanged.
+//
 // After newJob returns, the Overseer loop is started with the given budget.
 // If outputLimit == 0 and timeout == 0, the job runs until natural completion.
-func newJob(shell, command string, env []string, extraFiles []*os.File, timeout time.Duration, outputLimit int) (*Job, error) {
+func newJob(shell, command string, env []string, extraFiles []*os.File, timeout time.Duration, outputLimit int, interactive bool) (*Job, error) {
 	if shell == "" {
 		shell = "/bin/sh"
 	}
@@ -85,38 +101,7 @@ func newJob(shell, command string, env []string, extraFiles []*os.File, timeout 
 		cmd.ExtraFiles = extraFiles
 	}
 
-	// Separate pipes for stdout and stderr.
-	stdoutR, stdoutW, err := os.Pipe()
-	if err != nil {
-		return nil, fmt.Errorf("creating stdout pipe: %w", err)
-	}
-	stderrR, stderrW, err := os.Pipe()
-	if err != nil {
-		stdoutR.Close()
-		stdoutW.Close()
-		return nil, fmt.Errorf("creating stderr pipe: %w", err)
-	}
-
-	cmd.Stdout = stdoutW
-	cmd.Stderr = stderrW
-
-	if err := cmd.Start(); err != nil {
-		stdoutR.Close()
-		stdoutW.Close()
-		stderrR.Close()
-		stderrW.Close()
-		return nil, fmt.Errorf("starting process: %w", err)
-	}
-
-	// Close write ends in the parent (child has them now).
-	stdoutW.Close()
-	stderrW.Close()
-
 	j := &Job{
-		ID:            cmd.Process.Pid, // pgid == pid because Setpgid: true
-		cmd:           cmd,
-		stdoutPipe:    stdoutR,
-		stderrPipe:    stderrR,
 		state:         JobRunning,
 		pausedCh:      make(chan struct{}),
 		doneCh:        make(chan struct{}),
@@ -124,14 +109,72 @@ func newJob(shell, command string, env []string, extraFiles []*os.File, timeout 
 		waitDone:      make(chan int, 1),
 	}
 
-	// Start pump goroutines.
-	go j.pumpOutput(stdoutR, &j.stdout, outputLimit)
-	go j.pumpOutput(stderrR, &j.stderr, outputLimit)
+	if interactive {
+		// PTY mode: allocate a pseudo-terminal and start the command.
+		// pty.Start requires Setsid+Setctty; Setpgid is incompatible with Setsid
+		// on macOS. We use StartWithAttrs to supply exactly these flags.
+		// The process becomes its own session leader (sid==pid==pgid), so
+		// Kill(-pid, SIGSTOP) still targets the whole process group correctly.
+		ptmx, err := pty.StartWithAttrs(cmd, nil, &syscall.SysProcAttr{
+			Setsid:  true,
+			Setctty: true,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("starting PTY: %w", err)
+		}
+		j.ptyMaster = ptmx
+		j.ID = cmd.Process.Pid // sid == pid == pgid for session leader
+
+		// Single pump: PTY master merges stdout+stderr; all goes to j.stdout.
+		go j.pumpOutput(ptmx, &j.stdout, outputLimit)
+	} else {
+		// Non-interactive mode: separate pipes for stdout and stderr.
+		stdoutR, stdoutW, err := os.Pipe()
+		if err != nil {
+			return nil, fmt.Errorf("creating stdout pipe: %w", err)
+		}
+		stderrR, stderrW, err := os.Pipe()
+		if err != nil {
+			stdoutR.Close()
+			stdoutW.Close()
+			return nil, fmt.Errorf("creating stderr pipe: %w", err)
+		}
+
+		cmd.Stdout = stdoutW
+		cmd.Stderr = stderrW
+
+		if err := cmd.Start(); err != nil {
+			stdoutR.Close()
+			stdoutW.Close()
+			stderrR.Close()
+			stderrW.Close()
+			return nil, fmt.Errorf("starting process: %w", err)
+		}
+
+		// Close write ends in the parent (child has them now).
+		stdoutW.Close()
+		stderrW.Close()
+
+		j.ID = cmd.Process.Pid
+		j.stdoutPipe = stdoutR
+		j.stderrPipe = stderrR
+
+		go j.pumpOutput(stdoutR, &j.stdout, outputLimit)
+		go j.pumpOutput(stderrR, &j.stderr, outputLimit)
+	}
+
+	j.cmd = cmd
 
 	// Start the single cmd.Wait() goroutine — called exactly once for the
 	// lifetime of the job. All overseer generations read from j.waitDone.
 	go func() {
 		err := j.cmd.Wait()
+		// In PTY mode, close the master fd after Wait so any blocked Read in
+		// pumpOutput unblocks. (On Linux/macOS the process exit already causes
+		// EIO on the master, but closing is belt-and-suspenders.)
+		if j.ptyMaster != nil {
+			j.ptyMaster.Close()
+		}
 		code := 0
 		if err != nil {
 			if exitErr, ok := err.(*exec.ExitError); ok {
@@ -258,8 +301,10 @@ func (j *Job) Wait() (paused bool) {
 }
 
 // Resume sends SIGCONT and starts a new Overseer with the given budget.
-// Returns an error if the job is not in Paused state.
-func (j *Job) Resume(timeout time.Duration, outputLimit int) error {
+// If input is non-empty and the job is interactive, input is written to the
+// PTY master BEFORE SIGCONT so the data is in the kernel TTY buffer when the
+// process wakes up and calls read(). Returns an error if the job is not Paused.
+func (j *Job) Resume(timeout time.Duration, outputLimit int, input string) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 
@@ -271,6 +316,15 @@ func (j *Job) Resume(timeout time.Duration, outputLimit int) error {
 	j.state = JobRunning
 	j.pausedCh = make(chan struct{})
 	j.limitExceeded = make(chan struct{}, 1)
+
+	// Write input BEFORE SIGCONT so data is in the TTY buffer when the
+	// process resumes. Only valid in interactive (PTY) mode.
+	if input != "" && j.ptyMaster != nil {
+		if _, err := j.ptyMaster.Write([]byte(input)); err != nil {
+			// Non-fatal: log and continue — process may have exited already.
+			_ = err
+		}
+	}
 
 	_ = syscall.Kill(-j.ID, syscall.SIGCONT)
 

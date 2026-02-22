@@ -111,6 +111,11 @@ score_scenario() {
                 echo "  WARN  C6: Stderr present (review tape)" | tee -a "$score_file"
             fi
             ;;
+        interactive)
+            check_marker "$stdout" "NOTTY_OK"  "C1: Non-interactive mode has isatty==false"  "$score_file"
+            check_marker "$stdout" "TTY_OK"    "C2: interactive=true allocates real PTY"     "$score_file"
+            check_marker "$stdout" "INJECT_OK" "C3: input injection reaches the process"     "$score_file"
+            ;;
         *)
             echo "  No scoring rules for scenario: $name" | tee -a "$score_file"
             ;;

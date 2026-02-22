@@ -591,6 +591,7 @@ func (r *Runtime) handleSh(tc tape.ToolCall) bool {
 	command, _ := tc.Arguments["command"].(string)
 	timeoutSecs := tools.ToInt(tc.Arguments["timeout"])
 	outputLimit := tools.ToInt(tc.Arguments["output_limit"])
+	interactive, _ := tc.Arguments["interactive"].(bool)
 
 	var timeout time.Duration
 	if timeoutSecs > 0 {
@@ -601,7 +602,7 @@ func (r *Runtime) handleSh(tc tape.ToolCall) bool {
 	r.log("turn %d: assistant called sh(%s)", turnNum, truncateStr(command, 60))
 
 	// Execute
-	result := r.sh.Execute(tc.ID, command, timeout, outputLimit)
+	result := r.sh.Execute(tc.ID, command, timeout, outputLimit, interactive)
 
 	// Log completion
 	r.log("turn %d: sh completed (%d bytes)", turnNum, len(result.Content))

@@ -135,7 +135,7 @@ func (b *ShExecutor) GetJobManager() *JobManager {
 }
 
 // Execute dispatches a sh(command) call.
-func (b *ShExecutor) Execute(toolID string, command string, timeout time.Duration, outputLimit int) tape.ToolResult {
+func (b *ShExecutor) Execute(toolID string, command string, timeout time.Duration, outputLimit int, interactive bool) tape.ToolResult {
 	b.jobsMu.Lock()
 	b.initJobs()
 	b.jobsMu.Unlock()
@@ -157,7 +157,7 @@ func (b *ShExecutor) Execute(toolID string, command string, timeout time.Duratio
 
 	// We need the process before the overseer might fire, so we reach
 	// into a small shim: Launch returns the job which has the cmd.
-	j, err := b.jobs.Launch(command, effectiveTimeout, outputLimit)
+	j, err := b.jobs.Launch(command, effectiveTimeout, outputLimit, interactive)
 	if err != nil {
 		return tape.ToolResult{
 			ToolID:  toolID,
@@ -266,11 +266,12 @@ func (b *ShExecutor) HandleJob(toolID string, args map[string]any) tape.ToolResu
 	case "cont":
 		timeout := time.Duration(ToInt(args["timeout"])) * time.Second
 		outputLimit := ToInt(args["output_limit"])
+		input, _ := args["input"].(string)
 		// If no budget given, use executor defaults
 		if timeout == 0 {
 			timeout = b.Timeout
 		}
-		if err := j.Resume(timeout, outputLimit); err != nil {
+		if err := j.Resume(timeout, outputLimit, input); err != nil {
 			return tape.ToolResult{
 				ToolID:  toolID,
 				Content: fmt.Sprintf("[JOB ERROR] %v", err),
