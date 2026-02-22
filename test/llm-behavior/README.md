@@ -23,7 +23,7 @@ go build -o /tmp/quine ./cmd/quine/
 source .env.claude-sonnet-4-5  # or any model
 
 # Run a specific scenario
-./test/llm-behavior/run.sh sessions
+./test/llm-behavior/run.sh jobs
 
 # Run all scenarios
 ./test/llm-behavior/run.sh all
@@ -37,7 +37,7 @@ cat test/llm-behavior/runs/latest/score.txt
 
 | ID | Name | Tests | Key Question |
 |----|------|-------|-------------|
-| `sessions` | Named Session API | anonymous, session create, persistence, isolation, read-only, background+read | Can the LLM discover all 3 sh modes? |
+| `jobs` | Job Lifecycle (G4) | normal completion, output_limit pause, resume, kill, read-only | Can the LLM use the job tool correctly from the system prompt alone? |
 
 ## Interpreting Results
 
@@ -52,10 +52,10 @@ Each run produces:
 
 ## Baseline Results
 
-| Date | Model | Scenario | C1 | C2 | C3 | C4 | C5 | C6 | C7 | Score | Turns | Tokens | Time |
-|------|-------|----------|----|----|----|----|----|----|----|-------|-------|--------|------|
-| 2026-02-21 | claude-sonnet-4-5 | sessions | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 7/7 | 9 | 37065 | 33s |
-| 2026-02-21 | kimi-k2.5 | sessions | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 7/7 | 9 | 12346 | 30s |
+| Date | Model | Scenario | C1 | C2 | C3 | C4 | C5 | C6 | Score | Turns | Tokens | Time |
+|------|-------|----------|----|----|----|----|----|---|-------|-------|--------|------|
+| 2026-02-21 | claude-sonnet-4-5 | jobs | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 6/6 | 5 | 627153 | 42s |
+| 2026-02-21 | kimi-k2.5 | jobs | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 6/6 | 5 | 697654 | 88s |
 
 ## Adding Scenarios
 

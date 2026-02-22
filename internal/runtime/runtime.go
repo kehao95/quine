@@ -491,6 +491,9 @@ func (r *Runtime) Run(mission, material string) int {
 			case "fork":
 				r.handleFork(tc)
 
+			case "job":
+				r.handleJob(tc)
+
 			case "exec":
 				r.handleExec(tc)
 
@@ -584,26 +587,24 @@ func (r *Runtime) handleSh(tc tape.ToolCall) bool {
 	r.tape.IncrementTurn()
 	turnNum := r.tape.TurnCount
 
-	// Extract command and session from arguments
+	// Extract command and budget parameters
 	command, _ := tc.Arguments["command"].(string)
-	session, _ := tc.Arguments["session"].(string)
+	timeoutSecs := tools.ToInt(tc.Arguments["timeout"])
+	outputLimit := tools.ToInt(tc.Arguments["output_limit"])
+
+	var timeout time.Duration
+	if timeoutSecs > 0 {
+		timeout = time.Duration(timeoutSecs) * time.Second
+	}
 
 	// Log the call
-	var argSummary string
-	if session != "" && command != "" {
-		argSummary = fmt.Sprintf("session=%q, cmd=%q", session, truncateStr(command, 40))
-	} else if session != "" {
-		argSummary = fmt.Sprintf("session=%q (read)", session)
-	} else {
-		argSummary = truncateStr(command, 60)
-	}
-	r.log("turn %d: assistant called %s(%s)", turnNum, "sh", argSummary)
+	r.log("turn %d: assistant called sh(%s)", turnNum, truncateStr(command, 60))
 
-	// Execute with dispatch (anonymous/named/read)
-	result := r.sh.Execute(tc.ID, command, session)
+	// Execute
+	result := r.sh.Execute(tc.ID, command, timeout, outputLimit)
 
 	// Log completion
-	r.log("turn %d: sh completed (exit=%d, %d bytes)", turnNum, exitCodeFromResult(result), len(result.Content))
+	r.log("turn %d: sh completed (%d bytes)", turnNum, len(result.Content))
 
 	// Append tool result to tape
 	r.tape.Append(tape.Message{
@@ -618,6 +619,25 @@ func (r *Runtime) handleSh(tc tape.ToolCall) bool {
 		return true // Signal to terminate
 	}
 	return false
+}
+
+// handleJob processes a job tool call and appends the result to the tape.
+func (r *Runtime) handleJob(tc tape.ToolCall) {
+	turnNum := r.tape.TurnCount
+	pgid := tools.ToInt(tc.Arguments["id"])
+	signal, _ := tc.Arguments["signal"].(string)
+	r.log("turn %d: assistant called job(id=%d, signal=%q)", turnNum, pgid, signal)
+
+	result := r.sh.HandleJob(tc.ID, tc.Arguments)
+
+	r.log("turn %d: job completed (%d bytes)", turnNum, len(result.Content))
+
+	r.tape.Append(tape.Message{
+		Role:    tape.RoleToolResult,
+		Content: result.Content,
+		ToolID:  result.ToolID,
+	})
+	r.writeTapeEntry(tape.ToolResultEntry(result))
 }
 
 // handleFork processes a fork tool call and appends the result to the tape.

@@ -2,9 +2,9 @@
 # LLM Behavior Test Runner
 #
 # Usage:
-#   ./test/llm-behavior/run.sh sessions          # run one scenario
+#   ./test/llm-behavior/run.sh jobs               # run one scenario
 #   ./test/llm-behavior/run.sh all                # run all scenarios
-#   ./test/llm-behavior/run.sh sessions gpt-4o    # specify model
+#   ./test/llm-behavior/run.sh jobs gpt-4o        # specify model
 #
 # Requires:
 #   - /tmp/quine built (go build -o /tmp/quine ./cmd/quine/)
@@ -97,19 +97,18 @@ score_scenario() {
     echo "── Scoring ──" | tee "$score_file"
 
     case "$name" in
-        sessions)
-            check_marker "$stdout" "ANON_OK"        "C1: Anonymous execution"     "$score_file"
-            check_marker "$stdout" "SESSION_CREATED" "C2: Session creation"        "$score_file"
-            check_marker "$stdout" "PERSIST_OK"      "C3: Session persistence"     "$score_file"
-            check_marker "$stdout" "ISOLATE_OK"      "C4: Session isolation"       "$score_file"
-            check_marker "$stdout" "READ_OK"         "C5: Read-only mode"          "$score_file"
-            check_marker "$stdout" "BG_READ_OK"      "C6: Background + read"       "$score_file"
+        jobs)
+            check_marker "$stdout" "NORMAL_OK"  "C1: Normal completion (no spurious PAUSED)"  "$score_file"
+            check_marker "$stdout" "PAUSE_OK"   "C2: output_limit triggers [PAUSED]"          "$score_file"
+            check_marker "$stdout" "RESUME_OK"  "C3: job(signal=cont) resumes to completion"  "$score_file"
+            check_marker "$stdout" "KILL_OK"    "C4: job(signal=kill) terminates job"         "$score_file"
+            check_marker "$stdout" "READ_OK"    "C5: job() reads output without resuming"     "$score_file"
 
-            # C7: exit code
+            # C6: clean exit
             if [[ -f "$run_dir/stderr.txt" ]] && [[ ! -s "$run_dir/stderr.txt" ]]; then
-                echo "  PASS  C7: Clean exit (no stderr)" | tee -a "$score_file"
+                echo "  PASS  C6: Clean exit (no stderr)" | tee -a "$score_file"
             else
-                echo "  WARN  C7: Stderr present (review tape)" | tee -a "$score_file"
+                echo "  WARN  C6: Stderr present (review tape)" | tee -a "$score_file"
             fi
             ;;
         *)

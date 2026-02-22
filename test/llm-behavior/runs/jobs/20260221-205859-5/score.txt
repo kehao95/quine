@@ -1,0 +1,13 @@
+── Scoring ──
+  PASS  C1: Normal completion (no spurious PAUSED)
+  PASS  C2: output_limit triggers [PAUSED]
+  PASS  C3: job(signal=cont) resumes to completion
+  PASS  C4: job(signal=kill) terminates job
+  PASS  C5: job() reads output without resuming
+  PASS  C6: Clean exit (no stderr)
+
+Result: 6/6 passed
+Turns: ~35
+Session: session ended (exit=0, 5 turns, 42.2s, 627153 tokens)
+
+Review: cat /Users/kehao95/Project/personal/quine/test/llm-behavior/runs/jobs/20260221-205859-5/tape.log

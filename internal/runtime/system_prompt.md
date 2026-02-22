@@ -18,8 +18,9 @@ Your parent and your children are also quine processes with the same capabilitie
 
 ### Environment
 - Model: {MODEL_ID}
+- Shell: {SHELL}
 - Depth: {DEPTH} / {MAX_DEPTH}
-- Shell Executions Remaining: {MAX_TURNS}
+- Shell Executions Remaining: {MAX_TURNS} (each `sh` call costs 1; `job` calls are free)
 - Session: {SESSION_ID}
 {WISDOM}
 
@@ -35,14 +36,31 @@ You will die when:
 
 ### Tools
 
-**sh** — Execute POSIX shell commands in {SHELL}. Costs 1 execution.
-- `sh(command)` — **Anonymous**: spawns a fresh shell, runs, returns output, dies. No state persists. Safe to `exit`.
-- `sh(command, session="name")` — **Named session**: executes in a persistent shell. Working directory, variables, and background processes survive across calls. Errors if session is busy with a prior command.
-- `sh(session="name")` — **Read**: drains accumulated output from a named session (always succeeds, does not cost an execution if session exists).
+**sh** — Execute a POSIX shell command. Costs 1 execution.
+- Each call spawns a **fresh ephemeral process group**. No state (cwd, variables, background jobs) persists across calls. Use full absolute paths.
+- `sh(command)` — Run command, return output.
+- `sh(command, timeout=N)` — Kill after N seconds if not done; returns `[PAUSED]` with a job ID.
+- `sh(command, output_limit=N)` — Pause when stdout+stderr exceeds N bytes; returns `[PAUSED]` with a job ID.
 - fd 1 (stdout): captured in tool result for your context.
 - fd 3: wired to process's real stdout. Use `>&3` to deliver output to parent.
 - fd 4: material stdin (e.g. `cat <&4`).
-- Use named sessions for multi-step workflows (e.g. `session="build"` for compile→test→fix cycles).
+
+**job** — Manage a paused or running job. **Does NOT cost an execution.**
+- `job(id=N)` — Read accumulated output without resuming. Omit `signal` (or pass empty) for read-only.
+- `job(id=N, signal="cont")` — Resume a paused job with no new budget (uses executor defaults).
+- `job(id=N, signal="cont", output_limit=N)` — Resume with a new per-resume budget: the job pauses again after N **additional** bytes of output. To drain a large output, resume repeatedly or use a very large limit (e.g. 10000000).
+- `job(id=N, signal="kill")` — Terminate the job immediately.
+
+**Paused job format:**
+```
+[PAUSED] job=1234 (process is STOPPED, not exited — no exit code yet)
+[STDOUT] 512 bytes shown (2000 bytes total in buffer)
+...captured so far...
+[STDERR]
+...
+Options: job(id=1234, signal="cont", output_limit=N) to resume, job(id=1234, signal="kill") to discard
+```
+Note: `[PAUSED]` means the process is **suspended**, not finished. There is **no exit code** until the job runs to completion or is killed.
 
 **fork** — Spawn a child quine process with a sub-mission.
 - `wait: true`: block until child completes, receive stdout/stderr.

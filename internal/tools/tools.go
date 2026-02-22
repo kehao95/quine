@@ -2,7 +2,6 @@ package tools
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -14,18 +13,16 @@ import (
 	"github.com/kehao95/quine/internal/tape"
 )
 
-// ShExecutor runs shell commands via either ephemeral (anonymous) or persistent
-// (named session) shells.
+// ShExecutor runs shell commands as ephemeral jobs with optional resource budgets.
 //
-// Anonymous mode: spawns a fresh /bin/sh, runs the command, collects output via
-// pipe EOF (no sentinels), kills the process group, returns.
-//
-// Named session mode: delegates to a SessionManager which maintains persistent
-// shells with control-pipe-based completion detection.
+// Each sh(command) spawns a fresh process group. The job is monitored by an
+// Overseer goroutine; when a budget (timeout or output_limit) is exhausted,
+// the job is SIGSTOP'd and a [PAUSED] result is returned. The agent can
+// resume or kill the job via the separate `job` tool.
 type ShExecutor struct {
 	Shell     string
 	MaxOutput int
-	Env       []string // Base environment variables (without QUINE_SESSION_ID)
+	Env       []string
 	Timeout   time.Duration
 
 	// Stdin is the material stdin file descriptor. Passed as fd 4
@@ -36,15 +33,14 @@ type ShExecutor struct {
 	// (ExtraFiles[0]) so commands can write to >&3.
 	Stdout *os.File
 
-	// ProcessStarted is called when an anonymous shell starts.
+	// ProcessStarted is called when a shell starts (for SIGINT forwarding).
 	ProcessStarted func(*os.Process)
-	// ProcessEnded is called when an anonymous shell exits.
+	// ProcessEnded is called when a shell exits.
 	ProcessEnded func()
 
-	// sessions manages named persistent shells.
-	sessions *SessionManager
-
-	mu sync.Mutex // Serializes anonymous Execute() calls
+	// jobs manages all active/paused jobs.
+	jobs   *JobManager
+	jobsMu sync.Mutex // guards lazy init of jobs
 }
 
 // NewShExecutor creates a ShExecutor from config with the given child
@@ -52,11 +48,8 @@ type ShExecutor struct {
 // Config.ChildEnv). These are merged with os.Environ() so that spawned
 // commands inherit a complete environment with QUINE_* vars overlaid.
 //
-// Note: QUINE_SESSION_ID is stripped from BOTH childEnv and os.Environ() so
-// that each child ./quine process generates its own unique session ID via
-// config.Load(). This is critical because a single sh command can spawn
-// multiple ./quine children (e.g. via backgrounding with &), and they must
-// each have distinct session IDs to write to separate tape files.
+// QUINE_SESSION_ID is stripped from both envs so each child quine process
+// generates its own unique session ID.
 func NewShExecutor(cfg *config.Config, childEnv []string) *ShExecutor {
 	// Filter out QUINE_SESSION_ID from childEnv
 	filteredChildEnv := make([]string, 0, len(childEnv))
@@ -66,8 +59,7 @@ func NewShExecutor(cfg *config.Config, childEnv []string) *ShExecutor {
 		}
 	}
 
-	// Filter out QUINE_SESSION_ID from os.Environ() too — the parent's
-	// session ID must not leak into children.
+	// Filter out QUINE_SESSION_ID from os.Environ() too
 	filteredOsEnv := make([]string, 0, len(os.Environ()))
 	for _, entry := range os.Environ() {
 		if !strings.HasPrefix(entry, "QUINE_SESSION_ID=") {
@@ -91,14 +83,11 @@ func NewShExecutor(cfg *config.Config, childEnv []string) *ShExecutor {
 }
 
 // MergeEnv takes the OS environment and overlays child overrides.
-// Keys from childEnv take precedence over osEnv. This ensures spawned
-// processes have a full environment (PATH, HOME, etc.) with QUINE_*
-// variables set for recursive invocations.
+// Keys from childEnv take precedence over osEnv.
 func MergeEnv(osEnv []string, childEnv []string) []string {
 	env := make(map[string]string, len(osEnv)+len(childEnv))
 	order := make([]string, 0, len(osEnv)+len(childEnv))
 
-	// Load OS environment first
 	for _, entry := range osEnv {
 		key, _, _ := strings.Cut(entry, "=")
 		if _, exists := env[key]; !exists {
@@ -107,7 +96,6 @@ func MergeEnv(osEnv []string, childEnv []string) []string {
 		env[key] = entry
 	}
 
-	// Overlay child env vars (QUINE_* take precedence)
 	for _, entry := range childEnv {
 		key, _, _ := strings.Cut(entry, "=")
 		if _, exists := env[key]; !exists {
@@ -123,9 +111,9 @@ func MergeEnv(osEnv []string, childEnv []string) []string {
 	return result
 }
 
-// initSessions lazily creates the SessionManager on first named-session use.
-func (b *ShExecutor) initSessions() {
-	if b.sessions == nil {
+// initJobs lazily creates the JobManager.
+func (b *ShExecutor) initJobs() {
+	if b.jobs == nil {
 		var extraFiles []*os.File
 		if b.Stdout != nil {
 			extraFiles = append(extraFiles, b.Stdout)
@@ -133,92 +121,44 @@ func (b *ShExecutor) initSessions() {
 		if b.Stdin != nil {
 			extraFiles = append(extraFiles, b.Stdin)
 		}
-		b.sessions = NewSessionManager(b.Shell, b.Env, extraFiles)
+		b.jobs = NewJobManager(b.Shell, b.Env, extraFiles)
 	}
 }
 
-// Execute dispatches a shell command based on the presence of a session name.
-//
-// Three modes:
-//   - command only → anonymous ephemeral execution
-//   - command + session → execute in named session (error if busy)
-//   - session only → read accumulated output from named session
-func (b *ShExecutor) Execute(toolID string, command string, session string) tape.ToolResult {
-	if session == "" {
-		// Anonymous ephemeral mode
-		return b.executeAnonymous(toolID, command)
-	}
-
-	if command == "" {
-		// Read-only: return accumulated output from named session
-		return b.readSession(toolID, session)
-	}
-
-	// Named session: execute command in persistent shell
-	return b.executeSession(toolID, command, session)
+// GetJobManager returns the JobManager (creating it if needed).
+// Called by runtime.go to wire the job tool dispatcher.
+func (b *ShExecutor) GetJobManager() *JobManager {
+	b.jobsMu.Lock()
+	defer b.jobsMu.Unlock()
+	b.initJobs()
+	return b.jobs
 }
 
-// executeAnonymous spawns a fresh shell, runs the command, collects output
-// via pipe EOF (stdout+stderr combined), and kills the process group.
-// No sentinels, no temp files, no persistent state.
-func (b *ShExecutor) executeAnonymous(toolID string, command string) tape.ToolResult {
-	b.mu.Lock()
-	defer b.mu.Unlock()
+// Execute dispatches a sh(command) call.
+func (b *ShExecutor) Execute(toolID string, command string, timeout time.Duration, outputLimit int) tape.ToolResult {
+	b.jobsMu.Lock()
+	b.initJobs()
+	b.jobsMu.Unlock()
 
-	shell := b.Shell
-	if shell == "" {
-		shell = "/bin/sh"
-	}
-
-	cmd := exec.Command(shell, "-c", command)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-
-	if len(b.Env) > 0 {
-		cmd.Env = b.Env
-	}
-
-	// Set up extra file descriptors (same as old persistent shell):
-	// fd 3 = deliverable stdout, fd 4 = material stdin
-	var extraFiles []*os.File
-	if b.Stdout != nil {
-		extraFiles = append(extraFiles, b.Stdout)
-	}
-	if b.Stdin != nil {
-		extraFiles = append(extraFiles, b.Stdin)
-	}
-	if len(extraFiles) > 0 {
-		cmd.ExtraFiles = extraFiles
-	}
-
-	// Capture stdout and stderr separately via pipes
-	stdoutR, stdoutW, err := os.Pipe()
-	if err != nil {
-		return tape.ToolResult{
-			ToolID:  toolID,
-			Content: fmt.Sprintf("[SHELL ERROR] creating stdout pipe: %v", err),
-			IsError: true,
-		}
-	}
-	stderrR, stderrW, err := os.Pipe()
-	if err != nil {
-		stdoutR.Close()
-		stdoutW.Close()
-		return tape.ToolResult{
-			ToolID:  toolID,
-			Content: fmt.Sprintf("[SHELL ERROR] creating stderr pipe: %v", err),
-			IsError: true,
+	// Resolve effective timeout: explicit > executor default > hard default
+	effectiveTimeout := timeout
+	if effectiveTimeout == 0 {
+		effectiveTimeout = b.Timeout
+		if effectiveTimeout == 0 {
+			effectiveTimeout = 600 * time.Second
 		}
 	}
 
-	cmd.Stdout = stdoutW
-	cmd.Stderr = stderrW
+	// Notify caller that a shell is starting (for SIGINT forwarding)
+	// We do this synchronously before Launch so the process pointer is
+	// tracked from the moment it exists.
+	var proc *os.Process
+	_ = proc // used via callback below
 
-	// Start the shell
-	if err := cmd.Start(); err != nil {
-		stdoutR.Close()
-		stdoutW.Close()
-		stderrR.Close()
-		stderrW.Close()
+	// We need the process before the overseer might fire, so we reach
+	// into a small shim: Launch returns the job which has the cmd.
+	j, err := b.jobs.Launch(command, effectiveTimeout, outputLimit)
+	if err != nil {
 		return tape.ToolResult{
 			ToolID:  toolID,
 			Content: fmt.Sprintf("[SHELL ERROR] %v", err),
@@ -226,171 +166,193 @@ func (b *ShExecutor) executeAnonymous(toolID string, command string) tape.ToolRe
 		}
 	}
 
-	// Close write ends in parent (child has them)
-	stdoutW.Close()
-	stderrW.Close()
-
-	// Notify caller that an anonymous shell is running
 	if b.ProcessStarted != nil {
-		b.ProcessStarted(cmd.Process)
+		b.ProcessStarted(j.cmd.Process)
 	}
 
-	// Read stdout and stderr concurrently
-	var stdoutBytes, stderrBytes []byte
-	var readWg sync.WaitGroup
-	readWg.Add(2)
-	go func() {
-		defer readWg.Done()
-		stdoutBytes, _ = io.ReadAll(stdoutR)
-		stdoutR.Close()
-	}()
-	go func() {
-		defer readWg.Done()
-		stderrBytes, _ = io.ReadAll(stderrR)
-		stderrR.Close()
-	}()
+	paused := j.Wait()
 
-	// Wait for command with timeout
-	doneCh := make(chan error, 1)
-	go func() {
-		doneCh <- cmd.Wait()
-	}()
-
-	timeout := b.Timeout
-	if timeout == 0 {
-		timeout = 600 * time.Second
-	}
-
-	var exitCode int
-	timer := time.NewTimer(timeout)
-	defer timer.Stop()
-
-	select {
-	case err := <-doneCh:
-		if err != nil {
-			if exitErr, ok := err.(*exec.ExitError); ok {
-				exitCode = exitErr.ExitCode()
-			} else {
-				exitCode = 1
-			}
-		}
-	case <-timer.C:
-		// Timeout: kill process group
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-		<-doneCh // wait for Wait() to return
-		readWg.Wait()
-
-		if b.ProcessEnded != nil {
-			b.ProcessEnded()
-		}
-
-		return tape.ToolResult{
-			ToolID:  toolID,
-			Content: fmt.Sprintf("[SHELL ERROR] command timed out after %v", timeout),
-			IsError: true,
-		}
-	}
-
-	// Wait for read goroutines to finish
-	readWg.Wait()
-
-	// Notify caller that the anonymous shell has exited
-	if b.ProcessEnded != nil {
+	if b.ProcessEnded != nil && !paused {
 		b.ProcessEnded()
 	}
 
-	// Format output
-	stdoutStr := b.truncate(stdoutBytes)
-	stderrStr := b.truncate(stderrBytes)
-	content := fmt.Sprintf("[EXIT CODE] %d\n[STDOUT]\n%s\n[STDERR]\n%s", exitCode, stdoutStr, stderrStr)
+	if paused {
+		// Job is paused — keep in registry.
+		stdoutStr := j.ReadStdout()
+		stderrStr := j.ReadStderr()
+		totalBytes := j.stdout.Len()
+		shownBytes := len(stdoutStr)
+		content := fmt.Sprintf(
+			"[PAUSED] job=%d (process is STOPPED, not exited — no exit code yet)\n[STDOUT] %d bytes shown (%d bytes total in buffer)\n%s\n[STDERR]\n%s\nOptions: job(id=%d, signal=\"cont\", output_limit=N) to resume, job(id=%d, signal=\"kill\") to discard",
+			j.ID, shownBytes, totalBytes, stdoutStr, stderrStr, j.ID, j.ID,
+		)
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: content,
+		}
+	}
+
+	// Natural completion — remove from registry.
+	b.jobs.Remove(j.ID)
+
+	stdoutStr := b.applyOutputLimit(j.ReadStdout())
+	stderrStr := b.applyOutputLimit(j.ReadStderr())
+	content := fmt.Sprintf("[EXIT CODE] %d\n[STDOUT]\n%s\n[STDERR]\n%s", j.ExitCode(), stdoutStr, stderrStr)
 
 	return tape.ToolResult{
 		ToolID:  toolID,
 		Content: content,
-		IsError: exitCode != 0,
+		IsError: j.ExitCode() != 0,
 	}
 }
 
-// executeSession runs a command in a named persistent session.
-func (b *ShExecutor) executeSession(toolID string, command string, sessionName string) tape.ToolResult {
-	b.mu.Lock()
-	b.initSessions()
-	b.mu.Unlock()
+// applyOutputLimit truncates with a visible notice (only for naturally-completed
+// output that somehow exceeds MaxOutput — this should be rare with output_limit).
+func (b *ShExecutor) applyOutputLimit(s string) string {
+	if b.MaxOutput <= 0 || len(s) <= b.MaxOutput {
+		return s
+	}
+	total := len(s)
+	return s[:b.MaxOutput] + fmt.Sprintf("\n...[Output Truncated, %d bytes total]", total)
+}
 
-	sess, err := b.sessions.GetOrCreate(sessionName)
-	if err != nil {
+// HandleJob processes a job(id=N, ...) tool call and returns the result.
+func (b *ShExecutor) HandleJob(toolID string, args map[string]any) tape.ToolResult {
+	b.jobsMu.Lock()
+	b.initJobs()
+	b.jobsMu.Unlock()
+
+	// Parse id
+	idRaw, ok := args["id"]
+	if !ok {
 		return tape.ToolResult{
 			ToolID:  toolID,
-			Content: fmt.Sprintf("[SESSION ERROR] creating session %q: %v", sessionName, err),
+			Content: "[JOB ERROR] missing required parameter: id",
+			IsError: true,
+		}
+	}
+	pgid := ToInt(idRaw)
+	if pgid <= 0 {
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: fmt.Sprintf("[JOB ERROR] invalid id: %v", idRaw),
 			IsError: true,
 		}
 	}
 
-	timeout := b.Timeout
-	if timeout == 0 {
-		timeout = 600 * time.Second
-	}
-
-	exitCode, output, err := sess.Execute(command, timeout)
-	if err != nil {
+	j := b.jobs.Get(pgid)
+	if j == nil {
 		return tape.ToolResult{
 			ToolID:  toolID,
-			Content: fmt.Sprintf("[SESSION ERROR] %v", err),
+			Content: fmt.Sprintf("[JOB ERROR] job %d not found (already completed or killed)", pgid),
 			IsError: true,
 		}
 	}
 
-	// Format output (named sessions combine stdout+stderr)
-	outputStr := b.truncate([]byte(output))
-	content := fmt.Sprintf("[EXIT CODE] %d\n[OUTPUT]\n%s", exitCode, outputStr)
+	signal, _ := args["signal"].(string)
 
-	return tape.ToolResult{
-		ToolID:  toolID,
-		Content: content,
-		IsError: exitCode != 0,
-	}
-}
-
-// readSession returns accumulated output from a named session without
-// executing a command. Always succeeds (returns empty if no output).
-func (b *ShExecutor) readSession(toolID string, sessionName string) tape.ToolResult {
-	b.mu.Lock()
-	b.initSessions()
-	b.mu.Unlock()
-
-	sess := b.sessions.Get(sessionName)
-	if sess == nil {
+	switch signal {
+	case "kill":
+		j.Kill()
+		b.jobs.Remove(pgid)
+		if b.ProcessEnded != nil {
+			b.ProcessEnded()
+		}
 		return tape.ToolResult{
 			ToolID:  toolID,
-			Content: fmt.Sprintf("[SESSION ERROR] session %q not found", sessionName),
-			IsError: true,
+			Content: fmt.Sprintf("[JOB] %d killed", pgid),
 		}
-	}
 
-	output := sess.ReadOutput()
-	return tape.ToolResult{
-		ToolID:  toolID,
-		Content: fmt.Sprintf("[OUTPUT]\n%s", output),
+	case "cont":
+		timeout := time.Duration(ToInt(args["timeout"])) * time.Second
+		outputLimit := ToInt(args["output_limit"])
+		// If no budget given, use executor defaults
+		if timeout == 0 {
+			timeout = b.Timeout
+		}
+		if err := j.Resume(timeout, outputLimit); err != nil {
+			return tape.ToolResult{
+				ToolID:  toolID,
+				Content: fmt.Sprintf("[JOB ERROR] %v", err),
+				IsError: true,
+			}
+		}
+
+		paused := j.Wait()
+		if b.ProcessEnded != nil && !paused {
+			b.ProcessEnded()
+		}
+
+		if paused {
+			stdoutStr := j.ReadStdout()
+			stderrStr := j.ReadStderr()
+			totalBytes := j.stdout.Len()
+			shownBytes := len(stdoutStr)
+			content := fmt.Sprintf(
+				"[PAUSED] job=%d (process is STOPPED, not exited — no exit code yet)\n[STDOUT] %d bytes shown (%d bytes total in buffer)\n%s\n[STDERR]\n%s\nOptions: job(id=%d, signal=\"cont\", output_limit=N) to resume, job(id=%d, signal=\"kill\") to discard",
+				j.ID, shownBytes, totalBytes, stdoutStr, stderrStr, j.ID, j.ID,
+			)
+			return tape.ToolResult{ToolID: toolID, Content: content}
+		}
+
+		// Completed
+		b.jobs.Remove(pgid)
+		stdoutStr := b.applyOutputLimit(j.ReadStdout())
+		stderrStr := b.applyOutputLimit(j.ReadStderr())
+		content := fmt.Sprintf("[EXIT CODE] %d\n[STDOUT]\n%s\n[STDERR]\n%s", j.ExitCode(), stdoutStr, stderrStr)
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: content,
+			IsError: j.ExitCode() != 0,
+		}
+
+	default:
+		// Read-only: return current output without resuming
+		stdoutStr := j.ReadStdout()
+		stderrStr := j.ReadStderr()
+		stateStr := "paused"
+		if j.State() == JobRunning {
+			stateStr = "running"
+		}
+		content := fmt.Sprintf("[JOB %d - %s]\n[STDOUT]\n%s\n[STDERR]\n%s", pgid, stateStr, stdoutStr, stderrStr)
+		return tape.ToolResult{ToolID: toolID, Content: content}
 	}
 }
 
-// Close shuts down all sessions.
+// Close kills all active jobs.
 func (b *ShExecutor) Close() error {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	if b.sessions != nil {
-		return b.sessions.CloseAll()
+	b.jobsMu.Lock()
+	defer b.jobsMu.Unlock()
+	if b.jobs != nil {
+		return b.jobs.KillAll()
 	}
 	return nil
 }
 
-// truncate returns the string representation of data, truncating it if it
-// exceeds MaxOutput bytes with a trailing notice.
-func (b *ShExecutor) truncate(data []byte) string {
-	if len(data) <= b.MaxOutput {
-		return string(data)
+// ToInt converts various numeric types from JSON unmarshalling to int.
+func ToInt(v any) int {
+	switch n := v.(type) {
+	case int:
+		return n
+	case int64:
+		return int(n)
+	case float64:
+		return int(n)
+	case float32:
+		return int(n)
 	}
-	total := len(data)
-	truncated := string(data[:b.MaxOutput])
-	return truncated + fmt.Sprintf("\n...[Output Truncated, %d bytes total]", total)
+	return 0
 }
+
+// toDuration converts an int (seconds) to time.Duration.
+func toDuration(v any) time.Duration {
+	secs := ToInt(v)
+	if secs <= 0 {
+		return 0
+	}
+	return time.Duration(secs) * time.Second
+}
+
+// Keep exec.Cmd accessible for ProcessStarted callback.
+var _ = (*exec.Cmd)(nil)
+var _ = syscall.SIGSTOP // ensure syscall is used

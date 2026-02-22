@@ -302,98 +302,8 @@ func TestStderr_SuccessSilent(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Named session persistence
+// 4. (G3 named session persistence tests removed — G4 uses ephemeral sh calls)
 // ---------------------------------------------------------------------------
-
-// TestPersistentShell_CdPersists verifies that cd in one sh call persists to the next.
-func TestPersistentShell_CdPersists(t *testing.T) {
-	tmpDir := t.TempDir()
-	tapeDir := filepath.Join(tmpDir, "tapes")
-	cfg := unixTestConfig(t, tapeDir)
-
-	mock := newMockProvider([]tape.Message{
-		assistantshSession("c1", fmt.Sprintf("cd %q", tmpDir), "main"),
-		assistantshSession("c2", "pwd", "main"),
-		assistantExit("e1", "success", "", ""),
-	})
-
-	rt := runtime.NewWithProvider(cfg, mock)
-	code := rt.Run("check cd persistence", "Begin.")
-
-	if code != 0 {
-		t.Errorf("exit code = %d, want 0", code)
-	}
-
-	// Parse tape to find pwd output
-	tapePath := filepath.Join(tapeDir, cfg.SessionID+".jsonl")
-	entries := parseTapeJSONL(t, tapePath)
-	results := findToolResults(t, entries)
-
-	if len(results) < 2 {
-		t.Fatalf("expected at least 2 tool results, got %d", len(results))
-	}
-
-	// Second result (pwd) should show tmpDir
-	pwdResult := results[1].Content
-	if !strings.Contains(pwdResult, tmpDir) {
-		t.Errorf("pwd after cd = %q, want it to contain %q", pwdResult, tmpDir)
-	}
-}
-
-// TestPersistentShell_ExportPersists verifies that export in one sh call persists to the next.
-func TestPersistentShell_ExportPersists(t *testing.T) {
-	_, entries := runWithMock(t, []tape.Message{
-		assistantshSession("c1", "export QUINE_TEST_VAR=hello42", "main"),
-		assistantshSession("c2", "echo $QUINE_TEST_VAR", "main"),
-		assistantExit("e1", "success", "", ""),
-	}, "check export persistence", "Begin.")
-
-	results := findToolResults(t, entries)
-	if len(results) < 2 {
-		t.Fatalf("expected at least 2 tool results, got %d", len(results))
-	}
-
-	echoResult := results[1].Content
-	if !strings.Contains(echoResult, "hello42") {
-		t.Errorf("echo after export = %q, want it to contain %q", echoResult, "hello42")
-	}
-}
-
-// TestPersistentShell_ShellVarPersists verifies that shell variables persist.
-func TestPersistentShell_ShellVarPersists(t *testing.T) {
-	_, entries := runWithMock(t, []tape.Message{
-		assistantshSession("c1", "MY_COUNT=99", "main"),
-		assistantshSession("c2", "echo $MY_COUNT", "main"),
-		assistantExit("e1", "success", "", ""),
-	}, "check variable persistence", "Begin.")
-
-	results := findToolResults(t, entries)
-	if len(results) < 2 {
-		t.Fatalf("expected at least 2 tool results, got %d", len(results))
-	}
-
-	if !strings.Contains(results[1].Content, "99") {
-		t.Errorf("echo after set = %q, want it to contain %q", results[1].Content, "99")
-	}
-}
-
-// TestPersistentShell_FunctionPersists verifies that function definitions persist.
-func TestPersistentShell_FunctionPersists(t *testing.T) {
-	_, entries := runWithMock(t, []tape.Message{
-		assistantshSession("c1", `greet() { echo "hi $1"; }`, "main"),
-		assistantshSession("c2", `greet world`, "main"),
-		assistantExit("e1", "success", "", ""),
-	}, "check function persistence", "Begin.")
-
-	results := findToolResults(t, entries)
-	if len(results) < 2 {
-		t.Fatalf("expected at least 2 tool results, got %d", len(results))
-	}
-
-	if !strings.Contains(results[1].Content, "hi world") {
-		t.Errorf("function call result = %q, want it to contain %q", results[1].Content, "hi world")
-	}
-}
 
 // ---------------------------------------------------------------------------
 // 5. Anonymous shell behavior
@@ -670,45 +580,8 @@ echo "waited"`, outFile)),
 	}
 }
 
-// TestShell_BackgroundPidPersists verifies that $! persists across sh calls.
-func TestShell_BackgroundPidPersists(t *testing.T) {
-	tmpDir := t.TempDir()
-	outFile := filepath.Join(tmpDir, "async.txt")
-
-	_, entries := runWithMock(t, []tape.Message{
-		// Start a background job that writes to a file after a brief sleep
-		assistantsh("c1", fmt.Sprintf(`(sleep 0.1 && echo done > %q) &
-echo $!`, outFile)),
-		// Wait for it in a subsequent call
-		assistantsh("c2", `wait
-echo "all done"`),
-		assistantExit("e1", "success", "", ""),
-	}, "bg pid across calls", "Begin.")
-
-	results := findToolResults(t, entries)
-	if len(results) < 2 {
-		t.Fatalf("expected at least 2 tool results, got %d", len(results))
-	}
-
-	// First result should contain a PID number
-	if !strings.Contains(results[0].Content, "[EXIT CODE] 0") {
-		t.Errorf("bg start result = %q, want success", results[0].Content)
-	}
-
-	// Second result should show "all done"
-	if !strings.Contains(results[1].Content, "all done") {
-		t.Errorf("wait result = %q, want 'all done'", results[1].Content)
-	}
-
-	// Verify the async file was created
-	data, err := os.ReadFile(outFile)
-	if err != nil {
-		t.Fatalf("async output file not found: %v", err)
-	}
-	if !strings.Contains(string(data), "done") {
-		t.Errorf("async file content = %q, want 'done'", string(data))
-	}
-}
+// TestShell_BackgroundPidPersists is removed in G4 — cross-call $! persistence
+// required the G3 named session model which no longer exists.
 
 // ---------------------------------------------------------------------------
 // 11. Tape integrity

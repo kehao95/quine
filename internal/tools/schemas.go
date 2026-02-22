@@ -5,8 +5,10 @@ import "github.com/kehao95/quine/internal/llm"
 // ShToolSchema returns the JSON Schema for the sh tool.
 func ShToolSchema() llm.ToolSchema {
 	return llm.ToolSchema{
-		Name:        "sh",
-		Description: "Execute a POSIX shell command.\n\n- `sh(command)` — Anonymous ephemeral: spawn shell, run, return output, kill.\n- `sh(command, session=\"name\")` — Named persistent: execute in named session (error if busy).\n- `sh(session=\"name\")` — Read accumulated output from named session (always succeeds).",
+		Name: "sh",
+		Description: "Execute a POSIX shell command. Costs 1 execution.\n\n" +
+			"Returns output immediately on normal completion, or [PAUSED] when a budget is exhausted.\n" +
+			"Use `job` to read, resume, or kill paused jobs.",
 		Parameters: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -14,11 +16,50 @@ func ShToolSchema() llm.ToolSchema {
 					"type":        "string",
 					"description": "The shell command to execute.",
 				},
-				"session": map[string]any{
-					"type":        "string",
-					"description": "Named session. Creates on first use, persists state (cd, vars, processes) across calls.",
+				"timeout": map[string]any{
+					"type":        "integer",
+					"description": "Maximum wall-clock seconds. When exceeded, the job is SIGSTOP'd and [PAUSED] is returned. Default: no timeout.",
+				},
+				"output_limit": map[string]any{
+					"type":        "integer",
+					"description": "Maximum combined stdout+stderr bytes. When exceeded, the job is SIGSTOP'd and [PAUSED] is returned. Default: no limit.",
 				},
 			},
+			"required": []string{"command"},
+		},
+	}
+}
+
+// JobToolSchema returns the JSON Schema for the job tool.
+func JobToolSchema() llm.ToolSchema {
+	return llm.ToolSchema{
+		Name: "job",
+		Description: "Manage a paused or running job.\n\n" +
+			"- `job(id=N)` — Read accumulated output without resuming.\n" +
+			"- `job(id=N, signal=\"cont\")` — Resume a paused job (optionally with a new budget).\n" +
+			"- `job(id=N, signal=\"kill\")` — Terminate the job.",
+		Parameters: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"id": map[string]any{
+					"type":        "integer",
+					"description": "Job ID (pgid) returned in the [PAUSED] header.",
+				},
+				"signal": map[string]any{
+					"type":        "string",
+					"enum":        []string{"cont", "kill"},
+					"description": "\"cont\" resumes a paused job; \"kill\" terminates it.",
+				},
+				"timeout": map[string]any{
+					"type":        "integer",
+					"description": "New timeout budget in seconds (only meaningful with signal=\"cont\").",
+				},
+				"output_limit": map[string]any{
+					"type":        "integer",
+					"description": "New output budget in bytes (only meaningful with signal=\"cont\").",
+				},
+			},
+			"required": []string{"id"},
 		},
 	}
 }
@@ -104,6 +145,7 @@ func ExitToolSchema() llm.ToolSchema {
 func AllToolSchemas() []llm.ToolSchema {
 	return []llm.ToolSchema{
 		ShToolSchema(),
+		JobToolSchema(),
 		ForkToolSchema(),
 		ExecToolSchema(),
 		ExitToolSchema(),
