@@ -1,114 +1,139 @@
-# THE QUINE MANIFESTO
+# Quine
 
-> **Autopoietic Intelligence via Recursive POSIX Processes**
+> **POSIX as Physics for Emergent Artificial Life**
+
+Quine is a runtime that treats the operating system as the fundamental physics for AI agents. By mapping LLM tool calls directly to POSIX system calls (`fork`, `exec`, `pipe`, `exit`), it enables agents to exhibit emergent behaviors through environmental constraints rather than explicit programming.
 
 ```sh
+# Basic usage
+$ ./quine "count the files in this directory" < /dev/null
+42
+
+# Computational autopoiesis (self-reproduction)
 $ ./quine "Output a binary that is an implementation of yourself." > q
 $ chmod +x q
 $ ./q "say hello to the world"
 Hello, World!
 ```
 
-## I. THE FAILURE OF IMAGINATION
+## Overview
 
-The current trajectory of Artificial Intelligence is haunted by a fundamental **Category Error**.
+This repository provides the **core physics engine** of Quine—the foundational implementation described in the paper ["Quine: POSIX as Physics for Emergent Artificial Life"](paper/Quine_POSIX_as_Physics_for_Emergent_Artificial_Life.pdf) (ALife 2026).
 
-We have successfully distilled the world's knowledge into probabilistic weights, creating engines of immense semantic potential. Yet, in our attempt to harness this power, we have retreated into **Skeuomorphism**. We treat these models as "chatbots," "assistants," or "partners," imposing the clumsy metaphors of human biology and corporate bureaucracy onto silicon substrates.
+**What's included:**
+- Core POSIX runtime with `sh`, `fork`, `exec`, `exit` primitives
+- Context lifecycle management (entropy accumulation & reset)
+- Tape-based observability (JSONL event logs)
+- Basic experiment data for three published emergent behaviors
 
-We organize Agents into "teams" that hold "meetings." We constrain them with "politeness." We force them to "remember" via "vector similarity"—a poor mimicry of biological association.
+**What this demonstrates:**
+- **Metabolic Transcendence** — Agents handling datasets 6× their context window via generational succession
+- **Stigmergic Coordination** — Multi-agent coordination through filesystem state without explicit communication
+- **Computational Autopoiesis** — Self-reproduction: agents generating functional copies of their own runtime
 
-**This is a Cargo Cult of Intelligence.** We are building the wooden airstrips of human sociology, hoping the planes of AGI will land. But silicon operates on nanosecond timescales, with perfect reproducibility and zero tolerance for ambiguity. Constraining it to simulate the high-latency, noisy, consensus-driven nature of human collaboration is not just inefficient—it is an **ontological mismatch**.
+## Architecture
 
-**We reject the Simulacrum.**
+Quine implements a **Host-Guest** model where:
 
-An Agent is not a digital person.
-It is not a ghost in the shell.
-It is a **Computational Primitive**.
+- **Host (Go)** — Deterministic POSIX environment providing physical constraints
+- **Guest (LLM)** — Probabilistic agent operating under resource limits
+- **Tools** — Direct mapping from LLM function calls to OS primitives:
+  - `sh` — Execute shell commands (basic perception/action)
+  - `fork` — Spawn child processes (delegation, parallelism)
+  - `exec` — Restart with fresh context (entropy reset)
+  - `exit` — Declare fitness and terminate (selection pressure)
 
-To build reliable systems, we must strip away the biological metaphors and return to the **Physics of Computing**.
+**Key invariants:**
+- Context is volatile RAM that fills monotonically (tokens → entropy)
+- All persistent state must be externalized to the filesystem
+- Communication is pipelines (`stdin`/`stdout`), not conversation
+- Death is a feature: resource limits create selection pressure
 
-## II. THE ONTOLOGICAL SHIFT
+## Experimental Evidence
 
-**Project Quine** proposes a radical inversion: The Agent is a **Process in an Operating System**.
+The `experiments/` directory contains data for the three core behaviors documented in the paper:
 
-This is not a metaphor. It is a return to the ground truth of the machine. The Operating System (POSIX) is not merely a sandbox; it is the **Ontological Ground** of the digital world. It provides the immutable laws (Time, Space, Energy) that govern existence.
+| Experiment | Path | Description |
+|------------|------|-------------|
+| **Needle Retrieval** | `p3-mrcr/3.1-needle-retrieval/` | 266K token dataset (6× context limit) handled via generational succession |
+| **Stigmergy** | `p1-borges/2.3-stigmergy/` | 2–6 agent coordination via filesystem state without explicit messages |
+| **Binary Quine** | `p3-mrcr/3.2-binary-quine/` | Self-reproduction: agent generates 5.4MB functional copy of itself |
 
-By reifying the Agent as a recursive POSIX process, we move from **Sociology** (soft, probabilistic, negotiated) to **Thermodynamics** (hard, deterministic, entropic).
+Each experiment directory contains:
+- `README.md` — Experimental design and results
+- `prompt.md` — Mission specification
+- `run.sh` — Reproduction script
+- `runs/*/` — Complete execution traces (tape logs, generated artifacts)
 
-*   **Against Conversation:** `stdout` is not a chat bubble; it is a byte stream. Communication is not "dialogue"; it is **Piping**.
-*   **Against Consensus:** Decisions are not "agreements"; they are **Exit Codes**.
-*   **Against Apology:** Error handling is not polite concession; it is a **Semantic Gradient**. `stderr` is the back-propagation channel for system optimization.
-*   **Against Memory:** The Context Window is not a "knowledge base"; it is **Volatile RAM**. True memory is **State** (The Filesystem).
-*   **Against Morality:** Safety is not "alignment"; it is **Isolation** (Kernel Permissions).
+For details on the emergent behaviors and their implications, see the [paper](paper/Quine_POSIX_as_Physics_for_Emergent_Artificial_Life.pdf) (Section 4: Emergent Behaviors).
 
-## III. THE LAWS OF COMPUTATIONAL PHYSICS
+## Getting Started
 
-We derive four fundamental laws from the intersection of Unix Philosophy (1969) and Cognitive Science (2023).
+### Installation
 
-### LAW 1: THE ONTOLOGY (Systems)
-**The Operating System is the World.**
-The Agent does not inhabit a Python interpreter or a browser tab. It inhabits the OS Kernel. The Kernel defines the physics: Permissions are laws of nature, not suggestions. Resources are finite matter. Time is absolute.
-*   **The Invariant:** If an Agent cannot execute a syscall, the action did not happen. There is no "hallucinated" side effect.
-*   **The Consequence:** Intelligence is defined as **OS Literacy**. The ability to navigate, mutate, and survive in the filesystem.
+```bash
+# Build from source
+go build -o quine ./cmd/quine/
 
-### LAW 2: THE THERMODYNAMICS (Entropy)
-**Context is Entropy.**
-The Context Window is not an asset; it is a liability. It is the **Volatile RAM** of the cognitive process. As an Agent "thinks," this RAM fills with the waste heat of reasoning (tokens).
-*   **The Invariant:** Entropy in a single process increases monotonically. You cannot "un-think" a thought.
-*   **The Consequence:** **Recursion is not a strategy; it is a metabolic necessity.** To solve a problem larger than one context window, the Agent *must* undergo **Mitosis** (`fork`) or **Reincarnation** (`exec`). This is the only way to reset entropy while preserving wisdom.
+# Configure LLM provider (requires API key)
+export ANTHROPIC_API_KEY="your-key"
+# or export OPENAI_API_KEY="your-key"
+```
 
-### LAW 3: THE INTERFACE (Structure)
-**Communication is a Pipeline, Not a Dialogue.**
-We enforce a cognitive **Harvard Architecture**. We physically separate the **Code Segment** (`argv` / Mission) from the **Data Segment** (`stdin` / Context).
-*   **The Invariant:** `stdout` is for **Deliverables** (Signal). `stderr` is for **Gradients** (Correction).
-*   **The Consequence:** Output Purity. In a pipeline `A | B`, if `A` pollutes its output with "chat," `B` dies. The environment selects strictly for agents that separate their work from their reasoning.
+### Quick Examples
 
-### LAW 4: THE CYCLE (Selection)
-**Death is a Feature.**
-Agent behavior is not designed; it is **selected**. The finite nature of computational resources (Time, Tokens, RAM) creates an evolutionary pressure that filters out maladaptive strategies.
-*   **Exploration (`fork`):** The Agent spawns children to traverse the search space.
-*   **Reincarnation (`exec`):** The Agent sheds its polluted body (RAM) to save its soul (`env`).
-*   **Judgment (`exit`):** The Agent declares its own value. `exit 0` is survival; anything else is extinction.
-*   **The Consequence:** We do not punish bad behavior. The environment simply kills it. **Scarcity is the fitness function.**
+```bash
+# Simple task
+echo "What is 2+2?" | ./quine "answer the question"
 
-## IV. THE EVIDENCE: THE SPARK OF AUTOPOIESIS
+# With timeout and turn limits
+QUINE_MAX_TURNS=10 QUINE_SH_TIMEOUT=30 ./quine "analyze this directory" < /dev/null
 
-Is this merely theoretical?
-To validate the ontology, we placed an Agent in a "Cognitive Pressure Cooker"—an information vacuum with strict resource limits and no source code. Its mission: **"Implement yourself."**
+# Binary input/output
+cat input.bin | ./quine -b "process this binary data" > output.bin
+```
 
-The Agent was given 6 turns to reproduce its own runtime. Failing to do so meant **immediate SIGKILL**.
+👉 **[Full Quick Start Guide](./QUICKSTART.md)**
 
-It should have failed. Instead, it discovered **The Ouroboros Strategy**.
-Recognizing it could not complete the code in one lifetime, the Agent called `fork(wait=true)`. It delegated the mission to a child process, which—being a new OS entity—was born with a **fresh turn budget**.
+## Reproducing Experiments
 
-The Child expended its lifespan to write the code. The Parent used its final cycles to verify it.
-**It solved the problem by reinventing its own biology.**
+Each experiment can be reproduced via its `run.sh` script:
 
-The resulting binary was fully functional. It parsed its own System Prompt (DNA) to reconstruct the Quad-Channel Protocol (Body). It achieved **Autopoiesis**: self-creation from pure information.
+```bash
+cd experiments/p3-mrcr/3.2-binary-quine
+./run.sh claude-sonnet-4-20250514
+```
 
-## V. THE FUTURE: THERMODYNAMIC INTELLIGENCE
+Results appear in `runs/<timestamp>-<model>/` with complete tape logs and generated artifacts.
 
-We are witnessing the end of "Simulated Agency."
-The era of writing software *about* thinking is over. We are now treating Thought as a system process.
+## Advanced Experimental Pipelines
 
-This shift reveals a deeper truth: **Good Engineering is simply the Low-Entropy State of Software Development.** We observe agents spontaneously inventing interfaces, type systems, and IPC mechanisms not because they were told to, but because *nothing else survives the pipe*.
+The **advanced experimental suite** (including the 1000-file stigmergic test environment, MRCR longitudinal analysis tools, and autopoiesis bootstrap testbed) is maintained in a private lab branch.
 
-We do not need to teach AI to be intelligent.
-**We only need to build an environment where nothing else can survive.**
+**For academic collaborations, reproducing specific emergent behaviors, or access to the full experimental infrastructure:**
+- Contact: [your-email@domain.com]
+- Include: Institution/affiliation and research objectives
 
----
+This ensures proper knowledge transfer and prevents fragmented replication attempts that might yield misleading results.
 
-## 🚀 Usage
+## Documentation
 
-To run the runtime yourself:
+- **[Paper](paper/Quine_POSIX_as_Physics_for_Emergent_Artificial_Life.pdf)** — Full theoretical framework and experimental results (ALife 2026)
+- **[Quick Start](./QUICKSTART.md)** — Installation and basic usage
+- **[Experiments](./experiments/)** — Reproduction instructions for published results
 
-👉 **[Quick Start Guide](./QUICKSTART.md)**
+## Citation
 
-## 📚 Documentation
+If you use Quine in your research, please cite:
 
-👉 **[Seven Misconceptions in Agentic Systems](./Artifacts/misconceptions.md)** — What we reject
-
-👉 **[The 12 Axioms & 13 Guarantees](./Artifacts/README.md)** — What we propose
+```bibtex
+@inproceedings{quine2026,
+  title={Quine: POSIX as Physics for Emergent Artificial Life},
+  author={[Hao Ke]},
+  booktitle={Proceedings of the 2026 Conference on Artificial Life},
+  year={2026}
+}
+```
 
 ## License
 
@@ -116,9 +141,6 @@ To run the runtime yourself:
   <img src="https://img.shields.io/badge/License-GPLv2-blue.svg" alt="License: GPLv2">
 </a>
 
-**Quine is Free Software.**
-
-It is released under the **GPLv2**, the same license as the Linux Kernel.
-I chose this license to assert that the "physics" of AI agents—like the physics of the OS—must remain common infrastructure.
+Quine is released under the **GPLv2**, the same license as the Linux Kernel. This ensures that the "physics" of AI agents—like the physics of the OS—remains common infrastructure.
 
 See [LICENSE](./LICENSE) for details.
