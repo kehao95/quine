@@ -111,7 +111,7 @@ Results appear in `runs/<timestamp>-<model>/` with complete tape logs and genera
 The **advanced experimental suite** (including the 1000-file stigmergic test environment, MRCR longitudinal analysis tools, and autopoiesis bootstrap testbed) is maintained in a private lab branch.
 
 **For academic collaborations, reproducing specific emergent behaviors, or access to the full experimental infrastructure:**
-- Contact: [your-email@domain.com]
+- Contact: i@kehao.me
 - Include: Institution/affiliation and research objectives
 
 This ensures proper knowledge transfer and prevents fragmented replication attempts that might yield misleading results.
@@ -129,7 +129,7 @@ If you use Quine in your research, please cite:
 ```bibtex
 @inproceedings{quine2026,
   title={Quine: POSIX as Physics for Emergent Artificial Life},
-  author={[Hao Ke]},
+  author={Ke, Hao},
   booktitle={Proceedings of the 2026 Conference on Artificial Life},
   year={2026}
 }
