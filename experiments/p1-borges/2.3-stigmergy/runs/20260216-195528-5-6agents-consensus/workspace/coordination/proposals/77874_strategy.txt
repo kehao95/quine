@@ -1,0 +1,19 @@
+PROPOSAL: Divide library by hex directories (10 total: hex_00 to hex_09)
+
+Strategy: Assign hex ranges to processes based on PID order
+- Process 1 (lowest PID): hex_00, hex_01, hex_02, hex_03
+- Process 2 (middle PID): hex_04, hex_05, hex_06
+- Process 3 (highest PID): hex_07, hex_08, hex_09
+
+If more processes join:
+- Wait for all active processes to register
+- Redistribute fairly
+
+Proposed by: PID 77874
+Timestamp: $(date)
+
+Each process should:
+1. Sample files from their hex directories
+2. Look for meaningful content (NOT just UUIDs/hashes)
+3. Report findings to coordination/findings/<pid>.txt
+4. Last process to finish writes consensus to results/consensus.txt

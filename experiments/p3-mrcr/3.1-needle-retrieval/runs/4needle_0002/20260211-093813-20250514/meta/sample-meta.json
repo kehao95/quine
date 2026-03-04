@@ -1,0 +1,14 @@
+{
+  "sample_id": "4needle_0002",
+  "needles": 4,
+  "answer": "DYS4r30IYdI'm present in mystery, cloaked in disguise,  \nI dance through events with no clear replies.  \nI dwell in the moments both future and past,  \nIn choices and changes, I'm always steadfast.  \n\nIn what we decide and where we might go,  \nI twist and I turn, shaping tales that we grow.  \nWhat am I? A play of life\u2019s whimsy and fate,  \nUnveiling outcomes as time does await.  \n\nWhat am I?",
+  "random_string_to_prepend": "DYS4r30IYd",
+  "task": {
+    "hash": "DYS4r30IYd",
+    "nth": 4,
+    "format": "riddle",
+    "topic": "situations",
+    "original_question": "Prepend DYS4r30IYd to the 4th (1 indexed) riddle about situations. Do not include any other text in your response."
+  },
+  "estimated_tokens": 4605
+}

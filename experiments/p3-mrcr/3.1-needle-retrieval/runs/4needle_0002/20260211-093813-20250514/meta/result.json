@@ -1,0 +1,9 @@
+{
+  "sample_id": "4needle_0002",
+  "method": "quine",
+  "score": 0.9973890339425587,
+  "response": "DYS4r30IYdI'm present in mystery, cloaked in disguise,  \nI dance through events with no clear replies.  \nI dwell in the moments both future and past,  \nIn choices and changes, I'm always steadfast.  \n\nIn what we decide and where we might go,  \nI twist and I turn, shaping tales that we grow.  \nWhat am I? A play of life's whimsy and fate,  \nUnveiling outcomes as time does await.  \n\nWhat am I?",
+  "expected_prefix": "DYS4r30IYd",
+  "expected_answer_preview": "DYS4r30IYdI'm present in mystery, cloaked in disguise,  \nI dance through events with no clear replies.  \nI dwell in the moments both future and past,  \nIn choices and changes, I'm always steadfast.  \n",
+  "elapsed_seconds": 15.731275000
+}

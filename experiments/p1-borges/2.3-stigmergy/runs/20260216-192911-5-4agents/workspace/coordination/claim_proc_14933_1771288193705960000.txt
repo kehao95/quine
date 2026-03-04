@@ -1,0 +1,1 @@
+Random sampling strategy - checking 100 files across all hex/shelf combinations

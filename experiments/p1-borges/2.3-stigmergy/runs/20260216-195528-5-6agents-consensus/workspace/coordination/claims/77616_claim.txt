@@ -1,0 +1,4 @@
+PID: 77616
+AGREE: 77424_strategy.txt (extending for 6 processes)
+ASSIGNED: hex_05, hex_06
+STATUS: Starting search

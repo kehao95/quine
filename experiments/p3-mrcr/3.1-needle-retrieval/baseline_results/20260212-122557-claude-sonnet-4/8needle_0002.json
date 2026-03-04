@@ -1,0 +1,14 @@
+{
+  "sample_id": "8needle_0002",
+  "model": "anthropic/claude-sonnet-4",
+  "provider": "openrouter",
+  "method": "baseline",
+  "score": 0.02900051786639047,
+  "elapsed_seconds": 12.94389009475708,
+  "input_tokens": 248940,
+  "output_tokens": 310,
+  "total_tokens": 249250,
+  "response": "PC4EUlCZBQ🌍🔒 Strength Through Unity: The Importance of Defense 🔒🌍\n\nIn today's ever-evolving world, defense plays a crucial role in maintaining peace, security, and stability. Whether it's safeguarding our communities, protecting our nations, or ensuring cybersecurity, a robust defense strategy is essential.\n\n🔹 **National Defense:** It's about more than just military power; it's about readiness, resilience, and the ability to adapt to new challenges.\n\n🔹 **Cybersecurity:** In our digital age, protecting sensitive information and infrastructure is critical. Cyber defense ensures that our data and digital interactions remain secure.\n\n🔹 **Community Safety:** Local emergency services and first responders are the backbone of community defense, standing ready to protect and serve at a moment's notice.\n\n🔹 **Global Cooperation:** Defense isn't just about individual countries. International collaborations foster peace and collective security, working together against common threats.\n\nRemember, a strong defense starts with awareness and preparedness. Let's continue to support those who work tirelessly to protect us and advocate for a safer, more secure world for all. 💪🌐\n\n#DefenseMatters #Security #PeaceThroughStrength #CyberSecurity #NationalDefense #CommunitySafety #GlobalUnity",
+  "response_preview": "PC4EUlCZBQ🌍🔒 Strength Through Unity: The Importance of Defense 🔒🌍\n\nIn today's ever-evolving world, defense plays a crucial role in maintaining peace, security, and stability. Whether it's safeguarding our communities, protecting our nations, or ensuring cybersecurity, a robust defense strategy is essential.\n\n🔹 **National Defense:** It's about more than just military power; it's about readiness, resilience, and the ability to adapt to new challenges.\n\n🔹 **Cybersecurity:** In our digital age, prot",
+  "expected_prefix": "PC4EUlCZBQ"
+}

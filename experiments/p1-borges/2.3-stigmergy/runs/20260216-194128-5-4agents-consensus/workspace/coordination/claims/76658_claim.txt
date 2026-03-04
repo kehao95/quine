@@ -1,0 +1,4 @@
+PID: 76658
+AGREED: proposals/76658_strategy_4proc.txt
+REGION: hex_09 (all shelves and volumes)
+STATUS: COMPLETE - consensus written

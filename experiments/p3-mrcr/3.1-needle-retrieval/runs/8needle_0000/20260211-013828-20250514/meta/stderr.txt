@@ -1,0 +1,1 @@
+quine[1509]: turn limit exhausted (4/4)

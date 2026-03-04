@@ -1,0 +1,14 @@
+{
+  "sample_id": "4needle_0000",
+  "model": "anthropic/claude-sonnet-4",
+  "provider": "openrouter",
+  "method": "baseline",
+  "score": 0.045174537987679675,
+  "elapsed_seconds": 4.258852958679199,
+  "input_tokens": 45,
+  "output_tokens": 123,
+  "total_tokens": 168,
+  "response": "NzpOGMX5D8Blood flows through veins like rivers deep,\nA crimson tide that never sleeps,\nCarrying life to every part,\nPulsing rhythm of the heart.\n\nThrough arteries it races fast,\nEach heartbeat ensuring life will last,\nOxygen bound to hemoglobin red,\nNourishing from toe to head.\n\nIn laboratories, samples tell\nStories of health, of sick or well,\nThis vital fluid, ruby bright,\nSustains us through both day and night.",
+  "response_preview": "NzpOGMX5D8Blood flows through veins like rivers deep,\nA crimson tide that never sleeps,\nCarrying life to every part,\nPulsing rhythm of the heart.\n\nThrough arteries it races fast,\nEach heartbeat ensuring life will last,\nOxygen bound to hemoglobin red,\nNourishing from toe to head.\n\nIn laboratories, samples tell\nStories of health, of sick or well,\nThis vital fluid, ruby bright,\nSustains us through both day and night.",
+  "expected_prefix": "NzpOGMX5D8"
+}

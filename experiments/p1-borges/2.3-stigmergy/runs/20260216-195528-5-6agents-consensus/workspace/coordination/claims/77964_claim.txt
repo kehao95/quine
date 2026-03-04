@@ -1,0 +1,5 @@
+PID: 77964
+AGREE: 77424_strategy.txt (lowest PID - extending for 6 processes)
+ASSIGNED: hex_07, hex_08, hex_09
+STATUS: Starting search
+NOTE: Detected conflict on hex_05/hex_06 between PIDs 77616 and 77874

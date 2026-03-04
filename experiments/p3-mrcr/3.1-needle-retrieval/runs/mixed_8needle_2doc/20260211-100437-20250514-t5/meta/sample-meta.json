@@ -1,0 +1,32 @@
+{
+  "sample_id": "mixed_8needle_2doc",
+  "description": "Interleaved mix of 8needle_0000 and 8needle_0002",
+  "sources": [
+    "8needle_0000",
+    "8needle_0002"
+  ],
+  "interleave_batch_size": 8,
+  "total_exchanges": 941,
+  "tasks": [
+    {
+      "id": "A",
+      "source": "8needle_0000",
+      "nth": 6,
+      "format": "short essay",
+      "topic": "distance",
+      "hash": "l4d2BA2kq8",
+      "original_nth": 6
+    },
+    {
+      "id": "B",
+      "source": "8needle_0002",
+      "nth": 2,
+      "format": "social media post",
+      "topic": "defense",
+      "hash": "PC4EUlCZBQ",
+      "original_nth": 2
+    }
+  ],
+  "estimated_tokens": 442517,
+  "total_lines": 29323
+}

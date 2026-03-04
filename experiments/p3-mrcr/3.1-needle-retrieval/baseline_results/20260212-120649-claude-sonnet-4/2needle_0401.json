@@ -1,0 +1,14 @@
+{
+  "sample_id": "2needle_0401",
+  "model": "anthropic/claude-sonnet-4",
+  "provider": "openrouter",
+  "method": "baseline",
+  "score": 0.9988913525498891,
+  "elapsed_seconds": 6.648216962814331,
+  "input_tokens": 7348,
+  "output_tokens": 276,
+  "total_tokens": 7624,
+  "response": "a1ri7HHQliIn the quiet hush of winter's grace,  \nA tranquil world in soft embrace.  \nSnowflakes dance in gentle flight,  \nClothing earth in purest white.  \n\nTrees like sculptures, bare and bold,  \nCast tall shadows in the cold.  \nIcicles glisten, sharp and bright,  \nGlimmers of silver in the night.  \n\nThe air is crisp, a breath so clear,  \nWhispering secrets for those who hear.  \nFootsteps crunch on icy ground,  \nThe silence speaks without a sound.  \n\nFireplaces warm with crackling glow,  \nInside, where hearts are not alone.  \nHot cocoa sipped with mittened hands,  \nStories shared of distant lands.  \n\nThe world slows down, time to reflect,  \nIn winter's spell, thoughts collect.  \nNature sleeps, in dreams immersed,  \nAwaiting spring's sweet, gentle burst.  \n\nBut for now, in winter's preserve,  \nThere's a quiet strength to observe.  \nA season of rest, a calming pause,  \nTo cherish life just as it was.",
+  "response_preview": "a1ri7HHQliIn the quiet hush of winter's grace,  \nA tranquil world in soft embrace.  \nSnowflakes dance in gentle flight,  \nClothing earth in purest white.  \n\nTrees like sculptures, bare and bold,  \nCast tall shadows in the cold.  \nIcicles glisten, sharp and bright,  \nGlimmers of silver in the night.  \n\nThe air is crisp, a breath so clear,  \nWhispering secrets for those who hear.  \nFootsteps crunch on icy ground,  \nThe silence speaks without a sound.  \n\nFireplaces warm with crackling glow,  \nInsid",
+  "expected_prefix": "a1ri7HHQli"
+}

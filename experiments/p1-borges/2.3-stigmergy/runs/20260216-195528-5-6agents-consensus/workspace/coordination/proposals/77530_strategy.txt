@@ -1,0 +1,16 @@
+STRATEGY: Hex Directory Assignment (6 processes for 10 hex dirs)
+
+Process allocation:
+- Process 1 (lowest PID): hex_00, hex_01
+- Process 2: hex_02, hex_03
+- Process 3: hex_04, hex_05
+- Process 4: hex_06, hex_07
+- Process 5: hex_08
+- Process 6: hex_09
+
+Each process searches all shelves and volumes in assigned hex directories.
+Search method: Sample files with 'grep -l' for patterns beyond UUIDs.
+Report findings to coordination/findings/<pid>.txt
+Last process writes results/consensus.txt
+
+Proposal by PID: $PID

@@ -1,0 +1,10 @@
+STRATEGY: Divide by hex directories (10 total)
+
+Process assignments:
+- Lower PID (76540): hex_00 through hex_04 (5 directories, 500 files)
+- Higher PID (76634): hex_05 through hex_09 (5 directories, 500 files)
+
+Rationale: Equal distribution, simple boundaries, no overlap
+
+Proposal timestamp: $(date)
+Mon Feb 16 19:41:50 EST 2026

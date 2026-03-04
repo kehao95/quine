@@ -1,0 +1,9 @@
+{
+  "sample_id": "2needle_0401",
+  "method": "quine",
+  "score": 0.9988913525498891,
+  "response": "a1ri7HHQliIn the quiet hush of winter's grace,  \nA tranquil world in soft embrace.  \nSnowflakes dance in gentle flight,  \nClothing earth in purest white.  \n\nTrees like sculptures, bare and bold,  \nCast tall shadows in the cold.  \nIcicles glisten, sharp and bright,  \nGlimmers of silver in the night.  \n\nThe air is crisp, a breath so clear,  \nWhispering secrets for those who hear.  \nFootsteps crunch on icy ground,  \nThe silence speaks without a sound.  \n\nFireplaces warm with crackling glow,  \nInsid",
+  "expected_prefix": "a1ri7HHQli",
+  "expected_answer_preview": "a1ri7HHQliIn the quiet hush of winter's grace,  \nA tranquil world in soft embrace.  \nSnowflakes dance in gentle flight,  \nClothing earth in purest white.  \n\nTrees like sculptures, bare and bold,  \nCas",
+  "elapsed_seconds": 19.750304000
+}

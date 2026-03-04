@@ -1,0 +1,9 @@
+{
+  "sample_id": "2needle_0402",
+  "method": "quine",
+  "score": 1.0,
+  "response": "ONR9NnpI96Pressure is a multifaceted concept that permeates various aspects of life, manifesting in both physical and psychological forms. Physically, pressure is a fundamental principle in science, describing the force exerted per unit area. It governs essential processes from the earth's atmospheric systems to the function of the human body. Psychologically, pressure often refers to the demands placed on individuals to perform or conform to societal expectations. This dual nature of pressure u",
+  "expected_prefix": "ONR9NnpI96",
+  "expected_answer_preview": "ONR9NnpI96Pressure is a multifaceted concept that permeates various aspects of life, manifesting in both physical and psychological forms. Physically, pressure is a fundamental principle in science, d",
+  "elapsed_seconds": 21.650701000
+}

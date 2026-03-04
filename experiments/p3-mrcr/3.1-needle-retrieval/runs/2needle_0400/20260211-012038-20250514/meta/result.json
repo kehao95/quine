@@ -1,0 +1,9 @@
+{
+  "sample_id": "2needle_0400",
+  "method": "quine",
+  "score": 0.0509864774994458,
+  "response": "fRqBR9XGGADear Diary,\n\nToday was one of those days where I found myself obsessing over measures again. It started when I was baking this morning - trying to convert cups to grams for a new recipe I found online. Why can't the world just agree on one system? I spent twenty minutes going back and forth between measuring cups and my kitchen scale, second-guessing every conversion.\n\nThen at work, we had that presentation about quarterly performance measures. The irony wasn't lost on me as I sat ther",
+  "expected_prefix": "fRqBR9XGGA",
+  "expected_answer_preview": "fRqBR9XGGAOctober 25, 2023\n\nDear Diary,\n\nToday was all about measures. It's fascinating how metrics rule our lives in ways we often overlook. From the moment my morning started, I was confronted with ",
+  "elapsed_seconds": 25.177241000
+}

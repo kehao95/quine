@@ -1,0 +1,14 @@
+{
+  "sample_id": "8needle_0002",
+  "model": "anthropic/claude-sonnet-4",
+  "provider": "openrouter",
+  "method": "baseline",
+  "score": 0.04215747055176689,
+  "elapsed_seconds": 11.737101793289185,
+  "input_tokens": 248940,
+  "output_tokens": 250,
+  "total_tokens": 249190,
+  "response": "PC4EUlCZBQ🌍🛡️ Strength in Defense 🛡️🌍\n\nIn today's ever-changing world, let's not forget the importance of defense. Whether it's personal, digital, or national, being prepared and resilient is key to staying safe and secure.\n\n🏋️‍♀️ **Personal Defense**: Empower yourself with knowledge and skills. From self-defense classes to mental health strategies, building your personal resilience is crucial.\n\n💻 **Digital Defense**: Protect your data and privacy. Use strong passwords, enable two-factor authentication, and stay informed about the latest cybersecurity threats. The digital world is vast, let's navigate it wisely.\n\n🌍 **National Defense**: Appreciate the efforts of those who serve to protect our countries. Their dedication ensures our freedom and safety, allowing us to live our lives with peace of mind.\n\nLet's be proactive and guard what matters most. Together, we can create a safer, more secure world for everyone. 💪✨ #StaySafe #DefenseMatters #SecurityFirst",
+  "response_preview": "PC4EUlCZBQ🌍🛡️ Strength in Defense 🛡️🌍\n\nIn today's ever-changing world, let's not forget the importance of defense. Whether it's personal, digital, or national, being prepared and resilient is key to staying safe and secure.\n\n🏋️‍♀️ **Personal Defense**: Empower yourself with knowledge and skills. From self-defense classes to mental health strategies, building your personal resilience is crucial.\n\n💻 **Digital Defense**: Protect your data and privacy. Use strong passwords, enable two-factor authent",
+  "expected_prefix": "PC4EUlCZBQ"
+}

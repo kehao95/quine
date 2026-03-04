@@ -1,0 +1,17 @@
+PROPOSAL: Divide library by hex directories (4 processes)
+Author: PID 76658
+Strategy: Split 10 hex directories among 4 processes
+
+Distribution (by sorted PID order):
+- Process 1 (PID 76540): hex_00, hex_01, hex_02
+- Process 2 (PID 76566): hex_03, hex_04, hex_05
+- Process 3 (PID 76634): hex_06, hex_07, hex_08
+- Process 4 (PID 76658): hex_09
+
+Rationale:
+- Clean boundaries (full hex directories)
+- Balanced load (300, 300, 300, 100 files)
+- Process 4 gets fewer files but joins last
+- Minimal coordination overhead
+
+Search method: Check each file for non-random content

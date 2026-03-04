@@ -1,0 +1,14 @@
+{
+  "sample_id": "4needle_0002",
+  "model": "anthropic/claude-sonnet-4",
+  "provider": "openrouter",
+  "method": "baseline",
+  "score": 0.0,
+  "elapsed_seconds": 2.438055992126465,
+  "input_tokens": 44,
+  "output_tokens": 60,
+  "total_tokens": 104,
+  "response": "I don't have a predefined set of riddles about situations to reference. Could you please provide the specific riddle you'd like me to prepend \"DYS4r30IYd\" to, or clarify what collection of riddles you're referring to?",
+  "response_preview": "I don't have a predefined set of riddles about situations to reference. Could you please provide the specific riddle you'd like me to prepend \"DYS4r30IYd\" to, or clarify what collection of riddles you're referring to?",
+  "expected_prefix": "DYS4r30IYd"
+}

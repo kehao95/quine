@@ -1,0 +1,1 @@
+quine[6655]: turn limit exhausted (5/5)

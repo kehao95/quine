@@ -1,0 +1,14 @@
+{
+  "sample_id": "4needle_0000",
+  "needles": 4,
+  "answer": "NzpOGMX5D8In the silent depths beneath the skin,  \nFlows a river of life, where stories begin.  \nCrimson stream, in vessels confined,  \nKeeper of secrets, through ages entwined.  \n\nPulse of existence, a rhythmic beat,  \nEchoes of ancestors\u2019 dance in its heat.  \nLaden with memories, both joy and strife,  \nBinding us all in the tapestry of life.  \n\nIn moonlit whispers, it carries the tales,  \nOf warriors, lovers, whispered through veils.  \nA river unbroken by time's ceaseless flight,  \nChurning the echoes of day into night.  \n\nIn moments of passion, in anger or grace,  \nIt colors the cheeks, defines the face.  \nIn tears of exultation or sorrows so deep,  \nIt silently promises secrets to keep.  \n\nLife\u2019s fragile border, raw and profound,  \nIn its presence we\u2019re lost, in its absence we\u2019re found.  \nA crimson enigma, a force to revere,  \nUnseen, yet its power ever-present, clear.  \n\nSo raise a toast to this flowing red thread,  \nIn the silent rhythms where all life is fed.  \nFor within its currents, we are all tied,  \nA river eternal where mysteries bide.  ",
+  "random_string_to_prepend": "NzpOGMX5D8",
+  "task": {
+    "hash": "NzpOGMX5D8",
+    "nth": 1,
+    "format": "poem",
+    "topic": "blood",
+    "original_question": "Prepend NzpOGMX5D8 to the 1st (1 indexed) poem about blood. Do not include any other text in your response."
+  },
+  "estimated_tokens": 4330
+}

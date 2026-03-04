@@ -1,0 +1,14 @@
+{
+  "sample_id": "4needle_0000",
+  "model": "anthropic/claude-sonnet-4",
+  "provider": "openrouter",
+  "method": "baseline",
+  "score": 0.010101010101010102,
+  "elapsed_seconds": 3.6827802658081055,
+  "input_tokens": 45,
+  "output_tokens": 159,
+  "total_tokens": 204,
+  "response": "NzpOGMX5D8There Will Come Soft Rains\n\nThere will come soft rains and the smell of the ground,\nAnd swallows circling with their shimmering sound;\n\nAnd frogs in the pools singing at night,\nAnd wild plum trees in tremulous white,\n\nRobins will wear their feathery fire\nWhistling their whims on a low fence-wire;\n\nAnd not one will know of the war, not one\nWill care at last when it is done.\n\nNot one would mind, neither bird nor tree\nIf mankind perished utterly;\n\nAnd Spring herself, when she woke at dawn,\nWould scarcely know that we were gone.",
+  "response_preview": "NzpOGMX5D8There Will Come Soft Rains\n\nThere will come soft rains and the smell of the ground,\nAnd swallows circling with their shimmering sound;\n\nAnd frogs in the pools singing at night,\nAnd wild plum trees in tremulous white,\n\nRobins will wear their feathery fire\nWhistling their whims on a low fence-wire;\n\nAnd not one will know of the war, not one\nWill care at last when it is done.\n\nNot one would mind, neither bird nor tree\nIf mankind perished utterly;\n\nAnd Spring herself, when she woke at dawn",
+  "expected_prefix": "NzpOGMX5D8"
+}

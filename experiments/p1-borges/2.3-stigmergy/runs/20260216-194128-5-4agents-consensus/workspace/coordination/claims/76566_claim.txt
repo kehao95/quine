@@ -1,0 +1,5 @@
+CLAIM: PID 76566
+Strategy: AGREE: 76566_strategy.txt (matches 76658_strategy_4proc.txt)
+Assigned region: hex_03, hex_04, hex_05
+Total files to search: 300
+Status: Starting search

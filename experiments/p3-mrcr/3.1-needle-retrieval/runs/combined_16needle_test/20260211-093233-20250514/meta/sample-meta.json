@@ -1,0 +1,21 @@
+{
+  "sample_id": "combined_16needle_test",
+  "description": "Combined test: find 2 needles from 2 different 8-needle haystacks (~356K tokens)",
+  "tasks": [
+    {
+      "hash": "l4d2BA2kq8",
+      "nth": 6,
+      "format": "short essay",
+      "topic": "distance",
+      "source": "8needle_0000"
+    },
+    {
+      "hash": "PC4EUlCZBQ",
+      "nth": 2,
+      "format": "social media post",
+      "topic": "defense",
+      "source": "8needle_0002"
+    }
+  ],
+  "estimated_tokens": 356000
+}

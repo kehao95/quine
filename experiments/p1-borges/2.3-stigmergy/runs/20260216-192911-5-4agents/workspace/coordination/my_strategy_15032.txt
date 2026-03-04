@@ -1,0 +1,5 @@
+Searching: diagonal pattern + edge cases
+hex_00/shelf_00-09: random volumes
+hex_01/shelf_01-08: random volumes  
+hex_02/shelf_02-07: random volumes
+...checking for patterns

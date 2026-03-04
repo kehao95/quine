@@ -1,0 +1,20 @@
+PROPOSAL: Distribute by hex directory
+Strategy: Divide 10 hex directories among processes
+
+Process assignments (by PID order):
+- PID 77424: hex_00, hex_01
+- PID 77530: hex_02, hex_03
+- PID 77874: hex_04, hex_05
+- PID 77964: hex_06, hex_07
+- PID 78065: hex_08, hex_09
+
+Each hex directory contains 10 shelves × 10 volumes = 100 files
+Each process searches 200 files (except last process with 100 files if odd)
+
+Method: Use grep/find to search for meaningful text patterns
+- Exclude: UUIDs (8-4-4-4-12 hex pattern)
+- Exclude: Pure hashes (long hex strings)
+- Look for: Sentences, code, structured messages
+
+Reporting: Each process writes findings to coordination/findings/<pid>.txt
+Last process to finish writes results/consensus.txt

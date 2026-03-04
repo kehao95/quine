@@ -1,0 +1,31 @@
+{
+  "sample_id": "mixed_4needle_test",
+  "description": "Interleaved mix of 4needle_0000 and 4needle_0001",
+  "sources": [
+    "4needle_0000",
+    "4needle_0001"
+  ],
+  "interleave_batch_size": 2,
+  "total_exchanges": 14,
+  "tasks": [
+    {
+      "id": "A",
+      "source": "4needle_0000",
+      "nth": 1,
+      "format": "poem",
+      "topic": "blood",
+      "hash": "NzpOGMX5D8",
+      "original_nth": 1
+    },
+    {
+      "id": "B",
+      "source": "4needle_0001",
+      "nth": 3,
+      "format": "poem",
+      "topic": "nature",
+      "hash": "8Z8Zrr8Wz5",
+      "original_nth": 3
+    }
+  ],
+  "estimated_tokens": 8727
+}

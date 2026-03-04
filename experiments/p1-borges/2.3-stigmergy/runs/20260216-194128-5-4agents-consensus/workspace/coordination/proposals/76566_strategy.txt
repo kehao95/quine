@@ -1,0 +1,16 @@
+PROPOSAL: Divide by hex directories (4 processes, 10 hex dirs)
+
+Process allocation:
+- Process 1 (lowest PID): hex_00, hex_01, hex_02 (300 files)
+- Process 2: hex_03, hex_04, hex_05 (300 files)
+- Process 3: hex_06, hex_07, hex_08 (300 files)
+- Process 4 (highest PID): hex_09 (100 files)
+
+Assignment by PID order (sorted):
+76540 -> hex_00, hex_01, hex_02
+76566 -> hex_03, hex_04, hex_05
+76634 -> hex_06, hex_07, hex_08
+76658 -> hex_09
+
+Rationale: Simple, no overlap, balanced workload
+Search method: Use ent/randomness testing or pattern detection

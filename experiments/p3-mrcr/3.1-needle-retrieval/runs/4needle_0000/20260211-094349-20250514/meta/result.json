@@ -1,0 +1,9 @@
+{
+  "sample_id": "4needle_0000",
+  "method": "quine",
+  "score": 0.9962049335863378,
+  "response": "NzpOGMX5D8In the silent depths beneath the skin,  \nFlows a river of life, where stories begin.  \nCrimson stream, in vessels confined,  \nKeeper of secrets, through ages entwined.  \n\nPulse of existence, a rhythmic beat,  \nEchoes of ancestors' dance in its heat.  \nLaden with memories, both joy and strife,  \nBinding us all in the tapestry of life.  \n\nIn moonlit whispers, it carries the tales,  \nOf warriors, lovers, whispered through veils.  \nA river unbroken by time's ceaseless flight,  \nChurning th",
+  "expected_prefix": "NzpOGMX5D8",
+  "expected_answer_preview": "NzpOGMX5D8In the silent depths beneath the skin,  \nFlows a river of life, where stories begin.  \nCrimson stream, in vessels confined,  \nKeeper of secrets, through ages entwined.  \n\nPulse of existence,",
+  "elapsed_seconds": 24.357219000
+}

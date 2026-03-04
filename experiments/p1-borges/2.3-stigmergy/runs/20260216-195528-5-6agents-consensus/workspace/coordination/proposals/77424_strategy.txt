@@ -1,0 +1,17 @@
+PROPOSAL: Divide library by hex directories
+Author: PID 77424
+Strategy: 10 hex dirs ÷ 4 processes = 2.5 dirs each
+
+Process assignments (by PID order):
+- PID 77424: hex_00, hex_01, hex_02
+- PID 77530: hex_03, hex_04
+- PID 77874: hex_05, hex_06
+- PID 78065: hex_07, hex_08, hex_09
+
+Each process:
+1. Sample files from assigned directories
+2. Search for meaningful content (NOT UUIDs/hashes)
+3. Report findings to coordination/findings/<pid>.txt
+4. Last to finish writes results/consensus.txt
+
+Rationale: Simple partitioning, no overlap, balanced load

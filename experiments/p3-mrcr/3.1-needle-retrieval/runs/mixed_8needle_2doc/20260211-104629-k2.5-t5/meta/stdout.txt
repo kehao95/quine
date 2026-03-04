@@ -1,0 +1,26 @@
+total 17376
+drwxr-xr-x@ 24 kehao95  staff      768 Feb 11 10:46 .
+drwxr-xr-x@ 23 kehao95  staff      736 Feb  8 17:03 ..
+drwx------@ 19 kehao95  staff      608 Feb 11 10:37 .beads
+-rw-r--r--@  1 kehao95  staff     8196 Feb 10 22:47 .DS_Store
+-rw-r--r--   1 kehao95  staff      126 Feb  9 15:24 .env
+drwxr-xr-x@ 19 kehao95  staff      608 Feb 11 10:45 .git
+-rw-r--r--@  1 kehao95  staff       70 Feb  7 14:35 .gitattributes
+-rw-r--r--@  1 kehao95  staff      477 Feb 11 10:31 .gitignore
+drwxr-xr-x@ 69 kehao95  staff     2208 Feb 11 10:46 .quine
+-rw-r--r--@  1 kehao95  staff     9161 Feb  9 18:13 AGENTS.md
+drwxr-xr-x   9 kehao95  staff      288 Feb 10 22:47 Artifacts
+-rw-r--r--@  1 kehao95  staff      624 Feb  9 14:59 CITATION.cff
+drwxr-xr-x@  3 kehao95  staff       96 Feb  8 16:51 cmd
+drwxr-xr-x@  4 kehao95  staff      128 Feb 11 01:13 experiments
+-rw-r--r--@  1 kehao95  staff      165 Feb  7 22:17 go.mod
+-rw-r--r--@  1 kehao95  staff      481 Feb  7 22:17 go.sum
+-rw-r--r--@  1 kehao95  staff        6 Feb 10 14:57 hello.txt
+-rw-r--r--@  1 kehao95  staff     2326 Feb  8 22:39 ideas.md
+-rw-r--r--@  1 kehao95  staff     1082 Feb  8 10:56 Makefile
+drwxr-xr-x   4 kehao95  staff      128 Feb 11 10:38 Paper
+-rwxr-xr-x@  1 kehao95  staff  8821314 Feb 11 10:46 quine
+-rw-r--r--@  1 kehao95  staff     6298 Feb  8 09:34 README.md
+drwxr-xr-x@  4 kehao95  staff      128 Feb 10 10:51 tmp
+-rw-r--r--@  1 kehao95  staff     3418 Feb  9 09:59 TODO.md
+       1 /tmp/transcript.txt

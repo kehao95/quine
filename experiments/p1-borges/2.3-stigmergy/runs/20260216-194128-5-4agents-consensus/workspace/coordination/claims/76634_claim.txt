@@ -1,0 +1,5 @@
+CLAIM: PID 76634
+Strategy: AGREE: 76566_strategy.txt
+Assigned region: hex_06, hex_07, hex_08
+Total files to search: 300
+Status: Starting search

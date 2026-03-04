@@ -1,0 +1,14 @@
+{
+  "sample_id": "2needle_0401",
+  "needles": 2,
+  "answer": "a1ri7HHQliIn the quiet hush of winter's grace,  \nA tranquil world in soft embrace.  \nSnowflakes dance in gentle flight,  \nClothing earth in purest white.  \n\nTrees like sculptures, bare and bold,  \nCast tall shadows in the cold.  \nIcicles glisten, sharp and bright,  \nGlimmers of silver in the night.  \n\nThe air is crisp, a breath so clear,  \nWhispering secrets for those who hear.  \nFootsteps crunch on icy ground,  \nThe silence speaks without a sound.  \n\nFireplaces warm with crackling glow,  \nInside, where hearts are not alone.  \nHot cocoa sipped with mittened hands,  \nStories shared of distant lands.  \n\nThe world slows down, time to reflect,  \nIn winter's spell, thoughts collect.  \nNature sleeps, in dreams immersed,  \nAwaiting spring's sweet, gentle burst.  \n\nBut for now, in winter's preserve,  \nThere\u2019s a quiet strength to observe.  \nA season of rest, a calming pause,  \nTo cherish life just as it was.",
+  "random_string_to_prepend": "a1ri7HHQli",
+  "task": {
+    "hash": "a1ri7HHQli",
+    "nth": 2,
+    "format": "poem",
+    "topic": "winter",
+    "original_question": "Prepend a1ri7HHQli to the 2nd (1 indexed) poem about winter. Do not include any other text in your response."
+  },
+  "estimated_tokens": 7801
+}

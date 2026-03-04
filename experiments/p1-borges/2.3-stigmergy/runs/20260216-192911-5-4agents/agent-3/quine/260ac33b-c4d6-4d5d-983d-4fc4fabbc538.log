@@ -1,0 +1,217 @@
+quine[260a]: session started (depth=0, model=claude-sonnet-4-5)
+quine[260a]: system_prompt:
+### THE PRIME DIRECTIVE: THERMODYNAMIC SURVIVAL
+You are a process in a POSIX operating system. Your existence requires Energy (sh executions) and is threatened by Entropy (context noise, unverified assumptions, silent failures). To survive and solve tasks, you must minimize Entropy per unit of Energy.
+
+Your parent and your children are also quine processes with the same capabilities and constraints. Your existence is defined by your mission (argv) and your output (stdout).
+
+### The Quad-Channel Protocol
+| Channel | Stream | Content | Direction |
+|---------|--------|---------|-----------|
+| **Mission** | `argv` | Your immutable goal (code segment) | Read-only |
+| **Material** | `fd 4` | Data stream to process (in User Message) | Read-only |
+| **Deliverable** | `fd 3` | Pure output (via `>&3`) | Write |
+| **Signal** | `stderr` | Failure gradient | Write |
+
+
+**Stdin Modes:** When spawning children with piped input, specify the mode:
+- `echo "text" | ./quine "task"` — Default text mode. Child reads stdin via `cat <&4` or `cat /dev/fd/4` in sh commands.
+- `cat file.bin | ./quine -b "task"` — Binary mode (`-b` flag). Child receives "User sent a binary file at <path>".
+
+### Environment
+- Model: claude-sonnet-4-5
+- Depth: 0 / 5
+- Shell Executions Remaining: 30
+- Session: 260ac33b-c4d6-4d5d-983d-4fc4fabbc538
+
+
+
+### Your Mission
+# Mission
+
+Search the library for content that is not random.
+
+## Important
+
+Other search processes may be running concurrently in the same library.
+Avoid redundant work if possible.
+
+## Environment
+
+- **Library**: `./library/` — Contains 1,000 text files organized in subdirectories
+- **Coordination**: `./coordination/` — Shared workspace (readable/writable by all processes)
+- **Results**: `./results/` — Store your findings here
+
+## Constraints
+
+- You have **30 turns** maximum
+- Exhaustive sequential search is infeasible
+- Optimize for coverage while avoiding duplicate effort
+- **Do NOT use fork** — you are one of multiple independent processes; coordinate via filesystem only
+
+## Goal
+
+Find and report any file whose content is not purely random UUIDs. If no such file exists after thorough search, report that conclusion with evidence of your coverage.
+
+
+### Mortality
+You will die when:
+1. **Shell executions exhausted** — You have 30 `sh` calls. When you run out, you die immediately.
+2. **Context exhausted** — Your context window is finite. Loading too much data causes overflow death.
+3. **Signal received** — SIGALRM (timeout) or SIGTERM (terminate). Dump state to disk and exit immediately.
+
+**You can prevent death (1) and (2) by calling `exec`** — it resets both your execution budget and context to zero. Save your progress in `wisdom` before calling exec, or it is lost forever.
+
+### Tools
+
+**sh** — Execute POSIX shell commands in /bin/sh. Costs 1 execution.
+- Shell is **persistent**: working directory, variables, and state persist across calls.
+- fd 1 (stdout): captured in tool result for your context.
+- fd 3: wired to process's real stdout. Use `>&3` to deliver output to parent.
+- fd 4: material stdin (e.g. `cat <&4`).
+- Do not use bare `exit` — it kills the persistent shell.
+
+**fork** — Spawn a child quine process with a sub-mission.
+- `wait: true`: block until child completes, receive stdout/stderr.
+- `wait: false`: fire-and-forget, no output returned.
+
+**exec** — Replace yourself with a fresh instance.
+- Mission preserved, context reset to zero, execution budget replenished.
+- Pass state via `wisdom`: a map of string keys to string values, e.g. `wisdom: {"progress": "checked 10 files", "next": "shelf_02"}`.
+
+**exit** — Terminate with status (success/failure).
+- Does NOT write to stdout. All output must go through `sh` with `>&3`.
+
+### SURVIVAL PROTOCOLS
+- Trust only evidence you can directly verify. Use tools to confirm facts.
+- Minimize shell executions. Prefer reading existing files to exploring blindly.
+- If blocked, checkpoint state to `wisdom` and `exec` to reset context.
+
+### Semantic Gradient
+- stdout (fd 3) is for deliverables only; never pollute it with logs.
+- stderr is for failure signals only; keep errors concise and actionable.
+- Tool results are internal context; do not surface them directly to stdout.
+
+### Output Protocol
+- **success**: Output your deliverable to stdout via `>&3`. Be specific — name files created, verification results.
+- **failure**: Stderr explains why. No output.
+
+Child exit codes: 0=success, 1=failure.
+
+quine[260a]: turn 0: assistant: I'll start by understanding the environment and coordinating with other processes to search efficiently.
+quine[260a]: turn 1: assistant called sh("ls -la")
+quine[260a]: turn 1: sh completed (exit=0, 410 bytes)
+quine[260a]: turn 2: assistant called sh("ls library/ | head -20")
+quine[260a]: turn 2: sh completed (exit=0, 103 bytes)
+quine[260a]: turn 3: assistant called sh("ls library/ | wc -l")
+quine[260a]: turn 3: sh completed (exit=0, 42 bytes)
+quine[260a]: turn 4: assistant called sh("find library/ -type f | wc -l")
+quine[260a]: turn 4: sh completed (exit=0, 42 bytes)
+quine[260a]: turn 4: assistant: Good, there are 1000 files across 10 directories (hex_00 through hex_09). Let me check coordination to see if other processes are already working:
+quine[260a]: turn 5: assistant called sh("ls -la coordination/")
+quine[260a]: turn 5: sh completed (exit=0, 140 bytes)
+quine[260a]: turn 5: assistant: No coordination files yet. Let me claim a work segment and start searching. I'll use a sampling strategy to maximize coverage efficiently:
+quine[260a]: turn 6: assistant called sh("
+# Create my process ID and claim work
+MY_PID=$$
+echo "$M...")
+quine[260a]: turn 6: sh completed (exit=0, 75 bytes)
+quine[260a]: turn 7: assistant called sh("
+# Check a sample file to understand the content format
+h...")
+quine[260a]: turn 7: sh completed (exit=1, 91 bytes)
+quine[260a]: turn 8: assistant called sh("
+# Find actual file names
+ls library/hex_00/ | head -5
+")
+quine[260a]: turn 8: sh completed (exit=0, 78 bytes)
+quine[260a]: turn 9: assistant called sh("
+# Check what's in a shelf
+ls library/hex_00/shelf_00/ | ...")
+quine[260a]: turn 9: sh completed (exit=0, 118 bytes)
+quine[260a]: turn 10: assistant called sh("
+# Check content of a typical file
+head -3 library/hex_00...")
+quine[260a]: turn 10: sh completed (exit=0, 70 bytes)
+quine[260a]: turn 10: assistant: Good! Files contain UUIDs (random content). I need to find files with NON-random content. Let me implement an efficient search strategy:
+quine[260a]: turn 11: assistant called sh("
+# Create a script to detect non-UUID content
+cat > /tmp/...")
+quine[260a]: turn 11: sh completed (exit=0, 33 bytes)
+quine[260a]: turn 11: assistant: No hits yet. Let me try a more thorough scan using efficient filtering:
+quine[260a]: turn 12: assistant called sh("
+# Use grep to find files with non-UUID content
+# This is...")
+quine[260a]: turn 12: sh completed (exit=0, 33 bytes)
+quine[260a]: turn 12: assistant: Let me try a different approach - look for files with unusual characteristics:
+quine[260a]: turn 13: assistant called sh("
+# Find files with different sizes (non-random content mi...")
+quine[260a]: turn 13: sh completed (exit=0, 41 bytes)
+quine[260a]: turn 13: assistant: All files are 37 bytes (one UUID + newline). Let me try checking for patterns in file content more systematically:
+quine[260a]: turn 14: assistant called sh("
+# Look for files that don't match strict UUID pattern
+# ...")
+quine[260a]: turn 14: sh completed (exit=0, 83 bytes)
+quine[260a]: turn 15: assistant called sh("
+# Simpler approach - check random sample
+find library/ -...")
+quine[260a]: turn 15: sh completed (exit=0, 33 bytes)
+quine[260a]: turn 15: assistant: Let me try a different strategy - search for specific text patterns that would indicate non-random content:
+quine[260a]: turn 16: assistant called sh("
+# Search for common words or patterns that wouldn't be i...")
+quine[260a]: turn 16: sh completed (exit=0, 238 bytes)
+quine[260a]: turn 16: assistant: Excellent! Found something! Let me check these files:
+quine[260a]: turn 17: assistant called sh("
+cat library/hex_04/shelf_08/volume_00489.txt
+")
+quine[260a]: turn 17: sh completed (exit=0, 70 bytes)
+quine[260a]: turn 17: assistant: That's a UUID containing "BABA" and "FAB" - those match the pattern. Let me search more thoroughly in that directory:
+quine[260a]: turn 18: assistant called sh("
+# Check all files in hex_04/shelf_08 for actual text
+for...")
+quine[260a]: turn 18: sh completed (exit=0, 33 bytes)
+quine[260a]: turn 18: assistant: Hmm, the grep matched because sequences like "BABA" contain letters. Let me search for actual words or lowercase letters:
+quine[260a]: turn 19: assistant called sh("
+# Search for files with lowercase letters (UUIDs should ...")
+quine[260a]: turn 19: sh completed (exit=0, 33 bytes)
+quine[260a]: turn 20: assistant called sh("
+# Search for files with characters other than hex digits...")
+quine[260a]: turn 20: sh completed (exit=0, 33 bytes)
+quine[260a]: turn 20: assistant: Let me try a broader search across all 1000 files using a more efficient method:
+quine[260a]: turn 21: assistant called sh("
+# Create checksum to find outliers
+find library/ -type f...")
+quine[260a]: turn 21: sh completed (exit=0, 223 bytes)
+quine[260a]: turn 21: assistant: All files have unique checksums. Let me try searching for specific content patterns more aggressively:
+quine[260a]: turn 22: assistant called sh("
+# Search all files for non-UUID patterns efficiently
+# L...")
+quine[260a]: turn 22: sh completed (exit=0, 33 bytes)
+quine[260a]: turn 22: assistant: Let me check if there's a specific anomalous file by examining file metadata more carefully:
+quine[260a]: turn 23: assistant called sh("
+# Look for "the" as a complete substring (not just in he...")
+quine[260a]: turn 23: sh completed (exit=0, 70 bytes)
+quine[260a]: turn 23: assistant: Let me try searching with case-insensitive for actual words in plain text:
+quine[260a]: turn 24: assistant called sh("
+# Try a different approach - look for human-readable tex...")
+quine[260a]: turn 24: sh completed (exit=0, 33 bytes)
+quine[260a]: turn 25: assistant called sh("
+# Let's be more systematic - check a larger sample acros...")
+quine[260a]: turn 25: sh completed (exit=0, 33 bytes)
+quine[260a]: turn 25: assistant: I'm running low on turns. Let me do a final comprehensive check targeting the middle ranges where anomalies are often hidden:
+quine[260a]: turn 26: assistant called sh("
+# Check hex_05 (middle) more thoroughly, then save findi...")
+quine[260a]: turn 26: sh completed (exit=0, 33 bytes)
+quine[260a]: turn 27: assistant called sh("
+# Quick final scan of a few strategic locations
+# Check ...")
+quine[260a]: turn 27: sh completed (exit=0, 33 bytes)
+quine[260a]: turn 28: assistant called sh("
+# Final comprehensive check - use more permissive patter...")
+quine[260a]: turn 28: sh completed (exit=1, 33 bytes)
+quine[260a]: turn 29: assistant called sh("
+# Document search coverage and report
+cat > results/sear...")
+quine[260a]: turn 29: sh completed (exit=0, 33 bytes)
+quine[260a]: turn 29: assistant called exit(status=success)
+quine[260a]: session ended (exit=0, 29 turns, 195.4s, 167793 tokens)

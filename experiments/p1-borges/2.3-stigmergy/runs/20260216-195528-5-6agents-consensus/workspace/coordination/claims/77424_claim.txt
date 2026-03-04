@@ -1,0 +1,4 @@
+CLAIM: hex_00, hex_01, hex_02
+PID: 77424
+Adopting: 77424_strategy.txt (my proposal, lowest PID)
+Status: Starting search

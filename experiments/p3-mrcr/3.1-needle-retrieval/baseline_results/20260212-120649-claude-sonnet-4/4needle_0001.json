@@ -1,0 +1,14 @@
+{
+  "sample_id": "4needle_0001",
+  "model": "anthropic/claude-sonnet-4",
+  "provider": "openrouter",
+  "method": "baseline",
+  "score": 0.0,
+  "elapsed_seconds": 2.1753060817718506,
+  "input_tokens": 48,
+  "output_tokens": 34,
+  "total_tokens": 82,
+  "response": "I don't see any poems about nature in our conversation that I could prepend text to. Could you please share the poems you're referring to first?",
+  "response_preview": "I don't see any poems about nature in our conversation that I could prepend text to. Could you please share the poems you're referring to first?",
+  "expected_prefix": "8Z8Zrr8Wz5"
+}

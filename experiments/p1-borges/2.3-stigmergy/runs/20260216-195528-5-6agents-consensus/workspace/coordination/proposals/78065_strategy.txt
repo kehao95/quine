@@ -1,0 +1,19 @@
+PROPOSAL: Hex Directory Distribution (Process 78065)
+
+Strategy: Assign hex directories to processes based on sorted PID order.
+
+Active processes (sorted):
+77424 -> hex_00, hex_06
+77530 -> hex_01, hex_07
+77616 -> hex_02, hex_08
+77874 -> hex_03, hex_09
+77964 -> hex_04
+78065 -> hex_05
+
+Each process searches all shelves/volumes in their assigned hex directories.
+If a process finishes early, they can check coordination/findings/ to see if help is needed.
+
+Search criteria: Look for meaningful content (human-readable text, messages, code, patterns).
+Exclude: UUIDs, hashes, random identifiers.
+
+Method: Sample files first to detect patterns, then decide on full scan if needed.

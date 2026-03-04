@@ -1,0 +1,1 @@
+library/hex_06/shelf_00/volume_00600.txt: UUID

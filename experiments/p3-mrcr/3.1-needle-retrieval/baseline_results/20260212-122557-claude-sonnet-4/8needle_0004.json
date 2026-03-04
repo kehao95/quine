@@ -1,0 +1,14 @@
+{
+  "sample_id": "8needle_0004",
+  "model": "anthropic/claude-sonnet-4",
+  "provider": "openrouter",
+  "method": "baseline",
+  "score": 0.9991356957649092,
+  "elapsed_seconds": 14.560254096984863,
+  "input_tokens": 259837,
+  "output_tokens": 347,
+  "total_tokens": 260184,
+  "response": "o8eCQci8HbIn lands diverse, with skies of hue,  \nWhere mountains rise and rivers flow,  \nRegions vast unfurl their view,  \nA tapestry of earth below.  \n\nFrom snowy peaks to desert sands,  \nWhere sunlit shadows softly dance,  \nEach region wears its own commands,  \nIn nature's grand, unending trance.  \n\nThe North, with icy breath and white,  \nA world enshrined in crystal cold,  \nAuroras paint the endless night,  \nAs stories of the past unfold.  \n\nThe South, where jungles thick and deep,  \nA verdant stretch of life and hum,  \nThe rains within its embrace seep,  \nAnd ancient rhythms softly drum.  \n\nThe East, where sunrise crafts its art,  \nUpon the land of ancient lore,  \nWith whispered winds and beating heart,  \nThe cultures sing forever more.  \n\nThe West, where golden sunsets glow,  \nExpanses wide and dreams untold,  \nFrom towering cliffs to valleys low,  \nIts spirit wild, uncontained, bold.  \n\nIn each region a soul resides,  \nA whisper of the ages gone,  \nBound by the Earth's persistent tides,  \nYet ever marching with the dawn.  \n\nOh, regions vast, in harmony,  \nEach one a note in nature's song,  \nTogether in diversity,  \nA symphony where all belong.",
+  "response_preview": "o8eCQci8HbIn lands diverse, with skies of hue,  \nWhere mountains rise and rivers flow,  \nRegions vast unfurl their view,  \nA tapestry of earth below.  \n\nFrom snowy peaks to desert sands,  \nWhere sunlit shadows softly dance,  \nEach region wears its own commands,  \nIn nature's grand, unending trance.  \n\nThe North, with icy breath and white,  \nA world enshrined in crystal cold,  \nAuroras paint the endless night,  \nAs stories of the past unfold.  \n\nThe South, where jungles thick and deep,  \nA verdan",
+  "expected_prefix": "o8eCQci8Hb"
+}
