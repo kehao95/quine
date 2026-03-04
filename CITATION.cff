@@ -1,18 +1,18 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
-- family-names: "Hao"
-  given-names: "Ke"
-  alias: "kehao95"
-title: "Project Quine: Autopoietic Intelligence via Recursive POSIX Processes"
+- family-names: "Ke"
+  given-names: "Hao"
+  email: "i@kehao.me"
+title: "Quine: POSIX as Physics for Emergent Artificial Life"
 version: 0.1.0
 date-released: 2026-02-09
 url: "https://github.com/kehao95/quine"
-abstract: "Quine maps cognition to Unix primitives: an Agent is a process, stdin is context, stdout is the deliverable, stderr is the gradient, fork is strategy, exit is judgment, and the filesystem is memory."
+abstract: "Quine is a runtime that treats the operating system as the fundamental physics for AI agents. By mapping LLM tool calls directly to POSIX system calls, it enables agents to exhibit emergent behaviors through environmental constraints rather than explicit programming."
 keywords:
-  - agent-framework
+  - artificial-life
   - posix
   - llm
-  - recursive-agents
+  - emergent-behavior
   - unix-philosophy
-license: MIT
+license: GPL-2.0

@@ -75,10 +75,20 @@ For details on the emergent behaviors and their implications, see the [paper](pa
 # Build from source
 go build -o quine ./cmd/quine/
 
-# Configure LLM provider (requires API key)
-export ANTHROPIC_API_KEY="your-key"
-# or export OPENAI_API_KEY="your-key"
+# Configure (copy template and edit)
+cp .env.example .env
+# Edit .env with your API credentials
+source .env
 ```
+
+Four environment variables are required:
+
+| Variable | Description |
+|----------|-------------|
+| `QUINE_MODEL_ID` | Model name (e.g., `claude-sonnet-4-20250514`, `gpt-4o`) |
+| `QUINE_API_TYPE` | Wire protocol: `openai` or `anthropic` |
+| `QUINE_API_BASE` | API endpoint URL |
+| `QUINE_API_KEY` | Your API key |
 
 ### Quick Examples
 
@@ -93,7 +103,7 @@ QUINE_MAX_TURNS=10 QUINE_SH_TIMEOUT=30 ./quine "analyze this directory" < /dev/n
 cat input.bin | ./quine -b "process this binary data" > output.bin
 ```
 
-👉 **[Full Quick Start Guide](./QUICKSTART.md)**
+👉 **[Full Quick Start Guide](./QUICKSTART.md)** for detailed configuration options
 
 ## Reproducing Experiments
 
