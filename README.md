@@ -43,13 +43,13 @@ This is not UNIX nostalgia. It is an engineering leverage argument: use the laye
 |------|------|
 | Install and run Quine | [QUICKSTART.md](./QUICKSTART.md) |
 | Understand the public test surfaces | [TESTING.md](./TESTING.md) |
-| Read the systems paper | [paper/Quine_POSIX_Native_Runtime_for_LLM_Agents.pdf](./paper/Quine_POSIX_Native_Runtime_for_LLM_Agents.pdf) |
+| Read the systems paper | [paper/Quine_Realizing_LLM_Agents_as_Native_POSIX_Processes.pdf](./paper/Quine_Realizing_LLM_Agents_as_Native_POSIX_Processes.pdf) |
 | Read the artificial-life paper | [paper/Quine_POSIX_as_Physics_for_Emergent_Artificial_Life.pdf](./paper/Quine_POSIX_as_Physics_for_Emergent_Artificial_Life.pdf) |
 | Inspect runtime internals | [`internal/`](./internal/) |
 
 ## Public Papers
 ArXiv preprints(on hold for now)
-- [Quine: A POSIX-Native Runtime for Large Language Model Agents](./paper/Quine_POSIX_Native_Runtime_for_LLM_Agents.pdf)
+- [Quine: Realizing LLM Agents as Native POSIX Processes](./paper/Quine_Realizing_LLM_Agents_as_Native_POSIX_Processes.pdf)
 - [Quine: POSIX as Physics for Emergent Artificial Life](./paper/Quine_POSIX_as_Physics_for_Emergent_Artificial_Life.pdf)
 
 ## Branch Surface
