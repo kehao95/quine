@@ -1,0 +1,8 @@
+
+To authorize Quine with Kimi, please visit:
+  https://www.kimi.com/code/authorize_device?user_code=P1KS-TJQV
+
+Or enter code: P1KS-TJQV
+
+Waiting for authorization...
+Could not open browser automatically: opening browser: exec: "xdg-open": executable file not found in $PATH

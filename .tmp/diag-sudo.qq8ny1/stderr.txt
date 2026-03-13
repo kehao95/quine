@@ -1,0 +1,8 @@
+
+To authorize Quine with Kimi, please visit:
+  https://www.kimi.com/code/authorize_device?user_code=SJNW-7B8P
+
+Or enter code: SJNW-7B8P
+
+Waiting for authorization...
+Could not open browser automatically: opening browser: exec: "xdg-open": executable file not found in $PATH

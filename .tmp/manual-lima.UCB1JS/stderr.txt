@@ -1,0 +1,2 @@
+quine: initializing workspace physics: workspace physics unsupported in this Linux environment: mount/export merged workspace: mount: mounting overlay on /tmp/quine-ov.ji6A87/merged failed: Permission denied
+
