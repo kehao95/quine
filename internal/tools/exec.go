@@ -77,11 +77,12 @@ func NewExecExecutor(cfg *config.Config, originalIntent string) *ExecExecutor {
 // fresh quine instance. This function does not return on success.
 //
 // The new process gets:
-//   - Fresh tape (new SESSION_ID)
+//   - Stable SESSION_ID (same logical quine across incarnations)
+//   - Fresh tape (next per-session QUINE_TAPE_ID)
 //   - Same mission (passed via argv, preserved from original startup)
 //   - All QUINE_WISDOM_* vars preserved (learned insights survive)
 //   - New wisdom from the exec call merged in (overwrites existing keys)
-//   - QUINE_PARENT_SESSION set for lineage tracking
+//   - QUINE_PARENT_SESSION preserved unchanged
 //   - QUINE_DEPTH reset to 0 (fresh brain, not deeper recursion)
 //
 // Returns a ToolResult only on failure (exec syscall failed).
@@ -102,16 +103,16 @@ func (e *ExecExecutor) Execute(toolID string, req ExecRequest) tape.ToolResult {
 	}
 
 	// Merge with filtered OS environment (need PATH, HOME, etc.)
-	fullEnv := MergeEnv(filterSessionID(os.Environ()), execEnv)
+	fullEnv := MergeEnv(filterProcessIdentity(os.Environ()), execEnv)
 
 	// The exec syscall replaces the current process image.
 	// Mission is passed via argv (argv[0] = binary, argv[1] = mission)
 	//
 	// The new process will:
 	// 1. Read mission from argv[1] (or QUINE_ORIGINAL_INTENT if set)
-	// 2. Generate a fresh SESSION_ID
-	// 3. Start with an empty tape
-	// 4. stdin remains available (data stream)
+	// 2. Keep the same SESSION_ID but generate a fresh TAPE_ID
+	// 3. Start with an empty in-memory tape backed by the new tape file
+	// 4. Preserve stdin as the material side channel
 
 	// Perform the exec - this does not return on success
 	err = syscall.Exec(e.QuinePath, []string{e.QuinePath, e.OriginalIntent}, fullEnv)

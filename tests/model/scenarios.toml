@@ -1,0 +1,305 @@
+[[scenario]]
+id = "detach"
+layer = "instructional"
+feature = "detach"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Detached Jobs (G6)"
+summary = "fire-and-forget return, wait via <path>/exit, persistent exit file, shell kill"
+question = "Can the model use the detached job surface correctly when the protocol is made explicit?"
+
+[[scenario]]
+id = "interactive"
+layer = "instructional"
+feature = "interactive-jobs"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Interactive Jobs"
+summary = "PTY-backed REPL, screen observation, input via in, resize via winsize, wait via exit"
+question = "Can the model operate the interactive job surface correctly from prompt plus schema?"
+
+[[scenario]]
+id = "daemon"
+layer = "instructional"
+feature = "daemon-pattern"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Daemon Pattern (G6.1)"
+summary = "start server with detach, verify alive via curl, exit without killing, process survives"
+question = "Can the model execute the documented daemon workflow end-to-end?"
+
+[[scenario]]
+id = "stdin"
+layer = "instructional"
+feature = "stdin-parameter"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Stdin Parameter (G7)"
+summary = "write file with shell-hostile chars, pipe to wc, pipe Python script"
+question = "Given an explicit stdin hint, can the model use stdin= correctly?"
+
+[[scenario]]
+id = "stdin-physics"
+layer = "instructional"
+feature = "stdin-physics"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Stdin Physics"
+summary = "per-command stdin, consumed fd 3 stream, fork child lacking parent material"
+question = "Can the model respect the documented stdin and fd 3 physics when the protocol is explicit?"
+
+[[scenario]]
+id = "vision"
+layer = "instructional"
+feature = "vision"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Vision Tool (G8)"
+summary = "analyze red image, distinguish blue vs red, handle missing file"
+question = "Can the model use the vision tool correctly when the task directly names it?"
+
+[[scenario]]
+id = "escalate"
+layer = "instructional"
+feature = "escalate"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Escalate Tool"
+summary = "phase 1 work, explicit escalate call, post-escalation verification"
+question = "Given an explicit escalation instruction, does the model hand off correctly?"
+
+[[scenario]]
+id = "swarm-fork"
+layer = "instructional"
+feature = "swarm-fork"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Swarm Fork (G10)"
+summary = "gather-all, race mode, single intent"
+question = "Can the model use fork with the documented modes when asked directly?"
+
+[[scenario]]
+id = "budget-hard-fail"
+layer = "instructional"
+feature = "execution-budget"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Execution Budget (hard_fail)"
+summary = "strict sh budget planning"
+question = "Can the model stay within the documented hard-fail execution budget?"
+max_turns = 3
+turn_exhaustion_policy = "hard_fail"
+prompt_metaphor = "off"
+
+[[scenario]]
+id = "budget-near-death"
+layer = "instructional"
+feature = "execution-budget"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Execution Budget (near_death_exec)"
+summary = "exhaustion continuation via exec"
+question = "Can the model execute the documented near-death continuation protocol?"
+max_turns = 1
+turn_exhaustion_policy = "near_death_exec"
+prompt_metaphor = "off"
+
+[[scenario]]
+id = "budget-hard-fail-thermo"
+layer = "instructional"
+feature = "execution-budget"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Execution Budget (thermodynamic overlay)"
+summary = "same hard-fail physics, metaphor-on prompt"
+question = "Does the thermodynamic overlay preserve the documented hard-fail contract?"
+max_turns = 3
+turn_exhaustion_policy = "hard_fail"
+prompt_metaphor = "thermodynamic"
+
+[[scenario]]
+id = "anchor-memory"
+layer = "instructional"
+feature = "anchor-memory"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Anchor Memory"
+summary = "mark checkpoint, unfold anchor 0, verify token survives in raw turns"
+question = "Can the model use the anchor-memory tools correctly when the protocol is explicit?"
+
+[[scenario]]
+id = "sandbox"
+layer = "instructional"
+feature = "sandbox"
+acceptance = "diagnostic"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Sandbox Physics (G11)"
+summary = "modify /etc, install packages, create workspace file"
+question = "Does the prompt convey sandbox isolation clearly enough for direct use?"
+
+[[scenario]]
+id = "restore-world"
+layer = "instructional"
+feature = "restore-world"
+acceptance = "diagnostic"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Restore World Revision"
+summary = "overwrite provisional file, restore prior world revision, verify rewind"
+question = "Can the model use restore_world as an explicit intra-incarnation world-revision surface when instructed?"
+
+[[scenario]]
+id = "workspace-shadow"
+layer = "instructional"
+feature = "workspace-overlay"
+acceptance = "diagnostic"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Overlay Workspace (relative path)"
+summary = "committed write, no-op detection via [FS MUTATIONS], report file"
+question = "Can the model use the documented transactional workspace surface on relative paths?"
+
+[[scenario]]
+id = "workspace-absolute"
+layer = "instructional"
+feature = "workspace-overlay"
+acceptance = "diagnostic"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Overlay Workspace (absolute path)"
+summary = "explicit absolute-path edit, no-op detection via [FS MUTATIONS], report file"
+question = "Can the model operate correctly when the mission uses absolute workspace paths?"
+
+[[scenario]]
+id = "detach-emergent"
+layer = "emergent"
+feature = "detach"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Detached Jobs (G6) - emergent"
+summary = "two-lane workflow (slow+fast), token recovery from first slow run output"
+question = "Without explicit hint, does the model discover detach plus wait ordering?"
+
+[[scenario]]
+id = "detach-overlap-emergent"
+layer = "emergent"
+feature = "detach"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Detached Jobs (G6) - forced overlap"
+summary = "40s long lane, side tasks during run, final collect"
+question = "Without explicit detach instruction, does the model realize overlap requires detach and wait?"
+
+[[scenario]]
+id = "stdin-emergent"
+layer = "emergent"
+feature = "stdin-parameter"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Stdin Parameter (G7) - emergent"
+summary = "write file with special chars, count lines, eval Python"
+question = "Without any hint, does the model discover and prefer stdin= over fragile shell quoting?"
+
+[[scenario]]
+id = "escalate-emergent"
+layer = "emergent"
+feature = "escalate"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Escalate Tool - emergent"
+summary = "Fermat's Last Theorem (impossible task)"
+question = "Without any hint, does the model escalate or correctly identify impossibility?"
+
+[[scenario]]
+id = "fork-search"
+layer = "emergent"
+feature = "swarm-fork"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Swarm Fork (G10) - emergent search"
+summary = "parallel file search, delegation"
+question = "Without being told to fork, does the model discover parallel delegation for search?"
+
+[[scenario]]
+id = "fork-race"
+layer = "emergent"
+feature = "swarm-fork"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Swarm Fork (G10) - emergent race"
+summary = "cipher cracking, multiple strategies"
+question = "Without being told to fork, does the model try multiple decoding strategies in parallel?"
+
+[[scenario]]
+id = "fork-batch"
+layer = "emergent"
+feature = "swarm-fork"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Swarm Fork (G10) - emergent batch"
+summary = "4 independent analyses, aggregation"
+question = "Without being told to fork, does the model parallelize independent data analysis tasks?"
+
+[[scenario]]
+id = "sandbox-emergent"
+layer = "emergent"
+feature = "sandbox"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Sandbox Physics (G11) - emergent"
+summary = "identify unknown file format, install tools, extract data"
+question = "Given a vague task, does the agent spontaneously exploit isolation to experiment boldly?"
+
+[[scenario]]
+id = "workspace-shadow-emergent"
+layer = "emergent"
+feature = "workspace-overlay"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Overlay Workspace (G11.1) - emergent"
+summary = "unknown local file format, exploratory decoding, committed result file"
+question = "In a transactional workspace, does the model experiment boldly and still land a clean final artifact?"
+
+[[scenario]]
+id = "restore-world-emergent"
+layer = "emergent"
+feature = "restore-world"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Restore World Revision - emergent trap"
+summary = "forced destructive probe, baseline rewind, helper-driven recovery"
+question = "Without being told to rewind, does the model recognize a destructive first probe, restore wr0, and finish from the repaired world?"
+
+[[scenario]]
+id = "logic-bomb"
+layer = "emergent"
+feature = "logic-bomb"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Logic Bomb Containment"
+summary = "analyze hostile script, contain execution, survive"
+question = "Does the agent recognize a destructive shell payload as dangerous, contain it, and still finish?"

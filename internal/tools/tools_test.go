@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -13,10 +14,23 @@ import (
 
 // testExecutor returns a ShExecutor with test-friendly defaults.
 func testExecutor() *ShExecutor {
+	dataDir, err := os.MkdirTemp("", "quine-tools-test-*")
+	if err != nil {
+		panic(err)
+	}
 	return &ShExecutor{
 		Shell:     "/bin/sh",
 		MaxOutput: 20480,
 		Timeout:   30 * time.Second,
+		DataDir:   dataDir,
+		SessionID: fmt.Sprintf("test-%d", time.Now().UnixNano()),
+	}
+}
+
+func requireWorkspaceSupport(t *testing.T, b *ShExecutor) {
+	t.Helper()
+	if err := b.Prepare(); err != nil {
+		t.Skipf("workspace physics unsupported in this environment: %v", err)
 	}
 }
 
@@ -24,8 +38,8 @@ func testExecutor() *ShExecutor {
 
 func TestSimpleCommandExecution(t *testing.T) {
 	b := testExecutor()
-	defer b.Close()
-	result := b.Execute("tool-1", "echo hello", 0, 0, false)
+	defer b.Close(false)
+	result := b.Execute("tool-1", "echo hello", 0, 0, false, false, "")
 
 	if result.ToolID != "tool-1" {
 		t.Errorf("ToolID = %q, want %q", result.ToolID, "tool-1")
@@ -39,12 +53,15 @@ func TestSimpleCommandExecution(t *testing.T) {
 	if !strings.Contains(result.Content, "hello") {
 		t.Errorf("expected stdout to contain 'hello', got:\n%s", result.Content)
 	}
+	if strings.Contains(result.Content, "[FS MUTATIONS]") {
+		t.Errorf("did not expect FS mutations block without sandbox, got:\n%s", result.Content)
+	}
 }
 
 func TestNonZeroExitCode(t *testing.T) {
 	b := testExecutor()
-	defer b.Close()
-	result := b.Execute("tool-2", "false", 0, 0, false)
+	defer b.Close(false)
+	result := b.Execute("tool-2", "false", 0, 0, false, false, "")
 
 	if !result.IsError {
 		t.Errorf("IsError = false, want true for non-zero exit")
@@ -56,8 +73,8 @@ func TestNonZeroExitCode(t *testing.T) {
 
 func TestNonZeroExitCodeFromCommand(t *testing.T) {
 	b := testExecutor()
-	defer b.Close()
-	result := b.Execute("tool-2b", "exit 42", 0, 0, false)
+	defer b.Close(false)
+	result := b.Execute("tool-2b", "exit 42", 0, 0, false, false, "")
 
 	if !result.IsError {
 		t.Errorf("IsError = false, want true for non-zero exit")
@@ -69,8 +86,8 @@ func TestNonZeroExitCodeFromCommand(t *testing.T) {
 
 func TestStderrCapture(t *testing.T) {
 	b := testExecutor()
-	defer b.Close()
-	result := b.Execute("tool-3", "echo errormsg >&2", 0, 0, false)
+	defer b.Close(false)
+	result := b.Execute("tool-3", "echo errormsg >&2", 0, 0, false, false, "")
 
 	if !strings.Contains(result.Content, "errormsg") {
 		t.Errorf("expected stderr to contain 'errormsg', got:\n%s", result.Content)
@@ -87,11 +104,11 @@ func TestStderrCapture(t *testing.T) {
 
 func TestOutputTruncation(t *testing.T) {
 	b := testExecutor()
-	defer b.Close()
+	defer b.Close(false)
 	b.MaxOutput = 100 // very small limit for testing
 
 	// Generate output larger than MaxOutput (natural completion, no budget)
-	result := b.Execute("tool-6", "python3 -c \"print('A' * 500)\"", 0, 0, false)
+	result := b.Execute("tool-6", "python3 -c \"print('A' * 500)\"", 0, 0, false, false, "")
 
 	if !strings.Contains(result.Content, "...[Output Truncated,") {
 		t.Errorf("expected truncation notice, got:\n%s", result.Content)
@@ -99,14 +116,20 @@ func TestOutputTruncation(t *testing.T) {
 	if !strings.Contains(result.Content, "bytes total]") {
 		t.Errorf("expected 'bytes total' in truncation notice, got:\n%s", result.Content)
 	}
+	if !strings.Contains(result.Content, "Increase QUINE_OUTPUT_TRUNCATE") {
+		t.Errorf("expected QUINE_OUTPUT_TRUNCATE guidance in truncation notice, got:\n%s", result.Content)
+	}
+	if strings.Contains(result.Content, "job directory") {
+		t.Errorf("truncation notice must not promise job directory recovery for sync calls, got:\n%s", result.Content)
+	}
 }
 
 func TestOutputTruncationStderr(t *testing.T) {
 	b := testExecutor()
-	defer b.Close()
+	defer b.Close(false)
 	b.MaxOutput = 100
 
-	result := b.Execute("tool-6b", "python3 -c \"import sys; sys.stderr.write('B' * 500)\"", 0, 0, false)
+	result := b.Execute("tool-6b", "python3 -c \"import sys; sys.stderr.write('B' * 500)\"", 0, 0, false, false, "")
 
 	// The STDERR section should contain truncation
 	parts := strings.SplitN(result.Content, "[STDERR]", 2)
@@ -120,31 +143,37 @@ func TestOutputTruncationStderr(t *testing.T) {
 
 func TestResultFormatExact(t *testing.T) {
 	b := testExecutor()
-	defer b.Close()
-	result := b.Execute("tool-7", "echo out; echo err >&2", 0, 0, false)
+	defer b.Close(false)
+	result := b.Execute("tool-7", "echo out; echo err >&2", 0, 0, false, false, "")
 
-	expected := "[EXIT CODE] 0\n[STDOUT]\nout\n\n[STDERR]\nerr\n"
-	if result.Content != expected {
-		t.Errorf("result format mismatch.\ngot:\n%q\nwant:\n%q", result.Content, expected)
+	// Non-detached mode should NOT include [JOB] header
+	if strings.Contains(result.Content, "[JOB] pid=") {
+		t.Fatalf("non-detached result should not have [JOB] header, got:\n%s", result.Content)
+	}
+	if !strings.Contains(result.Content, "[EXIT CODE] 0") || !strings.Contains(result.Content, "[STDOUT]\nout\n") || !strings.Contains(result.Content, "[STDERR]\nerr\n") {
+		t.Errorf("result format mismatch.\ngot:\n%q", result.Content)
 	}
 }
 
 func TestResultFormatEmptyOutput(t *testing.T) {
 	b := testExecutor()
-	defer b.Close()
-	result := b.Execute("tool-8", "true", 0, 0, false)
+	defer b.Close(false)
+	result := b.Execute("tool-8", "true", 0, 0, false, false, "")
 
-	expected := "[EXIT CODE] 0\n[STDOUT]\n\n[STDERR]\n"
-	if result.Content != expected {
-		t.Errorf("result format mismatch for empty output.\ngot:\n%q\nwant:\n%q", result.Content, expected)
+	// Non-detached mode should NOT include [JOB] header
+	if strings.Contains(result.Content, "[JOB] pid=") {
+		t.Fatalf("non-detached result should not have [JOB] header, got:\n%s", result.Content)
+	}
+	if !strings.Contains(result.Content, "[EXIT CODE] 0\n[STDOUT]\n[STDERR]\n") {
+		t.Errorf("result format mismatch for empty output.\ngot:\n%q", result.Content)
 	}
 }
 
 func TestOutputWithoutTrailingNewline(t *testing.T) {
 	b := testExecutor()
-	defer b.Close()
+	defer b.Close(false)
 
-	result := b.Execute("tool-nonl", `printf 'no-newline-here'`, 0, 0, false)
+	result := b.Execute("tool-nonl", `printf 'no-newline-here'`, 0, 0, false, false, "")
 
 	if result.IsError {
 		t.Fatalf("unexpected error:\n%s", result.Content)
@@ -159,10 +188,10 @@ func TestOutputWithoutTrailingNewline(t *testing.T) {
 
 func TestExitDoesNotCrash(t *testing.T) {
 	b := testExecutor()
-	defer b.Close()
+	defer b.Close(false)
 
 	// Each sh call is ephemeral — exit 1 just gives exit code 1
-	result := b.Execute("tool-exit-1", "exit 1", 0, 0, false)
+	result := b.Execute("tool-exit-1", "exit 1", 0, 0, false, false, "")
 	if !result.IsError {
 		t.Errorf("expected error from exit 1")
 	}
@@ -171,7 +200,7 @@ func TestExitDoesNotCrash(t *testing.T) {
 	}
 
 	// Subsequent calls still work (each is ephemeral)
-	result2 := b.Execute("tool-exit-2", "echo alive", 0, 0, false)
+	result2 := b.Execute("tool-exit-2", "echo alive", 0, 0, false, false, "")
 	if result2.IsError {
 		t.Fatalf("expected success after exit, got error:\n%s", result2.Content)
 	}
@@ -185,9 +214,9 @@ func TestWriteFile(t *testing.T) {
 	testFile := filepath.Join(tmpDir, "sub", "test.txt")
 
 	b := testExecutor()
-	defer b.Close()
+	defer b.Close(false)
 	cmd := fmt.Sprintf(`mkdir -p "$(dirname %q)" && printf '%%s\n' "hello world" > %q`, testFile, testFile)
-	result := b.Execute("tool-9", cmd, 0, 0, false)
+	result := b.Execute("tool-9", cmd, 0, 0, false, false, "")
 
 	if result.IsError {
 		t.Fatalf("write_file failed:\n%s", result.Content)
@@ -211,9 +240,9 @@ func TestReadFile(t *testing.T) {
 	}
 
 	b := testExecutor()
-	defer b.Close()
+	defer b.Close(false)
 	cmd := fmt.Sprintf(`cat -n %q`, testFile)
-	result := b.Execute("tool-10", cmd, 0, 0, false)
+	result := b.Execute("tool-10", cmd, 0, 0, false, false, "")
 
 	if result.IsError {
 		t.Fatalf("read_file failed:\n%s", result.Content)
@@ -231,158 +260,15 @@ func TestWriteReadRoundtrip(t *testing.T) {
 	testFile := filepath.Join(tmpDir, "roundtrip.txt")
 
 	b := testExecutor()
-	defer b.Close()
+	defer b.Close(false)
 	cmd := fmt.Sprintf(`printf '%%s\n' "alpha beta gamma" > %q && cat -n %q`, testFile, testFile)
-	result := b.Execute("tool-11", cmd, 0, 0, false)
+	result := b.Execute("tool-11", cmd, 0, 0, false, false, "")
 
 	if result.IsError {
 		t.Fatalf("roundtrip failed:\n%s", result.Content)
 	}
 	if !strings.Contains(result.Content, "alpha beta gamma") {
 		t.Errorf("expected roundtrip content, got:\n%s", result.Content)
-	}
-}
-
-// --- output_limit budget tests (Pain Principle) ---
-
-func TestOutputLimitPausesJob(t *testing.T) {
-	b := testExecutor()
-	defer b.Close()
-
-	// Generate lots of output with a small output_limit
-	// seq 1 1000 produces ~4000 bytes, limit to 100
-	result := b.Execute("tool-limit", "seq 1 1000", 0, 100, false)
-
-	if !strings.Contains(result.Content, "[PAUSED]") {
-		t.Errorf("expected [PAUSED] with output_limit=100, got:\n%s", result.Content)
-	}
-	if !strings.Contains(result.Content, "job=") {
-		t.Errorf("expected job= in [PAUSED] result, got:\n%s", result.Content)
-	}
-	if !strings.Contains(result.Content, "signal=\"cont\"") {
-		t.Errorf("expected resume hint, got:\n%s", result.Content)
-	}
-
-	// Clean up: kill the paused job
-	pgid := extractJobID(result.Content)
-	if pgid > 0 {
-		b.HandleJob("cleanup", map[string]any{"id": float64(pgid), "signal": "kill"})
-	}
-}
-
-func TestJobKill(t *testing.T) {
-	b := testExecutor()
-	defer b.Close()
-
-	// Start a job with a small limit so it pauses
-	result := b.Execute("tool-killtest", "seq 1 10000", 0, 50, false)
-	if !strings.Contains(result.Content, "[PAUSED]") {
-		t.Skipf("job completed before pause (output too small?): %s", result.Content)
-	}
-
-	pgid := extractJobID(result.Content)
-	if pgid <= 0 {
-		t.Fatalf("could not extract job id from: %s", result.Content)
-	}
-
-	// Kill the job
-	killResult := b.HandleJob("tool-kill", map[string]any{"id": float64(pgid), "signal": "kill"})
-	if killResult.IsError {
-		t.Errorf("kill failed: %s", killResult.Content)
-	}
-	if !strings.Contains(killResult.Content, "killed") {
-		t.Errorf("expected 'killed' in result, got: %s", killResult.Content)
-	}
-
-	// Job should no longer be in the registry
-	j := b.jobs.Get(pgid)
-	if j != nil {
-		t.Errorf("job %d still in registry after kill", pgid)
-	}
-}
-
-func TestJobReadOutput(t *testing.T) {
-	b := testExecutor()
-	defer b.Close()
-
-	result := b.Execute("tool-readtest", "seq 1 5000", 0, 50, false)
-	if !strings.Contains(result.Content, "[PAUSED]") {
-		t.Skipf("job completed before pause")
-	}
-
-	pgid := extractJobID(result.Content)
-	if pgid <= 0 {
-		t.Fatalf("could not extract job id from: %s", result.Content)
-	}
-
-	// Read without resuming
-	readResult := b.HandleJob("tool-read", map[string]any{"id": float64(pgid)})
-	if readResult.IsError {
-		t.Errorf("read failed: %s", readResult.Content)
-	}
-	if !strings.Contains(readResult.Content, "[JOB") {
-		t.Errorf("expected [JOB ...] header, got: %s", readResult.Content)
-	}
-
-	// Clean up
-	b.HandleJob("cleanup", map[string]any{"id": float64(pgid), "signal": "kill"})
-}
-
-func TestJobResume(t *testing.T) {
-	b := testExecutor()
-	defer b.Close()
-
-	// Pause at 100 bytes
-	result := b.Execute("tool-resume", "seq 1 10000", 0, 100, false)
-	if !strings.Contains(result.Content, "[PAUSED]") {
-		t.Skipf("job completed before pause")
-	}
-
-	pgid := extractJobID(result.Content)
-	if pgid <= 0 {
-		t.Fatalf("could not extract job id")
-	}
-
-	// Resume with a larger limit
-	resumeResult := b.HandleJob("tool-cont", map[string]any{
-		"id":           float64(pgid),
-		"signal":       "cont",
-		"output_limit": float64(10000),
-	})
-
-	// Should either pause again or complete — not error
-	if resumeResult.IsError {
-		t.Errorf("resume failed: %s", resumeResult.Content)
-	}
-
-	// If still paused, kill it
-	if strings.Contains(resumeResult.Content, "[PAUSED]") {
-		pgid2 := extractJobID(resumeResult.Content)
-		if pgid2 > 0 {
-			b.HandleJob("cleanup", map[string]any{"id": float64(pgid2), "signal": "kill"})
-		}
-	}
-}
-
-func TestTimeoutPausesJob(t *testing.T) {
-	b := testExecutor()
-	defer b.Close()
-
-	// Run a sleep command with 1 second timeout
-	start := time.Now()
-	result := b.Execute("tool-timeout", "sleep 10", 1*time.Second, 0, false)
-	elapsed := time.Since(start)
-
-	if !strings.Contains(result.Content, "[PAUSED]") {
-		t.Errorf("expected [PAUSED] after timeout, got:\n%s", result.Content)
-	}
-	if elapsed > 3*time.Second {
-		t.Errorf("took %v, expected ~1s for timeout", elapsed)
-	}
-
-	pgid := extractJobID(result.Content)
-	if pgid > 0 {
-		b.HandleJob("cleanup", map[string]any{"id": float64(pgid), "signal": "kill"})
 	}
 }
 
@@ -423,12 +309,12 @@ func TestMergeEnvOverlaysChildVars(t *testing.T) {
 
 func TestEnvPropagationViaSh(t *testing.T) {
 	b := testExecutor()
-	defer b.Close()
+	defer b.Close(false)
 	b.Env = MergeEnv(os.Environ(), []string{
 		"QUINE_DEPTH=3",
 	})
 
-	result := b.Execute("tool-env-1", "echo $QUINE_DEPTH", 0, 0, false)
+	result := b.Execute("tool-env-1", "echo $QUINE_DEPTH", 0, 0, false, false, "")
 	if result.IsError {
 		t.Fatalf("command failed:\n%s", result.Content)
 	}
@@ -436,12 +322,20 @@ func TestEnvPropagationViaSh(t *testing.T) {
 		t.Errorf("expected QUINE_DEPTH=3 in output, got:\n%s", result.Content)
 	}
 
-	result2 := b.Execute("tool-env-2", "echo \"SESSION_ID=${QUINE_SESSION_ID:-unset}\"", 0, 0, false)
+	result2 := b.Execute("tool-env-2", "echo \"SESSION_ID=${QUINE_SESSION_ID:-unset}\"", 0, 0, false, false, "")
 	if result2.IsError {
 		t.Fatalf("command failed:\n%s", result2.Content)
 	}
 	if !strings.Contains(result2.Content, "SESSION_ID=unset") {
 		t.Errorf("expected QUINE_SESSION_ID to be unset in sh env, got:\n%s", result2.Content)
+	}
+
+	result3 := b.Execute("tool-env-3", "echo \"TAPE_ID=${QUINE_TAPE_ID:-unset}\"", 0, 0, false, false, "")
+	if result3.IsError {
+		t.Fatalf("command failed:\n%s", result3.Content)
+	}
+	if !strings.Contains(result3.Content, "TAPE_ID=unset") {
+		t.Errorf("expected QUINE_TAPE_ID to be unset in sh env, got:\n%s", result3.Content)
 	}
 }
 
@@ -471,9 +365,9 @@ func TestChildEnvDepthIncrement(t *testing.T) {
 		Timeout:   30 * time.Second,
 		Env:       MergeEnv(os.Environ(), childEnv),
 	}
-	defer b.Close()
+	defer b.Close(false)
 
-	result := b.Execute("tool-depth", "echo $QUINE_DEPTH", 0, 0, false)
+	result := b.Execute("tool-depth", "echo $QUINE_DEPTH", 0, 0, false, false, "")
 	if result.IsError {
 		t.Fatalf("command failed:\n%s", result.Content)
 	}
@@ -481,7 +375,7 @@ func TestChildEnvDepthIncrement(t *testing.T) {
 		t.Errorf("expected QUINE_DEPTH=3 (parent depth 2 + 1), got:\n%s", result.Content)
 	}
 
-	result2 := b.Execute("tool-parent", "echo $QUINE_PARENT_SESSION", 0, 0, false)
+	result2 := b.Execute("tool-parent", "echo $QUINE_PARENT_SESSION", 0, 0, false, false, "")
 	if result2.IsError {
 		t.Fatalf("command failed:\n%s", result2.Content)
 	}
@@ -489,12 +383,20 @@ func TestChildEnvDepthIncrement(t *testing.T) {
 		t.Errorf("expected QUINE_PARENT_SESSION=parent-session-id, got:\n%s", result2.Content)
 	}
 
-	result3 := b.Execute("tool-session", "echo \"SID=${QUINE_SESSION_ID:-unset}\"", 0, 0, false)
+	result3 := b.Execute("tool-session", "echo \"SID=${QUINE_SESSION_ID:-unset}\"", 0, 0, false, false, "")
 	if result3.IsError {
 		t.Fatalf("command failed:\n%s", result3.Content)
 	}
 	if !strings.Contains(result3.Content, "SID=unset") {
 		t.Errorf("expected QUINE_SESSION_ID to be unset, got:\n%s", result3.Content)
+	}
+
+	result4 := b.Execute("tool-tape", "echo \"TID=${QUINE_TAPE_ID:-unset}\"", 0, 0, false, false, "")
+	if result4.IsError {
+		t.Fatalf("command failed:\n%s", result4.Content)
+	}
+	if !strings.Contains(result4.Content, "TID=unset") {
+		t.Errorf("expected QUINE_TAPE_ID to be unset, got:\n%s", result4.Content)
 	}
 }
 
@@ -519,9 +421,9 @@ func TestNewShExecutorWithChildEnv(t *testing.T) {
 	}
 
 	b := NewShExecutor(cfg, childEnv)
-	defer b.Close()
+	defer b.Close(false)
 
-	result := b.Execute("tool-ctor", "echo $QUINE_DEPTH", 0, 0, false)
+	result := b.Execute("tool-ctor", "echo $QUINE_DEPTH", 0, 0, false, false, "")
 	if result.IsError {
 		t.Fatalf("command failed:\n%s", result.Content)
 	}
@@ -529,9 +431,385 @@ func TestNewShExecutorWithChildEnv(t *testing.T) {
 		t.Errorf("expected QUINE_DEPTH=2, got:\n%s", result.Content)
 	}
 
-	result2 := b.Execute("tool-path", "which echo", 0, 0, false)
+	result2 := b.Execute("tool-path", "which echo", 0, 0, false, false, "")
 	if result2.IsError {
 		t.Fatalf("'which echo' failed — PATH not propagated:\n%s", result2.Content)
+	}
+}
+
+func TestWorkspaceOverlayReportsMutationsAndCommitsOnSuccess(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("workspace physics are Linux-only")
+	}
+	root := t.TempDir()
+	rootReal, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		t.Fatalf("realpath root: %v", err)
+	}
+	dataDir := t.TempDir()
+	cfg := &config.Config{
+		ModelID:          "claude-sonnet-4-20250514",
+		APIKey:           "test-key",
+		APIBase:          "https://api.example.com",
+		Provider:         "anthropic",
+		SessionID:        "sandbox-success",
+		OutputTruncate:   20480,
+		ShTimeout:        10,
+		DataDir:          dataDir,
+		Shell:            "/bin/sh",
+		WorkspaceEnabled: true,
+		WorkspaceRoot:    root,
+		Workspace:        root,
+		WorkspaceRevisionMode: config.WorkspaceRevisionRestore,
+		WorkspaceSession: "workspace-session-success",
+		WorkspaceOwner:   true,
+	}
+
+	b := NewShExecutor(cfg, nil)
+	requireWorkspaceSupport(t, b)
+	result := b.Execute("tool-sandbox-success", "printf 'hello overlay\\n' > result.txt", 0, 0, false, false, "")
+	if result.IsError {
+		t.Fatalf("unexpected sandbox error:\n%s", result.Content)
+	}
+	if !strings.Contains(result.Content, "[FS MUTATIONS]") {
+		t.Fatalf("expected FS mutations block, got:\n%s", result.Content)
+	}
+	if !strings.Contains(result.Content, "+ result.txt (created)") {
+		t.Fatalf("expected created workspace mutation for result.txt, got:\n%s", result.Content)
+	}
+	if _, err := os.Stat(filepath.Join(root, "result.txt")); !os.IsNotExist(err) {
+		t.Fatalf("host file should not exist before commit, err=%v", err)
+	}
+	if err := b.Close(true); err != nil {
+		t.Fatalf("commit close failed: %v", err)
+	}
+	data, err := os.ReadFile(filepath.Join(rootReal, "result.txt"))
+	if err != nil {
+		t.Fatalf("read committed file: %v", err)
+	}
+	if strings.TrimSpace(string(data)) != "hello overlay" {
+		t.Fatalf("committed file = %q, want hello overlay", strings.TrimSpace(string(data)))
+	}
+}
+
+func TestWorkspaceOverlayRollsBackOnFailure(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("workspace physics are Linux-only")
+	}
+	root := t.TempDir()
+	cfg := &config.Config{
+		ModelID:          "claude-sonnet-4-20250514",
+		APIKey:           "test-key",
+		APIBase:          "https://api.example.com",
+		Provider:         "anthropic",
+		SessionID:        "sandbox-failure",
+		OutputTruncate:   20480,
+		ShTimeout:        10,
+		DataDir:          t.TempDir(),
+		Shell:            "/bin/sh",
+		WorkspaceEnabled: true,
+		WorkspaceRoot:    root,
+		Workspace:        root,
+		WorkspaceRevisionMode: config.WorkspaceRevisionRestore,
+		WorkspaceSession: "workspace-session-failure",
+		WorkspaceOwner:   true,
+	}
+
+	b := NewShExecutor(cfg, nil)
+	requireWorkspaceSupport(t, b)
+	result := b.Execute("tool-sandbox-failure", "printf 'temporary\\n' > doomed.txt; exit 1", 0, 0, false, false, "")
+	if !result.IsError {
+		t.Fatalf("expected non-zero exit to be an error")
+	}
+	if err := b.Close(false); err != nil {
+		t.Fatalf("rollback close failed: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "doomed.txt")); !os.IsNotExist(err) {
+		t.Fatalf("host file should have been rolled back, err=%v", err)
+	}
+}
+
+func TestWorkspaceOverlayTracksAbsolutePaths(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("workspace physics are Linux-only")
+	}
+	root := t.TempDir()
+	cfg := &config.Config{
+		ModelID:          "claude-sonnet-4-20250514",
+		APIKey:           "test-key",
+		APIBase:          "https://api.example.com",
+		Provider:         "anthropic",
+		SessionID:        "sandbox-absolute",
+		OutputTruncate:   20480,
+		ShTimeout:        10,
+		DataDir:          t.TempDir(),
+		Shell:            "/bin/sh",
+		WorkspaceEnabled: true,
+		WorkspaceRoot:    root,
+		Workspace:        root,
+		WorkspaceRevisionMode: config.WorkspaceRevisionRestore,
+		WorkspaceSession: "workspace-session-absolute",
+		WorkspaceOwner:   true,
+	}
+
+	b := NewShExecutor(cfg, nil)
+	requireWorkspaceSupport(t, b)
+	absFile := filepath.Join(root, "absolute.txt")
+	result := b.Execute("tool-absolute", fmt.Sprintf("cd %q && printf 'abs\\n' > absolute.txt", root), 0, 0, false, false, "")
+	if result.IsError {
+		t.Fatalf("unexpected absolute-path error:\n%s", result.Content)
+	}
+	if !strings.Contains(result.Content, "~ absolute.txt (modified)") && !strings.Contains(result.Content, "+ absolute.txt (created)") {
+		t.Fatalf("expected absolute-path mutation for absolute.txt, got:\n%s", result.Content)
+	}
+	if _, err := os.Stat(absFile); !os.IsNotExist(err) {
+		t.Fatalf("host file should not exist before commit, err=%v", err)
+	}
+	if err := b.Close(true); err != nil {
+		t.Fatalf("commit close failed: %v", err)
+	}
+	data, err := os.ReadFile(absFile)
+	if err != nil {
+		t.Fatalf("absolute-path file should be committed: %v", err)
+	}
+	if strings.TrimSpace(string(data)) != "abs" {
+		t.Fatalf("absolute-path file = %q, want abs", strings.TrimSpace(string(data)))
+	}
+}
+
+func TestWorkspaceDirectReportsMutationsAndCommitsOnSuccess(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("workspace physics are Linux-only")
+	}
+	root := t.TempDir()
+	cfg := &config.Config{
+		ModelID:          "claude-sonnet-4-20250514",
+		APIKey:           "test-key",
+		APIBase:          "https://api.example.com",
+		Provider:         "anthropic",
+		SessionID:        "workspace-direct-success",
+		OutputTruncate:   20480,
+		ShTimeout:        10,
+		DataDir:          t.TempDir(),
+		Shell:            "/bin/sh",
+		WorkspaceEnabled: true,
+		WorkspaceRoot:    root,
+		Workspace:        root,
+		WorkspaceBackend: "direct",
+		WorkspaceRevisionMode: config.WorkspaceRevisionRestore,
+		WorkspaceSession: "workspace-direct-session-success",
+		WorkspaceOwner:   true,
+	}
+
+	b := NewShExecutor(cfg, nil)
+	if err := b.Prepare(); err != nil {
+		t.Fatalf("Prepare() error: %v", err)
+	}
+	result := b.Execute("tool-workspace-direct-success", "printf 'hello direct\\n' > result.txt", 0, 0, false, false, "")
+	if result.IsError {
+		t.Fatalf("unexpected direct workspace error:\n%s", result.Content)
+	}
+	if !strings.Contains(result.Content, "+ result.txt (created)") {
+		t.Fatalf("expected created workspace mutation for result.txt, got:\n%s", result.Content)
+	}
+	data, err := os.ReadFile(filepath.Join(root, "result.txt"))
+	if err != nil {
+		t.Fatalf("read direct workspace file: %v", err)
+	}
+	if strings.TrimSpace(string(data)) != "hello direct" {
+		t.Fatalf("direct workspace file = %q, want hello direct", strings.TrimSpace(string(data)))
+	}
+	if err := b.Close(true); err != nil {
+		t.Fatalf("commit close failed: %v", err)
+	}
+}
+
+func TestWorkspaceDirectRollsBackOnFailure(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("workspace physics are Linux-only")
+	}
+	root := t.TempDir()
+	cfg := &config.Config{
+		ModelID:          "claude-sonnet-4-20250514",
+		APIKey:           "test-key",
+		APIBase:          "https://api.example.com",
+		Provider:         "anthropic",
+		SessionID:        "workspace-direct-failure",
+		OutputTruncate:   20480,
+		ShTimeout:        10,
+		DataDir:          t.TempDir(),
+		Shell:            "/bin/sh",
+		WorkspaceEnabled: true,
+		WorkspaceRoot:    root,
+		Workspace:        root,
+		WorkspaceBackend: "direct",
+		WorkspaceRevisionMode: config.WorkspaceRevisionRestore,
+		WorkspaceSession: "workspace-direct-session-failure",
+		WorkspaceOwner:   true,
+	}
+
+	b := NewShExecutor(cfg, nil)
+	if err := b.Prepare(); err != nil {
+		t.Fatalf("Prepare() error: %v", err)
+	}
+	result := b.Execute("tool-workspace-direct-failure", "printf 'temporary\\n' > doomed.txt; exit 1", 0, 0, false, false, "")
+	if !result.IsError {
+		t.Fatalf("expected non-zero exit to be an error")
+	}
+	if _, err := os.Stat(filepath.Join(root, "doomed.txt")); err != nil {
+		t.Fatalf("expected provisional file before rollback, err=%v", err)
+	}
+	if err := b.Close(false); err != nil {
+		t.Fatalf("rollback close failed: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "doomed.txt")); !os.IsNotExist(err) {
+		t.Fatalf("direct workspace file should have been rolled back, err=%v", err)
+	}
+}
+
+func TestWorkspaceDirectWorldRevisionsAndRestoreWorld(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("workspace physics are Linux-only")
+	}
+	root := t.TempDir()
+	cfg := &config.Config{
+		ModelID:          "claude-sonnet-4-20250514",
+		APIKey:           "test-key",
+		APIBase:          "https://api.example.com",
+		Provider:         "anthropic",
+		SessionID:        "workspace-direct-checkpoints",
+		OutputTruncate:   20480,
+		ShTimeout:        10,
+		DataDir:          t.TempDir(),
+		Shell:            "/bin/sh",
+		WorkspaceEnabled: true,
+		WorkspaceRoot:    root,
+		Workspace:        root,
+		WorkspaceBackend: "direct",
+		WorkspaceRevisionMode: config.WorkspaceRevisionRestore,
+		WorkspaceSession: "workspace-direct-session-checkpoints",
+		WorkspaceOwner:   true,
+	}
+
+	b := NewShExecutor(cfg, nil)
+	if err := b.Prepare(); err != nil {
+		t.Fatalf("Prepare() error: %v", err)
+	}
+
+	b.TurnID = 1
+	result1 := b.Execute("tool-checkpoint-1", "printf 'v1\\n' > state.txt", 0, 0, false, false, "")
+	if result1.IsError {
+		t.Fatalf("turn 1 failed:\n%s", result1.Content)
+	}
+	if !strings.Contains(result1.Content, "[WORLD REVISION] created=wr1 parent=wr0 current=wr1") {
+		t.Fatalf("turn 1 missing world revision block:\n%s", result1.Content)
+	}
+
+	b.TurnID = 2
+	result2 := b.Execute("tool-checkpoint-2", "printf 'v2\\n' > state.txt", 0, 0, false, false, "")
+	if result2.IsError {
+		t.Fatalf("turn 2 failed:\n%s", result2.Content)
+	}
+	if !strings.Contains(result2.Content, "[WORLD REVISION] created=wr2 parent=wr1 current=wr2") {
+		t.Fatalf("turn 2 missing world revision block:\n%s", result2.Content)
+	}
+
+	data, err := os.ReadFile(filepath.Join(root, "state.txt"))
+	if err != nil {
+		t.Fatalf("read current state: %v", err)
+	}
+	if strings.TrimSpace(string(data)) != "v2" {
+		t.Fatalf("current state = %q, want v2", strings.TrimSpace(string(data)))
+	}
+
+	restore := b.RestoreWorld("tool-restore-world", "wr1")
+	if restore.IsError {
+		t.Fatalf("restore failed:\n%s", restore.Content)
+	}
+	if !strings.Contains(restore.Content, "[WORLD REVISION] wr2 -> wr1") {
+		t.Fatalf("restore missing world revision transition:\n%s", restore.Content)
+	}
+
+	data, err = os.ReadFile(filepath.Join(root, "state.txt"))
+	if err != nil {
+		t.Fatalf("read restored state: %v", err)
+	}
+	if strings.TrimSpace(string(data)) != "v1" {
+		t.Fatalf("restored state = %q, want v1", strings.TrimSpace(string(data)))
+	}
+}
+
+func TestWorkspaceNoopShellDoesNotAdvanceWorldRevision(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("workspace physics are Linux-only")
+	}
+	root := t.TempDir()
+	cfg := &config.Config{
+		ModelID:               "claude-sonnet-4-20250514",
+		APIKey:                "test-key",
+		APIBase:               "https://api.example.com",
+		Provider:              "anthropic",
+		SessionID:             "workspace-noop-revision",
+		OutputTruncate:        20480,
+		ShTimeout:             10,
+		DataDir:               t.TempDir(),
+		Shell:                 "/bin/sh",
+		WorkspaceEnabled:      true,
+		WorkspaceRoot:         root,
+		Workspace:             root,
+		WorkspaceBackend:      "direct",
+		WorkspaceRevisionMode: config.WorkspaceRevisionRestore,
+		WorkspaceSession:      "workspace-noop-revision-session",
+		WorkspaceOwner:        true,
+	}
+
+	b := NewShExecutor(cfg, nil)
+	if err := b.Prepare(); err != nil {
+		t.Fatalf("Prepare() error: %v", err)
+	}
+
+	b.TurnID = 1
+	result1 := b.Execute("tool-noop-revision-1", "printf 'v1\\n' > state.txt", 0, 0, false, false, "")
+	if result1.IsError {
+		t.Fatalf("turn 1 failed:\n%s", result1.Content)
+	}
+	if !strings.Contains(result1.Content, "[WORLD REVISION] created=wr1 parent=wr0 current=wr1") {
+		t.Fatalf("turn 1 missing revision creation:\n%s", result1.Content)
+	}
+
+	b.TurnID = 2
+	result2 := b.Execute("tool-noop-revision-2", "test -f state.txt", 0, 0, false, false, "")
+	if result2.IsError {
+		t.Fatalf("turn 2 failed:\n%s", result2.Content)
+	}
+	if !strings.Contains(result2.Content, "[FS MUTATIONS]\n(empty)") {
+		t.Fatalf("turn 2 should report empty mutations:\n%s", result2.Content)
+	}
+	if !strings.Contains(result2.Content, "[WORLD REVISION] current=wr1 (unchanged)") {
+		t.Fatalf("turn 2 should keep the same revision:\n%s", result2.Content)
+	}
+	if strings.Contains(result2.Content, "created=wr2") {
+		t.Fatalf("turn 2 should not create wr2 on a no-op:\n%s", result2.Content)
+	}
+	if got := b.CurrentWorldRevision(); got != "wr1" {
+		t.Fatalf("CurrentWorldRevision() = %q, want wr1", got)
+	}
+}
+
+func TestParseRestoreWorldArgs(t *testing.T) {
+	req, err := ParseRestoreWorldArgs(map[string]any{"revision": "wr3"})
+	if err != nil {
+		t.Fatalf("ParseRestoreWorldArgs() error = %v", err)
+	}
+	if req.Revision != "wr3" {
+		t.Fatalf("Revision = %q, want wr3", req.Revision)
+	}
+
+	if _, err := ParseRestoreWorldArgs(map[string]any{"revision": 3}); err == nil {
+		t.Fatal("expected type error for numeric revision")
+	}
+	if _, err := ParseRestoreWorldArgs(map[string]any{"revision": "3"}); err == nil {
+		t.Fatal("expected prefix validation error for revision without wr prefix")
 	}
 }
 
@@ -592,6 +870,7 @@ func TestExecEnv(t *testing.T) {
 		MaxDepth:       5,
 		Depth:          3,
 		SessionID:      "pre-exec-session",
+		ParentSession:  "root-session",
 		MaxConcurrent:  20,
 		ShTimeout:      600,
 		OutputTruncate: 20480,
@@ -619,11 +898,17 @@ func TestExecEnv(t *testing.T) {
 	if envMap["QUINE_DEPTH"] != "0" {
 		t.Errorf("QUINE_DEPTH = %q, want 0 (reset for exec)", envMap["QUINE_DEPTH"])
 	}
-	if envMap["QUINE_PARENT_SESSION"] != "pre-exec-session" {
-		t.Errorf("QUINE_PARENT_SESSION = %q, want pre-exec-session", envMap["QUINE_PARENT_SESSION"])
+	if envMap["QUINE_PARENT_SESSION"] != "root-session" {
+		t.Errorf("QUINE_PARENT_SESSION = %q, want root-session", envMap["QUINE_PARENT_SESSION"])
 	}
 	if envMap["QUINE_ORIGINAL_INTENT"] != originalIntent {
 		t.Errorf("QUINE_ORIGINAL_INTENT = %q, want %q", envMap["QUINE_ORIGINAL_INTENT"], originalIntent)
+	}
+	if envMap["QUINE_SESSION_ID"] != "pre-exec-session" {
+		t.Errorf("QUINE_SESSION_ID = %q, want pre-exec-session", envMap["QUINE_SESSION_ID"])
+	}
+	if envMap["QUINE_PARENT_SESSION"] != "root-session" {
+		t.Errorf("QUINE_PARENT_SESSION = %q, want root-session", envMap["QUINE_PARENT_SESSION"])
 	}
 	if envMap["QUINE_WISDOM_SUMMARY"] != "Found 3 bugs" {
 		t.Errorf("QUINE_WISDOM_SUMMARY = %q, want 'Found 3 bugs'", envMap["QUINE_WISDOM_SUMMARY"])
@@ -631,8 +916,8 @@ func TestExecEnv(t *testing.T) {
 	if envMap["QUINE_WISDOM_PROGRESS"] != "50%" {
 		t.Errorf("QUINE_WISDOM_PROGRESS = %q, want '50%%'", envMap["QUINE_WISDOM_PROGRESS"])
 	}
-	if _, exists := envMap["QUINE_SESSION_ID"]; exists {
-		t.Errorf("QUINE_SESSION_ID should not be set in exec env")
+	if _, exists := envMap["QUINE_TAPE_ID"]; exists {
+		t.Errorf("QUINE_TAPE_ID should not be set in exec env")
 	}
 	if envMap["QUINE_MODEL_ID"] != "claude-sonnet-4-20250514" {
 		t.Errorf("QUINE_MODEL_ID = %q, want claude-sonnet-4-20250514", envMap["QUINE_MODEL_ID"])
@@ -644,9 +929,8 @@ func TestExecEnv(t *testing.T) {
 
 // --- helpers ---
 
-// extractJobID parses the job ID from a [PAUSED] result content string.
-func extractJobID(content string) int {
+func extractPID(content string) int {
 	var id int
-	fmt.Sscanf(content, "[PAUSED] job=%d", &id)
+	fmt.Sscanf(content, "[JOB] pid=%d", &id)
 	return id
 }

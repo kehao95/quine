@@ -1,86 +1,86 @@
 # Quick Start: Running Quine
 
-## Install
+## Installation
 
 ```bash
 go install github.com/kehao95/quine/cmd/quine@latest
 ```
 
-If you want a local binary in the repository root instead:
+## Configuration
 
-```bash
-go build -o quine ./cmd/quine/
-```
-
-## Configure
-
-Quine reads its runtime configuration from environment variables. Start from [`.env.example`](./.env.example):
+Four environment variables are required. See [`.env.example`](./.env.example) for a template.
 
 ```bash
 cp .env.example .env
-# Edit .env, then:
+# Edit .env — set your model, API type, base URL, and key
 source .env
 ```
 
-> **Tip:** Every line in `.env` should start with `export`, otherwise `source .env` will not pass the variables to child processes.
+### Group 1: Required Runtime Identity
 
-### Required
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `QUINE_MODEL_ID` | ✓ | Model name sent to the API |
+| `QUINE_API_TYPE` | ✓ | Wire protocol: `openai`, `anthropic`, or `openai-responses` |
+| `QUINE_API_BASE` | ✓ | API base URL |
+| `QUINE_API_KEY` | ✓ | API key (use `codex-oauth` to trigger OAuth flow for Codex) |
 
-| Variable | Description |
-|----------|-------------|
-| `QUINE_MODEL_ID` | Model name sent to the API |
-| `QUINE_API_TYPE` | Wire protocol: `openai`, `anthropic`, or `openai-responses` |
-| `QUINE_API_BASE` | API base URL |
-| `QUINE_API_KEY` | API key; `codex-oauth` triggers Codex OAuth flow |
+### Group 2: Physics Limits (`0 = disabled`)
 
-### Optional Runtime Limits
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `QUINE_MAX_DEPTH` | | Max recursion depth; `0` = disabled (default `0`) |
+| `QUINE_MAX_AGENTS` | | Max registered agents in a process tree; `0` = disabled (default `0`) |
+| `QUINE_MAX_CONCURRENT` | | Max concurrent inference slots; `0` = disabled (default `0`) |
+| `QUINE_MAX_TURNS` | | Execution budget in number of `sh` calls; `0` = unlimited (default `0`) |
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `QUINE_MAX_DEPTH` | `5` | Max recursion depth |
-| `QUINE_MAX_CONCURRENT` | `20` | Max concurrent child inferences |
-| `QUINE_MAX_AGENTS` | `10` | Max registered agents in a process tree |
-| `QUINE_MAX_TURNS` | `20` | Max shell/tool turns for one process |
-| `QUINE_SH_TIMEOUT` | `600` | Shell command timeout in seconds |
+### Group 3: Budget/Prompt Policies
 
-### Optional Context and Paths
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `QUINE_TURN_EXHAUSTION_POLICY` | | Budget exhaustion behavior: `hard_fail` or `near_death_exec` (default `hard_fail`; ignored when `QUINE_MAX_TURNS=0`) |
+| `QUINE_PROMPT_METAPHOR` | | System-prompt overlay: `off` or `thermodynamic` (default `off`) |
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `QUINE_CONTEXT_WINDOW` | `128000` | Context window size in tokens |
-| `QUINE_DATA_DIR` | `.quine/` | Session tape directory |
-| `QUINE_CONFIG_DIR` | `~/.config/quine/` | OAuth token/config directory |
+### Group 4: Runtime Context/Paths
 
-## Run
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `QUINE_CONTEXT_WINDOW` | | Context window size in tokens (default 128000) |
+| `QUINE_DATA_DIR` | | Session log directory (default `.quine/`) |
+| `QUINE_CONFIG_DIR` | | Config directory for OAuth tokens (default `~/.config/quine/`) |
+
+> **Tip:** Every line in your `.env` must start with `export` so that `source .env` propagates variables to child processes.
+
+## Usage
 
 ```bash
-# Simple one-shot task
+# Run a single task
 quine "Write a haiku about recursion"
 
-# Material through stdin
+# Pipe input
 echo "What is 2+2?" | quine "Answer the question"
-
-# Use shell exit semantics
-quine "Validate this config" < config.yaml && echo "config accepted"
 ```
 
-Quine can read and write files, run shell commands, and spawn child agents. The public runtime model is:
+**That's it.** The agent can read/write files, run shell commands, and spawn child agents.
 
-- mission in through `argv`
-- material in through `stdin`
-- deliverable out through `stdout`
-- failure signal through `stderr` and exit code
+## Testing
 
-## Test Next
+For the full testing stack, including local Go tests, API-backed end-to-end tests, and LLM behavior tests, see [TESTING.md](./TESTING.md).
 
-For deterministic tests and live API-backed checks, see [TESTING.md](./TESTING.md).
+Typical quick check:
+
+```bash
+go build -o /tmp/quine ./cmd/quine/
+go test ./...
+```
 
 ## Design Principles
 
-- **Zero external dependencies**: stdlib-only runtime
-- **Everything is an environment variable**: no config files required
-- **The agent owns its lifecycle**: the runtime exposes process semantics
-- **Unix is the API**: streams, files, and processes are the coordination layer
+- **Zero external dependencies** — stdlib only
+- **Everything is an environment variable** — no flags, no files, no magic
+- **The agent owns its lifecycle** — it calls `exit`, not the runtime
+- **Unix is the API** — pipes, processes, and files are the coordination primitives
+- **Fractal architecture** — a tree of identical processes, scale-invariant
 
 ## License
 

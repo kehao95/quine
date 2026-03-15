@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+# HOOK INTENTION
+# name: pre-commit
+# owner: repo control plane
+# purpose:
+#   - protect model-scenario inventory and scorer coverage
+#   - protect public-surface docs from drifting back to stale path/policy wording
+#   - validate only the staged public docs and model-scenario surfaces carried on main
+# enforcement:
+#   - model prompts must stay registered and scored
+#   - public-surface docs must not drift back to stale branch wording or old test paths
+# repair-guidance:
+#   - preserve touched-files-only scope; do not silently widen to whole-repo blocking
+#   - preserve scripts/check-model-scenarios.sh as the canonical model-scenario validator
+#   - preserve scripts/check-public-surface.sh as the canonical public-surface drift validator
+#   - if staged-file scope changes, update this hook and .githooks/README.md together
+#   - if this hook breaks, repair it rather than disabling it unless the policy itself changed
+
+set -euo pipefail
+
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+cd "$ROOT_DIR"
+
+mapfile -t staged_behavior_files < <(
+  git diff --cached --name-only --diff-filter=ACMR |
+    grep -E '^tests/model/README\.md$|^tests/model/run\.sh$|^tests/model/scenarios\.toml$|^tests/model/(instructional|emergent)/prompts/[^/]+\.md$' || true
+)
+
+mapfile -t staged_public_surface_files < <(
+  git diff --cached --name-only --diff-filter=ACMR |
+    grep -E '^README\.md$|^DEVELOPMENT\.md$|^TESTING\.md$|^AGENTS\.md$|^STATUS\.md$|^ROADMAP\.md$|^QUICKSTART\.md$|^tests/README\.md$|^tests/model/README\.md$|^scripts/check-public-surface\.sh$' || true
+)
+
+if [[ "${#staged_behavior_files[@]}" -eq 0 && "${#staged_public_surface_files[@]}" -eq 0 ]]; then
+  exit 0
+fi
+
+if [[ "${#staged_behavior_files[@]}" -gt 0 ]]; then
+  ./scripts/check-model-scenarios.sh --strict
+fi
+
+if [[ "${#staged_public_surface_files[@]}" -gt 0 ]]; then
+  ./scripts/check-public-surface.sh
+fi

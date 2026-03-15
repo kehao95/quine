@@ -32,6 +32,8 @@ func main() {
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "flags:")
 		flag.PrintDefaults()
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "workspace physics are enabled via QUINE_WORKSPACE / QUINE_WORKSPACE_ROOT env vars.")
 	}
 	flag.Parse()
 
@@ -78,7 +80,7 @@ func main() {
 
 	// Handle stdin:
 	// - TTY (no pipe): material = "Begin."
-	// - Piped text: material tells agent stdin is available via /dev/stdin
+	// - Piped text: material tells agent stdin is available via fd 3
 	// - Piped binary (-b): material references saved file
 	material, err := handleStdin(cfg, mode)
 	if err != nil {
@@ -100,7 +102,7 @@ func main() {
 // Message content (material).
 //
 // The mode parameter controls behavior:
-//   - stdinModeText: tell the agent that stdin data is available via /dev/stdin
+//   - stdinModeText: tell the agent that material is available via fd 3
 //   - stdinModeBinary: read all stdin and save to a file (-b flag)
 //
 // When stdin is TTY (no pipe): material="Begin." (mode ignored)
@@ -117,9 +119,8 @@ func handleStdin(cfg *config.Config, mode stdinMode) (material string, err error
 
 	// Stdin is piped
 	if mode == stdinModeText {
-		// The agent can read stdin directly via sh commands (e.g., cat /dev/stdin).
-		// Real stdin is wired to sh subprocesses via cmd.Stdin.
-		return "Input is piped to stdin. Read it with `cat /dev/stdin` or similar sh commands.", nil
+		// Material is available to sh commands via runtime side channel fd 3.
+		return "Input is piped as material on `fd 3`. This is the quine process stdin: it may behave like a finite batch or an open stream. Reads consume data, so later calls see only the unread remainder. Partial reads or redirects from `fd 3` can leave later steps with only a truncated remainder. It is available in `sh` via `cat <&3` or `cat /dev/fd/3`.", nil
 	}
 
 	// Binary mode: read all and save to file

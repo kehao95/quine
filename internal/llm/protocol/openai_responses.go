@@ -110,7 +110,7 @@ func (p *OpenAIResponsesProtocol) EndpointPath() string {
 	return "/v1/responses"
 }
 
-func (p *OpenAIResponsesProtocol) EncodeRequest(messages []tape.Message, tools []ToolSchema, model string, maxTokens int) ([]byte, error) {
+func (p *OpenAIResponsesProtocol) EncodeRequest(messages []tape.Message, tools []ToolSchema, model string, maxTokens int, opts RequestOptions) ([]byte, error) {
 	input, instructions := convertResponsesInput(messages)
 
 	req := responsesRequest{
@@ -123,6 +123,21 @@ func (p *OpenAIResponsesProtocol) EncodeRequest(messages []tape.Message, tools [
 		Reasoning: &responsesReasoning{
 			Summary: "detailed", // Request detailed reasoning summaries
 		},
+	}
+
+	// Apply thinking budget if specified
+	if opts.ThinkingBudget != "" && req.Reasoning != nil {
+		// Map our budget levels to Responses API effort levels
+		switch opts.ThinkingBudget {
+		case "off":
+			req.Reasoning.Effort = "none"
+		case "low":
+			req.Reasoning.Effort = "low"
+		case "medium":
+			req.Reasoning.Effort = "medium"
+		case "high":
+			req.Reasoning.Effort = "high"
+		}
 	}
 
 	return json.Marshal(req)
@@ -262,6 +277,10 @@ func convertResponsesInput(msgs []tape.Message) ([]responsesItem, string) {
 			}
 
 		case tape.RoleToolResult:
+			// TODO(vision): The Responses API function_call_output type does not
+			// currently support image content. Image data is silently dropped here.
+			// When OpenAI adds image support to function_call_output, attach the
+			// image as an additional content part.
 			input = append(input, responsesItem{
 				Type:   "function_call_output",
 				CallID: m.ToolID,

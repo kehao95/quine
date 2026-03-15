@@ -17,25 +17,41 @@ type Transport interface {
 // For returns the Transport implementation for a given API type.
 // Supported: "openai", "anthropic", "openai-responses".
 //
-// Special case: if apiKey is "codex-oauth", OAuth transport is used
-// regardless of apiType (for Codex CLI integration).
+// Special cases for OAuth:
+//   - apiKey "codex-oauth" triggers Codex CLI OAuth flow
+//   - apiKey "kimi-oauth" triggers Kimi CLI OAuth flow (impersonates Kimi CLI)
 func For(apiType, apiKey string, cfg *config.Config) (Transport, error) {
-	// Special sentinel: "codex-oauth" API key triggers OAuth flow
+	// Special sentinel: "codex-oauth" API key triggers Codex OAuth flow
 	if apiKey == "codex-oauth" {
 		return NewCodexOAuthTransport(cfg)
 	}
 
+	// Special sentinel: "kimi-oauth" API key triggers Kimi OAuth flow
+	if apiKey == "kimi-oauth" {
+		return NewKimiOAuthTransport(cfg)
+	}
+
+	// Extract optional User-Agent from config
+	var userAgent string
+	if cfg != nil {
+		userAgent = cfg.UserAgent
+	}
+
 	switch apiType {
 	case "anthropic":
+		extraHeaders := map[string]string{
+			"anthropic-version": "2023-06-01",
+		}
+		if userAgent != "" {
+			extraHeaders["User-Agent"] = userAgent
+		}
 		return &APIKeyHeader{
-			HeaderName: "x-api-key",
-			APIKey:     apiKey,
-			ExtraHeaders: map[string]string{
-				"anthropic-version": "2023-06-01",
-			},
+			HeaderName:   "x-api-key",
+			APIKey:       apiKey,
+			ExtraHeaders: extraHeaders,
 		}, nil
 	case "openai", "openai-responses":
-		return &BearerToken{APIKey: apiKey}, nil
+		return &BearerToken{APIKey: apiKey, UserAgent: userAgent}, nil
 	default:
 		return nil, fmt.Errorf("unknown provider: %s", apiType)
 	}

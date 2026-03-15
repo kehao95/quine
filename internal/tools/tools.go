@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -13,34 +15,150 @@ import (
 	"github.com/kehao95/quine/internal/tape"
 )
 
-// ShExecutor runs shell commands as ephemeral jobs with optional resource budgets.
+const jobWrapperScript = `
+job_pid="$$"
+canon_dir="${QUINE_JOB_SESSION_DIR}/${job_pid}"
+
+mkdir -p "$canon_dir"
+printf '%s' "$QUINE_JOB_COMMAND" >"$canon_dir/cmd"
+
+rm -f "$canon_dir/exit" "$canon_dir/exit.tmp"
+mkfifo "$canon_dir/exit"
+exec 9<>"$canon_dir/exit"
+
+child_pid=""
+term_requested=0
+trap 'term_requested=1; if [ -n "$child_pid" ]; then kill -TERM "$child_pid" 2>/dev/null || true; fi' TERM INT HUP
+
+cleanup_workspace_mounts() {
+  if [ -z "${QUINE_WORKSPACE_ENABLED:-}" ] || [ "${QUINE_WORKSPACE_ENABLED:-}" != "1" ]; then
+    return 0
+  fi
+  mount_root="${QUINE_WORKSPACE_MOUNT_BASE}/${job_pid}"
+  merged_dir="${mount_root}/merged"
+  umount "$QUINE_WORKSPACE_ROOT" 2>/dev/null || true
+  umount "$merged_dir" 2>/dev/null || true
+  rm -rf "$mount_root" 2>/dev/null || true
+}
+
+run_job_command() {
+  if [ "${QUINE_WORKSPACE_ENABLED:-}" = "1" ]; then
+    if [ "${QUINE_WORKSPACE_BACKEND:-overlay}" = "overlay" ]; then
+      set -eu
+      mount_root="${QUINE_WORKSPACE_MOUNT_BASE}/${job_pid}"
+      merged_dir="${mount_root}/merged"
+      work_dir="${mount_root}/work"
+      mkdir -p "$merged_dir" "$work_dir"
+      mount --make-rprivate / 2>/dev/null || mount --make-private /
+      mount -t overlay overlay -o "lowerdir=${QUINE_WORKSPACE_ROOT},upperdir=${QUINE_WORKSPACE_UPPER},workdir=${work_dir}" "$merged_dir"
+      mount --bind "$merged_dir" "$QUINE_WORKSPACE_ROOT"
+    fi
+    mkdir -p "$QUINE_WORKSPACE"
+    cd "$QUINE_WORKSPACE"
+    exec "$QUINE_JOB_SHELL" -c "$QUINE_JOB_COMMAND"
+  fi
+  exec "$QUINE_JOB_SHELL" -c "$QUINE_JOB_COMMAND"
+}
+
+if [ -n "${QUINE_JOB_STDIN_FILE:-}" ]; then
+  run_job_command <"$QUINE_JOB_STDIN_FILE" >"$canon_dir/out.log" 2>"$canon_dir/err.log" &
+else
+  run_job_command >"$canon_dir/out.log" 2>"$canon_dir/err.log" &
+fi
+child_pid=$!
+
+while :; do
+  wait "$child_pid"
+  status=$?
+  if [ "$term_requested" -eq 0 ] || ! kill -0 "$child_pid" 2>/dev/null; then
+    break
+  fi
+done
+
+printf '%s\n' "$status" >"$canon_dir/exit.tmp"
+printf '%s\n' "$status" >&9 || true
+mv -f "$canon_dir/exit.tmp" "$canon_dir/exit"
+exec 9>&-
+
+if [ -n "${QUINE_JOB_STDIN_FILE:-}" ]; then
+  rm -f "$QUINE_JOB_STDIN_FILE"
+fi
+
+cleanup_workspace_mounts
+
+exit "$status"
+`
+
+// ShExecutor runs shell commands as ephemeral jobs backed by filesystem state.
 //
-// Each sh(command) spawns a fresh process group. The job is monitored by an
-// Overseer goroutine; when a budget (timeout or output_limit) is exhausted,
-// the job is SIGSTOP'd and a [PAUSED] result is returned. The agent can
-// resume or kill the job via the separate `job` tool.
+// Every command gets a canonical job directory at:
+//
+//	${QUINE_DATA_DIR}/jobs/<session>/<pid>/
+//
+// Directory contents:
+//   - cmd: original command string passed to sh
+//   - out.log: child stdout
+//   - err.log: child stderr
+//   - exit: FIFO-then-regular-file completion status
+//
+// The special exit file starts life as a FIFO so `cat <job-path>/exit` blocks
+// while the process runs; on completion the wrapper replaces it with a regular
+// file containing the numeric exit status.
+//
+// Synchronous sh(command) calls remove their per-call job directory after the
+// bounded result is constructed. Detached jobs retain their directory.
+//
+// TODO(quine): expose a stable subjective-world /job/<pid>/ namespace instead
+// of returning raw runtime-root-backed absolute paths.
 type ShExecutor struct {
 	Shell     string
 	MaxOutput int
 	Env       []string
 	Timeout   time.Duration
 
-	// Stdin is the material stdin file descriptor. Passed as fd 4
-	// (ExtraFiles[1]) so the agent can read it via /dev/fd/4 or cat <&4.
+	// WorkDir is the working directory for shell commands.
+	// If empty, defaults to the session's job directory.
+	WorkDir string
+
+	// Stdin is the material stdin file descriptor. Passed as fd 3
+	// (ExtraFiles[0]) so the agent can read it via /dev/fd/3 or cat <&3.
 	Stdin *os.File
 
-	// Stdout is the deliverable stdout file descriptor. Passed as fd 3
-	// (ExtraFiles[0]) so commands can write to >&3.
+	// Stdout is the deliverable stdout file descriptor. Passed as fd 4
+	// (ExtraFiles[1]) so commands can write to >&4.
 	Stdout *os.File
+
+	// Stderr is the failure-signal file descriptor. Passed as fd 5
+	// (ExtraFiles[2]) so commands can write to >&5.
+	Stderr *os.File
 
 	// ProcessStarted is called when a shell starts (for SIGINT forwarding).
 	ProcessStarted func(*os.Process)
 	// ProcessEnded is called when a shell exits.
 	ProcessEnded func()
 
-	// jobs manages all active/paused jobs.
-	jobs   *JobManager
-	jobsMu sync.Mutex // guards lazy init of jobs
+	DataDir    string // durable runtime-state root for jobs and related surfaces
+	SessionID  string
+	TurnID     int
+	subjective *subjectiveFS
+
+	mu       sync.Mutex
+	detached map[int]*managedJob
+}
+
+type managedJob struct {
+	ID           int
+	cmd          *exec.Cmd
+	detached     bool
+	interactive  bool
+	canonicalDir string
+	displayDir   string
+	outPath      string
+	errPath      string
+	exitPath     string
+	doneCh       chan struct{}
+	exitCode     int
+	ptyState     *interactiveState
 }
 
 // NewShExecutor creates a ShExecutor from config with the given child
@@ -48,37 +166,44 @@ type ShExecutor struct {
 // Config.ChildEnv). These are merged with os.Environ() so that spawned
 // commands inherit a complete environment with QUINE_* vars overlaid.
 //
-// QUINE_SESSION_ID is stripped from both envs so each child quine process
-// generates its own unique session ID.
+// QUINE_SESSION_ID and QUINE_TAPE_ID are stripped from both envs so each
+// child quine process generates fresh per-process identity.
 func NewShExecutor(cfg *config.Config, childEnv []string) *ShExecutor {
-	// Filter out QUINE_SESSION_ID from childEnv
+	// Filter out per-process identity from childEnv.
 	filteredChildEnv := make([]string, 0, len(childEnv))
 	for _, entry := range childEnv {
-		if !strings.HasPrefix(entry, "QUINE_SESSION_ID=") {
-			filteredChildEnv = append(filteredChildEnv, entry)
+		if strings.HasPrefix(entry, "QUINE_SESSION_ID=") {
+			continue
 		}
+		if strings.HasPrefix(entry, "QUINE_TAPE_ID=") {
+			continue
+		}
+		filteredChildEnv = append(filteredChildEnv, entry)
 	}
 
-	// Filter out QUINE_SESSION_ID from os.Environ() too
+	// Filter out per-process identity from os.Environ() too.
 	filteredOsEnv := make([]string, 0, len(os.Environ()))
 	for _, entry := range os.Environ() {
-		if !strings.HasPrefix(entry, "QUINE_SESSION_ID=") {
-			filteredOsEnv = append(filteredOsEnv, entry)
+		if strings.HasPrefix(entry, "QUINE_SESSION_ID=") {
+			continue
 		}
+		if strings.HasPrefix(entry, "QUINE_TAPE_ID=") {
+			continue
+		}
+		filteredOsEnv = append(filteredOsEnv, entry)
 	}
 
 	mergedEnv := MergeEnv(filteredOsEnv, filteredChildEnv)
 
-	timeout := time.Duration(cfg.ShTimeout) * time.Second
-	if timeout == 0 {
-		timeout = 600 * time.Second // default 10 minutes
-	}
-
 	return &ShExecutor{
-		Shell:     cfg.Shell,
-		MaxOutput: cfg.OutputTruncate,
-		Env:       mergedEnv,
-		Timeout:   timeout,
+		Shell:      cfg.Shell,
+		MaxOutput:  cfg.OutputTruncate,
+		Env:        mergedEnv,
+		Timeout:    time.Duration(cfg.ShTimeout) * time.Second,
+		WorkDir:    cfg.WorkDir,
+		DataDir:    cfg.DataDir,
+		SessionID:  cfg.SessionID,
+		subjective: newSubjectiveFS(cfg),
 	}
 }
 
@@ -111,53 +236,278 @@ func MergeEnv(osEnv []string, childEnv []string) []string {
 	return result
 }
 
-// initJobs lazily creates the JobManager.
-func (b *ShExecutor) initJobs() {
-	if b.jobs == nil {
-		var extraFiles []*os.File
-		if b.Stdout != nil {
-			extraFiles = append(extraFiles, b.Stdout)
+func (b *ShExecutor) initState() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if b.detached == nil {
+		b.detached = make(map[int]*managedJob)
+	}
+
+	if b.Shell == "" {
+		b.Shell = "/bin/sh"
+	}
+	if b.MaxOutput == 0 {
+		b.MaxOutput = 20480
+	}
+	if b.DataDir == "" {
+		tmpDir, err := os.MkdirTemp("", "quine-sh-data-*")
+		if err != nil {
+			return fmt.Errorf("creating temp data dir: %w", err)
 		}
-		if b.Stdin != nil {
-			extraFiles = append(extraFiles, b.Stdin)
+		b.DataDir = tmpDir
+	}
+	if b.SessionID == "" {
+		b.SessionID = fmt.Sprintf("session-%d", time.Now().UnixNano())
+	}
+	if b.subjective != nil {
+		if err := b.subjective.init(b.DataDir, b.SessionID); err != nil {
+			return fmt.Errorf("initializing workspace physics: %w", err)
 		}
-		b.jobs = NewJobManager(b.Shell, b.Env, extraFiles)
+	}
+	return nil
+}
+
+func (b *ShExecutor) jobSessionRoot() (string, error) {
+	dataDirAbs, err := filepath.Abs(b.DataDir)
+	if err != nil {
+		return "", fmt.Errorf("abs data dir: %w", err)
+	}
+	root := filepath.Join(dataDirAbs, "jobs", b.SessionID)
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		return "", fmt.Errorf("creating session job root: %w", err)
+	}
+	return root, nil
+}
+
+func (b *ShExecutor) extraFiles() []*os.File {
+	stdoutFD := b.Stdout
+	if stdoutFD == nil {
+		stdoutFD = os.Stdout
+	}
+	stdinFD := b.Stdin
+	if stdinFD == nil {
+		stdinFD = os.Stdin
+	}
+	stderrFD := b.Stderr
+	if stderrFD == nil {
+		stderrFD = os.Stderr
+	}
+
+	// Side channels follow fd+3 positional mapping:
+	// runtime fd 0/1/2 -> child fd 3/4/5.
+	return []*os.File{stdinFD, stdoutFD, stderrFD}
+}
+
+func (b *ShExecutor) startJob(command string, detach bool, stdin string) (*managedJob, error) {
+	if err := b.initState(); err != nil {
+		return nil, err
+	}
+
+	jobSessionRoot, err := b.jobSessionRoot()
+	if err != nil {
+		return nil, err
+	}
+
+	var stdinFile string
+	if stdin != "" {
+		f, err := os.CreateTemp(jobSessionRoot, "stdin-*")
+		if err != nil {
+			return nil, fmt.Errorf("creating stdin temp file: %w", err)
+		}
+		if _, err := f.WriteString(stdin); err != nil {
+			f.Close()
+			os.Remove(f.Name())
+			return nil, fmt.Errorf("writing stdin temp file: %w", err)
+		}
+		if err := f.Close(); err != nil {
+			os.Remove(f.Name())
+			return nil, fmt.Errorf("closing stdin temp file: %w", err)
+		}
+		stdinFile = f.Name()
+	}
+
+	cmd := exec.Command(b.Shell, "-c", jobWrapperScript)
+	useWorkspace := b.subjective != nil && b.subjective.enabled
+	needsWorkspaceNamespace := useWorkspace && !b.subjective.directBackend()
+	cmd.SysProcAttr = jobSysProcAttr(detach, needsWorkspaceNamespace)
+
+	cmd.Env = MergeEnv(b.Env, []string{
+		"QUINE_JOB_SHELL=" + b.Shell,
+		"QUINE_JOB_COMMAND=" + command,
+		"QUINE_JOB_SESSION_DIR=" + jobSessionRoot,
+		"QUINE_JOB_STDIN_FILE=" + stdinFile,
+	})
+	// Use explicit WorkDir if set, otherwise fall back to the job session root
+	if b.WorkDir != "" {
+		cmd.Dir = b.WorkDir
+	} else {
+		cmd.Dir = jobSessionRoot
+	}
+	if useWorkspace {
+		cmd.Env = MergeEnv(cmd.Env, b.subjective.commandEnv())
+	}
+	cmd.ExtraFiles = b.extraFiles()
+
+	if err := cmd.Start(); err != nil {
+		if stdinFile != "" {
+			_ = os.Remove(stdinFile)
+		}
+		return nil, fmt.Errorf("starting process: %w", err)
+	}
+
+	pid := cmd.Process.Pid
+	canonicalDir := filepath.Join(jobSessionRoot, strconv.Itoa(pid))
+	job := &managedJob{
+		ID:           pid,
+		cmd:          cmd,
+		detached:     detach,
+		canonicalDir: canonicalDir,
+		displayDir:   filepath.ToSlash(canonicalDir) + "/",
+		outPath:      filepath.Join(canonicalDir, "out.log"),
+		errPath:      filepath.Join(canonicalDir, "err.log"),
+		exitPath:     filepath.Join(canonicalDir, "exit"),
+		doneCh:       make(chan struct{}),
+	}
+
+	if err := b.waitForMaterialization(job); err != nil {
+		_ = syscall.Kill(-job.ID, syscall.SIGKILL)
+		_ = cmd.Wait()
+		return nil, err
+	}
+
+	go b.awaitExit(job)
+	return job, nil
+}
+
+func (b *ShExecutor) waitForMaterialization(job *managedJob) error {
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if _, err := os.Stat(job.exitPath); err == nil {
+			return nil
+		}
+		if job.cmd.ProcessState != nil && job.cmd.ProcessState.Exited() {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	return fmt.Errorf("job %d did not materialize job metadata", job.ID)
+}
+
+func (b *ShExecutor) awaitExit(job *managedJob) {
+	code := exitCodeFromWait(job.cmd.Wait())
+	job.exitCode = code
+	close(job.doneCh)
+
+	if job.detached {
+		b.mu.Lock()
+		delete(b.detached, job.ID)
+		b.mu.Unlock()
 	}
 }
 
-// GetJobManager returns the JobManager (creating it if needed).
-// Called by runtime.go to wire the job tool dispatcher.
-func (b *ShExecutor) GetJobManager() *JobManager {
-	b.jobsMu.Lock()
-	defer b.jobsMu.Unlock()
-	b.initJobs()
-	return b.jobs
+func exitCodeFromWait(err error) int {
+	if err == nil {
+		return 0
+	}
+	exitErr, ok := err.(*exec.ExitError)
+	if !ok {
+		return 1
+	}
+	if ws, ok := exitErr.Sys().(syscall.WaitStatus); ok {
+		if ws.Exited() {
+			return ws.ExitStatus()
+		}
+		if ws.Signaled() {
+			return 128 + int(ws.Signal())
+		}
+	}
+	code := exitErr.ExitCode()
+	if code >= 0 {
+		return code
+	}
+	return 1
+}
+
+func (b *ShExecutor) registerDetached(job *managedJob) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.detached[job.ID] = job
+}
+
+func (b *ShExecutor) readLog(path string) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	return string(data)
+}
+
+func (b *ShExecutor) Prepare() error {
+	return b.initState()
 }
 
 // Execute dispatches a sh(command) call.
-func (b *ShExecutor) Execute(toolID string, command string, timeout time.Duration, outputLimit int, interactive bool) tape.ToolResult {
-	b.jobsMu.Lock()
-	b.initJobs()
-	b.jobsMu.Unlock()
+//
+// timeout and outputLimit are currently ignored in the filesystem job model.
+// interactive=true starts a PTY-backed interactive job and returns immediately
+// with a filesystem control surface under the job directory.
+func (b *ShExecutor) Execute(toolID string, command string, timeout time.Duration, outputLimit int, interactive bool, detach bool, stdin string) tape.ToolResult {
+	_ = timeout
+	_ = outputLimit
 
-	// Resolve effective timeout: explicit > executor default > hard default
-	effectiveTimeout := timeout
-	if effectiveTimeout == 0 {
-		effectiveTimeout = b.Timeout
-		if effectiveTimeout == 0 {
-			effectiveTimeout = 600 * time.Second
+	if interactive {
+		if stdin != "" {
+			return tape.ToolResult{
+				ToolID:  toolID,
+				Content: "[SHELL ERROR] interactive=true cannot be combined with stdin",
+				IsError: true,
+			}
+		}
+		if detach {
+			return tape.ToolResult{
+				ToolID:  toolID,
+				Content: "[SHELL ERROR] interactive=true already returns immediately; do not also set detach=true",
+				IsError: true,
+			}
+		}
+	}
+	if (detach || interactive) && b.subjective != nil && b.subjective.enabled {
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: "[SHELL ERROR] interactive and detached jobs are not supported while Linux workspace physics are enabled",
+			IsError: true,
+		}
+	}
+	if b.subjective != nil && b.subjective.enabled {
+		if err := b.initState(); err != nil {
+			return tape.ToolResult{
+				ToolID:  toolID,
+				Content: fmt.Sprintf("[SHELL ERROR] %v", err),
+				IsError: true,
+			}
 		}
 	}
 
-	// Notify caller that a shell is starting (for SIGINT forwarding)
-	// We do this synchronously before Launch so the process pointer is
-	// tracked from the moment it exists.
-	var proc *os.Process
-	_ = proc // used via callback below
+	beforeSnap, snapErr := fsSnapshot{}, error(nil)
+	if b.subjective != nil && b.subjective.enabled {
+		beforeSnap, snapErr = b.subjective.snapshot()
+		if snapErr != nil {
+			return tape.ToolResult{
+				ToolID:  toolID,
+				Content: fmt.Sprintf("[SHELL ERROR] snapshot before command: %v", snapErr),
+				IsError: true,
+			}
+		}
+	}
 
-	// We need the process before the overseer might fire, so we reach
-	// into a small shim: Launch returns the job which has the cmd.
-	j, err := b.jobs.Launch(command, effectiveTimeout, outputLimit, interactive)
+	var job *managedJob
+	var err error
+	if interactive {
+		job, err = b.startInteractiveJob(command)
+	} else {
+		job, err = b.startJob(command, detach, stdin)
+	}
 	if err != nil {
 		return tape.ToolResult{
 			ToolID:  toolID,
@@ -166,168 +516,232 @@ func (b *ShExecutor) Execute(toolID string, command string, timeout time.Duratio
 		}
 	}
 
-	if b.ProcessStarted != nil {
-		b.ProcessStarted(j.cmd.Process)
-	}
-
-	paused := j.Wait()
-
-	if b.ProcessEnded != nil && !paused {
-		b.ProcessEnded()
-	}
-
-	if paused {
-		// Job is paused — keep in registry.
-		stdoutStr := j.ReadStdout()
-		stderrStr := j.ReadStderr()
-		totalBytes := j.stdout.Len()
-		shownBytes := len(stdoutStr)
-		content := fmt.Sprintf(
-			"[PAUSED] job=%d (process is STOPPED, not exited — no exit code yet)\n[STDOUT] %d bytes shown (%d bytes total in buffer)\n%s\n[STDERR]\n%s\nOptions: job(id=%d, signal=\"cont\", output_limit=N) to resume, job(id=%d, signal=\"kill\") to discard",
-			j.ID, shownBytes, totalBytes, stdoutStr, stderrStr, j.ID, j.ID,
-		)
+	if interactive {
+		b.registerDetached(job)
+		if b.ProcessStarted != nil {
+			b.ProcessStarted(job.cmd.Process)
+		}
+		if b.ProcessEnded != nil {
+			b.ProcessEnded()
+		}
 		return tape.ToolResult{
-			ToolID:  toolID,
-			Content: content,
+			ToolID: toolID,
+			Content: fmt.Sprintf(
+				"[JOB] pid=%d path=%s (interactive)\nRead screen in `%sscreen.txt` or `%sscreen.png`.\nScreen metadata: `%sscreen.meta`\nInput keystrokes via `%sin`\nResize via `%swinsize`\nEvent log: `%sevents.log`\nWait for completion with `cat %sexit`.",
+				job.ID, job.displayDir, job.displayDir, job.displayDir, job.displayDir, job.displayDir, job.displayDir, job.displayDir, job.displayDir,
+			),
 		}
 	}
 
-	// Natural completion — remove from registry.
-	b.jobs.Remove(j.ID)
+	if detach {
+		b.registerDetached(job)
+		if b.ProcessStarted != nil {
+			b.ProcessStarted(job.cmd.Process)
+		}
+		if b.ProcessEnded != nil {
+			b.ProcessEnded()
+		}
+		mutations := ""
+		if b.subjective != nil && b.subjective.enabled {
+			afterSnap, err := b.subjective.snapshot()
+			if err == nil {
+				mutations = b.subjective.formatMutations(beforeSnap, afterSnap)
+			}
+		}
+		return tape.ToolResult{
+			ToolID: toolID,
+			Content: fmt.Sprintf(
+				"[JOB] pid=%d path=%s (detached)\nYou can wait this job by `cat %sexit`\nSee output in `%sout.log` and `%serr.log`.%s",
+				job.ID, job.displayDir, job.displayDir, job.displayDir, job.displayDir, optionalTrailingBlock(mutations),
+			),
+		}
+	}
 
-	stdoutStr := b.applyOutputLimit(j.ReadStdout())
-	stderrStr := b.applyOutputLimit(j.ReadStderr())
-	content := fmt.Sprintf("[EXIT CODE] %d\n[STDOUT]\n%s\n[STDERR]\n%s", j.ExitCode(), stdoutStr, stderrStr)
+	if b.ProcessStarted != nil {
+		b.ProcessStarted(job.cmd.Process)
+	}
+	<-job.doneCh
+	if b.ProcessEnded != nil {
+		b.ProcessEnded()
+	}
+
+	stdoutStr := b.applyOutputLimit(b.readLog(job.outPath))
+	stderrStr := b.applyOutputLimit(b.readLog(job.errPath))
+	mutations := ""
+	worldRevisionBlock := ""
+	if b.subjective != nil && b.subjective.enabled {
+		afterSnap, err := b.subjective.snapshot()
+		if err != nil {
+			return tape.ToolResult{
+				ToolID:  toolID,
+				Content: fmt.Sprintf("[SHELL ERROR] snapshot after command: %v", err),
+				IsError: true,
+			}
+		}
+		mutations = b.subjective.formatMutations(beforeSnap, afterSnap)
+		hasMutations := len(diffTree(beforeSnap.workspace, afterSnap.workspace)) > 0
+		if hasMutations {
+			if revision, err := b.subjective.captureWorldRevision("sh", b.TurnID); err != nil {
+				return tape.ToolResult{
+					ToolID:  toolID,
+					Content: fmt.Sprintf("[SHELL ERROR] capture world revision after turn %d: %v", b.TurnID, err),
+					IsError: true,
+				}
+			} else if revision.ID != "" {
+				worldRevisionBlock = formatWorldRevisionCreated(revision, false)
+			}
+		} else if revision, err := b.subjective.loadCurrentWorldRevision(); err != nil {
+			return tape.ToolResult{
+				ToolID:  toolID,
+				Content: fmt.Sprintf("[SHELL ERROR] load current world revision after turn %d: %v", b.TurnID, err),
+				IsError: true,
+			}
+		} else if revision.ID != "" {
+			worldRevisionBlock = formatWorldRevisionCreated(revision, true)
+		}
+	}
+
+	// Cleanup job directory for synchronous (non-detached) jobs since
+	// results have already been captured and returned inline.
+	_ = os.RemoveAll(job.canonicalDir)
+
+	content := fmt.Sprintf(
+		"[EXIT CODE] %d\n[STDOUT]\n%s[STDERR]\n%s%s%s",
+		job.exitCode, stdoutStr, stderrStr, optionalTrailingBlock(mutations), optionalTrailingBlock(worldRevisionBlock),
+	)
 
 	return tape.ToolResult{
 		ToolID:  toolID,
 		Content: content,
-		IsError: j.ExitCode() != 0,
+		IsError: job.exitCode != 0,
 	}
 }
 
-// applyOutputLimit truncates with a visible notice (only for naturally-completed
-// output that somehow exceeds MaxOutput — this should be rare with output_limit).
+func (b *ShExecutor) RestoreWorld(toolID string, revision string) tape.ToolResult {
+	if strings.TrimSpace(revision) == "" {
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: "[RESTORE WORLD ERROR] revision is required",
+			IsError: true,
+		}
+	}
+	if b.subjective == nil || !b.subjective.enabled {
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: "[RESTORE WORLD ERROR] world restore requires Linux workspace physics",
+			IsError: true,
+		}
+	}
+	if !b.subjective.canRestoreWorld() {
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: "[RESTORE WORLD ERROR] restore_world requires workspace revision mode with restore support",
+			IsError: true,
+		}
+	}
+	if err := b.initState(); err != nil {
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: fmt.Sprintf("[RESTORE WORLD ERROR] %v", err),
+			IsError: true,
+		}
+	}
+	previous, current, err := b.subjective.restoreWorld(revision)
+	if err != nil {
+		return tape.ToolResult{
+			ToolID:  toolID,
+			Content: fmt.Sprintf("[RESTORE WORLD ERROR] %v", err),
+			IsError: true,
+		}
+	}
+	return tape.ToolResult{
+		ToolID:  toolID,
+		Content: fmt.Sprintf("[RESTORE WORLD] restored provisional workspace to revision %s%s", current, optionalTrailingBlock(formatWorldRevisionTransition(previous, current))),
+	}
+}
+
+func (b *ShExecutor) CurrentWorldRevision() string {
+	if b.subjective == nil {
+		return ""
+	}
+	return b.subjective.currentWorldRevision()
+}
+
+func formatWorldRevisionCreated(revision worldRevision, unchanged bool) string {
+	if revision.ID == "" {
+		return ""
+	}
+	if unchanged {
+		return fmt.Sprintf("[WORLD REVISION] current=%s (unchanged)", revision.ID)
+	}
+	if revision.Parent == "" {
+		return fmt.Sprintf("[WORLD REVISION] current=%s", revision.ID)
+	}
+	return fmt.Sprintf("[WORLD REVISION] created=%s parent=%s current=%s", revision.ID, revision.Parent, revision.ID)
+}
+
+func formatWorldRevisionTransition(previous, current string) string {
+	if strings.TrimSpace(current) == "" {
+		return ""
+	}
+	if strings.TrimSpace(previous) == "" || previous == current {
+		return fmt.Sprintf("[WORLD REVISION] current=%s", current)
+	}
+	return fmt.Sprintf("[WORLD REVISION] %s -> %s", previous, current)
+}
+
+func optionalTrailingBlock(block string) string {
+	if strings.TrimSpace(block) == "" {
+		return ""
+	}
+	return "\n" + block
+}
+
+// applyOutputLimit truncates with a visible notice for tool results.
 func (b *ShExecutor) applyOutputLimit(s string) string {
 	if b.MaxOutput <= 0 || len(s) <= b.MaxOutput {
 		return s
 	}
 	total := len(s)
-	return s[:b.MaxOutput] + fmt.Sprintf("\n...[Output Truncated, %d bytes total]", total)
+	return s[:b.MaxOutput] + fmt.Sprintf("\n...[Output Truncated, %d bytes total] Increase QUINE_OUTPUT_TRUNCATE to capture more in the tool result.", total)
 }
 
-// HandleJob processes a job(id=N, ...) tool call and returns the result.
-func (b *ShExecutor) HandleJob(toolID string, args map[string]any) tape.ToolResult {
-	b.jobsMu.Lock()
-	b.initJobs()
-	b.jobsMu.Unlock()
-
-	// Parse id
-	idRaw, ok := args["id"]
-	if !ok {
-		return tape.ToolResult{
-			ToolID:  toolID,
-			Content: "[JOB ERROR] missing required parameter: id",
-			IsError: true,
-		}
-	}
-	pgid := ToInt(idRaw)
-	if pgid <= 0 {
-		return tape.ToolResult{
-			ToolID:  toolID,
-			Content: fmt.Sprintf("[JOB ERROR] invalid id: %v", idRaw),
-			IsError: true,
-		}
+// Close kills active detached jobs unless they should survive success.
+func (b *ShExecutor) Close(keepDetached bool) error {
+	if err := b.initState(); err != nil {
+		return err
 	}
 
-	j := b.jobs.Get(pgid)
-	if j == nil {
-		return tape.ToolResult{
-			ToolID:  toolID,
-			Content: fmt.Sprintf("[JOB ERROR] job %d not found (already completed or killed)", pgid),
-			IsError: true,
+	b.mu.Lock()
+	jobs := make([]*managedJob, 0, len(b.detached))
+	for _, job := range b.detached {
+		jobs = append(jobs, job)
+	}
+	b.mu.Unlock()
+
+	if !keepDetached {
+		for _, job := range jobs {
+			_ = syscall.Kill(-job.ID, syscall.SIGKILL)
 		}
 	}
-
-	signal, _ := args["signal"].(string)
-
-	switch signal {
-	case "kill":
-		j.Kill()
-		b.jobs.Remove(pgid)
-		if b.ProcessEnded != nil {
-			b.ProcessEnded()
+	if keepDetached && b.subjective != nil && b.subjective.enabled {
+		if err := b.subjective.commit(); err != nil {
+			return err
 		}
-		return tape.ToolResult{
-			ToolID:  toolID,
-			Content: fmt.Sprintf("[JOB] %d killed", pgid),
-		}
-
-	case "cont":
-		timeout := time.Duration(ToInt(args["timeout"])) * time.Second
-		outputLimit := ToInt(args["output_limit"])
-		input, _ := args["input"].(string)
-		// If no budget given, use executor defaults
-		if timeout == 0 {
-			timeout = b.Timeout
-		}
-		if err := j.Resume(timeout, outputLimit, input); err != nil {
-			return tape.ToolResult{
-				ToolID:  toolID,
-				Content: fmt.Sprintf("[JOB ERROR] %v", err),
-				IsError: true,
-			}
-		}
-
-		paused := j.Wait()
-		if b.ProcessEnded != nil && !paused {
-			b.ProcessEnded()
-		}
-
-		if paused {
-			stdoutStr := j.ReadStdout()
-			stderrStr := j.ReadStderr()
-			totalBytes := j.stdout.Len()
-			shownBytes := len(stdoutStr)
-			content := fmt.Sprintf(
-				"[PAUSED] job=%d (process is STOPPED, not exited — no exit code yet)\n[STDOUT] %d bytes shown (%d bytes total in buffer)\n%s\n[STDERR]\n%s\nOptions: job(id=%d, signal=\"cont\", output_limit=N) to resume, job(id=%d, signal=\"kill\") to discard",
-				j.ID, shownBytes, totalBytes, stdoutStr, stderrStr, j.ID, j.ID,
-			)
-			return tape.ToolResult{ToolID: toolID, Content: content}
-		}
-
-		// Completed
-		b.jobs.Remove(pgid)
-		stdoutStr := b.applyOutputLimit(j.ReadStdout())
-		stderrStr := b.applyOutputLimit(j.ReadStderr())
-		content := fmt.Sprintf("[EXIT CODE] %d\n[STDOUT]\n%s\n[STDERR]\n%s", j.ExitCode(), stdoutStr, stderrStr)
-		return tape.ToolResult{
-			ToolID:  toolID,
-			Content: content,
-			IsError: j.ExitCode() != 0,
-		}
-
-	default:
-		// Read-only: return current output without resuming
-		stdoutStr := j.ReadStdout()
-		stderrStr := j.ReadStderr()
-		stateStr := "paused"
-		if j.State() == JobRunning {
-			stateStr = "running"
-		}
-		content := fmt.Sprintf("[JOB %d - %s]\n[STDOUT]\n%s\n[STDERR]\n%s", pgid, stateStr, stdoutStr, stderrStr)
-		return tape.ToolResult{ToolID: toolID, Content: content}
 	}
-}
-
-// Close kills all active jobs.
-func (b *ShExecutor) Close() error {
-	b.jobsMu.Lock()
-	defer b.jobsMu.Unlock()
-	if b.jobs != nil {
-		return b.jobs.KillAll()
+	if !keepDetached && b.subjective != nil && b.subjective.enabled {
+		if err := b.subjective.rollback(); err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+func (b *ShExecutor) ChildEnvOverrides() []string {
+	if b.subjective == nil {
+		return nil
+	}
+	return b.subjective.childEnvOverrides()
 }
 
 // ToInt converts various numeric types from JSON unmarshalling to int.
@@ -353,7 +767,3 @@ func toDuration(v any) time.Duration {
 	}
 	return time.Duration(secs) * time.Second
 }
-
-// Keep exec.Cmd accessible for ProcessStarted callback.
-var _ = (*exec.Cmd)(nil)
-var _ = syscall.SIGSTOP // ensure syscall is used

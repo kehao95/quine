@@ -397,3 +397,64 @@ func TestMessageOmitemptyJSON(t *testing.T) {
 		t.Error("tool_id should be omitted for empty string")
 	}
 }
+
+func TestTape_SetSystemPrompt(t *testing.T) {
+	tape := NewTape("test-session", "", 0, "test-model")
+
+	// Add a system message
+	tape.Append(Message{
+		Role:    RoleSystem,
+		Content: "Original system prompt",
+	})
+
+	// Add a user message
+	tape.Append(Message{
+		Role:    RoleUser,
+		Content: "Hello",
+	})
+
+	// Update system prompt
+	tape.SetSystemPrompt("Updated system prompt")
+
+	// Verify the change
+	messages := tape.Messages()
+	if messages[0].Content != "Updated system prompt" {
+		t.Errorf("SetSystemPrompt() did not update content: got %q, want %q",
+			messages[0].Content, "Updated system prompt")
+	}
+
+	// Verify other messages unchanged
+	if messages[1].Content != "Hello" {
+		t.Error("SetSystemPrompt() should not affect other messages")
+	}
+}
+
+func TestTape_SetSystemPrompt_EmptyTape(t *testing.T) {
+	tape := NewTape("test-session", "", 0, "test-model")
+
+	// Should not panic on empty tape
+	tape.SetSystemPrompt("Some content")
+
+	// Should have no effect (no messages to update)
+	if len(tape.Messages()) != 0 {
+		t.Error("SetSystemPrompt() should not add messages")
+	}
+}
+
+func TestTape_SetSystemPrompt_NonSystemFirst(t *testing.T) {
+	tape := NewTape("test-session", "", 0, "test-model")
+
+	// Add a user message first (unusual but possible)
+	tape.Append(Message{
+		Role:    RoleUser,
+		Content: "Hello",
+	})
+
+	// Should not modify if first message is not system
+	tape.SetSystemPrompt("System content")
+
+	messages := tape.Messages()
+	if messages[0].Content != "Hello" {
+		t.Error("SetSystemPrompt() should not modify non-system first message")
+	}
+}

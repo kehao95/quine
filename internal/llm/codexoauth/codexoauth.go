@@ -34,8 +34,6 @@ var oauthScopes = []string{
 	"profile",
 	"email",
 	"offline_access",
-	"api.responses.read",
-	"api.responses.write",
 }
 
 type TokenState struct {

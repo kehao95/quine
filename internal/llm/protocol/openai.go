@@ -18,17 +18,37 @@ type OpenAIProtocol struct{}
 // ---------------------------------------------------------------------------
 
 type openaiRequest struct {
-	Model    string          `json:"model"`
-	Messages []openaiMessage `json:"messages"`
-	Tools    []openaiTool    `json:"tools,omitempty"`
+	Model           string          `json:"model"`
+	Messages        []openaiMessage `json:"messages"`
+	Tools           []openaiTool    `json:"tools,omitempty"`
+	ReasoningEffort string          `json:"reasoning_effort,omitempty"` // For o1/o3 models
+	// Kimi-specific thinking config (embedded in extra_body by JSON marshaling)
+	Thinking *openaiThinkingConfig `json:"thinking,omitempty"`
+}
+
+// openaiThinkingConfig is Kimi's thinking configuration.
+type openaiThinkingConfig struct {
+	Type string `json:"type"` // "enabled" or "disabled"
 }
 
 type openaiMessage struct {
 	Role             string           `json:"role"`
-	Content          string           `json:"content,omitempty"`
+	Content          any              `json:"content,omitempty"` // string or []openaiContentPart
 	ReasoningContent string           `json:"reasoning_content,omitempty"`
 	ToolCalls        []openaiToolCall `json:"tool_calls,omitempty"`
 	ToolCallID       string           `json:"tool_call_id,omitempty"`
+}
+
+// openaiContentPart is a single element in a multipart content array.
+type openaiContentPart struct {
+	Type     string          `json:"type"`
+	Text     string          `json:"text,omitempty"`
+	ImageURL *openaiImageURL `json:"image_url,omitempty"`
+}
+
+// openaiImageURL carries a data URI for image_url content parts.
+type openaiImageURL struct {
+	URL string `json:"url"` // "data:<mime>;base64,<data>"
 }
 
 type openaiToolCall struct {
@@ -93,7 +113,7 @@ func (p *OpenAIProtocol) EndpointPath() string {
 	return "/v1/chat/completions"
 }
 
-func (p *OpenAIProtocol) EncodeRequest(messages []tape.Message, tools []ToolSchema, model string, maxTokens int) ([]byte, error) {
+func (p *OpenAIProtocol) EncodeRequest(messages []tape.Message, tools []ToolSchema, model string, maxTokens int, opts RequestOptions) ([]byte, error) {
 	apiMsgs := convertOpenAIMessages(messages)
 	apiTools := convertOpenAITools(tools)
 
@@ -101,6 +121,19 @@ func (p *OpenAIProtocol) EncodeRequest(messages []tape.Message, tools []ToolSche
 		Model:    model,
 		Messages: apiMsgs,
 		Tools:    apiTools,
+	}
+
+	// Apply thinking budget if specified
+	if opts.ThinkingBudget != "" {
+		// For OpenAI o1/o3 models: use reasoning_effort
+		// For Kimi models: use both reasoning_effort and thinking config
+		switch opts.ThinkingBudget {
+		case "off":
+			req.Thinking = &openaiThinkingConfig{Type: "disabled"}
+		case "low", "medium", "high":
+			req.ReasoningEffort = opts.ThinkingBudget
+			req.Thinking = &openaiThinkingConfig{Type: "enabled"}
+		}
 	}
 
 	return json.Marshal(req)
@@ -147,8 +180,24 @@ func (p *OpenAIProtocol) ClassifyError(statusCode int, body []byte) error {
 
 func convertOpenAIMessages(msgs []tape.Message) []openaiMessage {
 	var out []openaiMessage
+	// pendingImages holds invisible user messages with image data that must be
+	// appended AFTER the full contiguous batch of tool messages ends.
+	// OpenAI requires all tool responses for a tool_calls batch to be
+	// contiguous before any user message — inserting a user message mid-batch
+	// causes a 400 "tool_call_id without response" error.
+	var pendingImages []openaiMessage
+
+	flushImages := func() {
+		out = append(out, pendingImages...)
+		pendingImages = nil
+	}
 
 	for _, m := range msgs {
+		// When we leave a tool_result run, flush any deferred image messages.
+		if m.Role != tape.RoleToolResult {
+			flushImages()
+		}
+
 		switch m.Role {
 		case tape.RoleSystem:
 			out = append(out, openaiMessage{
@@ -182,13 +231,39 @@ func convertOpenAIMessages(msgs []tape.Message) []openaiMessage {
 			out = append(out, msg)
 
 		case tape.RoleToolResult:
+			// OpenAI Chat Completions does not support images in role=tool messages.
+			// Workaround: send text as a normal tool message (preserving tool_call_id
+			// pairing), then defer an invisible role=user message carrying the image
+			// as a data: URI. The user message is flushed after the full tool batch.
 			out = append(out, openaiMessage{
 				Role:       "tool",
 				Content:    m.Content,
 				ToolCallID: m.ToolID,
 			})
+			if m.Image != nil {
+				dataURI := "data:" + m.Image.MIMEType + ";base64," + m.Image.Data
+				parts := []openaiContentPart{
+					{
+						Type: "text",
+						Text: m.Content,
+					},
+					{
+						Type: "image_url",
+						ImageURL: &openaiImageURL{
+							URL: dataURI,
+						},
+					},
+				}
+				pendingImages = append(pendingImages, openaiMessage{
+					Role:    "user",
+					Content: parts,
+				})
+			}
 		}
 	}
+
+	// Flush any remaining deferred images at end of message list.
+	flushImages()
 
 	return out
 }

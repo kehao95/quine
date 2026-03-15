@@ -3,12 +3,12 @@ package main
 // Unix conformance tests for quine as a POSIX process.
 //
 // These tests verify that quine behaves like a well-formed Unix process:
-//   - stdin (fd 4 in persistent shell) delivers material correctly
-//   - stdout (fd 3) carries only deliverables, never internal chatter
-//   - stderr carries only failure signals
+//   - stdin (fd 3 in persistent shell) delivers material correctly
+//   - stdout (fd 4) carries only deliverables, never internal chatter
+//   - stderr carries failure signals from exit() and fd 5 side channel writes
 //   - exit codes follow POSIX conventions (0=success, 1=failure)
 //   - persistent shell preserves state across sh calls (cd, export, variables)
-//   - process isolation: fd 1 (captured) vs fd 3 (delivered) are distinct
+//   - process isolation: fd 1 (captured) vs fd 4 (delivered) are distinct
 
 import (
 	"encoding/json"
@@ -38,6 +38,7 @@ func unixTestConfig(t *testing.T, tapeDir string) *config.Config {
 		MaxDepth:       5,
 		Depth:          0,
 		SessionID:      "unix-test-" + t.Name(),
+		TapeID:         "unix-tape-" + t.Name(),
 		MaxConcurrent:  20,
 		ShTimeout:      30,
 		OutputTruncate: 20480,
@@ -61,7 +62,7 @@ func runWithMock(t *testing.T, responses []tape.Message, mission, material strin
 	exitCode = rt.Run(mission, material)
 
 	// Parse tape
-	tapePath := filepath.Join(tapeDir, cfg.SessionID+".jsonl")
+	tapePath := cfg.TapePath("")
 	if _, err := os.Stat(tapePath); err == nil {
 		tapeEntries = parseTapeJSONL(t, tapePath)
 	}
@@ -149,11 +150,11 @@ func TestExitCode_TurnExhaustion(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 2. Stdout (fd 3) — deliverable channel
+// 2. Stdout (fd 4) — deliverable channel
 // ---------------------------------------------------------------------------
 
-// TestStdout_Fd3Delivery verifies that >&3 output reaches the process's real stdout.
-func TestStdout_Fd3Delivery(t *testing.T) {
+// TestStdout_Fd4Delivery verifies that >&4 output reaches the process's real stdout.
+func TestStdout_Fd4Delivery(t *testing.T) {
 	tmpDir := t.TempDir()
 	tapeDir := filepath.Join(tmpDir, "tapes")
 	cfg := unixTestConfig(t, tapeDir)
@@ -165,7 +166,7 @@ func TestStdout_Fd3Delivery(t *testing.T) {
 	}
 
 	mock := newMockProvider([]tape.Message{
-		assistantsh("c1", `echo "delivered" >&3`),
+		assistantsh("c1", `echo "delivered" >&4`),
 		assistantExit("e1", "success", "", ""),
 	})
 
@@ -177,7 +178,7 @@ func TestStdout_Fd3Delivery(t *testing.T) {
 	code := rt.Run("deliver output", "Begin.")
 	stdoutW.Close()
 
-	// Read what was delivered to fd 3
+	// Read what was delivered to fd 4
 	buf := make([]byte, 4096)
 	n, _ := stdoutR.Read(buf)
 	delivered := strings.TrimSpace(string(buf[:n]))
@@ -186,7 +187,7 @@ func TestStdout_Fd3Delivery(t *testing.T) {
 		t.Errorf("exit code = %d, want 0", code)
 	}
 	if delivered != "delivered" {
-		t.Errorf("fd 3 output = %q, want %q", delivered, "delivered")
+		t.Errorf("fd 4 output = %q, want %q", delivered, "delivered")
 	}
 }
 
@@ -204,7 +205,7 @@ func TestStdout_Fd1NotLeaked(t *testing.T) {
 	}
 
 	mock := newMockProvider([]tape.Message{
-		// This writes to fd 1 (captured), not fd 3 (delivered)
+		// This writes to fd 1 (captured), not fd 4 (delivered)
 		assistantsh("c1", `echo "internal"`),
 		assistantExit("e1", "success", "", ""),
 	})
@@ -298,6 +299,50 @@ func TestStderr_SuccessSilent(t *testing.T) {
 	}
 	if n > 0 {
 		t.Errorf("exit(success) wrote to stderr: %q", string(buf[:n]))
+	}
+}
+
+// TestStderr_Fd5Signal verifies that explicit writes to fd 5 reach runtime stderr
+// while regular tool stderr capture remains unchanged.
+func TestStderr_Fd5Signal(t *testing.T) {
+	tmpDir := t.TempDir()
+	tapeDir := filepath.Join(tmpDir, "tapes")
+	cfg := unixTestConfig(t, tapeDir)
+
+	stderrR, stderrW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mock := newMockProvider([]tape.Message{
+		assistantsh("c1", `echo "streamed-failure" >&5`),
+		assistantExit("e1", "success", "", ""),
+	})
+
+	rt := runtime.NewWithProvider(cfg, mock)
+	rt.SetStderr(stderrW)
+
+	code := rt.Run("write failure signal", "Begin.")
+	stderrW.Close()
+
+	buf := make([]byte, 4096)
+	n, _ := stderrR.Read(buf)
+	stderrContent := string(buf[:n])
+
+	if code != 0 {
+		t.Errorf("exit code = %d, want 0", code)
+	}
+	if !strings.Contains(stderrContent, "streamed-failure") {
+		t.Errorf("stderr = %q, want streamed-failure from fd 5", stderrContent)
+	}
+
+	entries := parseTapeJSONL(t, cfg.TapePath(""))
+	results := findToolResults(t, entries)
+	if len(results) < 1 {
+		t.Fatal("expected at least 1 tool result")
+	}
+	if strings.Contains(results[0].Content, "streamed-failure") {
+		t.Errorf("fd 5 output must not appear in tool result capture: %q", results[0].Content)
 	}
 }
 
@@ -415,11 +460,11 @@ func TestShResultFormat_NonZeroExit(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 7. Stdin (fd 4) — material channel
+// 7. Stdin (fd 3) — material channel
 // ---------------------------------------------------------------------------
 
-// TestStdin_Fd4Available verifies that material stdin is readable via /dev/fd/4.
-func TestStdin_Fd4Available(t *testing.T) {
+// TestStdin_Fd3Available verifies that material stdin is readable via /dev/fd/3.
+func TestStdin_Fd3Available(t *testing.T) {
 	tmpDir := t.TempDir()
 	tapeDir := filepath.Join(tmpDir, "tapes")
 	cfg := unixTestConfig(t, tapeDir)
@@ -437,21 +482,21 @@ func TestStdin_Fd4Available(t *testing.T) {
 	}()
 
 	mock := newMockProvider([]tape.Message{
-		assistantsh("c1", "cat /dev/fd/4"),
+		assistantsh("c1", "cat /dev/fd/3"),
 		assistantExit("e1", "success", "", ""),
 	})
 
 	rt := runtime.NewWithProvider(cfg, mock)
 	rt.SetStdin(stdinR)
 
-	code := rt.Run("read stdin", "Input is piped to stdin.")
+	code := rt.Run("read stdin", "Input is piped as material.")
 
 	if code != 0 {
 		t.Errorf("exit code = %d, want 0", code)
 	}
 
-	// Parse tape to verify fd 4 read
-	tapePath := filepath.Join(tapeDir, cfg.SessionID+".jsonl")
+	// Parse tape to verify fd 3 read
+	tapePath := cfg.TapePath("")
 	entries := parseTapeJSONL(t, tapePath)
 	results := findToolResults(t, entries)
 
@@ -460,7 +505,107 @@ func TestStdin_Fd4Available(t *testing.T) {
 	}
 
 	if !strings.Contains(results[0].Content, "material data") {
-		t.Errorf("fd 4 read = %q, want 'material data'", results[0].Content)
+		t.Errorf("fd 3 read = %q, want 'material data'", results[0].Content)
+	}
+}
+
+// TestStdin_Fd3ConsumptionAcrossShCalls verifies that fd 3 is a live stream:
+// once bytes are read in one sh call, later sh calls only see the unread
+// remainder.
+func TestStdin_Fd3ConsumptionAcrossShCalls(t *testing.T) {
+	tmpDir := t.TempDir()
+	tapeDir := filepath.Join(tmpDir, "tapes")
+	cfg := unixTestConfig(t, tapeDir)
+
+	stdinR, stdinW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go func() {
+		stdinW.Write([]byte("helloWORLD"))
+		stdinW.Close()
+	}()
+
+	mock := newMockProvider([]tape.Message{
+		assistantsh("c1", "dd bs=5 count=1 < /dev/fd/3 2>/dev/null"),
+		assistantsh("c2", "cat /dev/fd/3"),
+		assistantExit("e1", "success", "", ""),
+	})
+
+	rt := runtime.NewWithProvider(cfg, mock)
+	rt.SetStdin(stdinR)
+
+	code := rt.Run("consume stdin progressively", "Input is piped as material.")
+	if code != 0 {
+		t.Errorf("exit code = %d, want 0", code)
+	}
+
+	entries := parseTapeJSONL(t, cfg.TapePath(""))
+	results := findToolResults(t, entries)
+	if len(results) < 2 {
+		t.Fatalf("expected at least 2 tool results, got %d", len(results))
+	}
+
+	if !strings.Contains(results[0].Content, "hello") {
+		t.Errorf("first fd 3 read = %q, want first chunk 'hello'", results[0].Content)
+	}
+	if !strings.Contains(results[1].Content, "WORLD") {
+		t.Errorf("second fd 3 read = %q, want unread remainder 'WORLD'", results[1].Content)
+	}
+	if strings.Contains(results[1].Content, "hello") {
+		t.Errorf("second fd 3 read should not replay consumed bytes: %q", results[1].Content)
+	}
+}
+
+// TestStdin_ShParameterDoesNotReplaceMaterial verifies that sh(stdin="...")
+// feeds only the command's fd 0 and does not consume or replace material fd 3.
+func TestStdin_ShParameterDoesNotReplaceMaterial(t *testing.T) {
+	tmpDir := t.TempDir()
+	tapeDir := filepath.Join(tmpDir, "tapes")
+	cfg := unixTestConfig(t, tapeDir)
+
+	stdinR, stdinW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go func() {
+		stdinW.Write([]byte("material-stream"))
+		stdinW.Close()
+	}()
+
+	mock := newMockProvider([]tape.Message{
+		assistantshArgs("c1", map[string]any{
+			"command": "cat",
+			"stdin":   "tool-stdin",
+		}),
+		assistantsh("c2", "cat /dev/fd/3"),
+		assistantExit("e1", "success", "", ""),
+	})
+
+	rt := runtime.NewWithProvider(cfg, mock)
+	rt.SetStdin(stdinR)
+
+	code := rt.Run("separate sh stdin from material", "Input is piped as material.")
+	if code != 0 {
+		t.Errorf("exit code = %d, want 0", code)
+	}
+
+	entries := parseTapeJSONL(t, cfg.TapePath(""))
+	results := findToolResults(t, entries)
+	if len(results) < 2 {
+		t.Fatalf("expected at least 2 tool results, got %d", len(results))
+	}
+
+	if !strings.Contains(results[0].Content, "tool-stdin") {
+		t.Errorf("sh(stdin=...) output = %q, want tool-stdin", results[0].Content)
+	}
+	if !strings.Contains(results[1].Content, "material-stream") {
+		t.Errorf("fd 3 read = %q, want original material stream", results[1].Content)
+	}
+	if strings.Contains(results[1].Content, "tool-stdin") {
+		t.Errorf("fd 3 read should not be replaced by sh(stdin=...): %q", results[1].Content)
 	}
 }
 

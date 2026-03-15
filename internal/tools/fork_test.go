@@ -8,33 +8,74 @@ import (
 	"time"
 )
 
-func TestParseForkArgs_ValidIntent(t *testing.T) {
+func TestParseForkArgs_SingleChild(t *testing.T) {
 	args := map[string]any{
-		"intent": "Do something useful",
+		"children": []interface{}{
+			map[string]any{"intent": "Do something useful", "workspace": "."},
+		},
 	}
 	req, err := ParseForkArgs(args)
 	if err != nil {
 		t.Fatalf("ParseForkArgs failed: %v", err)
 	}
-	if req.Intent != "Do something useful" {
-		t.Errorf("Intent = %q, want %q", req.Intent, "Do something useful")
+	if len(req.Children) != 1 || req.Children[0].Intent != "Do something useful" {
+		t.Errorf("Children = %v", req.Children)
 	}
-	if req.Wait {
-		t.Errorf("Wait = true, want false (default)")
+	if req.Mode != ForkModeRace {
+		t.Errorf("Mode = %q, want %q (default)", req.Mode, ForkModeRace)
 	}
 }
 
-func TestParseForkArgs_WithWaitTrue(t *testing.T) {
+func TestParseForkArgs_MultipleChildren(t *testing.T) {
 	args := map[string]any{
-		"intent": "Calculate something",
-		"wait":   true,
+		"children": []interface{}{
+			map[string]any{"intent": "Task A", "workspace": "."},
+			map[string]any{"intent": "Task B", "workspace": "sub"},
+			map[string]any{"intent": "Task C", "workspace": "sub/deeper"},
+		},
 	}
 	req, err := ParseForkArgs(args)
 	if err != nil {
 		t.Fatalf("ParseForkArgs failed: %v", err)
 	}
-	if !req.Wait {
-		t.Errorf("Wait = false, want true")
+	if len(req.Children) != 3 {
+		t.Fatalf("got %d children, want 3", len(req.Children))
+	}
+	if req.Children[0].Intent != "Task A" || req.Children[1].Workspace != "sub" || req.Children[2].Workspace != "sub/deeper" {
+		t.Errorf("Children = %v", req.Children)
+	}
+}
+
+func TestParseForkArgs_ModeForget(t *testing.T) {
+	args := map[string]any{
+		"children": []interface{}{
+			map[string]any{"intent": "Calculate something", "workspace": "."},
+		},
+		"mode": "forget",
+	}
+	req, err := ParseForkArgs(args)
+	if err != nil {
+		t.Fatalf("ParseForkArgs failed: %v", err)
+	}
+	if req.Mode != ForkModeForget {
+		t.Errorf("Mode = %q, want %q", req.Mode, ForkModeForget)
+	}
+}
+
+func TestParseForkArgs_ModeRace(t *testing.T) {
+	args := map[string]any{
+		"children": []interface{}{
+			map[string]any{"intent": "Try approach A", "workspace": "."},
+			map[string]any{"intent": "Try approach B", "workspace": "."},
+		},
+		"mode": "race",
+	}
+	req, err := ParseForkArgs(args)
+	if err != nil {
+		t.Fatalf("ParseForkArgs failed: %v", err)
+	}
+	if req.Mode != ForkModeRace {
+		t.Errorf("Mode = %q, want %q", req.Mode, ForkModeRace)
 	}
 }
 
@@ -44,10 +85,16 @@ func TestParseForkArgs_InvalidInput(t *testing.T) {
 		args    map[string]any
 		errWord string
 	}{
-		{"MissingIntent", map[string]any{"wait": true}, "intent"},
-		{"EmptyIntent", map[string]any{"intent": ""}, "empty"},
-		{"WrongIntentType", map[string]any{"intent": 123}, "string"},
-		{"WrongWaitType", map[string]any{"intent": "Do something", "wait": "yes"}, "boolean"},
+		{"MissingChildren", map[string]any{"mode": "wait"}, "children"},
+		{"EmptyChildren", map[string]any{"children": []interface{}{}}, "at least one"},
+		{"WrongChildrenType", map[string]any{"children": "single string"}, "array"},
+		{"ChildNotObject", map[string]any{"children": []interface{}{"bad"}}, "object"},
+		{"MissingIntent", map[string]any{"children": []interface{}{map[string]any{"workspace": "."}}}, "intent"},
+		{"MissingWorkspace", map[string]any{"children": []interface{}{map[string]any{"intent": "ok"}}}, "workspace"},
+		{"EmptyIntent", map[string]any{"children": []interface{}{map[string]any{"intent": "", "workspace": "."}}}, "intent"},
+		{"EmptyWorkspace", map[string]any{"children": []interface{}{map[string]any{"intent": "ok", "workspace": ""}}}, "workspace"},
+		{"WrongModeType", map[string]any{"children": []interface{}{map[string]any{"intent": "task", "workspace": "."}}, "mode": 42}, "string"},
+		{"InvalidModeValue", map[string]any{"children": []interface{}{map[string]any{"intent": "task", "workspace": "."}}, "mode": "yolo"}, "must be one of"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -62,19 +109,52 @@ func TestParseForkArgs_InvalidInput(t *testing.T) {
 	}
 }
 
-func TestFilterSessionID(t *testing.T) {
+// Backward compatibility: old wait/race booleans should map to mode.
+func TestParseForkArgs_BackwardCompat_WaitFalse(t *testing.T) {
+	args := map[string]any{
+		"argv": []interface{}{"task"},
+		"wait": false,
+	}
+	req, err := ParseForkArgs(args)
+	if err != nil {
+		t.Fatalf("ParseForkArgs failed: %v", err)
+	}
+	if req.Mode != ForkModeForget {
+		t.Errorf("Mode = %q, want %q (wait=false → forget)", req.Mode, ForkModeForget)
+	}
+}
+
+func TestParseForkArgs_BackwardCompat_RaceTrue(t *testing.T) {
+	args := map[string]any{
+		"argv": []interface{}{"A", "B"},
+		"race": true,
+	}
+	req, err := ParseForkArgs(args)
+	if err != nil {
+		t.Fatalf("ParseForkArgs failed: %v", err)
+	}
+	if req.Mode != ForkModeRace {
+		t.Errorf("Mode = %q, want %q (race=true → race)", req.Mode, ForkModeRace)
+	}
+}
+
+func TestFilterProcessIdentity(t *testing.T) {
 	env := []string{
 		"PATH=/usr/bin",
 		"QUINE_SESSION_ID=old-session",
+		"QUINE_TAPE_ID=tape-session",
 		"QUINE_DEPTH=1",
 		"HOME=/home/user",
 	}
-	filtered := filterSessionID(env)
+	filtered := filterProcessIdentity(env)
 
-	// Should not contain QUINE_SESSION_ID
+	// Should not contain QUINE_SESSION_ID or QUINE_TAPE_ID
 	for _, e := range filtered {
 		if strings.HasPrefix(e, "QUINE_SESSION_ID=") {
 			t.Errorf("filtered env should not contain QUINE_SESSION_ID: %v", filtered)
+		}
+		if strings.HasPrefix(e, "QUINE_TAPE_ID=") {
+			t.Errorf("filtered env should not contain QUINE_TAPE_ID: %v", filtered)
 		}
 	}
 
@@ -174,8 +254,8 @@ func TestForkExecutor_Execute_MissingBinary(t *testing.T) {
 	os.WriteFile(f.TapePath, []byte{}, 0644)
 
 	req := ForkRequest{
-		Intent: "test intent",
-		Wait:   true,
+		Children: []ForkChild{{Intent: "test intent", Workspace: "."}},
+		Mode:     ForkModeWait,
 	}
 
 	result := f.Execute("tool-1", req)
@@ -205,8 +285,8 @@ func TestForkExecutor_Execute_AsyncMode(t *testing.T) {
 	os.WriteFile(f.TapePath, []byte{}, 0644)
 
 	req := ForkRequest{
-		Intent: "0.1", // sleep argument
-		Wait:   false,
+		Children: []ForkChild{{Intent: "0.1", Workspace: "."}}, // sleep argument
+		Mode:     ForkModeForget,
 	}
 
 	start := time.Now()
@@ -218,13 +298,153 @@ func TestForkExecutor_Execute_AsyncMode(t *testing.T) {
 		t.Errorf("async fork took too long: %v", elapsed)
 	}
 
-	// Result should indicate child was spawned
+	// Result should indicate children were spawned
 	if result.IsError {
 		// It's ok if it fails to start, but shouldn't take long
 		t.Logf("async fork error (expected for sleep command): %s", result.Content)
 	} else {
-		if !strings.Contains(result.Content, "[FORK]") {
-			t.Errorf("expected [FORK] in result, got: %s", result.Content)
+		if !strings.Contains(result.Content, "[FORK OK]") {
+			t.Errorf("expected [FORK OK] in result, got: %s", result.Content)
 		}
+	}
+}
+
+func TestForkExecutor_Execute_GatherAll_MissingBinary(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	f := &ForkExecutor{
+		QuinePath:      "/nonexistent/quine",
+		DataDir:        tmpDir,
+		SessionID:      "test-session",
+		TapePath:       filepath.Join(tmpDir, "test-session.jsonl"),
+		DefaultTimeout: 5 * time.Second,
+		MaxOutput:      10000,
+		Env:            []string{},
+	}
+
+	os.WriteFile(f.TapePath, []byte{}, 0644)
+
+	req := ForkRequest{
+		Children: []ForkChild{{Intent: "task A", Workspace: "."}, {Intent: "task B", Workspace: "."}},
+		Mode:     ForkModeWait,
+	}
+
+	result := f.Execute("tool-1", req)
+	if !result.IsError {
+		t.Errorf("expected error for missing binary")
+	}
+	if !strings.Contains(result.Content, "FORK ERROR") {
+		t.Errorf("expected FORK ERROR in result, got: %s", result.Content)
+	}
+}
+
+func TestForkExecutor_Execute_Race_MissingBinary(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	f := &ForkExecutor{
+		QuinePath:      "/nonexistent/quine",
+		DataDir:        tmpDir,
+		SessionID:      "test-session",
+		TapePath:       filepath.Join(tmpDir, "test-session.jsonl"),
+		DefaultTimeout: 5 * time.Second,
+		MaxOutput:      10000,
+		Env:            []string{},
+	}
+
+	os.WriteFile(f.TapePath, []byte{}, 0644)
+
+	req := ForkRequest{
+		Children: []ForkChild{{Intent: "approach A", Workspace: "."}, {Intent: "approach B", Workspace: "."}},
+		Mode:     ForkModeRace,
+	}
+
+	result := f.Execute("tool-1", req)
+	if !result.IsError {
+		t.Errorf("expected error for missing binary")
+	}
+	if !strings.Contains(result.Content, "FORK ERROR") {
+		t.Errorf("expected FORK ERROR in result, got: %s", result.Content)
+	}
+}
+
+func TestForkExecutor_Execute_MultipleAsync(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	f := &ForkExecutor{
+		QuinePath:      "/bin/sleep",
+		DataDir:        tmpDir,
+		SessionID:      "test-session",
+		TapePath:       filepath.Join(tmpDir, "test-session.jsonl"),
+		DefaultTimeout: 5 * time.Second,
+		MaxOutput:      10000,
+		Env:            []string{},
+	}
+
+	os.WriteFile(f.TapePath, []byte{}, 0644)
+
+	req := ForkRequest{
+		Children: []ForkChild{{Intent: "0.1", Workspace: "."}, {Intent: "0.1", Workspace: "."}, {Intent: "0.1", Workspace: "."}},
+		Mode:     ForkModeForget,
+	}
+
+	start := time.Now()
+	result := f.Execute("tool-1", req)
+	elapsed := time.Since(start)
+
+	if elapsed > 2*time.Second {
+		t.Errorf("async fork with 3 children took too long: %v", elapsed)
+	}
+
+	if result.IsError {
+		t.Logf("async fork error: %s", result.Content)
+	} else {
+		if !strings.Contains(result.Content, "3 children spawned") {
+			t.Errorf("expected '3 children spawned' in result, got: %s", result.Content)
+		}
+	}
+}
+
+func TestForkExecutor_ChildrenDoNotInheritLiveSideChannelFDs(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	helper := filepath.Join(tmpDir, "fork-helper.sh")
+	script := `#!/bin/sh
+if cat /dev/fd/3 >/dev/null 2>/tmp/fork-fd3.err; then
+  echo HAS_FD3
+else
+  echo NO_FD3
+fi
+`
+	if err := os.WriteFile(helper, []byte(script), 0o755); err != nil {
+		t.Fatalf("write helper: %v", err)
+	}
+
+	f := &ForkExecutor{
+		QuinePath:      helper,
+		DataDir:        tmpDir,
+		SessionID:      "test-session",
+		TapePath:       filepath.Join(tmpDir, "test-session.jsonl"),
+		DefaultTimeout: 5 * time.Second,
+		MaxOutput:      10000,
+		Env:            []string{},
+	}
+
+	if err := os.WriteFile(f.TapePath, []byte{}, 0o644); err != nil {
+		t.Fatalf("write tape: %v", err)
+	}
+
+	result := f.Execute("tool-1", ForkRequest{
+		Children: []ForkChild{{Intent: "ignored", Workspace: "."}},
+		Mode:     ForkModeWait,
+	})
+
+	if result.IsError {
+		t.Fatalf("expected child helper to succeed, got error:\n%s", result.Content)
+	}
+	if !strings.Contains(result.Content, "NO_FD3") {
+		t.Fatalf("expected child output to report missing fd 3, got:\n%s", result.Content)
+	}
+	if strings.Contains(result.Content, "HAS_FD3") {
+		t.Fatalf("child unexpectedly inherited live fd 3:\n%s", result.Content)
 	}
 }

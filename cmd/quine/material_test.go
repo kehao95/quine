@@ -42,9 +42,15 @@ func TestHandleStdin_TextMode(t *testing.T) {
 		t.Fatalf("handleStdin() error = %v", err)
 	}
 
-	// Should indicate stdin is piped
-	if !strings.Contains(material, "Input is piped to stdin") {
+	// Should indicate material is quine stdin available via fd 3
+	if !strings.Contains(material, "Input is piped as material") {
 		t.Errorf("handleStdin() material = %q, want stdin piped message", material)
+	}
+	if !strings.Contains(material, "quine process stdin") {
+		t.Errorf("handleStdin() material = %q, want quine stdin wording", material)
+	}
+	if !strings.Contains(material, "truncated remainder") {
+		t.Errorf("handleStdin() material = %q, want truncated remainder warning", material)
 	}
 
 	// Verify no binary file was created

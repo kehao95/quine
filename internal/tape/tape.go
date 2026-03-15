@@ -37,6 +37,7 @@ type Message struct {
 	ReasoningItems   []ReasoningItem `json:"reasoning_items,omitempty"`   // For Responses API reasoning output
 	ToolCalls        []ToolCall      `json:"tool_calls,omitempty"`
 	ToolID           string          `json:"tool_id,omitempty"`
+	Image            *ImagePart      `json:"image,omitempty"` // Optional image payload (vision tool results)
 	Timestamp        int64           `json:"timestamp"`
 }
 
@@ -63,11 +64,20 @@ type SessionOutcome struct {
 	TerminationMode TerminationMode `json:"termination_mode"`
 }
 
+// ImagePart carries a base64-encoded image for delivery to vision-capable models.
+// It is attached to a ToolResult (or Message) via the Image field and routed
+// through the protocol layer as a native image content block.
+type ImagePart struct {
+	MIMEType string `json:"mime_type"` // e.g. "image/png"
+	Data     string `json:"data"`      // base64-encoded bytes (no data: URI prefix)
+}
+
 // ToolResult holds the output of a tool execution.
 type ToolResult struct {
-	ToolID  string `json:"tool_id"`
-	Content string `json:"content"`
-	IsError bool   `json:"is_error"`
+	ToolID  string     `json:"tool_id"`
+	Content string     `json:"content"`
+	IsError bool       `json:"is_error"`
+	Image   *ImagePart `json:"image,omitempty"` // Optional image payload (vision tool)
 }
 
 // Tape is the append-only conversation log for a single session.
@@ -126,6 +136,14 @@ func (t *Tape) LastMessage() *Message {
 		return nil
 	}
 	return &t.messages[len(t.messages)-1]
+}
+
+// SetSystemPrompt replaces the content of the first message (which must be RoleSystem).
+// Used by escalation to update the system prompt after a model hot-swap.
+func (t *Tape) SetSystemPrompt(content string) {
+	if len(t.messages) > 0 && t.messages[0].Role == RoleSystem {
+		t.messages[0].Content = content
+	}
 }
 
 // SetOutcome records the final session outcome. Running token and turn

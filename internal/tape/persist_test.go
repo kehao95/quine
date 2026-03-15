@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -24,6 +25,45 @@ func TestWriterCreatesFile(t *testing.T) {
 	path := filepath.Join(dir, "test-session.jsonl")
 	if _, err := os.Stat(path); err != nil {
 		t.Fatalf("file should exist: %v", err)
+	}
+
+	yamlPath := filepath.Join(dir, "test-session.log.yaml")
+	if _, err := os.Stat(yamlPath); err != nil {
+		t.Fatalf("yaml mirror file should exist: %v", err)
+	}
+}
+
+func TestWriterCreatesYAMLMirror(t *testing.T) {
+	dir := t.TempDir()
+	w, err := NewWriter(dir, "yaml-session")
+	if err != nil {
+		t.Fatalf("NewWriter: %v", err)
+	}
+
+	tp := NewTape("yaml-session", "", 0, "test-model")
+	if err := w.WriteEntry(tp.MetaEntry()); err != nil {
+		t.Fatalf("WriteEntry meta: %v", err)
+	}
+	msg := Message{Role: RoleUser, Content: "hello yaml", Timestamp: 1700000000001}
+	if err := w.WriteEntry(MessageEntry(msg)); err != nil {
+		t.Fatalf("WriteEntry message: %v", err)
+	}
+	w.Close()
+
+	yamlPath := filepath.Join(dir, "yaml-session.log.yaml")
+	data, err := os.ReadFile(yamlPath)
+	if err != nil {
+		t.Fatalf("ReadFile yaml mirror: %v", err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "type: meta") {
+		t.Fatalf("yaml mirror missing meta entry: %q", content)
+	}
+	if !strings.Contains(content, "type: message") {
+		t.Fatalf("yaml mirror missing message entry: %q", content)
+	}
+	if !strings.Contains(content, "content: hello yaml") {
+		t.Fatalf("yaml mirror missing message content: %q", content)
 	}
 }
 

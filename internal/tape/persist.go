@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/yaml.v3"
 )
 
 // Writer handles JSONL persistence of a Tape.
@@ -15,6 +17,7 @@ type Writer struct {
 	dir       string // tape directory path
 	sessionID string // session ID for filename
 	path      string // full path to the JSONL file
+	yamlPath  string // full path to the YAML mirror file
 }
 
 // NewWriter creates a Writer. It creates the directory if needed.
@@ -28,6 +31,7 @@ func NewWriter(dir string, sessionID string) (*Writer, error) {
 		dir:       dir,
 		sessionID: sessionID,
 		path:      filepath.Join(dir, sessionID+".jsonl"),
+		yamlPath:  filepath.Join(dir, sessionID+".log.yaml"),
 	}, nil
 }
 
@@ -52,6 +56,49 @@ func (w *Writer) WriteEntry(entry TapeEntry) error {
 	if err := f.Sync(); err != nil {
 		return fmt.Errorf("syncing tape file: %w", err)
 	}
+
+	if err := w.writeYAMLEntry(entry); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (w *Writer) writeYAMLEntry(entry TapeEntry) error {
+	var data any
+	if len(entry.Data) > 0 {
+		if err := json.Unmarshal(entry.Data, &data); err != nil {
+			data = map[string]any{
+				"_raw":   string(entry.Data),
+				"_error": fmt.Sprintf("invalid entry data JSON: %v", err),
+			}
+		}
+	}
+
+	doc := map[string]any{
+		"type": entry.Type,
+		"data": data,
+	}
+	yamlBytes, err := yaml.Marshal(doc)
+	if err != nil {
+		return fmt.Errorf("marshalling tape YAML entry: %w", err)
+	}
+
+	f, err := os.OpenFile(w.yamlPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	if err != nil {
+		return fmt.Errorf("opening tape YAML file %q: %w", w.yamlPath, err)
+	}
+	defer f.Close()
+
+	if _, err := f.Write([]byte("---\n")); err != nil {
+		return fmt.Errorf("writing tape YAML document marker: %w", err)
+	}
+	if _, err := f.Write(yamlBytes); err != nil {
+		return fmt.Errorf("writing tape YAML entry: %w", err)
+	}
+	if err := f.Sync(); err != nil {
+		return fmt.Errorf("syncing tape YAML file: %w", err)
+	}
+
 	return nil
 }
 

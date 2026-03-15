@@ -35,13 +35,14 @@ type Provider interface {
 
 // provider implements Provider using composable protocol and transport.
 type provider struct {
-	proto         protocol.Protocol
-	trans         transport.Transport
-	endpoint      string
-	model         string
-	maxTokens     int
-	contextWindow int
-	client        *http.Client
+	proto          protocol.Protocol
+	trans          transport.Transport
+	endpoint       string
+	model          string
+	maxTokens      int
+	contextWindow  int
+	thinkingBudget string
+	client         *http.Client
 }
 
 // NewProvider constructs a Provider for the given config.
@@ -62,13 +63,14 @@ func NewProvider(cfg *config.Config) (Provider, error) {
 	endpoint := buildEndpoint(cfg, proto)
 
 	return &provider{
-		proto:         proto,
-		trans:         trans,
-		endpoint:      endpoint,
-		model:         cfg.APIModelID(),
-		maxTokens:     defaultMaxTokens(cfg.Provider),
-		contextWindow: cfg.ContextWindow,
-		client:        &http.Client{Timeout: 10 * time.Minute},
+		proto:          proto,
+		trans:          trans,
+		endpoint:       endpoint,
+		model:          cfg.APIModelID(),
+		maxTokens:      defaultMaxTokens(cfg.Provider),
+		contextWindow:  cfg.ContextWindow,
+		thinkingBudget: cfg.ThinkingBudget,
+		client:         &http.Client{Timeout: 10 * time.Minute},
 	}, nil
 }
 
@@ -113,8 +115,13 @@ func defaultMaxTokens(apiType string) int {
 
 // Generate sends a conversation and available tools to the model.
 func (p *provider) Generate(messages []tape.Message, tools []ToolSchema) (tape.Message, Usage, error) {
+	// Build request options
+	opts := protocol.RequestOptions{
+		ThinkingBudget: p.thinkingBudget,
+	}
+
 	// Encode request using protocol
-	body, err := p.proto.EncodeRequest(messages, tools, p.model, p.maxTokens)
+	body, err := p.proto.EncodeRequest(messages, tools, p.model, p.maxTokens, opts)
 	if err != nil {
 		return tape.Message{}, Usage{}, fmt.Errorf("encoding request: %w", err)
 	}

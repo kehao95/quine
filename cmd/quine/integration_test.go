@@ -62,6 +62,7 @@ func testConfig(t *testing.T, tapeDir string) *config.Config {
 		MaxDepth:       5,
 		Depth:          0,
 		SessionID:      "test-session-0001",
+		TapeID:         "test-tape-0001",
 		ParentSession:  "",
 		MaxConcurrent:  20,
 		ShTimeout:      30,
@@ -82,6 +83,20 @@ func assistantsh(id, command string) tape.Message {
 				Arguments: map[string]any{
 					"command": command,
 				},
+			},
+		},
+	}
+}
+
+// assistantshArgs returns a tape.Message that calls the sh tool with custom arguments.
+func assistantshArgs(id string, args map[string]any) tape.Message {
+	return tape.Message{
+		Role: tape.RoleAssistant,
+		ToolCalls: []tape.ToolCall{
+			{
+				ID:        id,
+				Name:      "sh",
+				Arguments: args,
 			},
 		},
 	}
@@ -201,7 +216,7 @@ func TestSurvivalTest(t *testing.T) {
 	}
 
 	// Verify tape JSONL file exists
-	tapePath := filepath.Join(tapeDir, cfg.SessionID+".jsonl")
+	tapePath := cfg.TapePath("")
 	if _, err := os.Stat(tapePath); os.IsNotExist(err) {
 		t.Fatalf("tape JSONL file does not exist: %s", tapePath)
 	}
@@ -283,7 +298,7 @@ func TestResilienceTest(t *testing.T) {
 	}
 
 	// Verify tape JSONL exists and has an outcome
-	tapePath := filepath.Join(tapeDir, cfg.SessionID+".jsonl")
+	tapePath := cfg.TapePath("")
 	entries := parseTapeJSONL(t, tapePath)
 
 	// Find the tool_result entry — it should contain an error indication

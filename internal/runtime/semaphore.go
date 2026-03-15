@@ -10,8 +10,8 @@ import (
 )
 
 // Semaphore provides a system-wide concurrency limiter using filesystem locks.
-// Lock files live in {tapeDir}/../locks/ and are shared across all processes
-// in the tree (they all share QUINE_DATA_DIR).
+// Lock files live under QUINE_DATA_DIR/locks/ and are shared across all
+// processes in the tree.
 type Semaphore struct {
 	lockDir   string
 	maxSlots  int
@@ -24,7 +24,7 @@ type Semaphore struct {
 }
 
 // NewSemaphore creates a Semaphore.
-// lockDir is typically filepath.Join(filepath.Dir(filepath.Clean(cfg.TapeDir)), "locks").
+// lockDir is typically QUINE_DATA_DIR/locks/.
 func NewSemaphore(lockDir string, maxSlots int, sessionID string) *Semaphore {
 	return &Semaphore{
 		lockDir:   lockDir,
@@ -38,6 +38,10 @@ func NewSemaphore(lockDir string, maxSlots int, sessionID string) *Semaphore {
 // If all slots are full, polls every 1 second.
 // If blocked for > 60 seconds, logs a warning to stderr.
 func (s *Semaphore) Acquire() error {
+	if s.maxSlots <= 0 {
+		return nil
+	}
+
 	s.mu.Lock()
 	seq := s.seq
 	s.seq++
@@ -104,11 +108,17 @@ func (s *Semaphore) Release() error {
 
 // Count returns the current number of acquired slots (lock files in lockDir).
 func (s *Semaphore) Count() int {
+	if s.maxSlots <= 0 {
+		return 0
+	}
 	return s.countFiles()
 }
 
 // IsFull returns true if all slots are currently occupied.
 func (s *Semaphore) IsFull() bool {
+	if s.maxSlots <= 0 {
+		return false
+	}
 	return s.countFiles() >= s.maxSlots
 }
 

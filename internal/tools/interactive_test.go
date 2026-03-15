@@ -1,161 +1,152 @@
 package tools
 
 import (
+	"encoding/json"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
 
-// --- Interactive (PTY) mode tests ---
+func waitForFileContains(t *testing.T, path string, needle string, timeout time.Duration) string {
+	t.Helper()
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		data, err := os.ReadFile(path)
+		if err == nil && strings.Contains(string(data), needle) {
+			return string(data)
+		}
+		time.Sleep(25 * time.Millisecond)
+	}
+	data, _ := os.ReadFile(path)
+	t.Fatalf("timed out waiting for %q in %s; last content=%q", needle, path, string(data))
+	return ""
+}
 
-// TestInteractivePTYBasicOutput verifies that interactive=true allocates a PTY,
-// captures output, and returns exit code 0 on natural completion.
-func TestInteractivePTYBasicOutput(t *testing.T) {
+func waitForMeta(t *testing.T, path string, timeout time.Duration, pred func(interactiveMeta) bool) interactiveMeta {
+	t.Helper()
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		data, err := os.ReadFile(path)
+		if err == nil {
+			var meta interactiveMeta
+			if json.Unmarshal(data, &meta) == nil && pred(meta) {
+				return meta
+			}
+		}
+		time.Sleep(25 * time.Millisecond)
+	}
+	data, _ := os.ReadFile(path)
+	t.Fatalf("timed out waiting for meta predicate on %s; last content=%q", path, string(data))
+	return interactiveMeta{}
+}
+
+func TestInteractiveJobMaterializesScreenFiles(t *testing.T) {
 	b := testExecutor()
-	defer b.Close()
+	defer b.Close(false)
 
-	result := b.Execute("pty-basic", "echo hello_pty", 5*time.Second, 0, true)
-
+	result := b.Execute("interactive-materialize", "printf 'HELLO_INTERACTIVE\\n'; sleep 1", 0, 0, true, false, "")
 	if result.IsError {
-		t.Fatalf("unexpected error: %s", result.Content)
-	}
-	if !strings.Contains(result.Content, "[EXIT CODE] 0") {
-		t.Errorf("expected exit code 0, got:\n%s", result.Content)
-	}
-	// PTY echoes input and output; "hello_pty" must appear somewhere in stdout.
-	if !strings.Contains(result.Content, "hello_pty") {
-		t.Errorf("expected 'hello_pty' in output, got:\n%s", result.Content)
-	}
-	// In PTY mode stderr is always empty.
-	parts := strings.SplitN(result.Content, "[STDERR]", 2)
-	if len(parts) == 2 && strings.TrimSpace(parts[1]) != "" {
-		t.Errorf("expected empty stderr in PTY mode, got: %q", parts[1])
-	}
-}
-
-// TestInteractivePTYExitCode verifies that non-zero exit codes propagate correctly
-// through the PTY path (EIO handling on process exit).
-func TestInteractivePTYExitCode(t *testing.T) {
-	b := testExecutor()
-	defer b.Close()
-
-	result := b.Execute("pty-exit42", "exit 42", 5*time.Second, 0, true)
-
-	if !result.IsError {
-		t.Errorf("expected IsError=true for exit 42, got false")
-	}
-	if !strings.Contains(result.Content, "[EXIT CODE] 42") {
-		t.Errorf("expected exit code 42, got:\n%s", result.Content)
-	}
-}
-
-// TestInteractivePTYTimeoutPauses verifies that a PTY job can be SIGSTOP'd by
-// the timeout budget, returning [PAUSED] with a job ID.
-func TestInteractivePTYTimeoutPauses(t *testing.T) {
-	b := testExecutor()
-	defer b.Close()
-
-	start := time.Now()
-	result := b.Execute("pty-timeout", "sleep 30", 1*time.Second, 0, true)
-	elapsed := time.Since(start)
-
-	if !strings.Contains(result.Content, "[PAUSED]") {
-		t.Errorf("expected [PAUSED] after timeout, got:\n%s", result.Content)
-	}
-	if elapsed > 3*time.Second {
-		t.Errorf("took %v, expected ~1s for timeout", elapsed)
+		t.Fatalf("interactive start failed: %s", result.Content)
 	}
 
-	// Clean up
-	pgid := extractJobID(result.Content)
-	if pgid > 0 {
-		b.HandleJob("cleanup", map[string]any{"id": float64(pgid), "signal": "kill"})
-	}
-}
+	pid := extractPID(result.Content)
+	jobDir := jobDirFromExecutor(b, pid)
 
-// TestInteractivePTYInputInjection verifies the core interactive workflow:
-//  1. Start a shell in PTY mode with a short timeout so it pauses.
-//  2. Resume with input="echo injected\n" — the shell should execute the command.
-//  3. The final output should contain "injected".
-func TestInteractivePTYInputInjection(t *testing.T) {
-	b := testExecutor()
-	defer b.Close()
-
-	// Start an interactive shell session that will pause after 1 second.
-	// We use a shell that just waits for input (read loop).
-	result := b.Execute("pty-input", "cat", 1*time.Second, 0, true)
-
-	if !strings.Contains(result.Content, "[PAUSED]") {
-		t.Skipf("job completed before pause (unexpected): %s", result.Content)
+	for _, path := range []string{
+		filepath.Join(jobDir, "in"),
+		filepath.Join(jobDir, "screen.txt"),
+		filepath.Join(jobDir, "screen.png"),
+		filepath.Join(jobDir, "screen.meta"),
+		filepath.Join(jobDir, "winsize"),
+		filepath.Join(jobDir, "events.log"),
+		filepath.Join(jobDir, "exit"),
+	} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("expected %s to exist: %v", path, err)
+		}
 	}
 
-	pgid := extractJobID(result.Content)
-	if pgid <= 0 {
-		t.Fatalf("could not extract job id from: %s", result.Content)
-	}
-
-	// Resume with input — cat should echo it back.
-	resumeResult := b.HandleJob("pty-cont", map[string]any{
-		"id":      float64(pgid),
-		"signal":  "cont",
-		"input":   "injected_text\n",
-		"timeout": float64(2),
+	waitForFileContains(t, filepath.Join(jobDir, "screen.txt"), "HELLO_INTERACTIVE", 2*time.Second)
+	waitForFileContains(t, filepath.Join(jobDir, "events.log"), "HELLO_INTERACTIVE", 2*time.Second)
+	meta := waitForMeta(t, filepath.Join(jobDir, "screen.meta"), 2*time.Second, func(m interactiveMeta) bool {
+		return m.Generation > 0
 	})
-
-	if resumeResult.IsError {
-		t.Errorf("resume failed: %s", resumeResult.Content)
+	if meta.Rows != defaultInteractiveRows || meta.Cols != defaultInteractiveCols {
+		t.Fatalf("meta rows/cols = %dx%d, want %dx%d", meta.Cols, meta.Rows, defaultInteractiveCols, defaultInteractiveRows)
 	}
 
-	// Clean up if still paused
-	if strings.Contains(resumeResult.Content, "[PAUSED]") {
-		pgid2 := extractJobID(resumeResult.Content)
-		if pgid2 > 0 {
-			b.HandleJob("cleanup", map[string]any{"id": float64(pgid2), "signal": "kill"})
-		}
-		// Check accumulated output contains the injected text
-		if !strings.Contains(resumeResult.Content, "injected_text") {
-			t.Errorf("expected 'injected_text' echoed back in output, got:\n%s", resumeResult.Content)
-		}
-	} else {
-		// Completed (cat exited after EOF) — check output
-		if !strings.Contains(resumeResult.Content, "injected_text") {
-			t.Errorf("expected 'injected_text' echoed back in output, got:\n%s", resumeResult.Content)
-		}
+	exitData, err := exec.Command("/bin/sh", "-c", "cat "+shellQuote(filepath.Join(jobDir, "exit"))).Output()
+	if err != nil {
+		t.Fatalf("cat exit: %v", err)
+	}
+	if strings.TrimSpace(string(exitData)) != "0" {
+		t.Fatalf("exit = %q, want 0", string(exitData))
 	}
 }
 
-// TestInteractivePTYIsatty verifies that the child process sees isatty(0)==true
-// in PTY mode, which is the primary motivation for the feature.
-func TestInteractivePTYIsatty(t *testing.T) {
+func TestInteractiveInputDrivesREPL(t *testing.T) {
 	b := testExecutor()
-	defer b.Close()
+	defer b.Close(false)
 
-	// python3 -c "import sys; print('TTY' if sys.stdin.isatty() else 'NOTTY')"
-	result := b.Execute("pty-isatty", `python3 -c "import sys; print('TTY' if sys.stdin.isatty() else 'NOTTY')"`, 5*time.Second, 0, true)
-
+	result := b.Execute("interactive-repl", "python3 -q", 0, 0, true, false, "")
 	if result.IsError {
-		t.Fatalf("command failed: %s", result.Content)
+		t.Fatalf("interactive start failed: %s", result.Content)
 	}
-	if !strings.Contains(result.Content, "TTY") {
-		t.Errorf("expected isatty(0)==true (TTY) in PTY mode, got:\n%s", result.Content)
+
+	pid := extractPID(result.Content)
+	jobDir := jobDirFromExecutor(b, pid)
+	screenPath := filepath.Join(jobDir, "screen.txt")
+	inputPath := filepath.Join(jobDir, "in")
+	exitPath := filepath.Join(jobDir, "exit")
+
+	waitForFileContains(t, screenPath, ">>>", 3*time.Second)
+
+	if err := os.WriteFile(inputPath, []byte("print(6*7)<enter>"), 0o644); err != nil {
+		t.Fatalf("write interactive input: %v", err)
 	}
-	if strings.Contains(result.Content, "NOTTY") {
-		t.Errorf("stdin is not a TTY in PTY mode, got:\n%s", result.Content)
+	waitForFileContains(t, screenPath, "42", 3*time.Second)
+
+	if err := os.WriteFile(inputPath, []byte("exit()<enter>"), 0o644); err != nil {
+		t.Fatalf("write interactive exit input: %v", err)
+	}
+	exitData, err := exec.Command("/bin/sh", "-c", "cat "+shellQuote(exitPath)).Output()
+	if err != nil {
+		t.Fatalf("cat exit: %v", err)
+	}
+	if strings.TrimSpace(string(exitData)) != "0" {
+		t.Fatalf("exit = %q, want 0", string(exitData))
 	}
 }
 
-// TestNonInteractivePTYIsatty confirms the baseline: non-interactive mode has
-// isatty(0)==false (stdin from /dev/null).
-func TestNonInteractivePTYIsatty(t *testing.T) {
+func TestInteractiveWinsizeUpdatesMeta(t *testing.T) {
 	b := testExecutor()
-	defer b.Close()
+	defer b.Close(false)
 
-	result := b.Execute("pipe-isatty", `python3 -c "import sys; print('TTY' if sys.stdin.isatty() else 'NOTTY')"`, 5*time.Second, 0, false)
-
+	result := b.Execute("interactive-winsize", "sleep 60", 0, 0, true, false, "")
 	if result.IsError {
-		t.Fatalf("command failed: %s", result.Content)
+		t.Fatalf("interactive start failed: %s", result.Content)
 	}
-	if !strings.Contains(result.Content, "NOTTY") {
-		t.Errorf("expected isatty(0)==false (NOTTY) in non-interactive mode, got:\n%s", result.Content)
+
+	pid := extractPID(result.Content)
+	jobDir := jobDirFromExecutor(b, pid)
+	winsizePath := filepath.Join(jobDir, "winsize")
+	metaPath := filepath.Join(jobDir, "screen.meta")
+
+	if err := os.WriteFile(winsizePath, []byte("120x40\n"), 0o644); err != nil {
+		t.Fatalf("write winsize: %v", err)
+	}
+	meta := waitForMeta(t, metaPath, 3*time.Second, func(m interactiveMeta) bool {
+		return m.Rows == 40 && m.Cols == 120
+	})
+	if meta.Rows != 40 || meta.Cols != 120 {
+		t.Fatalf("meta rows/cols = %dx%d, want 120x40", meta.Cols, meta.Rows)
+	}
+
+	if err := syscall.Kill(-pid, syscall.SIGTERM); err != nil {
+		t.Fatalf("kill interactive process group: %v", err)
 	}
 }

@@ -21,10 +21,17 @@ type ToolSchema struct {
 	Parameters  map[string]any // JSON Schema object
 }
 
+// RequestOptions contains optional parameters for API requests.
+type RequestOptions struct {
+	// ThinkingBudget controls the reasoning effort for thinking models.
+	// Values: "off", "low", "medium", "high", or "" (model default).
+	ThinkingBudget string
+}
+
 // Protocol defines how to encode/decode messages for a specific API format.
 type Protocol interface {
 	// EncodeRequest converts tape messages to provider-specific request body.
-	EncodeRequest(messages []tape.Message, tools []ToolSchema, model string, maxTokens int) ([]byte, error)
+	EncodeRequest(messages []tape.Message, tools []ToolSchema, model string, maxTokens int, opts RequestOptions) ([]byte, error)
 
 	// DecodeResponse parses provider response into tape message + usage.
 	DecodeResponse(body []byte) (tape.Message, Usage, error)
