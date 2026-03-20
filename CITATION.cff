@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
+message: "If you use this software, please cite the repository or the preferred paper citation below."
 authors:
 - family-names: "Ke"
   given-names: "Hao"
@@ -16,3 +16,14 @@ keywords:
   - emergent-behavior
   - unix-philosophy
 license: GPL-2.0
+preferred-citation:
+  type: article
+  authors:
+    - family-names: "Ke"
+      given-names: "Hao"
+      email: "i@kehao.me"
+  title: "Quine: Realizing LLM Agents as Native POSIX Processes"
+  journal: "arXiv"
+  year: 2026
+  doi: "10.48550/arXiv.2603.18030"
+  url: "https://arxiv.org/abs/2603.18030"

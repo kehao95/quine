@@ -79,6 +79,13 @@ echo "What is 2+2?" | quine "Answer the question"
 
 For the full setup, see [QUICKSTART.md](./QUICKSTART.md).
 
+## Citation
+
+If you use Quine in research, please cite the systems paper:
+
+- [Quine: Realizing LLM Agents as Native POSIX Processes](https://arxiv.org/abs/2603.18030)
+- DOI: [10.48550/arXiv.2603.18030](https://doi.org/10.48550/arXiv.2603.18030)
+
 ## Repository Map
 
 | Path | Role in the project |
