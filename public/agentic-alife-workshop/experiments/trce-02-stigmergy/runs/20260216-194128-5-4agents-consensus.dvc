@@ -1,0 +1,6 @@
+outs:
+- md5: 10acb479a4865260eab663f37b21357b.dir
+  size: 309331
+  nfiles: 32
+  hash: md5
+  path: 20260216-194128-5-4agents-consensus

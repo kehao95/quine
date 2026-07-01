@@ -1,0 +1,6 @@
+outs:
+- md5: 39a5c778ef8143e4b454ca835c37a540.dir
+  size: 16264812
+  nfiles: 30
+  hash: md5
+  path: 20260507-113536-gpt-5.5-codex-xhigh-C02-inherited-fd

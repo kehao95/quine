@@ -1,0 +1,5 @@
+[core]
+    analytics = false
+    remote = public
+['remote "public"']
+    url = https://dvc-artifacts.kehao.me

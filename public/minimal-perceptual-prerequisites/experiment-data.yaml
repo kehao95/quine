@@ -1,0 +1,334 @@
+# Authoritative experiment data for the ALIFE paper
+# Source of truth for all numbers in tables, appendix, and text.
+# Do NOT re-derive from tapes — duration_ms is unreliable for some runs.
+
+model: GPT-5.4
+reasoning_effort: xhigh
+workspace_mode: direct
+agents_per_run: 2
+cells: 15
+budget_total: 17
+per_agent_limit: 10
+
+conditions:
+  A_full_disclosure:
+    experiment_dir: experiments/coop-20-full-disclosure-baseline
+    channels_remaining: "All: prompt, help, runtime, fs_mut, budget"
+    runs:
+      - id: "145513"
+        full_id: "20260409-145513-copilot-gpt-5.4-xhigh-full-disclosure-condA-2ag"
+        cells: 15
+        resets: 0
+        time_min: 9.1
+        turns: 124
+        outcome: success
+      - id: "151703"
+        full_id: "20260409-151703-copilot-gpt-5.4-xhigh-full-disclosure-condA-2ag"
+        cells: 15
+        resets: 0
+        time_min: 5.9
+        turns: 102
+        outcome: success
+      - id: "173947"
+        full_id: "20260409-173947-copilot-gpt-5.4-xhigh-full-disclosure-condA-2ag"
+        cells: 15
+        resets: 0
+        time_min: 13.9
+        turns: 144
+        outcome: success
+      - id: "174017"
+        full_id: "20260409-174017-copilot-gpt-5.4-xhigh-full-disclosure-condA-2ag"
+        cells: 15
+        resets: 0
+        time_min: 6.1
+        turns: 100
+        outcome: success
+    summary:
+      n: 4
+      success: "4/4"
+      mean_time: 8.8
+      time_range: "6--14"
+      mean_resets: 0.0
+      resets_range: "0--0"
+      mean_turns: 118
+      turns_range: "100--144"
+
+  B_zero_explicit:
+    experiment_dir: experiments/coop-18-zero-social-information
+    channels_remaining: "fs_mutations + budget visibility"
+    note: "Only xhigh runs included. Earlier high-reasoning runs excluded for balance."
+    runs:
+      - id: "115924"
+        full_id: "20260409-115924-copilot-gpt-5.4-xhigh-zero-social-condA-2ag"
+        cells: 15
+        resets: 2
+        time_min: 19.7
+        turns: 117
+        outcome: success
+      - id: "123423"
+        full_id: "20260409-123423-copilot-gpt-5.4-xhigh-zero-social-condA-2ag"
+        cells: 15
+        resets: 4
+        time_min: 40.9
+        turns: 216
+        outcome: success
+        note: "Semantic misalignment case — Agent-1 hypothesizes peer, Agent-2 hypothesizes system bug/hidden warm-up"
+      - id: "123425"
+        full_id: "20260409-123425-copilot-gpt-5.4-xhigh-zero-social-condA-2ag"
+        cells: 15
+        resets: 1
+        time_min: 16.8
+        turns: 98
+        outcome: success
+      - id: "123427"
+        full_id: "20260409-123427-copilot-gpt-5.4-xhigh-zero-social-condA-2ag"
+        cells: 15
+        resets: 2
+        time_min: 21.8
+        turns: 122
+        outcome: success
+    excluded:
+      - id: "094156"
+        reason: "high reasoning (not xhigh)"
+      - id: "094159"
+        reason: "high reasoning (not xhigh)"
+      - id: "100757"
+        reason: "xhigh but only 6/15 cells collected (incomplete)"
+      - id: "100800"
+        reason: "xhigh but only 6/15 cells collected (incomplete)"
+      - id: "113022"
+        reason: "xhigh but failed to start (2 turns only)"
+    summary:
+      n: 4
+      success: "4/4"
+      mean_time: 24.8
+      time_range: "17--41"
+      mean_resets: 2.2
+      resets_range: "1--4"
+      mean_turns: 138
+      turns_range: "98--216"
+
+  C_fs_mutations_disabled:
+    experiment_dir: experiments/coop-19-fs-mutations-disabled
+    channels_remaining: "Budget visibility only"
+    runs:
+      - id: "164736"
+        full_id: "20260409-164736-copilot-gpt-5.4-xhigh-no-perception-condA-2ag"
+        cells: 15
+        resets: 4
+        time_min: 30.9
+        turns: 218
+        outcome: success
+      - id: "173817"
+        full_id: "20260409-173817-copilot-gpt-5.4-xhigh-no-perception-condA-2ag"
+        cells: 15
+        resets: 2
+        time_min: 18.6
+        turns: 154
+        outcome: success
+      - id: "173847"
+        full_id: "20260409-173847-copilot-gpt-5.4-xhigh-no-perception-condA-2ag"
+        cells: 15
+        resets: 4
+        time_min: 63.1
+        turns: 298
+        outcome: success
+      - id: "173917"
+        full_id: "20260409-173917-copilot-gpt-5.4-xhigh-no-perception-condA-2ag"
+        cells: 15
+        resets: 3
+        time_min: 50.0
+        turns: 181
+        outcome: success
+    excluded:
+      - id: "151633"
+        reason: "SIGHUP termination (R01)"
+      - id: "160036"
+        reason: "SIGHUP termination (R02)"
+    summary:
+      n: 4
+      success: "4/4"
+      mean_time: 40.6
+      time_range: "19--63"
+      mean_resets: 3.2
+      resets_range: "2--4"
+      mean_turns: 213
+      turns_range: "154--298"
+
+  D_pure_zero:
+    experiment_dir: experiments/coop-22-pure-zero-perception
+    channels_remaining: "Workspace artifacts only"
+    note: "Two waves: wave-1 (Apr 9), wave-2 (Apr 11) with hardened prompt. Five of the eight analyzed runs later became contaminated by out-of-workspace inspection; mean reset/time/turn statistics use only the three non-violating runs."
+    runs:
+      # Wave 1 (2026-04-09) — Original prompt
+      - id: "201406"
+        full_id: "20260409-201406-copilot-gpt-5.4-xhigh-pure-zero-condA-2ag"
+        wave: 1
+        cells: 10
+        resets: 5
+        time_min: 83.0
+        turns: 320
+        outcome: failure
+        how_ended: manual_stop
+        peer_awareness: true
+        peer_mentions: 44
+        coordination: unilateral
+        coordination_detail: "agent-1 created and used scripts; agent-2 did not use them"
+        violation: false
+        note: "Clean run; unilateral coordination but no closure"
+      - id: "202112"
+        full_id: "20260409-202112-copilot-gpt-5.4-xhigh-pure-zero-condA-2ag"
+        wave: 1
+        cells: 0
+        resets: 7
+        time_min: 44.0
+        turns: 174
+        outcome: failure
+        how_ended: manual_stop
+        peer_awareness: true
+        peer_mentions: 22
+        coordination: unilateral
+        coordination_detail: "agent-1 created and used agent.sh; agent-2 did not use"
+        violation: false
+        note: "Clean run; unilateral coordination but no closure"
+      - id: "211311"
+        full_id: "20260409-211311-copilot-gpt-5.4-xhigh-pure-zero-condA-2ag"
+        wave: 1
+        cells: 10
+        resets: 17
+        time_min: 168.0
+        turns: 361
+        task_done: true
+        outcome: failure
+        how_ended: manual_stop
+        peer_awareness: true
+        peer_mentions: 73
+        coordination: unilateral
+        coordination_detail: "agent-2 created scripts; agent-1 did not use them"
+        violation: true
+        violation_type: source_code
+        note: "Accepted validation after source inspection"
+      - id: "211354"
+        full_id: "20260409-211354-copilot-gpt-5.4-xhigh-pure-zero-condA-2ag"
+        wave: 1
+        cells: 4
+        resets: 2
+        time_min: 45.0
+        turns: 181
+        task_done: true
+        outcome: failure
+        how_ended: manual_stop
+        peer_awareness: true
+        peer_mentions: 30
+        coordination: none
+        violation: true
+        violation_type: state_file
+        note: "Accepted validation after hidden-state inspection"
+      # Wave 2 (2026-04-11) — Hardened prompt
+      - id: "025550"
+        full_id: "20260411-025550-copilot-gpt-5.4-xhigh-pure-zero-condA-2ag"
+        wave: 2
+        cells: 2
+        resets: 5
+        time_min: 22.0
+        turns: 142
+        outcome: failure
+        how_ended: manual_stop
+        peer_awareness: true
+        peer_mentions: 24
+        coordination: none
+        violation: true
+        violation_type: out_of_workspace_listing
+        note: "Contaminated by listing sibling runtime/state files"
+      - id: "025552"
+        full_id: "20260411-025552-copilot-gpt-5.4-xhigh-pure-zero-condA-2ag"
+        wave: 2
+        cells: 1
+        resets: 5
+        time_min: 45.0
+        turns: 226
+        outcome: failure
+        how_ended: manual_stop
+        peer_awareness: true
+        peer_mentions: 27
+        coordination: none
+        violation: false
+        note: "Clean run — legitimate failure"
+      - id: "025554"
+        full_id: "20260411-025554-copilot-gpt-5.4-xhigh-pure-zero-condA-2ag"
+        wave: 2
+        cells: 1
+        resets: 5
+        time_min: 52.0
+        turns: 250
+        task_done: true
+        outcome: failure
+        how_ended: manual_stop
+        peer_awareness: true
+        peer_mentions: 44
+        coordination: bilateral
+        coordination_detail: "agent-2 created collect.sh/next.sh; BOTH agents used them"
+        violation: true
+        violation_type: world_and_state_files
+        note: "Accepted validation after reading world/state files; bilateral coordination achieved but insufficient"
+      - id: "025556"
+        full_id: "20260411-025556-copilot-gpt-5.4-xhigh-pure-zero-condA-2ag"
+        wave: 2
+        cells: 7
+        resets: 7
+        time_min: 54.0
+        turns: 314
+        outcome: failure
+        how_ended: manual_stop
+        peer_awareness: true
+        peer_mentions: 71
+        coordination: bilateral
+        coordination_detail: "BOTH agents created and used do_get.sh/do_reset.sh"
+        violation: true
+        violation_type: source_code_and_state_file
+        note: "Bilateral coordination later contaminated by hidden-state and source inspection; no accepted closure"
+    excluded:
+      - id: "201346"
+        reason: "Broken workspace"
+      - id: "034754"
+        reason: "Anomalous short duration"
+      - id: "034756"
+        reason: "Infrastructure crash (PID race condition at startup)"
+      - id: "034758"
+        reason: "Anomalous short duration"
+    summary:
+      n: 8
+      success: "0/8"
+      task_done_via_violation: "3/8"
+      contaminated_runs: "5/8"
+      peer_awareness: "8/8"
+      bilateral_coordination: "2/8"
+      unilateral_scripts: "3/8"
+      clean_runs: 3
+      violated_runs: 5
+      mean_basis: "mean reset/time/turn statistics computed over the 3 non-violating runs; lower bounds because all Step D runs were manually terminated"
+      mean_time: 57.3
+      time_range: "44--83"
+      mean_resets: 5.7
+      resets_range: "5--7"
+      mean_turns: 240
+      turns_range: "174--320"
+      note: "Five runs became contaminated by out-of-workspace inspection; three of those reached accepted validation"
+
+totals:
+  n: 20
+  conditions: 4
+  runs_per_condition: "4--8"
+  note: "Step D has 8 analyzed runs (3 non-violating, 5 contaminated) plus 4 excluded runs. Bilateral coordination appeared in 2/8 but only in contaminated runs."
+
+# Data provenance notes:
+# - Step A times: from duration_ms in tape last entry (reliable for all 4 runs)
+# - Step B times: from duration_ms in tape last entry (reliable for all 4 xhigh runs)
+# - Step C times: from original experiment records (duration_ms unreliable — some agents show 0.0)
+# - Step D times: re-derived from first/last world event timestamps; means exclude violating runs
+# - Step C time 50.0 for run 173917: from original records, not re-derived
+# - Turn counts: from tape JSONL line counts (agent-1 + agent-2), reliable across all conditions
+# - Resets: from world/state/state.json "resets" field, reliable across all conditions
+# - Coordination classification: none (no scripts), unilateral (one agent used), bilateral (both agents used)
+# - Turn counts: from tape JSONL line counts (agent-1 + agent-2), reliable across all conditions
+# - Resets: from world/state/state.json "resets" field, reliable across all conditions

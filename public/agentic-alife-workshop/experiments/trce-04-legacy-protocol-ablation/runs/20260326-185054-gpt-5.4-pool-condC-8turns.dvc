@@ -1,0 +1,6 @@
+outs:
+- md5: b0b6a2bb68f0f6430008f1c50a244596.dir
+  size: 81236
+  nfiles: 35
+  hash: md5
+  path: 20260326-185054-gpt-5.4-pool-condC-8turns

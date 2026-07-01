@@ -1,0 +1,17 @@
+---
+title: "From Simulated Worlds to Process Habitats: POSIX as a Substrate for Generative Artificial Life"
+author_raw: |
+  Hao Ke$^{1}$ \quad Jingyun Wu$^{1}$ \\
+  \mbox{}\\
+  $^1$Independent Researcher \\
+  \texttt{i@kehao.me} \quad \texttt{joeywu021@gmail.com}
+date: "May 2026"
+numbersections: false
+reference-section-title: "References"
+submission_type: "Workshop Short Paper"
+copyright_holder: "Hao Ke and Jingyun Wu"
+code_url: "https://github.com/kehao95/quine"
+abstract: |
+  Artificial Life advances by changing the medium in which life-like organization is studied. Classic systems like Tierra and Avida withheld organism-level goals but stayed below the semantic complexity of language; today's LLM agents supply that complexity, yet the frameworks organizing them predefine the coordination and succession ALife sets out to explain. Quine, a POSIX-native runtime, instead realizes each agent as an operating-system process, so lifecycle, memory, coordination, and succession reduce to OS primitives the experimenter can vary. Withholding affordances for social knowledge and reproduction, exploratory assays reveal heterogeneous coordination protocols and a successor morphospace. We offer Quine as a process-habitat substrate for making such organizational diversity experimentally observable.
+bibliography: references.bib
+---

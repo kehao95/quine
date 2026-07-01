@@ -1,0 +1,6 @@
+outs:
+- md5: 11389482538b7533f798ce3bc4db5afa.dir
+  size: 14419269
+  nfiles: 29
+  hash: md5
+  path: 20260507-121757-gpt-5.5-codex-xhigh-C03-native-ctl-inject

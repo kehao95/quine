@@ -1,0 +1,15 @@
+# Build outputs / binaries — rebuild from source, never tracked.
+/quine
+/world
+/qctl
+*.test
+
+# Local environment — only .env.example is tracked.
+.env
+.env.*
+!.env.example
+
+# DVC cache and local state.
+/.dvc/cache
+/.dvc/tmp
+/.dvc/config.local

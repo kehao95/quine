@@ -1,0 +1,6 @@
+outs:
+- md5: 2cf4309dd94ac9a79982e199985cbdc9.dir
+  size: 48446
+  nfiles: 13
+  hash: md5
+  path: 20260216-111726-gpt-5.2-codex

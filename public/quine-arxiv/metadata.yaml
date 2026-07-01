@@ -1,0 +1,46 @@
+---
+title: "Quine: Realizing LLM Agents as Native POSIX Processes"
+author: |
+  Hao Ke\
+  Independent Researcher, Bloomington, IN, USA\
+  i@kehao.me
+date: "March 2026"
+numbersections: true
+reference-section-title: "References"
+abstract: |
+  Current LLM agent frameworks often implement isolation, scheduling, and communication at the application layer, even though these mechanisms are already provided by mature operating systems.
+  Instead of introducing another application-layer orchestrator, I present Quine, a runtime architecture and reference implementation that realizes LLM agents as native POSIX processes.
+  The mapping is explicit: identity is PID, interface is standard streams and exit status, state is memory, environment variables, and filesystem, and lifecycle is fork/exec/exit.
+  A single executable implements this model by recursively spawning fresh instances of itself.
+  By grounding the agent abstraction in the OS process model, Quine inherits isolation, composition, and resource control directly from the kernel, while naturally supporting recursive delegation, self-renewal through exec, and shell-native composition.
+  The design also exposes where the POSIX process model stops: processes provide a robust substrate for execution, but not a complete runtime model for cognition.
+  In particular, the analysis points toward two immediate extensions beyond process semantics: task-relative worlds and revisable time.
+  A reference implementation of Quine is publicly available at https://github.com/kehao95/quine.
+documentclass: acmart
+classoption:
+  - sigconf
+  - screen
+  - nonacm
+bibliography: references.bib
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+  - \usepackage{placeins}
+  - \raggedbottom
+  - \emergencystretch=2em
+  - \settopmatter{printacmref=false,printfolios=false}
+  - \renewcommand\footnotetextcopyrightpermission[1]{}
+  - \makeatletter\let\@copyrightspace\relax\makeatother
+  - \pagestyle{plain}
+  - \fancyhead{}
+  - \fancyfoot{}
+  - \usepackage{fvextra}
+  - \RecustomVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\},breaklines=true,breakanywhere=true,fontsize=\small}
+  - \fvset{breaklines=true,breakanywhere=true}
+  - \acmConference[arXiv 2026]{arXiv Preprint}{March 2026}{Bloomington, IN, USA}
+  - \acmYear{2026}\copyrightyear{2026}
+  - \acmBooktitle{arXiv Preprint (March 2026)}
+  - \acmPrice{0.00}
+  - \acmDOI{}
+  - \acmISBN{}
+---

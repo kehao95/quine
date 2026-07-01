@@ -1,0 +1,7 @@
+outs:
+- md5: 401a0eca9d51a1943717f8b5a3f59972.dir
+  size: 463589
+  nfiles: 53
+  hash: md5
+  path: 
+    20260502-170956-copilot-gpt-5.4-C01-successor-visible-trace-2x2peer-container

@@ -1,0 +1,9 @@
+# Add patterns of files dvc should ignore, which could improve
+# the performance. Learn more at
+# https://dvc.org/doc/user-guide/dvcignore
+
+# Runtime-only IPC/control endpoints are not archival experiment data and can
+# block DVC scans when opened as ordinary files.
+**/runtime/agent/*/ctl/**
+**/runtime/agent-snapshot/*/ctl/**
+**/runtime/pid/**

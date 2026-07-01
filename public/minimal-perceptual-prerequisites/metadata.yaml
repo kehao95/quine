@@ -1,0 +1,23 @@
+---
+title: "Coordination Under Existential Unawareness: Information Ablation and Closure Thresholds in LLM Multi-Agent Systems"
+author_raw: |
+  Hao Ke\textsuperscript{1} \hspace{2em} Jingyun Wu\textsuperscript{1} \\
+  \mbox{}\\
+  \textsuperscript{1}Independent Researcher, Bloomington, IN, USA \\
+  i@kehao.me \hspace{2em} joeywu021@gmail.com
+date: "April 2026"
+numbersections: true
+reference-section-title: "References"
+abstract: |
+  Can LLM agents coordinate when given no explicit indication that other agents exist or that cooperation is required? We show that they can, and identify a threshold distinguishing coordination that closes from coordination that stalls. In a shared-scarcity task, two LLM agents face a collection problem objectively requiring coordination under a global budget, but this requirement is not disclosed. We enforce \emph{existential unawareness}---no explicit peer/cooperation framing in prompts, tool results, or telemetry---and progressively remove passive perception channels across four conditions (N=20). Framed as an existence proof in a single substrate, task, and model configuration, our results are twofold: (1) existential unawareness is experimentally isolatable, with coordination succeeding whenever at least one quantitative environmental signal remains (12/12); (2) we observe a threshold between anomaly-detection and artifact-detection---quantitative signals (budget depletion patterns) support task closure, while qualitative signals (static files) support peer-detection but not stable cooperation (0/8 legitimate closure). In one run, agents completed the task while holding incompatible causal models, suggesting macro-level coordination does not require aligned representations.
+code_url: "https://github.com/kehao95/quine"
+bibliography: references.bib
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+  - \usepackage{placeins}
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\},breaklines=true,breakanywhere=true,fontsize=\small}
+  - \RecustomVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true,breakanywhere=true,fontsize=\small}
+  - \fvset{breaklines=true,breakanywhere=true}
+---

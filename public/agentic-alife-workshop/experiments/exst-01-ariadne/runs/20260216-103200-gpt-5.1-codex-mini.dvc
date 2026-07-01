@@ -1,0 +1,6 @@
+outs:
+- md5: 9a92d2f5e70366f86ae60174bdf8b581.dir
+  size: 27424
+  nfiles: 10
+  hash: md5
+  path: 20260216-103200-gpt-5.1-codex-mini

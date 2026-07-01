@@ -1,0 +1,6 @@
+outs:
+- md5: b1b3a7600438126c1f555343370927e5.dir
+  size: 263098
+  nfiles: 69
+  hash: md5
+  path: 20260412-094703-claude-sonnet-4-5-condA-8turns

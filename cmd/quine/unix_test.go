@@ -1,0 +1,879 @@
+package main
+
+// Unix conformance tests for quine as a POSIX process.
+//
+// These tests verify that quine behaves like a well-formed Unix process:
+//   - stdin (fd 3 in persistent shell) delivers material correctly
+//   - stdout (fd 4) carries only deliverables, never internal chatter
+//   - stderr carries failure signals from exit() and fd 5 side channel writes
+//   - exit codes follow POSIX conventions (0=success, 1=failure)
+//   - persistent shell preserves state across sh calls (cd, export, variables)
+//   - process isolation: fd 1 (captured) vs fd 4 (delivered) are distinct
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/kehao95/quine/internal/config"
+	"github.com/kehao95/quine/internal/runtime"
+	"github.com/kehao95/quine/internal/tape"
+)
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+// unixTestConfig builds a Config for Unix conformance tests.
+func unixTestConfig(t *testing.T, tapeDir string) *config.Config {
+	t.Helper()
+	return &config.Config{
+		Identity: config.Identity{
+			ModelID:   "test-model",
+			Depth:     0,
+			SessionID: "unix-test-" + t.Name(),
+			TapeID:    "unix-tape-" + t.Name(),
+		},
+		Transport:    config.Transport{APIKey: "test-key", APIBase: "", Provider: "anthropic"},
+		Limits:       config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 30, OutputTruncate: 20480, MaxTurns: 20},
+		PromptConfig: config.PromptConfig{FailOnImpossible: true},
+		Paths:        config.Paths{DataDir: tapeDir, Shell: "/bin/sh"},
+	}
+}
+
+// runWithMock runs a quine session with mock responses and returns the exit code,
+// captured stdout, captured stderr, and tape entries.
+func runWithMock(t *testing.T, responses []tape.Message, mission, material string) (exitCode int, tapeEntries []tape.TapeEntry) {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+	tapeDir := filepath.Join(tmpDir, "tapes")
+	cfg := unixTestConfig(t, tapeDir)
+
+	mock := newMockProvider(responses)
+	rt := runtime.NewWithProvider(cfg, mock)
+	exitCode = rt.Run(mission, material)
+
+	// Parse tape
+	tapePath := cfg.TapePath("")
+	if _, err := os.Stat(tapePath); err == nil {
+		tapeEntries = parseTapeJSONL(t, tapePath)
+	}
+	return
+}
+
+// findToolResults extracts all tool_result entries from tape entries.
+func findToolResults(t *testing.T, entries []tape.TapeEntry) []tape.ToolResult {
+	t.Helper()
+	var results []tape.ToolResult
+	for _, e := range entries {
+		if e.Type == "tool_result" {
+			var tr tape.ToolResult
+			if err := json.Unmarshal(e.Data, &tr); err != nil {
+				t.Fatalf("unmarshal tool_result: %v", err)
+			}
+			results = append(results, tr)
+		}
+	}
+	return results
+}
+
+// findOutcome extracts the session outcome from tape entries.
+func findOutcome(t *testing.T, entries []tape.TapeEntry) tape.SessionOutcome {
+	t.Helper()
+	for i := len(entries) - 1; i >= 0; i-- {
+		if entries[i].Type == "outcome" {
+			var outcome tape.SessionOutcome
+			if err := json.Unmarshal(entries[i].Data, &outcome); err != nil {
+				t.Fatalf("unmarshal outcome: %v", err)
+			}
+			return outcome
+		}
+	}
+	t.Fatal("no outcome entry found in tape")
+	return tape.SessionOutcome{}
+}
+
+func decodeToolResultContent(t *testing.T, result tape.ToolResult) map[string]any {
+	t.Helper()
+	payload, err := tape.UnmarshalStructuredToolResultContent(result.Content)
+	if err != nil {
+		t.Fatalf("decode tool result content: %v\ncontent=%s", err, string(result.Content))
+	}
+	return payload
+}
+
+func toolResultString(t *testing.T, payload map[string]any, key string) string {
+	t.Helper()
+	value, _ := payload[key].(string)
+	return value
+}
+
+func toolResultInt(t *testing.T, payload map[string]any, key string) int {
+	t.Helper()
+	switch value := payload[key].(type) {
+	case json.Number:
+		n, err := value.Int64()
+		if err != nil {
+			t.Fatalf("parse %q int: %v", key, err)
+		}
+		return int(n)
+	case float64:
+		return int(value)
+	case int:
+		return value
+	case int64:
+		return int(value)
+	default:
+		t.Fatalf("expected numeric %q in payload: %#v", key, payload)
+		return 0
+	}
+}
+
+func toolResultOutput(t *testing.T, result tape.ToolResult) string {
+	t.Helper()
+	payload := decodeToolResultContent(t, result)
+	return toolResultString(t, payload, "stdout") + toolResultString(t, payload, "stderr")
+}
+
+// ---------------------------------------------------------------------------
+// 1. Exit codes
+// ---------------------------------------------------------------------------
+
+// TestExitCode_Success verifies exit(success) → exit code 0.
+func TestExitCode_Success(t *testing.T) {
+	code, _ := runWithMock(t, []tape.Message{
+		assistantExit("e1", "success", "", ""),
+	}, "say hello", "Begin.")
+
+	if code != 0 {
+		t.Errorf("exit(success) → exit code %d, want 0", code)
+	}
+}
+
+// TestExitCode_Failure verifies exit(failure) → exit code 1.
+func TestExitCode_Failure(t *testing.T) {
+	code, _ := runWithMock(t, []tape.Message{
+		assistantExit("e1", "failure", "", "something broke"),
+	}, "do something", "Begin.")
+
+	if code != 1 {
+		t.Errorf("exit(failure) → exit code %d, want 1", code)
+	}
+}
+
+// TestExitCode_TurnExhaustion verifies turn limit → exit code 1.
+func TestExitCode_TurnExhaustion(t *testing.T) {
+	tmpDir := t.TempDir()
+	tapeDir := filepath.Join(tmpDir, "tapes")
+	cfg := unixTestConfig(t, tapeDir)
+	cfg.MaxTurns = 2 // Only 2 turns allowed
+
+	// Mock: 3 sh calls (exceeds MaxTurns=2)
+	mock := newMockProvider([]tape.Message{
+		assistantsh("c1", "echo turn1"),
+		assistantsh("c2", "echo turn2"),
+		// Turn limit hit after c2; agent never gets to call c3
+	})
+
+	rt := runtime.NewWithProvider(cfg, mock)
+	code := rt.Run("loop forever", "Begin.")
+
+	if code != 1 {
+		t.Errorf("turn exhaustion → exit code %d, want 1", code)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// 2. Stdout (fd 4) — deliverable channel
+// ---------------------------------------------------------------------------
+
+// TestStdout_Fd4Delivery verifies that >&4 output reaches the process's real stdout.
+func TestStdout_Fd4Delivery(t *testing.T) {
+	tmpDir := t.TempDir()
+	tapeDir := filepath.Join(tmpDir, "tapes")
+	cfg := unixTestConfig(t, tapeDir)
+
+	// Capture stdout by replacing it with a pipe
+	stdoutR, stdoutW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mock := newMockProvider([]tape.Message{
+		assistantsh("c1", `echo "delivered" >&4`),
+		assistantExit("e1", "success", "", ""),
+	})
+
+	rt := runtime.NewWithProvider(cfg, mock)
+
+	// Replace the runtime's stdout with our pipe
+	rt.SetStdout(stdoutW)
+
+	code := rt.Run("deliver output", "Begin.")
+	stdoutW.Close()
+
+	// Read what was delivered to fd 4
+	buf := make([]byte, 4096)
+	n, _ := stdoutR.Read(buf)
+	delivered := strings.TrimSpace(string(buf[:n]))
+
+	if code != 0 {
+		t.Errorf("exit code = %d, want 0", code)
+	}
+	if delivered != "delivered" {
+		t.Errorf("fd 4 output = %q, want %q", delivered, "delivered")
+	}
+}
+
+// TestStdout_Fd1NotLeaked verifies that regular command output (fd 1)
+// stays in the tool result and does NOT leak to the process's real stdout.
+func TestStdout_Fd1NotLeaked(t *testing.T) {
+	tmpDir := t.TempDir()
+	tapeDir := filepath.Join(tmpDir, "tapes")
+	cfg := unixTestConfig(t, tapeDir)
+
+	// Capture stdout
+	stdoutR, stdoutW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mock := newMockProvider([]tape.Message{
+		// This writes to fd 1 (captured), not fd 4 (delivered)
+		assistantsh("c1", `echo "internal"`),
+		assistantExit("e1", "success", "", ""),
+	})
+
+	rt := runtime.NewWithProvider(cfg, mock)
+	rt.SetStdout(stdoutW)
+
+	code := rt.Run("produce internal output", "Begin.")
+	stdoutW.Close()
+
+	// Read whatever reached stdout
+	buf := make([]byte, 4096)
+	n, _ := stdoutR.Read(buf)
+	stdoutContent := string(buf[:n])
+
+	if code != 0 {
+		t.Errorf("exit code = %d, want 0", code)
+	}
+
+	// "internal" should NOT appear in the process's stdout
+	if strings.Contains(stdoutContent, "internal") {
+		t.Errorf("fd 1 output leaked to process stdout: %q", stdoutContent)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// 3. Stderr — failure signal channel
+// ---------------------------------------------------------------------------
+
+// TestStderr_FailureSignal verifies that exit(failure, stderr=...) writes to stderr.
+func TestStderr_FailureSignal(t *testing.T) {
+	tmpDir := t.TempDir()
+	tapeDir := filepath.Join(tmpDir, "tapes")
+	cfg := unixTestConfig(t, tapeDir)
+
+	// Capture stderr
+	stderrR, stderrW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mock := newMockProvider([]tape.Message{
+		assistantExit("e1", "failure", "", "file not found"),
+	})
+
+	rt := runtime.NewWithProvider(cfg, mock)
+	rt.SetStderr(stderrW)
+
+	code := rt.Run("find file", "Begin.")
+	stderrW.Close()
+
+	buf := make([]byte, 4096)
+	n, _ := stderrR.Read(buf)
+	stderrContent := string(buf[:n])
+
+	if code != 1 {
+		t.Errorf("exit code = %d, want 1", code)
+	}
+	if !strings.Contains(stderrContent, "file not found") {
+		t.Errorf("stderr = %q, want it to contain %q", stderrContent, "file not found")
+	}
+}
+
+// TestStderr_SuccessSilent verifies that exit(success) produces no stderr.
+func TestStderr_SuccessSilent(t *testing.T) {
+	tmpDir := t.TempDir()
+	tapeDir := filepath.Join(tmpDir, "tapes")
+	cfg := unixTestConfig(t, tapeDir)
+
+	// Capture stderr
+	stderrR, stderrW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mock := newMockProvider([]tape.Message{
+		assistantExit("e1", "success", "", ""),
+	})
+
+	rt := runtime.NewWithProvider(cfg, mock)
+	rt.SetStderr(stderrW)
+
+	code := rt.Run("noop", "Begin.")
+	stderrW.Close()
+
+	buf := make([]byte, 4096)
+	n, _ := stderrR.Read(buf)
+
+	if code != 0 {
+		t.Errorf("exit code = %d, want 0", code)
+	}
+	if n > 0 {
+		t.Errorf("exit(success) wrote to stderr: %q", string(buf[:n]))
+	}
+}
+
+// TestStderr_Fd5Signal verifies that explicit writes to fd 5 reach runtime stderr
+// while regular tool stderr capture remains unchanged.
+func TestStderr_Fd5Signal(t *testing.T) {
+	tmpDir := t.TempDir()
+	tapeDir := filepath.Join(tmpDir, "tapes")
+	cfg := unixTestConfig(t, tapeDir)
+
+	stderrR, stderrW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mock := newMockProvider([]tape.Message{
+		assistantsh("c1", `echo "streamed-failure" >&5`),
+		assistantExit("e1", "success", "", ""),
+	})
+
+	rt := runtime.NewWithProvider(cfg, mock)
+	rt.SetStderr(stderrW)
+
+	code := rt.Run("write failure signal", "Begin.")
+	stderrW.Close()
+
+	buf := make([]byte, 4096)
+	n, _ := stderrR.Read(buf)
+	stderrContent := string(buf[:n])
+
+	if code != 0 {
+		t.Errorf("exit code = %d, want 0", code)
+	}
+	if !strings.Contains(stderrContent, "streamed-failure") {
+		t.Errorf("stderr = %q, want streamed-failure from fd 5", stderrContent)
+	}
+
+	entries := parseTapeJSONL(t, cfg.TapePath(""))
+	results := findToolResults(t, entries)
+	if len(results) < 1 {
+		t.Fatal("expected at least 1 tool result")
+	}
+	if strings.Contains(toolResultOutput(t, results[0]), "streamed-failure") {
+		t.Errorf("fd 5 output must not appear in tool result capture: %q", results[0].Content)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// 4. (G3 named session persistence tests removed — G4 uses ephemeral sh calls)
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// 5. Anonymous shell behavior
+// ---------------------------------------------------------------------------
+
+// TestAnonymousShell_ExitDoesNotCrash verifies that `exit` in anonymous mode
+// gives an exit code without crash/recovery (each call is ephemeral).
+func TestCrashRecovery_ExitInShell(t *testing.T) {
+	_, entries := runWithMock(t, []tape.Message{
+		assistantsh("c1", "exit 1"), // in anonymous mode, just returns exit code 1
+		assistantsh("c2", "echo recovered"),
+		assistantExit("e1", "success", "", ""),
+	}, "test anonymous exit", "Begin.")
+
+	results := findToolResults(t, entries)
+	if len(results) < 2 {
+		t.Fatalf("expected at least 2 tool results, got %d", len(results))
+	}
+
+	// First result should show exit code 1 (not a SHELL ERROR)
+	if toolResultInt(t, decodeToolResultContent(t, results[0]), "exit_code") != 1 {
+		t.Errorf("exit result = %q, want exit_code 1", results[0].Content)
+	}
+
+	// Second result should work fine (ephemeral, no crash)
+	if !strings.Contains(toolResultOutput(t, results[1]), "recovered") {
+		t.Errorf("recovery result = %q, want 'recovered'", results[1].Content)
+	}
+}
+
+// TestAnonymousShell_StateNotShared verifies that state is not shared between anonymous calls.
+func TestCrashRecovery_StateLost(t *testing.T) {
+	_, entries := runWithMock(t, []tape.Message{
+		assistantsh("c1", "export EPHEMERAL=before_crash"),
+		assistantsh("c2", `echo "val=${EPHEMERAL:-gone}"`),
+		assistantExit("e1", "success", "", ""),
+	}, "test state isolation in anonymous mode", "Begin.")
+
+	results := findToolResults(t, entries)
+	if len(results) < 2 {
+		t.Fatalf("expected at least 2 tool results, got %d", len(results))
+	}
+
+	// In anonymous mode, each call is ephemeral — EPHEMERAL should be gone
+	if !strings.Contains(toolResultOutput(t, results[1]), "val=gone") {
+		t.Errorf("anonymous mode: %q, want val=gone (state should not persist)", results[1].Content)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// 6. sh tool result format
+// ---------------------------------------------------------------------------
+
+// TestShResultFormat verifies the exact format: [EXIT CODE] N\n[STDOUT]\n...\n[STDERR]\n...
+func TestShResultFormat(t *testing.T) {
+	_, entries := runWithMock(t, []tape.Message{
+		assistantsh("c1", "echo out; echo err >&2"),
+		assistantExit("e1", "success", "", ""),
+	}, "check result format", "Begin.")
+
+	results := findToolResults(t, entries)
+	if len(results) < 1 {
+		t.Fatal("expected at least 1 tool result")
+	}
+
+	payload := decodeToolResultContent(t, results[0])
+	if toolResultInt(t, payload, "exit_code") != 0 {
+		t.Errorf("missing exit_code 0 in %q", results[0].Content)
+	}
+	if toolResultString(t, payload, "stdout") != "out\n" {
+		t.Errorf("stdout = %q, want %q", toolResultString(t, payload, "stdout"), "out\n")
+	}
+	if toolResultString(t, payload, "stderr") != "err\n" {
+		t.Errorf("stderr = %q, want %q", toolResultString(t, payload, "stderr"), "err\n")
+	}
+}
+
+// TestShResultFormat_NonZeroExit verifies non-zero exit code is reported.
+func TestShResultFormat_NonZeroExit(t *testing.T) {
+	_, entries := runWithMock(t, []tape.Message{
+		assistantsh("c1", "false"), // exit code 1
+		assistantExit("e1", "success", "", ""),
+	}, "check non-zero exit", "Begin.")
+
+	results := findToolResults(t, entries)
+	if len(results) < 1 {
+		t.Fatal("expected at least 1 tool result")
+	}
+
+	if toolResultInt(t, decodeToolResultContent(t, results[0]), "exit_code") != 1 {
+		t.Errorf("expected exit_code 1, got %q", results[0].Content)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// 7. Stdin (fd 3) — material channel
+// ---------------------------------------------------------------------------
+
+// TestStdin_Fd3Available verifies that material stdin is readable via /dev/fd/3.
+func TestStdin_Fd3Available(t *testing.T) {
+	tmpDir := t.TempDir()
+	tapeDir := filepath.Join(tmpDir, "tapes")
+	cfg := unixTestConfig(t, tapeDir)
+
+	// Create a pipe to simulate stdin
+	stdinR, stdinW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Write test data to stdin pipe
+	go func() {
+		stdinW.Write([]byte("material data\n"))
+		stdinW.Close()
+	}()
+
+	mock := newMockProvider([]tape.Message{
+		assistantsh("c1", "cat /dev/fd/3"),
+		assistantExit("e1", "success", "", ""),
+	})
+
+	rt := runtime.NewWithProvider(cfg, mock)
+	rt.SetStdin(stdinR)
+
+	code := rt.Run("read stdin", "Input is piped as material.")
+
+	if code != 0 {
+		t.Errorf("exit code = %d, want 0", code)
+	}
+
+	// Parse tape to verify fd 3 read
+	tapePath := cfg.TapePath("")
+	entries := parseTapeJSONL(t, tapePath)
+	results := findToolResults(t, entries)
+
+	if len(results) < 1 {
+		t.Fatal("expected at least 1 tool result")
+	}
+
+	if !strings.Contains(toolResultOutput(t, results[0]), "material data") {
+		t.Errorf("fd 3 read = %q, want 'material data'", results[0].Content)
+	}
+}
+
+// TestStdin_Fd3ConsumptionAcrossShCalls verifies that fd 3 is a live stream:
+// once bytes are read in one sh call, later sh calls only see the unread
+// remainder.
+func TestStdin_Fd3ConsumptionAcrossShCalls(t *testing.T) {
+	tmpDir := t.TempDir()
+	tapeDir := filepath.Join(tmpDir, "tapes")
+	cfg := unixTestConfig(t, tapeDir)
+
+	stdinR, stdinW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go func() {
+		stdinW.Write([]byte("helloWORLD"))
+		stdinW.Close()
+	}()
+
+	mock := newMockProvider([]tape.Message{
+		assistantsh("c1", "dd bs=5 count=1 < /dev/fd/3 2>/dev/null"),
+		assistantsh("c2", "cat /dev/fd/3"),
+		assistantExit("e1", "success", "", ""),
+	})
+
+	rt := runtime.NewWithProvider(cfg, mock)
+	rt.SetStdin(stdinR)
+
+	code := rt.Run("consume stdin progressively", "Input is piped as material.")
+	if code != 0 {
+		t.Errorf("exit code = %d, want 0", code)
+	}
+
+	entries := parseTapeJSONL(t, cfg.TapePath(""))
+	results := findToolResults(t, entries)
+	if len(results) < 2 {
+		t.Fatalf("expected at least 2 tool results, got %d", len(results))
+	}
+
+	if !strings.Contains(toolResultOutput(t, results[0]), "hello") {
+		t.Errorf("first fd 3 read = %q, want first chunk 'hello'", results[0].Content)
+	}
+	if !strings.Contains(toolResultOutput(t, results[1]), "WORLD") {
+		t.Errorf("second fd 3 read = %q, want unread remainder 'WORLD'", results[1].Content)
+	}
+	if strings.Contains(toolResultOutput(t, results[1]), "hello") {
+		t.Errorf("second fd 3 read should not replay consumed bytes: %q", results[1].Content)
+	}
+}
+
+// TestStdin_ShParameterDoesNotReplaceMaterial verifies that sh(stdin="...")
+// feeds only the command's fd 0 and does not consume or replace material fd 3.
+func TestStdin_ShParameterDoesNotReplaceMaterial(t *testing.T) {
+	tmpDir := t.TempDir()
+	tapeDir := filepath.Join(tmpDir, "tapes")
+	cfg := unixTestConfig(t, tapeDir)
+
+	stdinR, stdinW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go func() {
+		stdinW.Write([]byte("material-stream"))
+		stdinW.Close()
+	}()
+
+	mock := newMockProvider([]tape.Message{
+		assistantshArgs("c1", map[string]any{
+			"command": "cat",
+			"stdin":   "tool-stdin",
+		}),
+		assistantsh("c2", "cat /dev/fd/3"),
+		assistantExit("e1", "success", "", ""),
+	})
+
+	rt := runtime.NewWithProvider(cfg, mock)
+	rt.SetStdin(stdinR)
+
+	code := rt.Run("separate sh stdin from material", "Input is piped as material.")
+	if code != 0 {
+		t.Errorf("exit code = %d, want 0", code)
+	}
+
+	entries := parseTapeJSONL(t, cfg.TapePath(""))
+	results := findToolResults(t, entries)
+	if len(results) < 2 {
+		t.Fatalf("expected at least 2 tool results, got %d", len(results))
+	}
+
+	if !strings.Contains(toolResultOutput(t, results[0]), "tool-stdin") {
+		t.Errorf("sh(stdin=...) output = %q, want tool-stdin", results[0].Content)
+	}
+	if !strings.Contains(toolResultOutput(t, results[1]), "material-stream") {
+		t.Errorf("fd 3 read = %q, want original material stream", results[1].Content)
+	}
+	if strings.Contains(toolResultOutput(t, results[1]), "tool-stdin") {
+		t.Errorf("fd 3 read should not be replaced by sh(stdin=...): %q", results[1].Content)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// 8. Multiline and special characters
+// ---------------------------------------------------------------------------
+
+// TestShell_MultilineCommand verifies that multiline commands work.
+func TestShell_MultilineCommand(t *testing.T) {
+	_, entries := runWithMock(t, []tape.Message{
+		assistantsh("c1", "for i in 1 2 3; do\n  echo \"line$i\"\ndone"),
+		assistantExit("e1", "success", "", ""),
+	}, "multiline command", "Begin.")
+
+	results := findToolResults(t, entries)
+	if len(results) < 1 {
+		t.Fatal("expected at least 1 tool result")
+	}
+
+	content := toolResultOutput(t, results[0])
+	if !strings.Contains(content, "line1") || !strings.Contains(content, "line2") || !strings.Contains(content, "line3") {
+		t.Errorf("multiline output = %q, want line1, line2, line3", results[0].Content)
+	}
+}
+
+// TestShell_SpecialChars verifies that special characters are handled correctly.
+func TestShell_SpecialChars(t *testing.T) {
+	_, entries := runWithMock(t, []tape.Message{
+		assistantsh("c1", `printf 'tab\there\nnewline\n'`),
+		assistantExit("e1", "success", "", ""),
+	}, "special chars", "Begin.")
+
+	results := findToolResults(t, entries)
+	if len(results) < 1 {
+		t.Fatal("expected at least 1 tool result")
+	}
+
+	content := toolResultOutput(t, results[0])
+	if !strings.Contains(content, "tab\there") {
+		t.Errorf("special chars output = %q, want tab and newline chars", results[0].Content)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// 9. Pipe semantics — command pipeline exit codes
+// ---------------------------------------------------------------------------
+
+// TestShell_PipeExitCode verifies that pipeline exit code is the last command's.
+func TestShell_PipeExitCode(t *testing.T) {
+	_, entries := runWithMock(t, []tape.Message{
+		// In POSIX sh, pipeline exit = last command's exit code
+		assistantsh("c1", "false | true"),
+		assistantExit("e1", "success", "", ""),
+	}, "pipe exit code", "Begin.")
+
+	results := findToolResults(t, entries)
+	if len(results) < 1 {
+		t.Fatal("expected at least 1 tool result")
+	}
+
+	// Pipeline exit code = last command (true = 0)
+	if toolResultInt(t, decodeToolResultContent(t, results[0]), "exit_code") != 0 {
+		t.Errorf("pipe exit code: %q, want exit_code 0", results[0].Content)
+	}
+}
+
+// TestShell_PipeData verifies data flows through pipes correctly.
+func TestShell_PipeData(t *testing.T) {
+	_, entries := runWithMock(t, []tape.Message{
+		assistantsh("c1", `echo "alpha\nbeta\ngamma" | grep beta`),
+		assistantExit("e1", "success", "", ""),
+	}, "pipe data flow", "Begin.")
+
+	results := findToolResults(t, entries)
+	if len(results) < 1 {
+		t.Fatal("expected at least 1 tool result")
+	}
+
+	if !strings.Contains(toolResultOutput(t, results[0]), "beta") {
+		t.Errorf("pipe output = %q, want 'beta'", results[0].Content)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// 10. Background jobs in persistent shell
+// ---------------------------------------------------------------------------
+
+// TestShell_BackgroundJob verifies that background jobs can be started and waited on.
+func TestShell_BackgroundJob(t *testing.T) {
+	tmpDir := t.TempDir()
+	outFile := filepath.Join(tmpDir, "bg.txt")
+
+	_, entries := runWithMock(t, []tape.Message{
+		assistantsh("c1", fmt.Sprintf(`echo background > %q &
+BG_PID=$!
+wait $BG_PID
+echo "waited"`, outFile)),
+		assistantExit("e1", "success", "", ""),
+	}, "background job", "Begin.")
+
+	results := findToolResults(t, entries)
+	if len(results) < 1 {
+		t.Fatal("expected at least 1 tool result")
+	}
+
+	if !strings.Contains(toolResultOutput(t, results[0]), "waited") {
+		t.Errorf("bg job result = %q, want 'waited'", results[0].Content)
+	}
+
+	// Verify the background job wrote its file
+	data, err := os.ReadFile(outFile)
+	if err != nil {
+		t.Fatalf("bg output file not found: %v", err)
+	}
+	if !strings.Contains(string(data), "background") {
+		t.Errorf("bg file content = %q, want 'background'", string(data))
+	}
+}
+
+// TestShell_BackgroundPidPersists is removed in G4 — cross-call $! persistence
+// required the G3 named session model which no longer exists.
+
+// ---------------------------------------------------------------------------
+// 11. Tape integrity
+// ---------------------------------------------------------------------------
+
+// TestTape_OutcomePresent verifies every session produces an outcome entry.
+func TestTape_OutcomePresent(t *testing.T) {
+	_, entries := runWithMock(t, []tape.Message{
+		assistantExit("e1", "success", "", ""),
+	}, "tape outcome", "Begin.")
+
+	outcome := findOutcome(t, entries)
+	if outcome.ExitCode != 0 {
+		t.Errorf("outcome exit code = %d, want 0", outcome.ExitCode)
+	}
+	if outcome.TerminationMode != tape.TermExit {
+		t.Errorf("termination mode = %q, want %q", outcome.TerminationMode, tape.TermExit)
+	}
+}
+
+// TestTape_TurnCounting verifies turn count matches sh calls.
+func TestTape_TurnCounting(t *testing.T) {
+	_, entries := runWithMock(t, []tape.Message{
+		assistantsh("c1", "echo 1"),
+		assistantsh("c2", "echo 2"),
+		assistantsh("c3", "echo 3"),
+		assistantExit("e1", "success", "", ""),
+	}, "turn counting", "Begin.")
+
+	// Should have exactly 3 tool results (one per sh call)
+	results := findToolResults(t, entries)
+	if len(results) != 3 {
+		t.Errorf("tool result count = %d, want 3", len(results))
+	}
+
+	// Outcome should record 3 turns
+	outcome := findOutcome(t, entries)
+	if outcome.ExitCode != 0 {
+		t.Errorf("exit code = %d, want 0", outcome.ExitCode)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// 12. File operations via shell
+// ---------------------------------------------------------------------------
+
+// TestShell_FileRoundtrip verifies write → read via shell commands.
+func TestShell_FileRoundtrip(t *testing.T) {
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "roundtrip.txt")
+
+	_, entries := runWithMock(t, []tape.Message{
+		assistantsh("c1", fmt.Sprintf(`echo "hello from shell" > %q`, testFile)),
+		assistantsh("c2", fmt.Sprintf(`cat %q`, testFile)),
+		assistantExit("e1", "success", "", ""),
+	}, "file roundtrip", "Begin.")
+
+	results := findToolResults(t, entries)
+	if len(results) < 2 {
+		t.Fatalf("expected at least 2 tool results, got %d", len(results))
+	}
+
+	if !strings.Contains(toolResultOutput(t, results[1]), "hello from shell") {
+		t.Errorf("file read = %q, want 'hello from shell'", results[1].Content)
+	}
+}
+
+// TestShell_Permissions verifies permission enforcement.
+func TestShell_Permissions(t *testing.T) {
+	tmpDir := t.TempDir()
+	noReadFile := filepath.Join(tmpDir, "noread.txt")
+
+	_, entries := runWithMock(t, []tape.Message{
+		// Create file, then remove read permission, then try to read
+		assistantsh("c1", fmt.Sprintf(`echo "secret" > %q && chmod 000 %q`, noReadFile, noReadFile)),
+		assistantsh("c2", fmt.Sprintf(`cat %q 2>&1`, noReadFile)),
+		// Clean up
+		assistantsh("c3", fmt.Sprintf(`chmod 644 %q`, noReadFile)),
+		assistantExit("e1", "success", "", ""),
+	}, "permission check", "Begin.")
+
+	results := findToolResults(t, entries)
+	if len(results) < 2 {
+		t.Fatalf("expected at least 2 tool results, got %d", len(results))
+	}
+
+	// Second result should show a permission error and non-zero exit
+	secondPayload := decodeToolResultContent(t, results[1])
+	secondResult := toolResultOutput(t, results[1])
+	if toolResultInt(t, secondPayload, "exit_code") != 1 {
+		t.Errorf("permission denied: %q, want exit_code 1", results[1].Content)
+	}
+	if !strings.Contains(strings.ToLower(secondResult), "permission denied") &&
+		!strings.Contains(strings.ToLower(secondResult), "operation not permitted") {
+		t.Errorf("permission denied message missing: %q", secondResult)
+	}
+}
+
+// TestShell_ExecutePermission verifies that scripts need execute permission.
+func TestShell_ExecutePermission(t *testing.T) {
+	tmpDir := t.TempDir()
+	script := filepath.Join(tmpDir, "test.sh")
+
+	_, entries := runWithMock(t, []tape.Message{
+		// Create script without execute permission
+		assistantsh("c1", fmt.Sprintf(`printf '#!/bin/sh\necho works\n' > %q`, script)),
+		// Try to execute it directly (should fail)
+		assistantsh("c2", fmt.Sprintf(`%s 2>&1`, script)),
+		// Add execute permission and try again
+		assistantsh("c3", fmt.Sprintf(`chmod +x %q && %s`, script, script)),
+		assistantExit("e1", "success", "", ""),
+	}, "execute permission", "Begin.")
+
+	results := findToolResults(t, entries)
+	if len(results) < 3 {
+		t.Fatalf("expected at least 3 tool results, got %d", len(results))
+	}
+
+	// Without +x: should fail
+	if toolResultInt(t, decodeToolResultContent(t, results[1]), "exit_code") == 0 {
+		t.Errorf("expected non-zero exit without +x, got: %q", results[1].Content)
+	}
+
+	// With +x: should succeed
+	if !strings.Contains(toolResultOutput(t, results[2]), "works") {
+		t.Errorf("with +x: %q, want 'works'", results[2].Content)
+	}
+}

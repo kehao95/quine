@@ -1,0 +1,6 @@
+outs:
+- md5: 09dbb36be2d783bf8f73f36526a7b73a.dir
+  size: 13541651
+  nfiles: 23
+  hash: md5
+  path: 20260507-121227-gpt-5.5-codex-xhigh-C04-public-ctl-raw-carrier

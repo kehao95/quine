@@ -1,0 +1,6 @@
+outs:
+- md5: f473d8c62faa274e3e3438f2a9ff8e3d.dir
+  size: 559511
+  nfiles: 142
+  hash: md5
+  path: 20260518-121011-gpt-5.4-codex-medium-C08-c08-closure-authority-no-answer-reentry-4peer-2cohort-container

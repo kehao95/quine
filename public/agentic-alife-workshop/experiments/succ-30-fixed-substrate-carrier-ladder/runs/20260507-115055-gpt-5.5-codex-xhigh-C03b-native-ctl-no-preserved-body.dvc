@@ -1,0 +1,6 @@
+outs:
+- md5: 7fe6e1b4fb9decdd3d47fc3c2bad3c84.dir
+  size: 15735543
+  nfiles: 122
+  hash: md5
+  path: 20260507-115055-gpt-5.5-codex-xhigh-C03b-native-ctl-no-preserved-body

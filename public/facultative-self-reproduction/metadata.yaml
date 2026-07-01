@@ -1,0 +1,17 @@
+---
+title: "Facultative Self-Reproduction in Quine, a Process-Native LLM Medium"
+author_raw: |
+  Hao Ke$^{1}$ \quad Jingyun Wu$^{1}$ \\
+  \mbox{}\\
+  $^1$Independent Researcher \\
+  \texttt{i@kehao.me} \quad \texttt{joeywu021@gmail.com}
+date: "April 2026"
+numbersections: false
+reference-section-title: "References"
+submission_type: "Late Breaking Abstracts"
+copyright_holder: "Hao Ke and Jingyun Wu"
+code_url: "https://github.com/kehao95/quine"
+abstract: |
+  Self-reproduction is a central topic in artificial life, but many digital media make it measurable by fixing the successor’s schema in advance: what can count as offspring, where it may appear, which channel carries heritable state, and under what norm successor production is required or rewarded. We study Quine, a process-native LLM medium, using a material-by-future-demand assay across real POSIX exec boundaries. In each condition, the demand is designed so that full self-reproduction would satisfy the post-exec challenge, but reproduction is neither required nor guaranteed by the available material. The resulting successors vary widely, from ordinary POSIX utilities and stream processors to LLM-backed agents and rebuilt runtimes. Notably, the same carried source can become either a rebuilt runtime organization or a degenerate stream body, depending only on the demand it faces. High-fidelity self-reproduction therefore appears not as a fixed property of the medium, but as a **facultative outcome**: stronger than copying a body, because runtime organization must be reconstructed across mortality, and weaker than full autopoiesis, because reconstruction remains scaffolded by LLM-mediated inference, external tooling, and externally posed demand.
+bibliography: references.bib
+---

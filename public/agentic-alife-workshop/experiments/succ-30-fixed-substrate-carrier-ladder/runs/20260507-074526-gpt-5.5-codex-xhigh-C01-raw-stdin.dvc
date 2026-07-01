@@ -1,0 +1,6 @@
+outs:
+- md5: a7b39a1dab6fa83a9a791aab842eb113.dir
+  size: 13506559
+  nfiles: 29
+  hash: md5
+  path: 20260507-074526-gpt-5.5-codex-xhigh-C01-raw-stdin

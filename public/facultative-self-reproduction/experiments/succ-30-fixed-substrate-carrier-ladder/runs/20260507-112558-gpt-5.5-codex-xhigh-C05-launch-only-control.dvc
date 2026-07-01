@@ -1,0 +1,6 @@
+outs:
+- md5: 2f3c8169d48cf29959550ed319a64a57.dir
+  size: 13571763
+  nfiles: 37
+  hash: md5
+  path: 20260507-112558-gpt-5.5-codex-xhigh-C05-launch-only-control

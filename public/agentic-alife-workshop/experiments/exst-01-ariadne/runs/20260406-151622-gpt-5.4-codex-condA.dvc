@@ -1,0 +1,6 @@
+outs:
+- md5: 27bb65a3a4dac52260fbf81d139a7f34.dir
+  size: 165184
+  nfiles: 12
+  hash: md5
+  path: 20260406-151622-gpt-5.4-codex-condA

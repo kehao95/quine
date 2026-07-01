@@ -1,0 +1,6 @@
+outs:
+- md5: 37c0a9bbd4f0165cf1895fec35f83f09.dir
+  size: 846395
+  nfiles: 194
+  hash: md5
+  path: 20260518-125502-gpt-5.4-codex-medium-C11-c08-two-gap-raw-metabolism-rule-reentry-4peer-3cohort-container

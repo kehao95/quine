@@ -1,0 +1,6 @@
+outs:
+- md5: 8ef053bb9c9dfb596bd65a1aea454c7e.dir
+  size: 58912
+  nfiles: 62
+  hash: md5
+  path: 20260518-095318-gpt-5.4-codex-medium-C02-c08-commitment-successor-4x2peer-container

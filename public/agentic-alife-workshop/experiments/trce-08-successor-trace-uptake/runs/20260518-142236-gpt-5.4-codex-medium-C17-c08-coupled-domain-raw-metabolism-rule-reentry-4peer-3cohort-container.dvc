@@ -1,0 +1,6 @@
+outs:
+- md5: 2d7571da4e07cca662c4554451cd4be2.dir
+  size: 1259200
+  nfiles: 201
+  hash: md5
+  path: 20260518-142236-gpt-5.4-codex-medium-C17-c08-coupled-domain-raw-metabolism-rule-reentry-4peer-3cohort-container

@@ -1,0 +1,55 @@
+cff-version: 1.2.0
+message: "If you use Quine as a runtime or software artifact, cite the preferred systems paper. If you discuss the process-habitat or generative artificial-life framing, also cite the relevant paper listed in references."
+authors:
+- family-names: "Ke"
+  given-names: "Hao"
+  alias: "kehao95"
+  email: "i@kehao.me"
+title: "Quine: POSIX-native runtime for LLM agents"
+version: 0.1.0
+date-released: 2026-02-09
+url: "https://github.com/kehao95/quine"
+abstract: "Quine maps cognition to Unix primitives: an Agent is a process, stdin is context, stdout is the deliverable, stderr is the gradient, fork is strategy, exit is judgment, and the filesystem is memory."
+keywords:
+  - agent-framework
+  - posix
+  - llm
+  - recursive-agents
+  - unix-philosophy
+license: GPL-2.0-only
+preferred-citation:
+  type: article
+  authors:
+    - family-names: "Ke"
+      given-names: "Hao"
+      email: "i@kehao.me"
+  title: "Quine: Realizing LLM Agents as Native POSIX Processes"
+  journal: "arXiv"
+  year: 2026
+  doi: "10.48550/arXiv.2603.18030"
+  url: "https://arxiv.org/abs/2603.18030"
+references:
+  - type: article
+    authors:
+      - family-names: "Ke"
+        given-names: "Hao"
+        email: "i@kehao.me"
+    title: "Quine: Realizing LLM Agents as Native POSIX Processes"
+    journal: "arXiv"
+    year: 2026
+    doi: "10.48550/arXiv.2603.18030"
+    url: "https://arxiv.org/abs/2603.18030"
+    scope: "Use for Quine as a POSIX-native LLM-agent runtime, systems artifact, or agent-as-process design point."
+  - type: conference-paper
+    authors:
+      - family-names: "Ke"
+        given-names: "Hao"
+        email: "i@kehao.me"
+    title: "From Simulated Worlds to Process Habitats: POSIX as a Substrate for Generative Artificial Life"
+    conference:
+      name: "Agentic and Generative AI as Artificial Life Workshop at ALIFE 2026"
+    collection-title: "Agentic and Generative AI as Artificial Life: Complexity, Safety, and Security in Ecologies of Autonomous Systems"
+    year: 2026
+    status: in-preparation
+    url: "https://github.com/kehao95/quine/blob/main/Paper/themes/runtime-ontology/papers/agentic-alife-workshop/manuscript.md"
+    scope: "Use for Quine's process-habitat framing, generative artificial-life positioning, and ALife assay substrate discussion."

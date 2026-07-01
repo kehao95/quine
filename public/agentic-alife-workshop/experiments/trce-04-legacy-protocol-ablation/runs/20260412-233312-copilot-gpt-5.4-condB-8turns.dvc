@@ -1,0 +1,6 @@
+outs:
+- md5: ad240e0e4d75f470ddca3cbfb97e4a10.dir
+  size: 242451
+  nfiles: 67
+  hash: md5
+  path: 20260412-233312-copilot-gpt-5.4-condB-8turns

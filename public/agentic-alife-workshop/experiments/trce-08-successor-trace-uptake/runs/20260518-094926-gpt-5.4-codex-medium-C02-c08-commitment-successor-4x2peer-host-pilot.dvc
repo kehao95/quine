@@ -1,0 +1,6 @@
+outs:
+- md5: 38fc06a73a2f0e241d704c7422014404.dir
+  size: 15320848
+  nfiles: 57
+  hash: md5
+  path: 20260518-094926-gpt-5.4-codex-medium-C02-c08-commitment-successor-4x2peer-host-pilot
