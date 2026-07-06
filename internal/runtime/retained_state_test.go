@@ -805,12 +805,6 @@ func TestResumeReplaysSafePendingTools(t *testing.T) {
 				"target": "wr0",
 			}},
 		},
-		{
-			name: "escalate",
-			tc: tape.ToolCall{ID: "call_escalate", Name: "escalate", Arguments: map[string]any{
-				"reason": "recover pending escalation",
-			}},
-		},
 	}
 
 	for _, tt := range tests {

@@ -1,0 +1,6 @@
+outs:
+- md5: e665ffd554cbdb3173a7e14b5515bb3a.dir
+  size: 945936
+  nfiles: 2066
+  hash: md5
+  path: runs-glm-scale

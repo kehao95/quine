@@ -104,9 +104,6 @@ func filterProcessIdentity(env []string) []string {
 		if strings.HasPrefix(e, config.EnvRunID+"=") {
 			continue
 		}
-		if strings.HasPrefix(e, config.EnvShTimeout+"=") {
-			continue
-		}
 		if strings.HasPrefix(e, config.EnvTapeID+"=") {
 			continue
 		}

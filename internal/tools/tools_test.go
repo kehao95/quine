@@ -1349,16 +1349,14 @@ func TestParseExecArgs(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "with target argv wisdom",
+			name: "with target argv",
 			args: map[string]any{
 				"target": "/bin/sh",
 				"argv":   []any{"/bin/sh", "-c", "echo hi"},
-				"wisdom": map[string]any{"phase": "post"},
 			},
 			want: ExecRequest{
 				Target: "/bin/sh",
 				Argv:   []string{"/bin/sh", "-c", "echo hi"},
-				Wisdom: map[string]string{"phase": "post"},
 			},
 			wantErr: false,
 		},
@@ -1402,9 +1400,6 @@ func TestParseExecArgs(t *testing.T) {
 				if !reflect.DeepEqual(got.Argv, tt.want.Argv) {
 					t.Errorf("Argv = %v, want %v", got.Argv, tt.want.Argv)
 				}
-				if !reflect.DeepEqual(got.Wisdom, tt.want.Wisdom) {
-					t.Errorf("Wisdom = %v, want %v", got.Wisdom, tt.want.Wisdom)
-				}
 			}
 		})
 	}
@@ -1412,11 +1407,7 @@ func TestParseExecArgs(t *testing.T) {
 
 func TestExecEnv(t *testing.T) {
 	cfg := &config.Config{
-
-		Wisdom: map[string]string{
-			"SUMMARY":  "Found 3 bugs",
-			"PROGRESS": "50%",
-		}, Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", Depth: 3, SessionID: "pre-exec-session", RunID: "pre-exec-run", TapeID: "legacy-tape", ParentSession: "root-session"}, Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"}, Limits: config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 600, OutputTruncate: 20480, MaxTurns: 20}, Paths: config.Paths{DataDir: "/tmp/quine-test", Shell: "/bin/sh"},
+		Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", Depth: 3, SessionID: "pre-exec-session", RunID: "pre-exec-run", TapeID: "legacy-tape", ParentSession: "root-session"}, Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"}, Limits: config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 600, OutputTruncate: 20480, MaxTurns: 20}, Paths: config.Paths{DataDir: "/tmp/quine-test", Shell: "/bin/sh"},
 	}
 
 	execEnv, err := cfg.ExecEnv()
@@ -1445,12 +1436,6 @@ func TestExecEnv(t *testing.T) {
 	if envMap["QUINE_PARENT_SESSION"] != "root-session" {
 		t.Errorf("QUINE_PARENT_SESSION = %q, want root-session", envMap["QUINE_PARENT_SESSION"])
 	}
-	if envMap["QUINE_WISDOM_SUMMARY"] != "Found 3 bugs" {
-		t.Errorf("QUINE_WISDOM_SUMMARY = %q, want 'Found 3 bugs'", envMap["QUINE_WISDOM_SUMMARY"])
-	}
-	if envMap["QUINE_WISDOM_PROGRESS"] != "50%" {
-		t.Errorf("QUINE_WISDOM_PROGRESS = %q, want '50%%'", envMap["QUINE_WISDOM_PROGRESS"])
-	}
 	if envMap["QUINE_TAPE_ID"] != "legacy-tape" {
 		t.Errorf("QUINE_TAPE_ID = %q, want legacy-tape", envMap["QUINE_TAPE_ID"])
 	}
@@ -1460,6 +1445,130 @@ func TestExecEnv(t *testing.T) {
 	if envMap["QUINE_MAX_DEPTH"] != "5" {
 		t.Errorf("QUINE_MAX_DEPTH = %q, want 5", envMap["QUINE_MAX_DEPTH"])
 	}
+}
+
+// writeStagedNextEnv plants a staged-override file under the agent-root
+// config/ dir the way an agent's sh call would.
+func writeStagedNextEnv(t *testing.T, cfg *config.Config, content string) string {
+	t.Helper()
+	path := cfg.StagedNextEnvPath()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("mkdir staged config dir: %v", err)
+	}
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatalf("write staged config: %v", err)
+	}
+	return path
+}
+
+// TestStagedOverridesExecPathOnlyChildIsolation is the child-isolation
+// regression test required by registry-design-brief § C (F-3): the staged
+// next.env merge lives strictly in the exec path — fork/spawn children built
+// from ChildEnv() (which shares baseEnv with ExecEnv) must NEVER see staged
+// values.
+func TestStagedOverridesExecPathOnlyChildIsolation(t *testing.T) {
+	cfg := &config.Config{
+		Identity:  config.Identity{ModelID: "test-model", SessionID: "staged-isolation-session", TapeID: "tape-staged"},
+		Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"},
+		Limits:    config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 10, OutputTruncate: 20480},
+		Paths:     config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"},
+	}
+	writeStagedNextEnv(t, cfg, "QUINE_OUTPUT_TRUNCATE=31337\n")
+
+	// Exec path: the staged value must be merged over the ExecEnv() output.
+	execEnv, err := cfg.ExecEnv()
+	if err != nil {
+		t.Fatalf("ExecEnv() error: %v", err)
+	}
+	staged, err := config.ReadStagedOverrides(cfg.StagedNextEnvPath())
+	if err != nil {
+		t.Fatalf("ReadStagedOverrides() error: %v", err)
+	}
+	merged := config.MergeStagedOverrides(execEnv, staged)
+	mergedMap := envSliceToMap(merged)
+	if mergedMap["QUINE_OUTPUT_TRUNCATE"] != "31337" {
+		t.Fatalf("exec path QUINE_OUTPUT_TRUNCATE = %q, want staged 31337", mergedMap["QUINE_OUTPUT_TRUNCATE"])
+	}
+
+	// Child path: fork/spawn children never see the staged value.
+	childEnv, err := cfg.ChildEnv()
+	if err != nil {
+		t.Fatalf("ChildEnv() error: %v", err)
+	}
+	childMap := envSliceToMap(childEnv)
+	if childMap["QUINE_OUTPUT_TRUNCATE"] != "20480" {
+		t.Fatalf("child QUINE_OUTPUT_TRUNCATE = %q, want the in-process 20480 — staged next.env leaked into ChildEnv", childMap["QUINE_OUTPUT_TRUNCATE"])
+	}
+}
+
+func TestExecRejectsInvalidStagedConfigAndKeepsFileIntact(t *testing.T) {
+	cfg := &config.Config{
+		Identity:  config.Identity{ModelID: "test-model", SessionID: "staged-reject-session", TapeID: "tape-staged-reject"},
+		Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"},
+		Limits:    config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 10, OutputTruncate: 20480},
+		Paths:     config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"},
+	}
+	content := "QUINE_API_KEY=stolen\nQUINE_MAX_TURNS=soon\n"
+	path := writeStagedNextEnv(t, cfg, content)
+
+	exec := &ExecExecutor{QuinePath: "/nonexistent/quine", Cfg: cfg, Mission: "staged reject"}
+	result := exec.Execute("tool-exec-staged", ExecRequest{})
+	if !result.IsError {
+		t.Fatal("exec with an invalid staged config should fail as a normal tool error")
+	}
+	text := string(result.Content)
+	for _, want := range []string{
+		"[EXEC ERROR]",
+		"QUINE_API_KEY",            // mutability violation named
+		"QUINE_MAX_TURNS",          // type violation named
+		"only exec-boundary knobs", // the whitelist, agent-legible
+		"left intact",              // fix-and-retry guidance
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("exec rejection missing %q:\n%s", want, text)
+		}
+	}
+
+	after, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("re-read staged file: %v", err)
+	}
+	if string(after) != content {
+		t.Fatalf("rejected exec must leave next.env intact: %q -> %q", content, after)
+	}
+}
+
+func TestExecAbsentStagedConfigIsNoOp(t *testing.T) {
+	cfg := &config.Config{
+		Identity:  config.Identity{ModelID: "test-model", SessionID: "staged-absent-session", TapeID: "tape-staged-absent"},
+		Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"},
+		Limits:    config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 10, OutputTruncate: 20480},
+		Paths:     config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"},
+	}
+
+	// No next.env exists: exec proceeds to the syscall and fails only on the
+	// bogus target, not on staged validation.
+	exec := &ExecExecutor{QuinePath: "/nonexistent/quine", Cfg: cfg, Mission: "staged absent"}
+	result := exec.Execute("tool-exec-absent", ExecRequest{})
+	if !result.IsError {
+		t.Fatal("expected exec failure on the nonexistent target")
+	}
+	text := string(result.Content)
+	if !strings.Contains(text, "syscall.Exec failed") {
+		t.Fatalf("failure should come from the exec syscall, not staged validation:\n%s", text)
+	}
+	if strings.Contains(text, "staged config") {
+		t.Fatalf("absent staged file must be a silent no-op:\n%s", text)
+	}
+}
+
+func envSliceToMap(env []string) map[string]string {
+	m := make(map[string]string, len(env))
+	for _, entry := range env {
+		key, val, _ := strings.Cut(entry, "=")
+		m[key] = val
+	}
+	return m
 }
 
 func TestExecProcessSurfaceEnvIncludesAgentRoot(t *testing.T) {
@@ -1489,7 +1598,6 @@ func TestExecExecutor_FailureUsesJSONContentOnly(t *testing.T) {
 
 	result := exec.Execute("tool-exec", ExecRequest{
 		Target: "definitely-missing-executable-for-structured-content",
-		Wisdom: map[string]string{"SUMMARY": "keep this"},
 	})
 	if !result.IsError {
 		t.Fatal("expected exec failure result")

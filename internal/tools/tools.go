@@ -429,9 +429,6 @@ func NewShExecutor(cfg *config.Config, childEnv []string) *ShExecutor {
 		if strings.HasPrefix(entry, config.EnvRunID+"=") {
 			continue
 		}
-		if strings.HasPrefix(entry, config.EnvShTimeout+"=") {
-			continue
-		}
 		if strings.HasPrefix(entry, ContextBootstrapEnv+"=") {
 			continue
 		}
@@ -451,9 +448,6 @@ func NewShExecutor(cfg *config.Config, childEnv []string) *ShExecutor {
 			continue
 		}
 		if strings.HasPrefix(entry, config.EnvRunID+"=") {
-			continue
-		}
-		if strings.HasPrefix(entry, config.EnvShTimeout+"=") {
 			continue
 		}
 		if strings.HasPrefix(entry, ContextBootstrapEnv+"=") {

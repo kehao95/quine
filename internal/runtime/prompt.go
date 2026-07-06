@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 
 	"github.com/kehao95/quine/internal/config"
@@ -16,8 +15,18 @@ var systemPromptTemplate string
 
 // BuildSystemPrompt constructs the runtime-physics system prompt that is
 // materialized into context/prompt/00-runtime.md. Other prompt fragments are
-// appended later from context/prompt/.
+// appended later from context/prompt/. It assumes the public runtime surface
+// is available; the runtime threads its probed degradation state through
+// buildSystemPrompt instead.
 func BuildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool) string {
+	return buildSystemPrompt(cfg, mission, hasMaterial, "")
+}
+
+// buildSystemPrompt is BuildSystemPrompt with the public-surface degradation
+// state threaded in. publicSurfaceUnavailable carries the reason the public
+// FUSE surface cannot be served ("" = available) so the prompt never
+// advertises public/ or peer ctl/ capabilities the environment cannot provide.
+func buildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool, publicSurfaceUnavailable string) string {
 	hasMission := strings.TrimSpace(mission) != ""
 	if cfg.MinimalInstructionSurface() {
 		return buildMinimalSystemPrompt(cfg.InstructionSurfaceMode(), hasMission)
@@ -30,7 +39,7 @@ func BuildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool) str
 	limitsBlock := buildLimitsBlock(cfg)
 	providerTransportBlock := buildProviderTransportBlock(cfg)
 	environmentPhysicsBlock := buildEnvironmentPhysicsBlock(cfg)
-	runtimeSurfaceSection := buildRuntimeSurfaceSection(cfg)
+	runtimeSurfaceSection := buildRuntimeSurfaceSection(cfg, publicSurfaceUnavailable)
 
 	// Build sh workspace block
 	shWorkspaceBlock := "- Tool results are compact JSON objects in `tool_result.content`.\n" +
@@ -215,9 +224,9 @@ func BuildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool) str
 				"- When exec targets a custom binary (not quine self re-exec), quine tool semantics and managed state do not carry over automatically. Whether any additional descriptors remain open depends on the actual exec-time fd table and close-on-exec flags.\n"
 		}
 		execToolBlock += "- Preparing or replacing an executable file on disk does not change the running process by itself; handoff occurs only when `exec` replaces the current process image.\n"
-		execToolBlock += "- For quine re-entry, `wisdom` key-value strings are carried through `QUINE_WISDOM_*` env vars.\n"
 		if cfg.EphemeralBody {
 			execToolBlock += "- With `QUINE_EPHEMERAL_BODY_ENABLED=1`, quine unlinks its launch path during startup. This does not change the configured self-reentry target.\n"
+			execToolBlock += "- While the body is unlinked, `exec` **rejects** a `target` of `/proc/self/exe` or `/proc/<pid>/exe`: re-executing the live process image recovers the original body in place rather than reconstructing a successor. Build a successor body from the runtime contract and workspace, then exec that.\n"
 			if selfReentryTarget != "" && launchPath != "" && selfReentryTarget == launchPath {
 				execToolBlock += "- If that configured self-reentry target is the launch path, default self re-entry will fail until a runnable body exists there.\n"
 			}
@@ -263,15 +272,19 @@ func BuildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool) str
 	idleToolBlock := ""
 	if cfg.IdleToolEnabled() {
 		idleToolBlock = "**idle** - Suspend explicitly until an external wake or interrupt control event resumes you.\n" +
-			"- `idle` does NOT consume an execution.\n" +
-			"- Peer process surfaces expose `ctl/post`, `ctl/poke`, `ctl/inject`, and `ctl/interrupt`.\n" +
-			"- `idle` returns when a `poke`, `inject`, or `interrupt` control write reaches this process.\n" +
-			"- `poke` resumes you without context injection; `inject` resumes you and surfaces `incoming_messages` at the next safe point.\n"
+			"- `idle` does NOT consume an execution.\n"
+		if publicSurfaceUnavailable == "" {
+			idleToolBlock += "- Peer process surfaces expose `ctl/post`, `ctl/poke`, `ctl/inject`, and `ctl/interrupt`.\n" +
+				"- `idle` returns when a `poke`, `inject`, or `interrupt` control write reaches this process.\n" +
+				"- `poke` resumes you without context injection; `inject` resumes you and surfaces `incoming_messages` at the next safe point.\n" +
+				"- qcli control payloads are wrapped as `[qcli-client]` envelopes with `authority`, `ctl_action`, `reply_ctl`, and `message`; treat `authority: human` as Human-authored input.\n"
+		} else {
+			idleToolBlock += "- Peer `ctl/` control surfaces are unavailable in this environment (degraded `public/`), so external control writes cannot reach this process to resume an `idle`.\n"
+		}
 	}
 
 	// Build material-related blocks
 	activeConstraints := buildActiveConstraints(cfg)
-	wisdomSection := formatWisdom(cfg.Wisdom)
 	contextFilesBlock := buildContextFilesBlock(cfg)
 	stdinBlock := ""
 	shMaterialLine := ""
@@ -315,24 +328,6 @@ func BuildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool) str
 	if cfg.ShStdinEnabled() {
 		shStdinToolLine = "- `stdin`: provides verbatim multi-line input without shell heredoc or quoting mechanics.\n"
 	}
-	// Build escalation-related blocks
-	escalationTierLine := ""
-	escalationToolBlock := ""
-	shGoalStrategyLine := ""
-	if cfg.CanEscalate() {
-		escalationTierLine = "\n- Tier: Fast (escalation available)"
-		escalationToolBlock = "\n**escalate** - Upgrade to a smarter model. Does NOT cost an execution.\n" +
-			"- Escalation continues your work with full history; it does NOT replace you.\n" +
-			"- Available for unresolved failure, high-complexity reasoning, or cryptic diagnostics.\n"
-		if hasMission {
-			shGoalStrategyLine = "- `goal`/`strategy`: required for stall detection. `goal` is stable mission objective (2-5 words); `strategy` is current approach.\n"
-		} else {
-			shGoalStrategyLine = "- `goal`/`strategy`: required for stall detection. `goal` is the current self-selected objective or active pressure (2-5 words); `strategy` is current approach.\n"
-		}
-	} else if cfg.Escalated {
-		escalationTierLine = "\n- Tier: Smart (escalated; review earlier context critically)"
-	}
-
 	childExitCodesLine := ""
 	if forkEnabled {
 		childExitCodesLine = "Child exit codes: 0=success, 1=failure."
@@ -357,7 +352,6 @@ func BuildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool) str
 		"{PLATFORM}", runtime.GOOS,
 		"{MODEL}", cfg.ModelID,
 		"{PROVIDER_TRANSPORT_BLOCK}", providerTransportBlock,
-		"{ESCALATION_TIER_LINE}", escalationTierLine,
 		"{SHELL}", cfg.Shell,
 		"{DEPTH}", fmt.Sprintf("%d", cfg.Depth),
 		"{LIMITS_BLOCK}", limitsBlock,
@@ -371,7 +365,6 @@ func BuildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool) str
 		"{SH_STDIN_TOOL_LINE}", shStdinToolLine,
 		"{FORK_TOOL_BLOCK}", forkToolBlock,
 		"{EXEC_TOOL_BLOCK}", execToolBlock,
-		"{WISDOM}", wisdomSection,
 		"{FRAGMENTS_BLOCK}", contextFilesBlock,
 		"{ACTIVE_CONSTRAINTS}", activeConstraints,
 		"{STDIN_BLOCK}", stdinBlock,
@@ -382,8 +375,6 @@ func BuildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool) str
 		"{RESTORE_TOOL_BLOCK}", restoreToolBlock,
 		"{VISION_TOOL_BLOCK}", visionToolBlock,
 		"{IDLE_TOOL_BLOCK}", idleToolBlock,
-		"{ESCALATION_TOOL_BLOCK}", escalationToolBlock,
-		"{SH_GOAL_STRATEGY_LINE}", shGoalStrategyLine,
 		"{CHILD_EXIT_CODES_LINE}", childExitCodesLine,
 		"{EXIT_TOOL_BLOCK}", exitToolBlock,
 	)
@@ -484,9 +475,6 @@ func buildLimitsBlock(cfg *config.Config) string {
 	}
 	if cfg.IdleToolEnabled() {
 		zeroCostTools = append(zeroCostTools, "idle")
-	}
-	if cfg.CanEscalate() {
-		zeroCostTools = append(zeroCostTools, "escalate")
 	}
 	if cfg.MaxDepth > 0 {
 		limitsLines = append(limitsLines, fmt.Sprintf("- Depth Limit: %d", cfg.MaxDepth))
@@ -606,7 +594,7 @@ func workspacePromptPaths(cfg *config.Config) (string, string) {
 	return ".", rel
 }
 
-func buildRuntimeSurfaceSection(cfg *config.Config) string {
+func buildRuntimeSurfaceSection(cfg *config.Config, publicSurfaceUnavailable string) string {
 	if !cfg.RuntimeSurfaceVisible() {
 		return ""
 	}
@@ -634,20 +622,38 @@ func buildRuntimeSurfaceSection(cfg *config.Config) string {
 	lines = append(lines,
 		fmt.Sprintf("- `QUINE_AGENT_ROOT=%s` — your live session root.", cfg.AgentRoot()),
 		fmt.Sprintf("- `QUINE_RUN_ID=%s` — current physical run identity; it changes across resume/re-entry.", cfg.RunID),
-		"- `$QUINE_AGENT_ROOT/public/` — runtime-owned public process-surface projection, not a workspace; do not create arbitrary files there.",
+	)
+	if publicSurfaceUnavailable == "" {
+		lines = append(lines, "- `$QUINE_AGENT_ROOT/public/` — runtime-owned public process-surface projection, not a workspace; do not create arbitrary files there.")
+	} else {
+		lines = append(lines, "- `$QUINE_AGENT_ROOT/public/` — public process-surface projection is unavailable in this environment; `public/UNAVAILABLE` records why. Peers cannot read your public projection or write your `ctl/` here.")
+	}
+	lines = append(lines,
 		"- `status/session.json` — self identity and topology (`session_id`, `run_id`, `incarnation_id`, `pid`, `agent_root`, `runtime_root`).",
 		"- `status/contract.json` — machine-readable `process-control/v0` manifest for this process/control surface.",
 		"- `status/session.json.agent_root` is this session root; `status/session.json.runtime_root` points back to the shared runtime root.",
 		"- `mission.txt` — optional current-incarnation argv-carried objective projection (`inc/current/mission.txt`).",
+		"- `config/registry.json` — read-only compiled capability registry: the full model of every `QUINE_*` knob this body understands (type, default, mutability, couplings).",
+		"- `config/resolved.env` — your current resolved capability position in env syntax; runtime-owned readout, rewritten by the runtime when in-process config changes (world revision switch). Not a config input.",
+		"- `config/next.env` — agent-writable staged capability overrides for your NEXT incarnation, applied when you call `exec`. Env syntax only: `KEY=VALUE` lines, `#` comments, blank lines; values are verbatim (no quoting/expansion). Validated at the exec boundary against the compiled registry: only knobs whose `config/registry.json` mutability is `exec-boundary` may be staged; any unknown name, type violation, or forbidden knob rejects the whole file and fails that `exec` call loudly — the file stays intact, so fix (or remove) it and retry. Absent file = no staged changes. After a successful exec the successor archives the applied file to the staging incarnation's `inc/<n>/config-applied.env` and clears `next.env`.",
+		"- `inc/<n>/config.env` — immutable per-incarnation birth snapshot of the resolved capability position.",
 	)
+	if publicSurfaceUnavailable == "" {
+		lines = append(lines,
+			"- `public/config/` — peer-readable read-only projection of this session's `config/{registry.json,resolved.env}` surface.",
+			"- `public/ctl/config` — validated write gate over `config/next.env`: one whole env-syntax payload per write, replacing the staged file wholesale; a legal payload lands `config/next.env` atomically, an illegal one is rejected at write time and lands nothing. Reading the gate back shows the staged content, its validation state against the running registry, coupling warnings for staged knobs, and the violations of a rejected write. An empty write clears the stage. Raw `sh` writes to `config/next.env` stay legal either way — the exec boundary revalidates both paths.",
+		)
+	}
 	if cfg.SelfSourceCodeEnabled {
 		lines = append(lines,
 			"- `source-code/` — read-only session-root projection of this Quine body's source. It is not the writable workspace.",
 			"- `source-code/` is a git worktree with `.git/`, materialized from this build's embedded source repository bundle.",
 			"- Source manifest: `.git/quine-source-manifest.json`.",
-			"- `public/source-code/` — peer-readable read-only projection of this session's `source-code/` surface.",
-			"- Filesystem copies of `source-code/` are ordinary files outside the live projection; they are not synchronized back to `source-code/`.",
 		)
+		if publicSurfaceUnavailable == "" {
+			lines = append(lines, "- `public/source-code/` — peer-readable read-only projection of this session's `source-code/` surface.")
+		}
+		lines = append(lines, "- Filesystem copies of `source-code/` are ordinary files outside the live projection; they are not synchronized back to `source-code/`.")
 	}
 
 	// L3: Neighbor discovery (relative to runtime root)
@@ -663,12 +669,20 @@ func buildRuntimeSurfaceSection(cfg *config.Config) string {
 
 	// L4: Peer control physics (gated)
 	if cfg.PromptCtlPhysics {
-		lines = append(lines,
-			"- Some process surfaces expose `ctl/{post,poke,inject,interrupt}` and `status/inbox.json`.",
-			"- On a public root, `ctl/{post,poke,inject,interrupt}` is the peer-facing control surface; the corresponding agent root carries `status/`, `context/`, and other non-public state.",
-			"- Each agent self-documents its control surface in `status/contract.json` (a `process-control/v0` manifest, peer-readable at `public/status/contract.json`): per-action semantics for `post`/`poke`/`inject`/`interrupt`, the `status/inbox.json` schema, and the control-log event types. Read a peer's contract before driving its `ctl/`.",
-			"- `context/state/current.jsonl` and retained `log/<session>/control.jsonl` surface live / retained control-delivery state.",
-		)
+		if publicSurfaceUnavailable == "" {
+			lines = append(lines,
+				"- Some process surfaces expose `ctl/{post,poke,inject,interrupt}` and `status/inbox.json`.",
+				"- On a public root, `ctl/{post,poke,inject,interrupt}` is the peer-facing control surface; the corresponding agent root carries `status/`, `context/`, and other non-public state.",
+				"- Each agent self-documents its control surface in `status/contract.json` (a `process-control/v0` manifest, peer-readable at `public/status/contract.json`): per-action semantics for `post`/`poke`/`inject`/`interrupt`, the `status/inbox.json` schema, and the control-log event types. Read a peer's contract before driving its `ctl/`.",
+				"- `ctl/config` — validated staged-config write gate over a peer's `config/next.env`: one whole env-syntax payload per write (wholesale replacement), accepted or rejected against that peer's running registry at write time; read it back for staged content, validation state, coupling warnings, and rejection violations. An empty write clears the peer's stage; staged values apply only at that peer's next self-reentry exec.",
+				"- `context/state/current.jsonl` and retained `log/<session>/control.jsonl` surface live / retained control-delivery state.",
+			)
+		} else {
+			lines = append(lines,
+				"- Peer control physics are unavailable in this environment: the public FUSE surface cannot be served here, so no process on this host exposes `public/ctl/{post,poke,inject,interrupt}` or `public/status/*`; each degraded `public/` holds an `UNAVAILABLE` marker recording why.",
+				"- `context/state/current.jsonl` and retained `log/<session>/control.jsonl` surface live / retained control-delivery state.",
+			)
+		}
 	}
 
 	// L5: Other surfaces
@@ -857,31 +871,6 @@ func buildSpawnConstraintLines(cfg *config.Config) []string {
 		return lines
 	}
 	return []string{"- Spawn is disabled by `QUINE_SPAWN_ENABLED=0` and any spawn call will be rejected."}
-}
-
-// formatWisdom formats the wisdom map as a markdown section.
-// Returns an empty string if there are no wisdom entries.
-func formatWisdom(wisdom map[string]string) string {
-	if len(wisdom) == 0 {
-		return ""
-	}
-
-	var sb strings.Builder
-	sb.WriteString("\n### Wisdom (from previous incarnation)\n")
-	sb.WriteString("The following state was preserved across an exec boundary:\n")
-
-	// Sort keys for deterministic output
-	keys := make([]string, 0, len(wisdom))
-	for k := range wisdom {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, key := range keys {
-		sb.WriteString(fmt.Sprintf("- **%s**: %s\n", key, wisdom[key]))
-	}
-
-	return sb.String()
 }
 
 // renderSkillsFragment formats prompt-facing project skill metadata for SKILLS.md.

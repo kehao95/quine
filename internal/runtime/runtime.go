@@ -89,16 +89,23 @@ type Runtime struct {
 	peerDiscoveryKnown         map[int]peerDiscoveryPeer
 	peerDiscoveryInitialized   bool
 
-	// Goal stall tracking for escalation hints
-	lastGoal   string
-	stallCount int
-
 	incarnationID         int
 	childEnvBase          []string
 	lastFSMutations       string
 	agentRootBootstrapped bool
 	control               *controlState
+	// configGate holds the public/ctl/config write-gate transaction feedback
+	// (last rejected write's violations); see config_gate.go.
+	configGate configGateState
 	publicSurface         *fusePublicSurfaceBackend
+	// publicSurfaceProbed/publicSurfaceDegraded memoize the FUSE availability
+	// probe: computed once, consumed by both the public-surface sync and the
+	// prompt disclosure. A non-empty publicSurfaceDegraded means public/ is a
+	// plain directory holding only an UNAVAILABLE marker (non-Linux hosts,
+	// containers without /dev/fuse, denied mounts); the run continues without
+	// the peer-facing projection.
+	publicSurfaceProbed   bool
+	publicSurfaceDegraded string
 	// Test seams for the public surface. When non-nil they replace the real
 	// FUSE mount/unmount, letting finalization-ordering tests run without
 	// /dev/fuse. Nil in production.
@@ -396,22 +403,6 @@ func (r *Runtime) gracefulShutdownWithOutcome(exitCode int, stderr string, mode 
 	}
 
 	os.Exit(exitCode)
-}
-
-// checkGoalStall returns true if the model has been working on the same goal for StallThreshold+ turns
-func (r *Runtime) checkGoalStall(goal string) bool {
-	if goal == "" {
-		return false // Missing goal, skip tracking
-	}
-
-	if goal == r.lastGoal {
-		r.stallCount++
-	} else {
-		r.lastGoal = goal
-		r.stallCount = 1
-	}
-
-	return r.stallCount >= r.cfg.StallThreshold
 }
 
 // Run executes the full agent lifecycle:
@@ -1379,8 +1370,8 @@ func (r *Runtime) appendContextMessage(msg tape.Message) {
 	}
 	if err := r.appendContextEntry(tape.MessageEntry(msg)); err != nil && len(msg.ToolCalls) > 0 {
 		// A lost assistant tool_use entry orphans the tool calls on the
-		// provider-input surface; escalate so the loop fails rather than
-		// silently dropping the turn.
+		// provider-input surface; surface the failure so the loop fails
+		// rather than silently dropping the turn.
 		r.recordContextIntegrityFailure(err)
 	}
 }
@@ -1388,7 +1379,7 @@ func (r *Runtime) appendContextMessage(msg tape.Message) {
 func (r *Runtime) appendContextToolResult(result tape.ToolResult) {
 	if err := r.appendContextEntry(tape.ToolResultEntry(result)); err != nil {
 		// A lost tool_result breaks tool_use/tool_result pairing on the next
-		// request; escalate rather than send a context the provider rejects.
+		// request; fail loudly rather than send a context the provider rejects.
 		r.recordContextIntegrityFailure(err)
 	}
 }
@@ -1474,6 +1465,11 @@ func (r *Runtime) bootstrapAgentRoot() error {
 		return fmt.Errorf("stat context root %s: %w", currentContextDir, err)
 	}
 
+	// After an exec handover the previous image's public FUSE mount survives
+	// at publicDir as a disconnected mountpoint; reclaim it before the
+	// MkdirAll below trips over the dead mount.
+	r.reclaimStalePublicSurfaceMount(publicDir)
+
 	for _, dir := range []string{
 		agentRoot,
 		retainedRoot,
@@ -1549,6 +1545,18 @@ func (r *Runtime) bootstrapAgentRoot() error {
 	if err := removeSelfSourceSurface(filepath.Join(agentRoot, "genome")); err != nil {
 		return fmt.Errorf("remove stale genome surface: %w", err)
 	}
+	// Version-skew observability, then phase 2 of the staged-config
+	// transaction (brief § C, T3.2) — deliberately BEFORE syncConfigSurface
+	// so the archive+clear completes (or aborts bootstrap) before this
+	// incarnation's config surface and birth snapshot are declared; the
+	// consume step's doc comment records the full ordering rationale.
+	r.logCapabilityEnvDrift()
+	if err := r.consumeAppliedStagedConfig(); err != nil {
+		return fmt.Errorf("consume applied staged config: %w", err)
+	}
+	if err := r.syncConfigSurface(agentRoot); err != nil {
+		return fmt.Errorf("sync config surface: %w", err)
+	}
 	sourceRoot := ""
 	if r.cfg.SelfSourceCodeEnabled {
 		sourceRoot = filepath.Join(agentRoot, "source-code")
@@ -1557,6 +1565,7 @@ func (r *Runtime) bootstrapAgentRoot() error {
 		PublicDir:        publicDir,
 		StatusTarget:     sessionStatusDir,
 		ControlLogTarget: r.cfg.SessionControlLogPath(""),
+		ConfigTarget:     filepath.Join(agentRoot, "config"),
 		SourceRoot:       sourceRoot,
 	}); err != nil {
 		return fmt.Errorf("sync public surface: %w", err)
@@ -2075,64 +2084,6 @@ func (r *Runtime) handleVision(tc tape.ToolCall) {
 	result := tools.HandleVisionWithReader(tc.ID, tc.Arguments, readFile)
 
 	r.appendToolResult(result)
-}
-
-// handleEscalate processes an escalate tool call, hot-swapping to a smarter model.
-// Escalate does NOT consume a turn — it is a model upgrade operation.
-func (r *Runtime) handleEscalate(tc tape.ToolCall) {
-	reason, _ := tc.Arguments["reason"].(string)
-
-	// Guard: already escalated or not configured
-	if r.cfg.Escalated || r.cfg.SmartModelID == "" {
-		errMsg := runtimeToolResultMessage(tc.ID, "escalate", "error", map[string]any{
-			"error": "Escalation not available.",
-		})
-		r.appendRuntimeToolMessage(errMsg, true)
-		return
-	}
-
-	oldModel := r.cfg.ModelID
-	r.log("escalate: %s -> %s (reason=%s)", oldModel, r.cfg.SmartModelID, truncateOneLine(reason, 80))
-
-	// Build new provider from smart config
-	smartCfg := *r.cfg
-	smartCfg.ModelID = r.cfg.SmartModelID
-	smartCfg.APIKey = r.cfg.SmartAPIKey
-	smartCfg.APIBase = r.cfg.SmartAPIBase
-	smartCfg.Provider = r.cfg.SmartProvider
-
-	newProvider, err := llm.NewProvider(&smartCfg)
-	if err != nil {
-		errMsg := runtimeToolResultMessage(tc.ID, "escalate", "error", map[string]any{
-			"error": fmt.Sprintf("Escalation failed: %v", err),
-		})
-		r.appendRuntimeToolMessage(errMsg, true)
-		return
-	}
-
-	// Hot-swap
-	r.provider = newProvider
-	r.cfg.ModelID = r.cfg.SmartModelID
-	r.cfg.Escalated = true
-
-	// Update tape metadata so JSONL records attribute post-escalation turns correctly
-	r.tape.ModelID = r.cfg.SmartModelID
-
-	// Remove escalate tool (CanEscalate() now returns false)
-	r.tools = tools.AllToolSchemas(r.cfg)
-
-	// Update system prompt in tape via SetSystemPrompt (not Messages() which returns a copy)
-	systemPrompt, err := r.currentSystemPrompt()
-	if err == nil {
-		r.tape.SetSystemPrompt(systemPrompt)
-	}
-
-	// Tool result — reason is already in tc.Arguments (the handoff note)
-	resultMsg := runtimeToolResultMessage(tc.ID, "escalate", "completed", map[string]any{
-		"model":  r.cfg.SmartModelID,
-		"reason": reason,
-	})
-	r.appendRuntimeToolMessage(resultMsg, false)
 }
 
 // truncateStr truncates s to maxLen characters, appending "..." if truncated.

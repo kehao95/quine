@@ -1,0 +1,17 @@
+---
+title: "Structural Elicitation in a Frozen POSIX Agent: Environmental Affordance Fields for Artificial Agency"
+author_raw: |
+  Hao Ke$^{1}$ \quad Jingyun Wu$^{1}$ \\
+  \mbox{}\\
+  $^1$Independent Researcher \\
+  \texttt{i@kehao.me} \quad \texttt{joeywu021@gmail.com}
+date: "June 2026"
+numbersections: false
+reference-section-title: "References"
+submission_type: "Late Breaking Abstracts"
+copyright_holder: "Hao Ke and Jingyun Wu"
+code_url: "https://github.com/kehao95/quine"
+abstract: |
+  Artificial life asks how agency arises from the coupling of an agent, its substrate, and a structured environment, rather than from a designer-supplied goal. We introduce a minimal POSIX assay for this coupling: a frozen, instruction-tuned LLM activated as a long-running process with a shell and full autonomy, given no task and no reward. Using matched-pair experiments scored only on un-fakeable filesystem and exec events, we find that the static structure of the workspace directs what the agent does. Across five motifs spanning discrepancy and affordance structure---a broken file repaired, a missing element created, a dangling reference closed, a version conflict reconciled, an executable run---the structure arm produces the matched act in 96 of 102 runs while an otherwise-identical control never does (0/85), for three independent model families (gpt-5.4-codex, deepseek-v4-pro, glm-5.2). The pull replicates on non-code prose across families and persists when the substrate blocks realization. Specific tasking overrides it completely (9/10 to 0/10 on gpt, with GLM repeating 5/5 to 0/5), while a small pilot suggests weak underspecified prompting still leaves the pull intact. The environment does not create a goal ex nihilo; it selects among latent action priors in an activated policy, producing behavior that is purpose-like without being purposive. We report a phenomenon and a cheap, un-fakeable assay for environment-coupled behavior; mechanism is left to future work.
+bibliography: references.bib
+---

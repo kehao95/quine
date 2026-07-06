@@ -31,6 +31,12 @@ const (
 	controlActionPoke      controlSurfaceAction = "poke"
 	controlActionInject    controlSurfaceAction = "inject"
 	controlActionInterrupt controlSurfaceAction = "interrupt"
+	// controlActionConfig is the validated staged-config write gate
+	// (public/ctl/config, work order T3.3; see config_gate.go). Not a
+	// message-delivery action: writes land config/next.env under registry
+	// validation, reads return the gate summary; nothing queues, wakes,
+	// or injects.
+	controlActionConfig controlSurfaceAction = "config"
 )
 
 var controlSurfaceActions = []controlSurfaceAction{
@@ -38,6 +44,7 @@ var controlSurfaceActions = []controlSurfaceAction{
 	controlActionPoke,
 	controlActionInject,
 	controlActionInterrupt,
+	controlActionConfig,
 }
 
 type controlState struct {
@@ -129,6 +136,11 @@ func normalizeControlPayload(payload string) string {
 }
 
 func (r *Runtime) publicControlSurfaceSummary(action controlSurfaceAction) []byte {
+	if action == controlActionConfig {
+		// The config gate is not a message action: its summary reports the
+		// staged-config transaction state, not inbox pending counts.
+		return r.configControlSurfaceSummary()
+	}
 	snapshot := r.controlSnapshot()
 	lines := []string{
 		fmt.Sprintf("backend: %s", runtimeSurfaceBackendName),
@@ -169,6 +181,11 @@ func (r *Runtime) publicControlSurfaceSummary(action controlSurfaceAction) []byt
 }
 
 func (r *Runtime) applyControlSurfaceAction(action controlSurfaceAction, payload string) error {
+	if action == controlActionConfig {
+		// The payload is a whole staged-config file: no trailing-newline
+		// normalization, no trimming — it lands byte-verbatim when legal.
+		return r.applyConfigStageWrite(payload)
+	}
 	hasPayload := strings.TrimSpace(normalizeControlPayload(payload)) != ""
 	switch action {
 	case controlActionPost:

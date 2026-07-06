@@ -105,8 +105,8 @@ func TestProviderContextMessagesDropOrphanToolResults(t *testing.T) {
 			Content: json.RawMessage(`{"tool":"sh","status":"completed"}`),
 		}),
 		tape.ToolResultEntry(tape.ToolResult{
-			ToolID:  "call_escalate",
-			Content: json.RawMessage(`{"tool":"escalate","status":"completed"}`),
+			ToolID:  "call_vision",
+			Content: json.RawMessage(`{"tool":"vision","status":"completed"}`),
 		}),
 	)
 
@@ -127,7 +127,7 @@ func TestProviderContextMessagesDropOrphanToolResults(t *testing.T) {
 		t.Fatalf("msgs[3] = %+v, want retained sh tool result", msgs[3])
 	}
 	for _, msg := range msgs {
-		if msg.ToolID == "call_mark" || msg.ToolID == "call_escalate" {
+		if msg.ToolID == "call_mark" || msg.ToolID == "call_vision" {
 			t.Fatalf("provider context should drop orphan tool result %q", msg.ToolID)
 		}
 	}

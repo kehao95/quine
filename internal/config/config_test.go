@@ -37,7 +37,6 @@ var envVars = []string{
 	"QUINE_WALL_CLOCK_EXIT_SECONDS",
 
 	// Execution/prompt behavior switches.
-	"QUINE_TURN_EXHAUSTION_POLICY",
 	"QUINE_PROMPT_METAPHOR",
 	"QUINE_PROMPT_SELF_MODEL",
 	"QUINE_PROMPT_INSTRUCTION_SURFACE",
@@ -294,7 +293,6 @@ func TestHappyPath(t *testing.T) {
 	os.Setenv("QUINE_SH_NETWORK", "none")
 	os.Setenv("QUINE_MAX_TURNS", "30")
 	os.Setenv("QUINE_WALL_CLOCK_EXIT_SECONDS", "870")
-	os.Setenv("QUINE_TURN_EXHAUSTION_POLICY", "hard_fail")
 	os.Setenv("QUINE_PROMPT_METAPHOR", "thermodynamic")
 	os.Setenv("QUINE_PROMPT_SELF_MODEL", "basic")
 	os.Setenv("QUINE_PROMPT_INSTRUCTION_SURFACE", "minimal")
@@ -356,7 +354,6 @@ func TestHappyPath(t *testing.T) {
 		{"ShNetwork", c.ShNetwork, "none"},
 		{"MaxTurns", c.MaxTurns, 30},
 		{"WallClockExitSeconds", c.WallClockExitSeconds, 870},
-		{"TurnExhaustionPolicy", c.TurnExhaustionPolicy, TurnExhaustionHardFail},
 		{"PromptMetaphor", c.PromptMetaphor, PromptMetaphorThermodynamic},
 		{"PromptSelfModel", c.PromptSelfModel, PromptSelfModelBasic},
 		{"PromptInstructionSurface", c.PromptInstructionSurface, PromptInstructionSurfaceMinimal},
@@ -488,9 +485,6 @@ func TestDefaults(t *testing.T) {
 	}
 	if c.MaxTurns != 0 {
 		t.Errorf("MaxTurns = %d, want 0 (disabled)", c.MaxTurns)
-	}
-	if c.TurnExhaustionPolicy != TurnExhaustionHardFail {
-		t.Errorf("TurnExhaustionPolicy = %q, want %q", c.TurnExhaustionPolicy, TurnExhaustionHardFail)
 	}
 	if c.PromptMetaphor != PromptMetaphorOff {
 		t.Errorf("PromptMetaphor = %q, want %q", c.PromptMetaphor, PromptMetaphorOff)
@@ -1664,21 +1658,6 @@ func TestIdleEnabledCanBeEnabledAndPropagates(t *testing.T) {
 	}
 }
 
-func TestRejectsUnknownTurnExhaustionPolicy(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
-	os.Setenv("QUINE_MAX_TURNS", "5")
-	os.Setenv("QUINE_TURN_EXHAUSTION_POLICY", "near_death_exec")
-
-	_, err := Load()
-	if err == nil {
-		t.Fatal("Load() should reject removed near_death_exec policy")
-	}
-	if !strings.Contains(err.Error(), "must be \"hard_fail\"") {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
 func TestTapeIDAutoIncrementsPerSession(t *testing.T) {
 	clearEnv(t)
 	setRequired(t)
@@ -2038,7 +2017,7 @@ func TestChildEnv(t *testing.T) {
 		"QUINE_MODEL_ID", "QUINE_API_TYPE", "QUINE_API_BASE", "QUINE_API_KEY",
 		"QUINE_MAX_DEPTH", "QUINE_DEPTH", "QUINE_PARENT_SESSION",
 		"QUINE_MAX_CONCURRENT", "QUINE_MAX_AGENTS", "QUINE_SH_DEFAULT_TIMEOUT_SECONDS", "QUINE_SH_TIMEOUT_OVERRIDE_ENABLED", "QUINE_SH_STDIN_ENABLED", "QUINE_SH_DETACH_ENABLED", "QUINE_OUTPUT_TRUNCATE",
-		"QUINE_DATA_DIR", "QUINE_SHELL", "QUINE_SH_NETWORK", "QUINE_MAX_TURNS", "QUINE_TURN_EXHAUSTION_POLICY",
+		"QUINE_DATA_DIR", "QUINE_SHELL", "QUINE_SH_NETWORK", "QUINE_MAX_TURNS",
 		"QUINE_PROMPT_METAPHOR", "QUINE_PROMPT_SELF_MODEL", "QUINE_PROMPT_INSTRUCTION_SURFACE", "QUINE_PROMPT_RUNTIME_SURFACE", "QUINE_PROMPT_PERSONA", "QUINE_PROMPT_CTL", "QUINE_PROMPT_IMPL_DETAILS", "QUINE_PEER_DISCOVERY_ENABLED", "QUINE_PEER_DISCOVERY_HEARTBEAT_INTERVAL_MS", "QUINE_FAIL_ON_IMPOSSIBLE",
 		"QUINE_FS_MUTATION_TELEMETRY_ENABLED",
 		"QUINE_READY_TEXT_AUTO_IDLE",
@@ -2243,7 +2222,6 @@ func TestProcessEnvFixtureExactOutput(t *testing.T) {
 			OutputTruncate:            9,
 			MaxTurns:                  10,
 			WallClockExitSeconds:      11,
-			TurnExhaustionPolicy:      TurnExhaustionHardFail,
 			ContextWindow:             12,
 			MemoryWarnTokens:          13,
 			MemoryDangerTokens:        14,
@@ -2278,7 +2256,6 @@ func TestProcessEnvFixtureExactOutput(t *testing.T) {
 		envKV(EnvSelfReentryMode, string(SelfReentryModeExecutablePath)),
 		envKV(EnvMaxTurns, "10"),
 		envKV(EnvWallClockExitSeconds, "11"),
-		envKV(EnvTurnExhaustionPolicy, string(TurnExhaustionHardFail)),
 		envKV(EnvPromptMetaphor, ""),
 		envKV(EnvPromptSelfModel, string(PromptSelfModelAdvanced)),
 		envKV(EnvPromptInstructionSurface, string(PromptInstructionSurfaceStandard)),
@@ -2369,37 +2346,6 @@ func TestConfigDirPassthrough(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("QUINE_CONFIG_DIR should be passed through")
-	}
-}
-
-func TestWisdomChildEnv(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
-
-	os.Setenv("QUINE_WISDOM_STATE", "processing chunk 5")
-	t.Cleanup(func() {
-		os.Unsetenv("QUINE_WISDOM_STATE")
-	})
-
-	c, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-
-	found := false
-	for _, e := range env {
-		if e == "QUINE_WISDOM_STATE=processing chunk 5" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("ChildEnv should include QUINE_WISDOM_STATE")
 	}
 }
 
@@ -2499,33 +2445,6 @@ func TestSelfSourceCodeEnabledPropagatesAcrossProcessTransitions(t *testing.T) {
 	}
 	if !containsEnv(execEnv, "QUINE_SELF_SOURCE_CODE_ENABLED=1") {
 		t.Fatalf("ExecEnv() should propagate QUINE_SELF_SOURCE_CODE_ENABLED=1, got %v", execEnv)
-	}
-}
-
-func TestWisdomIgnoresEmptyValues(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
-
-	os.Setenv("QUINE_WISDOM_EMPTY", "")
-	os.Setenv("QUINE_WISDOM_VALID", "has value")
-	t.Cleanup(func() {
-		os.Unsetenv("QUINE_WISDOM_EMPTY")
-		os.Unsetenv("QUINE_WISDOM_VALID")
-	})
-
-	c, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	if len(c.Wisdom) != 1 {
-		t.Errorf("Wisdom length = %d, want 1 (empty values ignored)", len(c.Wisdom))
-	}
-	if _, exists := c.Wisdom["EMPTY"]; exists {
-		t.Error("Wisdom should not contain EMPTY key")
-	}
-	if c.Wisdom["VALID"] != "has value" {
-		t.Errorf("Wisdom[VALID] = %q, want %q", c.Wisdom["VALID"], "has value")
 	}
 }
 
@@ -2631,36 +2550,6 @@ func TestPromptPersonaRejectsInvalidValue(t *testing.T) {
 	_, err := Load()
 	if err == nil || !strings.Contains(err.Error(), "QUINE_PROMPT_PERSONA") {
 		t.Fatalf("expected invalid persona error, got %v", err)
-	}
-}
-
-func TestInvalidTurnExhaustionPolicy(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
-	os.Setenv("QUINE_MAX_TURNS", "1")
-	os.Setenv("QUINE_TURN_EXHAUSTION_POLICY", "invalid")
-
-	_, err := Load()
-	if err == nil {
-		t.Fatal("expected error for invalid QUINE_TURN_EXHAUSTION_POLICY")
-	}
-	if !strings.Contains(err.Error(), "QUINE_TURN_EXHAUSTION_POLICY") {
-		t.Errorf("error should mention QUINE_TURN_EXHAUSTION_POLICY, got: %v", err)
-	}
-}
-
-func TestTurnExhaustionPolicyIgnoredWhenBudgetDisabled(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
-	os.Setenv("QUINE_MAX_TURNS", "0")
-	os.Setenv("QUINE_TURN_EXHAUSTION_POLICY", "invalid")
-
-	c, err := Load()
-	if err != nil {
-		t.Fatalf("Load() should ignore QUINE_TURN_EXHAUSTION_POLICY when QUINE_MAX_TURNS=0, got: %v", err)
-	}
-	if c.TurnExhaustionPolicy != TurnExhaustionHardFail {
-		t.Errorf("TurnExhaustionPolicy = %q, want %q when budget disabled", c.TurnExhaustionPolicy, TurnExhaustionHardFail)
 	}
 }
 

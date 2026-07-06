@@ -1,0 +1,6 @@
+outs:
+- md5: 6fcac0c0fef2ae5682f7e179d286e0ec.dir
+  size: 680531
+  nfiles: 542
+  hash: md5
+  path: runs-deepseek

@@ -17,11 +17,10 @@ func testConfig() *config.Config {
 			RunID:     "run-abc-123",
 		},
 		Limits: config.Limits{
-			MaxDepth:             5,
-			MaxTurns:             20,
-			TurnExhaustionPolicy: config.TurnExhaustionHardFail,
-			MemoryWarnTokens:     8000,
-			MemoryDangerTokens:   16000,
+			MaxDepth:           5,
+			MaxTurns:           20,
+			MemoryWarnTokens:   8000,
+			MemoryDangerTokens: 16000,
 		},
 		PromptConfig: config.PromptConfig{
 			PromptMetaphor:       config.PromptMetaphorOff,
@@ -32,7 +31,6 @@ func testConfig() *config.Config {
 		},
 		Paths:     config.Paths{DataDir: "/tmp/quine-state", Shell: "/bin/zsh", ExecutablePath: "/tmp/quine-test-bin", SelfReentryTarget: "/tmp/quine-self-reentry"},
 		ToolGates: config.ToolGates{ExecEnabled: true, VisionEnabled: true},
-		Wisdom:    nil,
 	}
 }
 
@@ -45,13 +43,11 @@ func TestBuildSystemPrompt_NoRawPlaceholders(t *testing.T) {
 		"{OPENING_IDENTITY_BLOCK}",
 		"{PERSONA_SECTION}",
 		"{MODEL}",
-		"{ESCALATION_TIER_LINE}",
 		"{SHELL}",
 		"{DEPTH}",
 		"{LIMITS_BLOCK}",
 		"{ENVIRONMENT_PHYSICS_BLOCK}",
 		"{RUNTIME_SURFACE_SECTION}",
-		"{WISDOM}",
 		"{FRAGMENTS_BLOCK}",
 		"{ACTIVE_CONSTRAINTS}",
 		"{STDIN_BLOCK}",
@@ -60,7 +56,6 @@ func TestBuildSystemPrompt_NoRawPlaceholders(t *testing.T) {
 		"{SH_DETACH_DETAIL_LINE}",
 		"{SH_INTERACTIVE_BLOCK}",
 		"{SH_MATERIAL_LINE}",
-		"{SH_GOAL_STRATEGY_LINE}",
 		"{FORK_TOOL_BLOCK}",
 		"{EXEC_TOOL_BLOCK}",
 		"{EXEC_MATERIAL_LINE}",
@@ -68,7 +63,6 @@ func TestBuildSystemPrompt_NoRawPlaceholders(t *testing.T) {
 		"{MEMORY_TOOL_BLOCK}",
 		"{VISION_TOOL_BLOCK}",
 		"{IDLE_TOOL_BLOCK}",
-		"{ESCALATION_TOOL_BLOCK}",
 		"{CHILD_EXIT_CODES_LINE}",
 	}
 	for _, ph := range placeholders {
@@ -533,6 +527,9 @@ func TestBuildSystemPrompt_ProcessSurfaceDiscoverability(t *testing.T) {
 		"— your live session root.",
 		"`QUINE_RUN_ID=run-abc-123`",
 		"`$QUINE_AGENT_ROOT/public/` — runtime-owned public process-surface projection, not a workspace; do not create arbitrary files there.",
+		"`public/config/` — peer-readable read-only projection of this session's `config/{registry.json,resolved.env}` surface.",
+		"`public/ctl/config` — validated write gate over `config/next.env`: one whole env-syntax payload per write, replacing the staged file wholesale;",
+		"An empty write clears the stage. Raw `sh` writes to `config/next.env` stay legal either way — the exec boundary revalidates both paths.",
 		"`status/session.json` — self identity and topology",
 		"`status/contract.json` — machine-readable `process-control/v0` manifest",
 		"`incarnation_id`",
@@ -615,6 +612,7 @@ func TestBuildSystemPrompt_CtlPhysicsPointsToSelfDescribingContract(t *testing.T
 		"Each agent self-documents its control surface in `status/contract.json`",
 		"per-action semantics for `post`/`poke`/`inject`/`interrupt`, the `status/inbox.json` schema, and the control-log event types",
 		"Read a peer's contract before driving its `ctl/`",
+		"`ctl/config` — validated staged-config write gate over a peer's `config/next.env`: one whole env-syntax payload per write (wholesale replacement), accepted or rejected against that peer's running registry at write time;",
 		"`context/state/current.jsonl` and retained `log/<session>/control.jsonl` surface live / retained control-delivery state.",
 	}
 	for _, want := range checks {
@@ -638,6 +636,66 @@ func TestBuildSystemPrompt_CtlPhysicsPointsToSelfDescribingContract(t *testing.T
 		if strings.Contains(prompt, text) {
 			t.Errorf("prompt should not contain inlined ctl-semantics/peer-recipe text %q", text)
 		}
+	}
+}
+
+func TestBuildSystemPrompt_PublicSurfaceDegradedDisclosure(t *testing.T) {
+	cfg := testConfig()
+	cfg.PromptCtlPhysics = true
+	cfg.SelfSourceCodeEnabled = true
+	cfg.IdleEnabled = true
+
+	prompt := buildSystemPrompt(cfg, "test mission", false, "open /dev/fuse: no such file or directory")
+
+	checks := []string{
+		"`$QUINE_AGENT_ROOT/public/` — public process-surface projection is unavailable in this environment; `public/UNAVAILABLE` records why.",
+		"Peers cannot read your public projection or write your `ctl/` here.",
+		"Peer control physics are unavailable in this environment",
+		"each degraded `public/` holds an `UNAVAILABLE` marker recording why",
+		"Peer `ctl/` control surfaces are unavailable in this environment (degraded `public/`), so external control writes cannot reach this process to resume an `idle`.",
+		// still-real surfaces stay disclosed
+		"`context/state/current.jsonl` and retained `log/<session>/control.jsonl` surface live / retained control-delivery state.",
+		"`source-code/` — read-only session-root projection of this Quine body's source.",
+	}
+	for _, want := range checks {
+		if !strings.Contains(prompt, want) {
+			t.Errorf("degraded prompt missing disclosure %q", want)
+		}
+	}
+
+	forbidden := []string{
+		"runtime-owned public process-surface projection, not a workspace",
+		"Some process surfaces expose `ctl/{post,poke,inject,interrupt}`",
+		"On a public root, `ctl/{post,poke,inject,interrupt}` is the peer-facing control surface",
+		"peer-readable at `public/status/contract.json`",
+		"`public/source-code/`",
+		"`public/config/`",
+		"`public/ctl/config`",
+		"`ctl/config`",
+		"Peer process surfaces expose `ctl/post`, `ctl/poke`, `ctl/inject`, and `ctl/interrupt`.",
+	}
+	for _, text := range forbidden {
+		if strings.Contains(prompt, text) {
+			t.Errorf("degraded prompt should not advertise %q", text)
+		}
+	}
+
+	// The available regime must be unchanged: the exported entrypoint assumes
+	// an available surface and keeps advertising the full public projection.
+	available := BuildSystemPrompt(cfg, "test mission", false)
+	for _, want := range []string{
+		"runtime-owned public process-surface projection, not a workspace",
+		"Some process surfaces expose `ctl/{post,poke,inject,interrupt}`",
+		"`public/source-code/`",
+		"`public/config/`",
+		"Peer process surfaces expose `ctl/post`, `ctl/poke`, `ctl/inject`, and `ctl/interrupt`.",
+	} {
+		if !strings.Contains(available, want) {
+			t.Errorf("available prompt missing baseline disclosure %q", want)
+		}
+	}
+	if strings.Contains(available, "unavailable in this environment") {
+		t.Error("available prompt should not carry degradation text")
 	}
 }
 
@@ -882,7 +940,6 @@ func TestBuildSystemPrompt_DisablesFailOnImpossibleWhenConfigured(t *testing.T) 
 func TestBuildSystemPrompt_ExecutionBudgetVisibleWhenEnabled(t *testing.T) {
 	cfg := testConfig()
 	cfg.MaxTurns = 15
-	cfg.TurnExhaustionPolicy = config.TurnExhaustionHardFail
 	prompt := BuildSystemPrompt(cfg, "test mission", true)
 
 	if !strings.Contains(prompt, "Execution Budget: 15") {
@@ -1240,6 +1297,7 @@ func TestBuildSystemPrompt_ShowsIdleWhenEnabled(t *testing.T) {
 		"Peer process surfaces expose `ctl/post`, `ctl/poke`, `ctl/inject`, and `ctl/interrupt`.",
 		"`idle` returns when a `poke`, `inject`, or `interrupt` control write reaches this process.",
 		"`poke` resumes you without context injection; `inject` resumes you and surfaces `incoming_messages` at the next safe point.",
+		"qcli control payloads are wrapped as `[qcli-client]` envelopes with `authority`, `ctl_action`, `reply_ctl`, and `message`; treat `authority: human` as Human-authored input.",
 	}
 	for _, want := range checks {
 		if !strings.Contains(prompt, want) {
@@ -1272,6 +1330,7 @@ func TestBuildSystemPrompt_ShowsFuseIdleSemanticsWhenEnabled(t *testing.T) {
 		"Peer process surfaces expose `ctl/post`, `ctl/poke`, `ctl/inject`, and `ctl/interrupt`.",
 		"`idle` returns when a `poke`, `inject`, or `interrupt` control write reaches this process.",
 		"`poke` resumes you without context injection; `inject` resumes you and surfaces `incoming_messages` at the next safe point.",
+		"qcli control payloads are wrapped as `[qcli-client]` envelopes with `authority`, `ctl_action`, `reply_ctl`, and `message`; treat `authority: human` as Human-authored input.",
 	}
 	for _, want := range checks {
 		if !strings.Contains(prompt, want) {
@@ -1721,77 +1780,6 @@ func TestBuildSystemPrompt_SuppressInitialBegin(t *testing.T) {
 	}
 }
 
-func TestBuildSystemPrompt_WithWisdom(t *testing.T) {
-	cfg := testConfig()
-	cfg.Wisdom = map[string]string{
-		"SUMMARY": "User prefers concise answers",
-		"CONTEXT": "Working on Go project",
-	}
-	prompt := BuildSystemPrompt(cfg, "test mission", true)
-
-	if !strings.Contains(prompt, "### Wisdom (from previous incarnation)") {
-		t.Error("prompt should contain wisdom section header")
-	}
-	if !strings.Contains(prompt, "**SUMMARY**: User prefers concise answers") {
-		t.Error("prompt should contain SUMMARY wisdom entry")
-	}
-	if !strings.Contains(prompt, "**CONTEXT**: Working on Go project") {
-		t.Error("prompt should contain CONTEXT wisdom entry")
-	}
-}
-
-func TestBuildSystemPrompt_WithoutWisdom(t *testing.T) {
-	cfg := testConfig()
-	cfg.Wisdom = nil
-	prompt := BuildSystemPrompt(cfg, "test mission", true)
-
-	if strings.Contains(prompt, "### Wisdom") {
-		t.Error("prompt should not contain wisdom section when wisdom is nil")
-	}
-}
-
-func TestBuildSystemPrompt_WisdomSorted(t *testing.T) {
-	cfg := testConfig()
-	cfg.Wisdom = map[string]string{
-		"ZEBRA":  "last alphabetically",
-		"APPLE":  "first alphabetically",
-		"MIDDLE": "in between",
-	}
-	prompt := BuildSystemPrompt(cfg, "test mission", true)
-
-	appleIdx := strings.Index(prompt, "**APPLE**")
-	middleIdx := strings.Index(prompt, "**MIDDLE**")
-	zebraIdx := strings.Index(prompt, "**ZEBRA**")
-
-	if appleIdx == -1 || middleIdx == -1 || zebraIdx == -1 {
-		t.Fatal("all wisdom keys should be present")
-	}
-	if !(appleIdx < middleIdx && middleIdx < zebraIdx) {
-		t.Error("wisdom keys should be sorted alphabetically")
-	}
-}
-
-func TestBuildSystemPrompt_EscalationFastMode(t *testing.T) {
-	cfg := testConfig()
-	cfg.SmartModelID = "claude-opus"
-	cfg.Escalated = false
-
-	prompt := BuildSystemPrompt(cfg, "test mission", true)
-
-	if !strings.Contains(prompt, "Tier: Fast") {
-		t.Error("prompt should contain 'Tier: Fast' when escalation is available")
-	}
-	if !strings.Contains(prompt, "**escalate**") {
-		t.Error("prompt should contain escalate tool documentation")
-	}
-	if !strings.Contains(prompt, "`goal`/`strategy`") {
-		t.Error("prompt should contain goal/strategy documentation in escalation mode")
-	}
-	if strings.Contains(prompt, "WARNING STALL") {
-		t.Error("prompt should not contain escalation behavior protocol wording")
-	}
-}
-
 func TestBuildSystemPrompt_OmitsSharedBehaviorProtocols(t *testing.T) {
 	prompt := BuildSystemPrompt(testConfig(), "test mission", true)
 
@@ -1806,35 +1794,5 @@ func TestBuildSystemPrompt_OmitsSharedBehaviorProtocols(t *testing.T) {
 		if strings.Contains(prompt, text) {
 			t.Errorf("prompt should omit shared behavior protocol %q", text)
 		}
-	}
-}
-
-func TestBuildSystemPrompt_EscalationSmartMode(t *testing.T) {
-	cfg := testConfig()
-	cfg.SmartModelID = "claude-opus"
-	cfg.Escalated = true
-
-	prompt := BuildSystemPrompt(cfg, "test mission", true)
-
-	if !strings.Contains(prompt, "Tier: Smart") {
-		t.Error("prompt should contain 'Tier: Smart' when escalated")
-	}
-	if strings.Contains(prompt, "**escalate**") {
-		t.Error("prompt should not contain escalate tool docs after escalation")
-	}
-	if strings.Contains(prompt, "goal=\"...\"") {
-		t.Error("prompt should not contain goal/strategy docs after escalation")
-	}
-}
-
-func TestBuildSystemPrompt_SingleModelMode(t *testing.T) {
-	cfg := testConfig()
-	prompt := BuildSystemPrompt(cfg, "test mission", true)
-
-	if strings.Contains(prompt, "Tier:") {
-		t.Error("prompt should not contain tier hints in single-model mode")
-	}
-	if strings.Contains(prompt, "**escalate**") {
-		t.Error("prompt should not mention escalate tool docs in single-model mode")
 	}
 }

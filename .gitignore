@@ -1,7 +1,7 @@
 # Build outputs / binaries — rebuild from source, never tracked.
 /quine
 /world
-/qctl
+/qcli
 *.test
 
 # Local environment — only .env.example is tracked.

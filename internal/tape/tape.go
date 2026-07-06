@@ -248,7 +248,8 @@ func (t *Tape) LastMessage() *Message {
 }
 
 // SetSystemPrompt replaces the content of the first message (which must be RoleSystem).
-// Used by escalation to update the system prompt after a model hot-swap.
+// Used to refresh the system prompt after an in-session config mutation
+// (today: a workspace revision switch).
 func (t *Tape) SetSystemPrompt(content string) {
 	if len(t.messages) > 0 && t.messages[0].Role == RoleSystem {
 		t.messages[0].Content = content

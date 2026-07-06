@@ -134,54 +134,6 @@ func TestAllToolSchemas_WithSpawn(t *testing.T) {
 	}
 }
 
-func TestAllToolSchemas_WithEscalation(t *testing.T) {
-	// SmartModelID enables escalation.
-	cfg := &config.Config{
-		ToolGates: config.ToolGates{ExecEnabled: true, VisionEnabled: true},
-		Escalation: config.Escalation{
-			SmartModelID: "claude-opus",
-			Escalated:    false,
-		},
-	}
-	schemas := AllToolSchemas(cfg)
-	if len(schemas) != 6 {
-		t.Fatalf("AllToolSchemas() with escalation should return 6 schemas, got %d", len(schemas))
-	}
-
-	// Verify escalate is in the list
-	found := false
-	for _, s := range schemas {
-		if s.Name == "escalate" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("AllToolSchemas() should include escalate tool when escalation is configured")
-	}
-}
-
-func TestAllToolSchemas_PostEscalation(t *testing.T) {
-	cfg := &config.Config{
-		ToolGates: config.ToolGates{ExecEnabled: true, VisionEnabled: true},
-		Escalation: config.Escalation{
-			SmartModelID: "claude-opus",
-			Escalated:    true,
-		},
-	}
-	schemas := AllToolSchemas(cfg)
-	if len(schemas) != 5 {
-		t.Fatalf("AllToolSchemas() post-escalation should return 5 schemas, got %d", len(schemas))
-	}
-
-	// Verify escalate is NOT in the list
-	for _, s := range schemas {
-		if s.Name == "escalate" {
-			t.Error("AllToolSchemas() should NOT include escalate tool after escalation")
-		}
-	}
-}
-
 func TestAllToolSchemas_WithAnchorMemory(t *testing.T) {
 	cfg := &config.Config{ToolGates: config.ToolGates{ExecEnabled: true, AnchorMemoryEnabled: true, VisionEnabled: true}}
 	schemas := AllToolSchemas(cfg)
@@ -253,19 +205,11 @@ func TestAllToolSchemas_WithAnchorMemory(t *testing.T) {
 	}
 }
 
-func TestAllToolSchemas_WithAnchorMemoryAndEscalation(t *testing.T) {
-	cfg := &config.Config{ToolGates: config.ToolGates{ExecEnabled: true, AnchorMemoryEnabled: true, VisionEnabled: true}, Escalation: config.Escalation{SmartModelID: "claude-opus"}}
+func TestAllToolSchemas_WithIdleAndAnchorMemory(t *testing.T) {
+	cfg := &config.Config{ToolGates: config.ToolGates{IdleEnabled: true, ExecEnabled: true, AnchorMemoryEnabled: true, VisionEnabled: true}}
 	schemas := AllToolSchemas(cfg)
 	if len(schemas) != 8 {
-		t.Fatalf("AllToolSchemas() with anchor memory + escalation should return 8 schemas, got %d", len(schemas))
-	}
-}
-
-func TestAllToolSchemas_WithIdleAndAnchorMemoryAndEscalation(t *testing.T) {
-	cfg := &config.Config{ToolGates: config.ToolGates{IdleEnabled: true, ExecEnabled: true, AnchorMemoryEnabled: true, VisionEnabled: true}, Escalation: config.Escalation{SmartModelID: "claude-opus"}}
-	schemas := AllToolSchemas(cfg)
-	if len(schemas) != 9 {
-		t.Fatalf("AllToolSchemas() with idle + anchor memory + escalation should return 9 schemas, got %d", len(schemas))
+		t.Fatalf("AllToolSchemas() with idle + anchor memory should return 8 schemas, got %d", len(schemas))
 	}
 }
 
@@ -503,34 +447,6 @@ func TestShToolSchema_HidesTimeoutWhenOverrideDisabled(t *testing.T) {
 	}
 }
 
-func TestShToolSchema_EscalationMode(t *testing.T) {
-	// Escalation mode: SmartModelID configured and not yet escalated
-	cfg := &config.Config{ToolGates: config.ToolGates{ExecEnabled: true, VisionEnabled: true}, Escalation: config.Escalation{SmartModelID: "claude-opus", Escalated: false}}
-	schema := ShToolSchema(cfg)
-
-	props := schema.Parameters["properties"].(map[string]any)
-	required := schema.Parameters["required"].([]string)
-
-	// Should have command, goal, and strategy
-	if _, ok := props["command"]; !ok {
-		t.Error("sh schema should have 'command' property")
-	}
-	if _, ok := props["interactive"]; !ok {
-		t.Error("sh schema should have 'interactive' in escalation mode")
-	}
-	if _, ok := props["goal"]; !ok {
-		t.Error("sh schema should have 'goal' in escalation mode")
-	}
-	if _, ok := props["strategy"]; !ok {
-		t.Error("sh schema should have 'strategy' in escalation mode")
-	}
-
-	// All three should be required
-	if len(required) != 3 {
-		t.Errorf("sh schema required should have 3 items in escalation mode, got %v", required)
-	}
-}
-
 func TestShToolSchema_HidesInteractiveWhenDisabled(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.ToolGates = config.DefaultToolGates()
@@ -693,28 +609,6 @@ func TestShToolSchema_DetailedImplDescribesJobImplementationDetails(t *testing.T
 	}
 	if !strings.Contains(schema.Description, "interactive jobs run in a job-local workspace lineage") {
 		t.Fatalf("sh schema should describe overlay interactive lineage, got %q", schema.Description)
-	}
-}
-
-func TestShToolSchema_PostEscalation(t *testing.T) {
-	// Post-escalation: SmartModelID configured but already escalated
-	cfg := &config.Config{ToolGates: config.ToolGates{ExecEnabled: true, VisionEnabled: true}, Escalation: config.Escalation{SmartModelID: "claude-opus", Escalated: true}}
-	schema := ShToolSchema(cfg)
-
-	props := schema.Parameters["properties"].(map[string]any)
-	required := schema.Parameters["required"].([]string)
-
-	// Post-escalation behaves like single-model mode (no STALL detection needed)
-	if _, ok := props["goal"]; ok {
-		t.Error("sh schema should NOT have 'goal' post-escalation")
-	}
-	if _, ok := props["strategy"]; ok {
-		t.Error("sh schema should NOT have 'strategy' post-escalation")
-	}
-
-	// Only command should be required
-	if len(required) != 1 || required[0] != "command" {
-		t.Errorf("sh schema required should be ['command'] post-escalation, got %v", required)
 	}
 }
 

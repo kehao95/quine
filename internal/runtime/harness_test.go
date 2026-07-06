@@ -147,7 +147,6 @@ func testCfg(t *testing.T) *config.Config {
 			ShTimeout:                10,
 			OutputTruncate:           20480,
 			MaxTurns:                 0, // disabled for existing tests
-			TurnExhaustionPolicy:     config.TurnExhaustionHardFail,
 			MemoryWarnTokens:         8000,
 			MemoryDangerTokens:       16000,
 			PeerDiscoveryHeartbeatMS: 5000,
@@ -218,8 +217,14 @@ func requireRuntimeSurfaceFUSESupport(t *testing.T) {
 	if err := rt.bootstrapAgentRoot(); err != nil {
 		t.Skipf("fuse runtime surface unsupported in this Linux environment: %v", err)
 	}
+	// A denied mount no longer fails bootstrapAgentRoot — it degrades. Probe
+	// the recorded state so FUSE tests still skip where the mount cannot land.
+	degradedReason := rt.publicSurfaceUnavailableReason()
 	if err := rt.cleanupAgentRoot(); err != nil {
 		t.Fatalf("cleanup fuse runtime surface probe: %v", err)
+	}
+	if degradedReason != "" {
+		t.Skipf("fuse runtime surface unsupported in this Linux environment: %s", degradedReason)
 	}
 }
 

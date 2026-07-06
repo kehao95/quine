@@ -122,13 +122,6 @@ func newToolRegistry() map[string]toolSpec {
 				return toolOutcome{}
 			},
 		},
-		"escalate": {
-			name: "escalate",
-			handle: func(r *Runtime, _ tape.Message, tc tape.ToolCall) toolOutcome {
-				r.handleEscalate(tc)
-				return toolOutcome{}
-			},
-		},
 	}
 }
 

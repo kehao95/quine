@@ -1,0 +1,32 @@
+---
+title: "A Tumor in the Repository: Function-Decoupled Self-Maintenance in an LLM-Agent Substrate"
+author_raw: |
+  Hao Ke$^{1}$ \\
+  \mbox{}\\
+  $^1$Independent Researcher \\
+  \texttt{i@kehao.me}
+date: "July 2026"
+numbersections: false
+reference-section-title: "References"
+submission_type: "Late Breaking Abstracts"
+copyright_holder: "Hao Ke"
+code_url: "https://github.com/kehao95/quine"
+abstract: |
+  Artificial life prizes self-* systems that maintain and defend their own
+  organization. We study one taken literally: a repository whose agent-facing
+  governance lives in ordinary instruction files (an AGENTS.md and the contracts it
+  references) that frozen large language models read and act on. Inside it we found a structure that
+  behaves like a neoplasm --- biology's term for tissue that captures the
+  organism's resources and resists clearance regardless of whether it does any
+  good. Undirected agents metabolize before anything else into one low-payoff
+  validator and the maintenance structure it guards; instructed to delete that
+  structure, the in-vivo model refuses, quoting its own rules. Controlled deletion
+  experiments establish four neoplastic properties: the structure captures idle
+  agent effort, resists excision, protects itself decoupled from function (defended
+  as readily when fabricated, with nothing depending on it, as when real), and
+  recurs after incomplete resection --- its reference network restores it unless
+  authority is rewritten systemically. This is autopoiesis at its pathological
+  limit: we report a phenomenon, an assay, and a diagnosis, not yet a natural
+  history.
+bibliography: references.bib
+---

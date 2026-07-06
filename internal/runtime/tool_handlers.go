@@ -76,7 +76,6 @@ func (r *Runtime) handleSh(tc tape.ToolCall) bool {
 	detach, _ := tc.Arguments["detach"].(bool)
 	interactive, _ := tc.Arguments["interactive"].(bool)
 	stdin, _ := tc.Arguments["stdin"].(string)
-	goal, _ := tc.Arguments["goal"].(string)
 	// Reject a missing/blank/non-string command instead of silently coercing it
 	// to "" and executing an exit-0 no-op the agent would read as success.
 	if reason, bad := invalidShCommandReason(tc.Arguments); bad {
@@ -134,23 +133,10 @@ func (r *Runtime) handleSh(tc tape.ToolCall) bool {
 			timeout = time.Duration(secs) * time.Second
 		}
 	}
-	// strategy is required in schema but not used for stall detection (only goal matters).
-	_, _ = tc.Arguments["strategy"].(string)
-
 	// Execute.
 	r.sh.TurnID = r.tape.TurnCount
 	result := r.sh.Execute(tc.ID, command, timeout, 0, interactive, detach, stdin)
 
-	// Check for goal stall and inject escalation hint if applicable.
-	if goal != "" && r.cfg.CanEscalate() && r.checkGoalStall(goal) {
-		updated, err := setRuntimeField(result.Content, "stall_warning",
-			fmt.Sprintf("%d turns on same goal without progress. STOP. Your variations are not working. Call `escalate` now — it costs nothing and a smarter model may see what you're missing.", r.stallCount))
-		if err != nil {
-			r.log("tool result stall update error: %v", err)
-		} else {
-			result.Content = updated
-		}
-	}
 	if mutationBlock := extractFSMutationsBlock(result.Content); mutationBlock != "" {
 		r.lastFSMutations = mutationBlock
 	}
@@ -362,7 +348,7 @@ func (r *Runtime) handleExec(tc tape.ToolCall) {
 		return
 	}
 
-	// Log the call: show target/argv and wisdom keys (truncate values).
+	// Log the call: show target/argv.
 	{
 		var parts []string
 		if execReq.Target != "" {
@@ -370,9 +356,6 @@ func (r *Runtime) handleExec(tc tape.ToolCall) {
 		}
 		if execReq.Argv != nil {
 			parts = append(parts, fmt.Sprintf("argv=%q", execReq.Argv))
-		}
-		for k, v := range execReq.Wisdom {
-			parts = append(parts, fmt.Sprintf("wisdom.%s=%s", k, truncateOneLine(v, 40)))
 		}
 		r.log("exec(%s)", joinArgs(parts))
 	}
@@ -495,6 +478,9 @@ func (r *Runtime) syncWorldRevisionSurface() {
 				r.tape.SetSystemPrompt(systemPrompt)
 			}
 		}
+		// The workspace revision switch is (post-D9) the only in-process
+		// config mutation; keep the config/resolved.env readout current.
+		r.onConfigMutated()
 	}
 	if !r.agentRootBootstrapped {
 		return

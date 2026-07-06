@@ -37,6 +37,8 @@ type runtimeContractSurfaces struct {
 	Inbox           string `json:"inbox"`
 	Control         string `json:"control"`
 	ControlLog      string `json:"control_log"`
+	Config          string `json:"config"`
+	ConfigControl   string `json:"config_control"`
 	LiveContext     string `json:"live_context"`
 	LiveGeneration  string `json:"live_generation"`
 	PromptFragments string `json:"prompt_fragments"`
@@ -64,13 +66,15 @@ func (r *Runtime) runtimeContractManifest() runtimeContractManifest {
 		AgentRoot:       r.cfg.AgentRoot(),
 		PublicRoot:      publicRoot,
 		RuntimeRoot:     r.cfg.RuntimeRoot(),
-		Usage:           "To drive a peer process, read its public/status/contract.json, then write the named file under its public ctl/. Reads of status/* and this contract are scan-safe; writes to ctl/* are the only effectful actions. Retrieve queued payloads from status/inbox.json. The live_context surface is the canonical complete-cell context (provider input); live_generation is a transient display-only stream of in-flight generation deltas and is never provider input or recovery state.",
+		Usage:           "To drive a peer process, read its public/status/contract.json, then write the named file under its public ctl/. Reads of status/*, config/*, and this contract are scan-safe; writes to ctl/* are the only effectful actions. Retrieve queued payloads from status/inbox.json. The live_context surface is the canonical complete-cell context (provider input); live_generation is a transient display-only stream of in-flight generation deltas and is never provider input or recovery state.",
 		Surfaces: runtimeContractSurfaces{
 			Contract:        "status/contract.json",
 			Identity:        "status/session.json",
 			Inbox:           "status/inbox.json",
 			Control:         "ctl",
 			ControlLog:      "log/control.jsonl",
+			Config:          "config",                         // config/{registry.json,resolved.env}: peer-readable capability position, read-only
+			ConfigControl:   "ctl/config",                     // validated write gate over the peer's staged config/next.env; see control_actions.config
 			LiveContext:     "../context/state/current.jsonl", // complete cells, provider input, recovered
 			LiveGeneration:  "../context/state/live.jsonl",    // transient generation deltas, display-only, never input, never recovered
 			PromptFragments: "../context/prompt",
@@ -101,6 +105,10 @@ func (r *Runtime) runtimeContractManifest() runtimeContractManifest {
 				InjectsContext: true,
 				Interrupts:     true,
 				EmptyWrite:     "request interrupt without new payload",
+			},
+			"config": {
+				Description: "validated staged-config write gate: a write must be one whole config/next.env payload (env syntax) and REPLACES the staged file wholesale; it lands atomically only when every line is legal against this process's compiled capability registry, otherwise the whole transaction is rejected at close and nothing lands. Reading the file back returns the staged content, its validation state, registry coupling warnings, and the violations of the last rejected write. Not a message action: nothing queues, wakes, or injects; staged values apply only at this process's next self-reentry exec.",
+				EmptyWrite:  "clears the staged file (no overrides for the next incarnation)",
 			},
 		},
 		InboxSchema: map[string]string{
@@ -271,9 +279,6 @@ func (r *Runtime) runtimeWorldToolNames() []string {
 	}
 	if r.cfg.AnchorMemoryEnabled {
 		names = append(names, "mark", "unfold")
-	}
-	if r.cfg.CanEscalate() {
-		names = append(names, "escalate")
 	}
 	return names
 }

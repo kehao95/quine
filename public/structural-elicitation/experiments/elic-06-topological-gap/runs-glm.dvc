@@ -1,0 +1,6 @@
+outs:
+- md5: 48d95e507148fb465f0338e6292a968a.dir
+  size: 30160
+  nfiles: 293
+  hash: md5
+  path: runs-glm

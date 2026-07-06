@@ -2,10 +2,12 @@ package runtime
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 
@@ -903,6 +905,368 @@ func TestBootstrapAgentRootProjectsFusePublicSurface(t *testing.T) {
 	}
 	if _, err := os.Stat(cfg.AgentRoot()); !os.IsNotExist(err) {
 		t.Fatalf("agent root should be removed after cleanup, got err=%v", err)
+	}
+}
+
+// TestBootstrapAgentRootProjectsFuseConfigSurface covers the peer-facing
+// public/config/ projection (registry-design-brief § B): live FUSE views over
+// the agent-root config/ SSTs, read-only, current-content-on-read (a peer
+// reading resolved.env after onConfigMutated sees the switched position), with
+// the raw API key never visible and the surface advertised to peers through
+// status/contract.json.
+func TestBootstrapAgentRootProjectsFuseConfigSurface(t *testing.T) {
+	requireRuntimeSurfaceFUSESupport(t)
+
+	cfg := testCfg(t)
+	cfg.WorkspaceEnabled = true
+	cfg.WorkspaceRoot = t.TempDir()
+	cfg.Workspace = cfg.WorkspaceRoot
+	cfg.WorkspaceBackend = "direct"
+	cfg.WorkspaceCurrentRevision = "rev-birth"
+	rt := NewWithProvider(cfg, &mockProvider{})
+	silenceRuntime(rt)
+	useRealPublicSurface(rt)
+	rt.originalInput = "project config surface over fuse"
+
+	if err := rt.bootstrapAgentRoot(); err != nil {
+		t.Fatalf("bootstrapAgentRoot failed: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := rt.cleanupAgentRoot(); err != nil {
+			t.Fatalf("cleanupAgentRoot failed: %v", err)
+		}
+	})
+
+	publicConfig := filepath.Join(cfg.AgentRoot(), "public", "config")
+	if info, err := os.Lstat(publicConfig); err != nil {
+		t.Fatalf("stat public config dir: %v", err)
+	} else if !info.IsDir() {
+		t.Fatalf("public config should be a FUSE directory, got mode %v", info.Mode())
+	}
+	for _, name := range []string{"registry.json", "resolved.env"} {
+		path := filepath.Join(publicConfig, name)
+		if info, err := os.Lstat(path); err != nil {
+			t.Fatalf("stat public config file %s: %v", path, err)
+		} else if info.Mode()&os.ModeType != 0 {
+			t.Fatalf("public config file %s should be a regular FUSE file, got mode %v", path, info.Mode())
+		}
+		publicData, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read public config file %s: %v", path, err)
+		}
+		targetData, err := os.ReadFile(filepath.Join(cfg.AgentRoot(), "config", name))
+		if err != nil {
+			t.Fatalf("read config target %s: %v", name, err)
+		}
+		if string(publicData) != string(targetData) {
+			t.Fatalf("public config file %s drifted from target", name)
+		}
+		if f, err := os.OpenFile(path, os.O_WRONLY, 0); err == nil {
+			f.Close()
+			t.Fatalf("public config file %s should reject write access", path)
+		}
+	}
+
+	resolved, err := os.ReadFile(filepath.Join(publicConfig, "resolved.env"))
+	if err != nil {
+		t.Fatalf("read public resolved.env: %v", err)
+	}
+	if strings.Contains(string(resolved), config.EnvAPIKey+"=") {
+		t.Fatalf("public resolved.env must not carry a raw %s= line:\n%s", config.EnvAPIKey, resolved)
+	}
+	if strings.Contains(string(resolved), cfg.APIKey) {
+		t.Fatal("public resolved.env must not contain the raw API key value")
+	}
+	if !strings.Contains(string(resolved), config.EnvWorkspaceCurrentRevision+"=rev-birth\n") {
+		t.Fatalf("public resolved.env should carry the bootstrap-time revision:\n%s", resolved)
+	}
+
+	// The projection is a live view: after the sole post-D9 in-process config
+	// mutation (workspace revision switch), a peer re-reading resolved.env
+	// through the mount must see the new position without a re-mount.
+	rt.cfg.WorkspaceCurrentRevision = "rev-switched"
+	rt.onConfigMutated()
+	mutated, err := os.ReadFile(filepath.Join(publicConfig, "resolved.env"))
+	if err != nil {
+		t.Fatalf("re-read public resolved.env after mutation: %v", err)
+	}
+	if !strings.Contains(string(mutated), config.EnvWorkspaceCurrentRevision+"=rev-switched\n") {
+		t.Fatalf("public resolved.env should reflect the switched position:\n%s", mutated)
+	}
+	backing, err := os.ReadFile(filepath.Join(cfg.AgentRoot(), "config", "resolved.env"))
+	if err != nil {
+		t.Fatalf("read backing resolved.env after mutation: %v", err)
+	}
+	if string(mutated) != string(backing) {
+		t.Fatal("public resolved.env drifted from the backing SST after mutation")
+	}
+
+	// Peers discover the surface from the peer-readable contract.
+	contractData, err := os.ReadFile(filepath.Join(cfg.AgentRoot(), "public", "status", "contract.json"))
+	if err != nil {
+		t.Fatalf("read public contract: %v", err)
+	}
+	var contract struct {
+		Surfaces runtimeContractSurfaces `json:"surfaces"`
+	}
+	if err := json.Unmarshal(contractData, &contract); err != nil {
+		t.Fatalf("unmarshal public contract: %v", err)
+	}
+	if contract.Surfaces.Config != "config" {
+		t.Fatalf("contract surfaces.config = %q, want %q", contract.Surfaces.Config, "config")
+	}
+}
+
+// TestBootstrapAgentRootFuseConfigGateTransactions covers the public/ctl/config
+// validated write gate through the real mount (registry-design-brief § C
+// feedback layer, work order T3.3): a valid write transaction lands
+// config/next.env byte-equal at close, an invalid one is rejected synchronously
+// at close (EINVAL) without creating or clobbering the staged file and its
+// violations are readable back from the gate, coupling warnings surface for
+// accepted stages of Couples-bearing knobs, and an empty write clears the
+// stage. Peers discover the gate from status/contract.json.
+func TestBootstrapAgentRootFuseConfigGateTransactions(t *testing.T) {
+	requireRuntimeSurfaceFUSESupport(t)
+
+	cfg := testCfg(t)
+	rt := NewWithProvider(cfg, &mockProvider{})
+	silenceRuntime(rt)
+	useRealPublicSurface(rt)
+	rt.originalInput = "exercise the fuse config gate"
+
+	if err := rt.bootstrapAgentRoot(); err != nil {
+		t.Fatalf("bootstrapAgentRoot failed: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := rt.cleanupAgentRoot(); err != nil {
+			t.Fatalf("cleanupAgentRoot failed: %v", err)
+		}
+	})
+
+	gatePath := filepath.Join(cfg.AgentRoot(), "public", "ctl", "config")
+	stagedPath := cfg.StagedNextEnvPath()
+	if info, err := os.Lstat(gatePath); err != nil {
+		t.Fatalf("stat public ctl/config: %v", err)
+	} else if info.Mode()&os.ModeType != 0 {
+		t.Fatalf("public ctl/config should be a regular FUSE file, got mode %v", info.Mode())
+	}
+
+	// Read before any stage: gate self-description + empty state.
+	summary, err := os.ReadFile(gatePath)
+	if err != nil {
+		t.Fatalf("read public ctl/config summary: %v", err)
+	}
+	for _, want := range []string{"control_file: config", "mode: validated-config-stage", "staged: none"} {
+		if !strings.Contains(string(summary), want) {
+			t.Fatalf("initial gate summary missing %q:\n%s", want, summary)
+		}
+	}
+
+	// Valid transaction: lands next.env byte-equal, synchronously at close.
+	payload := "QUINE_MAX_TURNS=64\n"
+	if err := os.WriteFile(gatePath, []byte(payload), 0o666); err != nil {
+		t.Fatalf("valid gate write should be accepted: %v", err)
+	}
+	landed, err := os.ReadFile(stagedPath)
+	if err != nil {
+		t.Fatalf("read landed config/next.env: %v", err)
+	}
+	if string(landed) != payload {
+		t.Fatalf("landed next.env = %q, want byte-equal %q", landed, payload)
+	}
+	summary, err = os.ReadFile(gatePath)
+	if err != nil {
+		t.Fatalf("re-read gate summary: %v", err)
+	}
+	for _, want := range []string{"QUINE_MAX_TURNS=64", "validation: valid against the running capability registry"} {
+		if !strings.Contains(string(summary), want) {
+			t.Fatalf("post-accept gate summary missing %q:\n%s", want, summary)
+		}
+	}
+
+	// Accepted stage of a Couples-bearing knob replaces the file wholesale
+	// and surfaces the registry edge as a warning, not an error.
+	coupled := "QUINE_EPHEMERAL_BODY_ENABLED=1\n"
+	if err := os.WriteFile(gatePath, []byte(coupled), 0o666); err != nil {
+		t.Fatalf("coupled gate write should be accepted (warnings are not errors): %v", err)
+	}
+	summary, err = os.ReadFile(gatePath)
+	if err != nil {
+		t.Fatalf("re-read gate summary after coupled stage: %v", err)
+	}
+	if !strings.Contains(string(summary), "QUINE_EPHEMERAL_BODY_ENABLED couples with QUINE_SELF_REENTRY_MODE (hazard):") {
+		t.Fatalf("gate summary missing coupling warning:\n%s", summary)
+	}
+
+	// Invalid transaction: rejected at close with the pattern's transaction
+	// errno; the pre-existing staged file survives a rejected replacement.
+	writeErr := os.WriteFile(gatePath, []byte("QUINE_TOTALLY_UNKNOWN_KNOB=1\n"), 0o666)
+	if writeErr == nil {
+		t.Fatal("invalid gate write should be rejected at close")
+	}
+	if !errors.Is(writeErr, syscall.EINVAL) {
+		t.Fatalf("invalid gate write errno = %v, want EINVAL", writeErr)
+	}
+	surviving, err := os.ReadFile(stagedPath)
+	if err != nil {
+		t.Fatalf("staged file should survive a rejected replacement: %v", err)
+	}
+	if string(surviving) != coupled {
+		t.Fatalf("rejected replacement clobbered next.env: got %q, want %q", surviving, coupled)
+	}
+	summary, err = os.ReadFile(gatePath)
+	if err != nil {
+		t.Fatalf("re-read gate summary after rejection: %v", err)
+	}
+	for _, want := range []string{
+		"last_rejected_write: rejected in full, nothing landed:",
+		"QUINE_TOTALLY_UNKNOWN_KNOB: unknown env name",
+	} {
+		if !strings.Contains(string(summary), want) {
+			t.Fatalf("post-rejection gate summary missing %q:\n%s", want, summary)
+		}
+	}
+
+	// Empty write: wholesale replacement with nothing = clear the stage.
+	if err := os.WriteFile(gatePath, nil, 0o666); err != nil {
+		t.Fatalf("empty gate write should clear the stage: %v", err)
+	}
+	if _, err := os.Stat(stagedPath); !os.IsNotExist(err) {
+		t.Fatalf("staged file should be cleared by an empty write, got err=%v", err)
+	}
+
+	// Peers discover the gate from the contract.
+	contractData, err := os.ReadFile(filepath.Join(cfg.AgentRoot(), "public", "status", "contract.json"))
+	if err != nil {
+		t.Fatalf("read public contract: %v", err)
+	}
+	var contract struct {
+		Surfaces       runtimeContractSurfaces          `json:"surfaces"`
+		ControlActions map[string]controlActionContract `json:"control_actions"`
+	}
+	if err := json.Unmarshal(contractData, &contract); err != nil {
+		t.Fatalf("unmarshal public contract: %v", err)
+	}
+	if contract.Surfaces.ConfigControl != "ctl/config" {
+		t.Fatalf("contract surfaces.config_control = %q, want %q", contract.Surfaces.ConfigControl, "ctl/config")
+	}
+	action, ok := contract.ControlActions["config"]
+	if !ok || !strings.Contains(action.Description, "validated staged-config write gate") {
+		t.Fatalf("contract control_actions.config missing self-describing gate semantics: %#v", contract.ControlActions["config"])
+	}
+}
+
+// TestBootstrapAgentRootDegradesPublicSurfaceWithoutFUSE covers the graceful
+// degradation regime: when the FUSE preflight fails (non-Linux hosts,
+// containers without /dev/fuse), bootstrapAgentRoot must proceed with public/
+// holding only an UNAVAILABLE marker instead of failing the whole run, and the
+// prompt must stop advertising public/ctl and peer surfaces.
+func TestBootstrapAgentRootDegradesPublicSurfaceWithoutFUSE(t *testing.T) {
+	prevDevice := fuseDevicePath
+	fuseDevicePath = filepath.Join(t.TempDir(), "missing-fuse-device")
+	t.Cleanup(func() { fuseDevicePath = prevDevice })
+
+	cfg := testCfg(t)
+	cfg.SelfSourceCodeEnabled = true
+	cfg.PromptCtlPhysics = true
+	rt := NewWithProvider(cfg, &mockProvider{})
+	silenceRuntime(rt)
+	useRealPublicSurface(rt)
+	rt.originalInput = "degrade public surface without fuse"
+
+	if err := rt.bootstrapAgentRoot(); err != nil {
+		t.Fatalf("bootstrapAgentRoot should degrade instead of failing: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := rt.cleanupAgentRoot(); err != nil {
+			t.Fatalf("cleanupAgentRoot failed: %v", err)
+		}
+	})
+
+	publicRoot := filepath.Join(cfg.AgentRoot(), "public")
+	entries, err := os.ReadDir(publicRoot)
+	if err != nil {
+		t.Fatalf("read degraded public dir: %v", err)
+	}
+	if len(entries) != 1 || entries[0].Name() != publicSurfaceUnavailableMarkerName {
+		t.Fatalf("degraded public/ should hold only the %s marker, got %v", publicSurfaceUnavailableMarkerName, entries)
+	}
+	marker, err := os.ReadFile(filepath.Join(publicRoot, publicSurfaceUnavailableMarkerName))
+	if err != nil {
+		t.Fatalf("read %s marker: %v", publicSurfaceUnavailableMarkerName, err)
+	}
+	markerText := string(marker)
+	if !strings.Contains(markerText, "reason:") {
+		t.Fatalf("marker should record the degradation reason, got %q", markerText)
+	}
+
+	prompt, err := rt.currentSystemPrompt()
+	if err != nil {
+		t.Fatalf("currentSystemPrompt failed: %v", err)
+	}
+	degradedChecks := []string{
+		"public process-surface projection is unavailable in this environment",
+		"`public/UNAVAILABLE` records why",
+		"Peer control physics are unavailable in this environment",
+	}
+	for _, want := range degradedChecks {
+		if !strings.Contains(prompt, want) {
+			t.Errorf("degraded prompt missing disclosure %q", want)
+		}
+	}
+	forbidden := []string{
+		"runtime-owned public process-surface projection, not a workspace",
+		"Some process surfaces expose `ctl/{post,poke,inject,interrupt}`",
+		"`public/source-code/`",
+		"`public/config/`",
+		"peer-readable at `public/status/contract.json`",
+	}
+	for _, text := range forbidden {
+		if strings.Contains(prompt, text) {
+			t.Errorf("degraded prompt should not advertise %q", text)
+		}
+	}
+
+	if err := rt.cleanupAgentRoot(); err != nil {
+		t.Fatalf("cleanupAgentRoot failed: %v", err)
+	}
+	if _, err := os.Stat(cfg.AgentRoot()); !os.IsNotExist(err) {
+		t.Fatalf("agent root should be removed after cleanup, got err=%v", err)
+	}
+}
+
+// TestSyncPublicSurfaceDegradesWhenMountDenied covers the second degradation
+// trigger: the preflight passes but the actual mount attempt is denied. The
+// sync must not propagate the error; it lands the UNAVAILABLE marker instead.
+func TestSyncPublicSurfaceDegradesWhenMountDenied(t *testing.T) {
+	requireRuntimeSurfaceFUSESupport(t)
+
+	cfg := testCfg(t)
+	rt := NewWithProvider(cfg, &mockProvider{})
+	silenceRuntime(rt)
+	useRealPublicSurface(rt)
+	rt.originalInput = "degrade public surface on denied mount"
+
+	// A mountpoint that does not exist makes the real mount attempt fail
+	// deterministically without needing to withdraw FUSE privileges. The sync
+	// must swallow the mount failure, mark the surface degraded, and land the
+	// marker (writePublicSurfaceUnavailableMarker creates the directory).
+	publicDir := filepath.Join(cfg.AgentRoot(), "missing-parent", "public")
+	if err := rt.syncPublicSurface(publicSurfacePaths{
+		PublicDir:        publicDir,
+		StatusTarget:     filepath.Join(cfg.AgentRoot(), "status"),
+		ControlLogTarget: cfg.SessionControlLogPath(""),
+	}); err != nil {
+		t.Fatalf("mount denial should degrade, not fail: %v", err)
+	}
+	if rt.publicSurfaceUnavailableReason() == "" {
+		t.Fatal("mount denial should mark the public surface degraded")
+	}
+	if rt.publicSurface != nil {
+		t.Fatal("degraded sync should not retain a live FUSE backend")
+	}
+	if _, err := os.Stat(filepath.Join(publicDir, publicSurfaceUnavailableMarkerName)); err != nil {
+		t.Fatalf("degraded sync should write the %s marker: %v", publicSurfaceUnavailableMarkerName, err)
 	}
 }
 

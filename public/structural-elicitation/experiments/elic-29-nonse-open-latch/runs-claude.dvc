@@ -1,0 +1,6 @@
+outs:
+- md5: f11e6de3379a1a18d4e2981712b0dbf4.dir
+  size: 3434483
+  nfiles: 1128
+  hash: md5
+  path: runs-claude

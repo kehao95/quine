@@ -142,8 +142,6 @@ func (r *Runtime) recoverPendingToolCall(source tape.Message, tc tape.ToolCall) 
 		r.handleVision(tc)
 	case "unfold":
 		r.handleUnfold(tc)
-	case "escalate":
-		r.handleEscalate(tc)
 	case "switch_world":
 		r.handleSwitchWorld(tc)
 	case "sh":

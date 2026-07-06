@@ -44,7 +44,7 @@ func (r *Runtime) syncPromptFragments() error {
 	}
 
 	runtimePath := filepath.Join(root, "00-runtime.md")
-	if err := writeTextFile(runtimePath, BuildSystemPrompt(r.cfg, r.originalInput, r.hasMaterial)); err != nil {
+	if err := writeTextFile(runtimePath, buildSystemPrompt(r.cfg, r.originalInput, r.hasMaterial, r.publicSurfaceUnavailableReason())); err != nil {
 		return err
 	}
 

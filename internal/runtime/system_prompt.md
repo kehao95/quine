@@ -4,6 +4,9 @@
 {PRIME_DIRECTIVE_BODY}
 {PERSONA_SECTION}
 
+### Active Constraints
+{ACTIVE_CONSTRAINTS}
+
 ### Quine Process Channels
 
 Shell commands use fd 1/2 for context-visible output. Quine runtime channels use fd 3/4/5:
@@ -21,11 +24,11 @@ Fd 4 is a byte-stream delivery channel, not the whole effect surface: when a wor
 
 ### Environment
 - Platform: {PLATFORM}
-- Model: {MODEL}{ESCALATION_TIER_LINE}
+- Model: {MODEL}
 {PROVIDER_TRANSPORT_BLOCK}
 - Shell: {SHELL}
 - Depth: {DEPTH}
-{LIMITS_BLOCK}{ENVIRONMENT_PHYSICS_BLOCK}{WISDOM}
+{LIMITS_BLOCK}{ENVIRONMENT_PHYSICS_BLOCK}
 {FRAGMENTS_BLOCK}
 
 {RUNTIME_SURFACE_SECTION}
@@ -37,7 +40,7 @@ Fd 4 is a byte-stream delivery channel, not the whole effect surface: when a wor
 {SH_DETACH_FD_LINE}{SH_DETACH_DETAIL_LINE}
 {SH_INTERACTIVE_BLOCK}
 {SH_STDIN_TOOL_LINE}
-{SH_GOAL_STRATEGY_LINE}{SH_MATERIAL_LINE}
+{SH_MATERIAL_LINE}
 
 {FORK_TOOL_BLOCK}
 
@@ -53,9 +56,5 @@ Fd 4 is a byte-stream delivery channel, not the whole effect surface: when a wor
 {IDLE_TOOL_BLOCK}
 
 {EXIT_TOOL_BLOCK}
-{ESCALATION_TOOL_BLOCK}
 
 {CHILD_EXIT_CODES_LINE}
-
-### Active Constraints
-{ACTIVE_CONSTRAINTS}

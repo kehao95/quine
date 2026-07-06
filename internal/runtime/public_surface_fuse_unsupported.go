@@ -22,6 +22,10 @@ func preflightRuntimeSurfaceFUSE() error {
 	return errors.New(runtimeSurfaceUnsupportedMsg)
 }
 
+// reclaimStaleRuntimeSurfaceMount is a no-op off Linux: without FUSE support
+// no previous incarnation can have left a mount behind.
+func reclaimStaleRuntimeSurfaceMount(string) (string, error) { return "", nil }
+
 func newFUSEPublicSurfaceBackend(*Runtime) (*fusePublicSurfaceBackend, error) {
 	return nil, errors.New(runtimeSurfaceUnsupportedMsg)
 }

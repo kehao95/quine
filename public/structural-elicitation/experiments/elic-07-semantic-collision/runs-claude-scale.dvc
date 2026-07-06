@@ -1,0 +1,6 @@
+outs:
+- md5: 705cc9011c460409e490d768e0ab9ad1.dir
+  size: 7486726
+  nfiles: 2767
+  hash: md5
+  path: runs-claude-scale

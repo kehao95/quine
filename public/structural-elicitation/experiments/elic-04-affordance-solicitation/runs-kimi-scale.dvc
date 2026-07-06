@@ -1,0 +1,6 @@
+outs:
+- md5: 0be421820f58d6ba0c109b61c0d534be.dir
+  size: 238086228
+  nfiles: 2673
+  hash: md5
+  path: runs-kimi-scale

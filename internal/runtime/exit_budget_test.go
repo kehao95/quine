@@ -206,7 +206,6 @@ func TestExecutionBudgetHardFailAllowsFinalExitResponse(t *testing.T) {
 
 	cfg := testCfg(t)
 	cfg.MaxTurns = 2
-	cfg.TurnExhaustionPolicy = config.TurnExhaustionHardFail
 	rt := NewWithProvider(cfg, mock)
 	silenceRuntime(rt)
 
@@ -294,7 +293,6 @@ func TestExecutionBudgetHardFailRejectsNonExitFinalResponse(t *testing.T) {
 
 	cfg := testCfg(t)
 	cfg.MaxTurns = 2
-	cfg.TurnExhaustionPolicy = config.TurnExhaustionHardFail
 	rt := NewWithProvider(cfg, mock)
 	silenceRuntime(rt)
 

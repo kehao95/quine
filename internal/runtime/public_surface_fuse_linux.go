@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -32,12 +34,144 @@ func newFUSEPublicSurfaceBackend(r *Runtime) (*fusePublicSurfaceBackend, error) 
 }
 
 func preflightRuntimeSurfaceFUSE() error {
-	f, err := os.OpenFile("/dev/fuse", os.O_RDWR, 0)
+	f, err := os.OpenFile(fuseDevicePath, os.O_RDWR, 0)
 	if err != nil {
-		return fmt.Errorf("runtime surface FUSE unsupported in this Linux environment: open /dev/fuse: %w", err)
+		// err is a *PathError that already names the device path.
+		return fmt.Errorf("runtime surface FUSE unsupported in this Linux environment: %w", err)
 	}
 	_ = f.Close()
+	// Root can mount(2) directly (DirectMount); everyone else needs the
+	// fusermount/fusermount3 setuid helper as the go-fuse fallback path.
+	if os.Geteuid() != 0 {
+		if _, err3 := exec.LookPath("fusermount3"); err3 != nil {
+			if _, err1 := exec.LookPath("fusermount"); err1 != nil {
+				return fmt.Errorf("runtime surface FUSE unsupported in this Linux environment: neither fusermount3 nor fusermount found in PATH")
+			}
+		}
+	}
 	return nil
+}
+
+// detectStaleRuntimeSurfaceMount reports the signal ("" = clean) that the
+// mountpoint is occupied by a mount this process is not serving. After the
+// exec handover the predecessor image's in-process FUSE server is gone, so its
+// mount survives disconnected: stat returns ENOTCONN and /proc/self/mountinfo
+// still lists the path (diagnosed 2026-06-29 in development/autopoiesis-probes/
+// l0-ablation-2x2-2026-06-29/agent-d2-stdout.log). Callers reclaim before
+// mounting so a stale mount is never misread as "mount denied → degrade".
+func detectStaleRuntimeSurfaceMount(mountpoint string) string {
+	if _, err := os.Stat(mountpoint); isDisconnectedMountStatError(err) {
+		return err.Error()
+	}
+	data, err := os.ReadFile("/proc/self/mountinfo")
+	if err != nil {
+		return ""
+	}
+	if fstype, ok := mountinfoEntryForMountpoint(string(data), mountpoint); ok {
+		return fmt.Sprintf("%s mount listed in /proc/self/mountinfo", fstype)
+	}
+	return ""
+}
+
+// isDisconnectedMountStatError classifies a stat error as the
+// disconnected-FUSE signal: ENOTCONN means the mountpoint's filesystem lost
+// its userspace server.
+func isDisconnectedMountStatError(err error) bool {
+	return err != nil && errors.Is(err, syscall.ENOTCONN)
+}
+
+// mountinfoEntryForMountpoint scans /proc/self/mountinfo content for an entry
+// whose mount point (field 5, octal-escaped per proc(5)) equals mountpoint and
+// returns its filesystem type (the field after the "-" separator).
+func mountinfoEntryForMountpoint(mountinfo, mountpoint string) (string, bool) {
+	target := filepath.Clean(mountpoint)
+	for _, line := range strings.Split(mountinfo, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) < 5 || unescapeMountinfoField(fields[4]) != target {
+			continue
+		}
+		fstype := "unknown"
+		for i := 5; i < len(fields)-1; i++ {
+			if fields[i] == "-" {
+				fstype = fields[i+1]
+				break
+			}
+		}
+		return fstype, true
+	}
+	return "", false
+}
+
+// unescapeMountinfoField decodes the \ooo octal escapes proc(5) applies to
+// space, tab, newline, and backslash in mountinfo paths.
+func unescapeMountinfoField(field string) string {
+	if !strings.Contains(field, `\`) {
+		return field
+	}
+	var out strings.Builder
+	for i := 0; i < len(field); i++ {
+		if field[i] == '\\' && i+3 < len(field) &&
+			field[i+1] >= '0' && field[i+1] <= '7' &&
+			field[i+2] >= '0' && field[i+2] <= '7' &&
+			field[i+3] >= '0' && field[i+3] <= '7' {
+			out.WriteByte((field[i+1]-'0')<<6 | (field[i+2]-'0')<<3 | (field[i+3] - '0'))
+			i += 3
+			continue
+		}
+		out.WriteByte(field[i])
+	}
+	return out.String()
+}
+
+// reclaimStaleRuntimeSurfaceMount unmounts whatever occupies mountpoint so a
+// fresh mount can land. Unmount chain: fusermount3/fusermount -u, then lazy
+// -uz (the setuid helper is the only road for non-root mounts), then direct
+// umount2 — plain, then MNT_DETACH — for the root/direct-mount case the
+// preflight exempts from the fusermount requirement. Returns the detection
+// signal ("" when nothing was stale) and an error when the mountpoint could
+// not be freed.
+func reclaimStaleRuntimeSurfaceMount(mountpoint string) (string, error) {
+	signal := detectStaleRuntimeSurfaceMount(mountpoint)
+	if signal == "" {
+		return "", nil
+	}
+	var attempts []string
+	unmounted := func(err error, attempt string) bool {
+		if err == nil {
+			if detectStaleRuntimeSurfaceMount(mountpoint) == "" {
+				return true
+			}
+			err = errors.New("mountpoint still occupied")
+		}
+		attempts = append(attempts, fmt.Sprintf("%s: %v", attempt, err))
+		return false
+	}
+	helper := ""
+	for _, name := range []string{"fusermount3", "fusermount"} {
+		if path, err := exec.LookPath(name); err == nil {
+			helper = path
+			break
+		}
+	}
+	if helper == "" {
+		attempts = append(attempts, "fusermount3/fusermount: not found in PATH")
+	} else {
+		for _, flag := range []string{"-u", "-uz"} {
+			out, err := exec.Command(helper, flag, mountpoint).CombinedOutput()
+			if err != nil && len(out) > 0 {
+				err = fmt.Errorf("%w (%s)", err, strings.TrimSpace(string(out)))
+			}
+			if unmounted(err, filepath.Base(helper)+" "+flag) {
+				return signal, nil
+			}
+		}
+	}
+	for _, flags := range []int{0, syscall.MNT_DETACH} {
+		if unmounted(syscall.Unmount(mountpoint, flags), fmt.Sprintf("umount2 flags=%#x", flags)) {
+			return signal, nil
+		}
+	}
+	return signal, fmt.Errorf("stale mount at %s not reclaimed (%s): %s", mountpoint, signal, strings.Join(attempts, "; "))
 }
 
 func (b *fusePublicSurfaceBackend) sync(paths publicSurfacePaths) error {
@@ -49,6 +183,15 @@ func (b *fusePublicSurfaceBackend) sync(paths publicSurfacePaths) error {
 			return fmt.Errorf("runtime surface FUSE already mounted at %s", b.mountpoint)
 		}
 		return nil
+	}
+
+	// A predecessor image's mount survives the exec handover as a disconnected
+	// mountpoint that refuses a fresh mount over it. Reclaim it first; only if
+	// the mount below still fails does the caller conclude degradation.
+	if signal, err := reclaimStaleRuntimeSurfaceMount(paths.PublicDir); err != nil {
+		b.rt.log("public surface: %v", err)
+	} else if signal != "" {
+		b.rt.log("public surface: reclaimed stale mount at %s (%s)", paths.PublicDir, signal)
 	}
 
 	timeout := time.Duration(0)
@@ -111,6 +254,13 @@ func (r *fusePublicSurfaceRoot) OnAdd(ctx context.Context) {
 	}, fusefs.StableAttr{
 		Mode: syscall.S_IFDIR,
 	}), false)
+	if r.paths.ConfigTarget != "" {
+		r.AddChild("config", r.NewPersistentInode(ctx, &fuseConfigDirNode{
+			configDirTarget: r.paths.ConfigTarget,
+		}, fusefs.StableAttr{
+			Mode: syscall.S_IFDIR,
+		}), false)
+	}
 	if r.paths.SourceRoot != "" {
 		r.AddChild("source-code", r.NewPersistentInode(ctx, &fuseProjectedDirNode{
 			targetDir: r.paths.SourceRoot,
@@ -146,6 +296,30 @@ func (n *fuseStatusDirNode) OnAdd(ctx context.Context) {
 	for _, name := range []string{"session.json", "inbox.json", "contract.json"} {
 		n.AddChild(name, n.NewPersistentInode(ctx, &fuseProjectedFileNode{
 			targetPath: filepath.Join(n.statusDirTarget, name),
+		}, fusefs.StableAttr{
+			Mode: syscall.S_IFREG,
+		}), false)
+	}
+}
+
+// fuseConfigDirNode projects the peer-readable slice of the agent-root
+// config/ read surface (registry-design-brief § B: the peer-readable
+// capability position) as live views over the backing SSTs — the status/*
+// computed-on-read vehicle: every read fetches the current backing file, so a
+// peer reading resolved.env after onConfigMutated sees the mutated position.
+// The child set is a fixed enumeration: the Phase-3 agent-writable
+// config/next.env staging file must never become peer-visible here.
+type fuseConfigDirNode struct {
+	fusefs.Inode
+	configDirTarget string
+}
+
+var _ = (fusefs.NodeOnAdder)((*fuseConfigDirNode)(nil))
+
+func (n *fuseConfigDirNode) OnAdd(ctx context.Context) {
+	for _, name := range []string{"registry.json", "resolved.env"} {
+		n.AddChild(name, n.NewPersistentInode(ctx, &fuseProjectedFileNode{
+			targetPath: filepath.Join(n.configDirTarget, name),
 		}, fusefs.StableAttr{
 			Mode: syscall.S_IFREG,
 		}), false)
@@ -380,6 +554,15 @@ func (h *fuseControlActionHandle) Write(ctx context.Context, data []byte, off in
 }
 
 func (h *fuseControlActionHandle) Flush(ctx context.Context) syscall.Errno {
+	// The config gate is a validated transaction: commit at flush so the
+	// writer's close(2) observes acceptance or rejection synchronously
+	// (RELEASE carries no reply back to any syscall, so a release-time
+	// rejection would be invisible to the writer). The message actions keep
+	// their commit at release: their payloads cannot be rejected, so nothing
+	// is lost by the asynchronous ack.
+	if h.node.action == controlActionConfig {
+		return h.commit()
+	}
 	return 0
 }
 

@@ -8,7 +8,6 @@ import (
 )
 
 // ShToolSchema returns the JSON Schema for the sh tool.
-// When cfg.CanEscalate() is true, goal/strategy params are added for STALL detection.
 func ShToolSchema(cfg *config.Config) llm.ToolSchema {
 	interactiveEnabled := cfg == nil || cfg.ShInteractiveEnabled()
 	timeoutOverrideEnabled := cfg == nil || cfg.ShTimeoutOverrideEnabled()
@@ -121,19 +120,6 @@ func ShToolSchema(cfg *config.Config) llm.ToolSchema {
 		}
 	}
 	required := []string{"command"}
-
-	// Add goal/strategy only when escalation is available (for STALL detection)
-	if cfg != nil && cfg.CanEscalate() {
-		props["goal"] = map[string]any{
-			"type":        "string",
-			"description": "The stable overall task objective in 2-5 abstract words (e.g. 'Decode hidden message', 'Fix auth bug', 'Build REST API'). This field is for the session-level goal, not the individual shell command.",
-		}
-		props["strategy"] = map[string]any{
-			"type":        "string",
-			"description": "Current approach to achieving the goal (e.g. 'parse with regex', 'geometric analysis'). This field changes when the approach changes.",
-		}
-		required = []string{"command", "goal", "strategy"}
-	}
 
 	return llm.ToolSchema{
 		Name:        "sh",
@@ -325,24 +311,18 @@ func ExecToolSchema(cfg *config.Config) llm.ToolSchema {
 		"Default behavior is sugar for re-execing quine through its configured self-reentry target; it preserves the current mission when one exists and uses no mission argv when none exists. " +
 		"When both `target` and `argv` are omitted during quine self re-exec, the current mission state is preserved. " +
 		"Providing `argv` explicitly replaces the mission passed to the new image. " +
-		"A different target binary and explicit argv can be supplied."
+		"A different target binary and explicit argv can be supplied. " +
+		"If present, `config/next.env` is validated and applied to the successor's environment at this boundary; the runtime prompt owns the full staged-config mechanism."
 
 	props := map[string]any{
 		"target": map[string]any{
 			"type":        "string",
-			"description": "Optional executable path or name. If omitted, exec defaults to quine's configured self-reentry target. The runtime surface shows the launch path separately. Omission preserves the current mission state under default self re-exec.",
+			"description": "Optional executable path or name. If omitted, exec defaults to quine's configured self-reentry target. The runtime surface shows the launch path separately. Omission preserves the current mission state under default self re-exec. When the ephemeral body has been unlinked, a `target` of /proc/self/exe or /proc/<pid>/exe is rejected: re-executing the live process image recovers the original body instead of reconstructing a successor.",
 		},
 		"argv": map[string]any{
 			"type":        "array",
 			"description": "Optional full argv vector. If omitted: the self re-exec default is sugar for [configured self-reentry target, current mission] when a mission exists and [configured self-reentry target] when no mission exists, while an external target defaults to [target]. Supplying `argv` overrides that default and replaces the mission the new image receives.",
 			"items": map[string]any{
-				"type": "string",
-			},
-		},
-		"wisdom": map[string]any{
-			"type":        "object",
-			"description": "State to pass through QUINE_WISDOM_* env vars. Values must be strings. Empty-string values remove the corresponding wisdom key.",
-			"additionalProperties": map[string]any{
 				"type": "string",
 			},
 		},
@@ -513,24 +493,6 @@ func UnfoldToolSchema() llm.ToolSchema {
 	}
 }
 
-// EscalateToolSchema returns the JSON Schema for the escalate tool.
-func EscalateToolSchema() llm.ToolSchema {
-	return llm.ToolSchema{
-		Name:        "escalate",
-		Description: "Request a more capable model. Escalation continues the same work with full history and does not consume execution budget. This is a one-way upgrade.",
-		Parameters: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"reason": map[string]any{
-					"type":        "string",
-					"description": "Reason for escalation: what failed, what remains unresolved, or what diagnostic is cryptic.",
-				},
-			},
-			"required": []string{"reason"},
-		},
-	}
-}
-
 // AllToolSchemas returns all tool schemas.
 func AllToolSchemas(cfg *config.Config) []llm.ToolSchema {
 	schemas := []llm.ToolSchema{
@@ -562,9 +524,6 @@ func AllToolSchemas(cfg *config.Config) []llm.ToolSchema {
 			schemas = append(schemas, MarkToolSchema(cfg.AnchorFoldEnabled()))
 		}
 		schemas = append(schemas, UnfoldToolSchema())
-	}
-	if cfg != nil && cfg.CanEscalate() {
-		schemas = append(schemas, EscalateToolSchema())
 	}
 	return schemas
 }

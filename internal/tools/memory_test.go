@@ -386,7 +386,7 @@ func TestAnchorMemory_StatusWarnsOnParallelAnchors(t *testing.T) {
 	}
 }
 
-func TestAnchorMemory_StatusEscalatesFoldActionOnlyAtDangerParallelAnchors(t *testing.T) {
+func TestAnchorMemory_StatusRaisesFoldActionOnlyAtDangerParallelAnchors(t *testing.T) {
 	tmp := t.TempDir()
 	agentRoot := filepath.Join(tmp, "agent", "sess-1")
 	exec := NewAnchorMemoryExecutor(agentRoot, 32, 64)

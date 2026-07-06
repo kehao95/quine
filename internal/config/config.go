@@ -19,14 +19,6 @@ var ErrDepthExceeded = errors.New("max recursion depth exceeded")
 // runtime identities when QUINE_SESSION_ID is not supplied.
 var processStartTime = time.Now()
 
-// TurnExhaustionPolicy controls runtime behavior when execution budget is exhausted.
-type TurnExhaustionPolicy string
-
-const (
-	// TurnExhaustionHardFail terminates immediately when executions reach zero.
-	TurnExhaustionHardFail TurnExhaustionPolicy = "hard_fail"
-)
-
 // PromptMetaphor controls optional metaphor framing in the system prompt.
 type PromptMetaphor string
 
@@ -191,7 +183,6 @@ type Limits struct {
 	OutputTruncate            int
 	MaxTurns                  int
 	WallClockExitSeconds      int
-	TurnExhaustionPolicy      TurnExhaustionPolicy
 	ContextWindow             int
 	MemoryWarnTokens          int
 	MemoryDangerTokens        int
@@ -229,15 +220,6 @@ type WorkspaceConfig struct {
 	WorkspaceBootstrap       string
 }
 
-type Escalation struct {
-	SmartModelID   string
-	SmartAPIKey    string
-	SmartAPIBase   string
-	SmartProvider  string
-	StallThreshold int
-	Escalated      bool
-}
-
 type Paths struct {
 	DataDir           string
 	RetentionDir      string
@@ -258,20 +240,12 @@ type Config struct {
 	ToolGates
 	PromptConfig
 	WorkspaceConfig
-	Escalation
 	Paths
-
-	Wisdom map[string]string
 }
 
 // APIModelID returns the model ID to use in API calls.
 func (c *Config) APIModelID() string {
 	return c.ModelID
-}
-
-// CanEscalate returns true if escalation is configured and hasn't occurred yet.
-func (c *Config) CanEscalate() bool {
-	return c.SmartModelID != "" && !c.Escalated
 }
 
 // CurrentWorld reports the current process world substrate.
@@ -677,7 +651,6 @@ func Load() (*Config, error) {
 		loadWorkspaceConfig,
 		loadLimitConfig,
 		loadIdentityAndPathConfig,
-		loadEscalationConfig,
 		loadPromptAndTransportOptions,
 		loadToolGates,
 		loadSelfReentryConfig,
@@ -1060,53 +1033,11 @@ func loadIdentityAndPathConfig(c *Config) error {
 			c.WorkDir = wd
 		}
 	}
-	c.Wisdom = loadWisdom()
-	return nil
-}
-
-func loadEscalationConfig(c *Config) error {
-	var err error
-	// --- Smart model config for escalation (optional) ---
-	c.SmartModelID = os.Getenv(EnvSmartModelID)
-	c.SmartAPIKey = os.Getenv(EnvSmartAPIKey)
-	if c.SmartAPIKey == "" {
-		c.SmartAPIKey = c.APIKey
-	}
-	c.SmartAPIBase = os.Getenv(EnvSmartAPIBase)
-	if c.SmartAPIBase == "" {
-		c.SmartAPIBase = c.APIBase
-	}
-	c.SmartProvider = os.Getenv(EnvSmartAPIType)
-	if c.SmartProvider == "" {
-		c.SmartProvider = c.Provider
-	}
-
-	c.StallThreshold, err = envInt(EnvStallThreshold, 5)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
 func loadPromptAndTransportOptions(c *Config) error {
 	var err error
-	// --- Execution exhaustion policy ---
-	// Policy is only meaningful when execution budget is enabled.
-	// QUINE_MAX_TURNS=0 means disabled/unlimited, so ignore policy value.
-	c.TurnExhaustionPolicy = TurnExhaustionHardFail
-	if c.MaxTurns > 0 {
-		policy := os.Getenv(EnvTurnExhaustionPolicy)
-		if policy != "" {
-			switch TurnExhaustionPolicy(policy) {
-			case TurnExhaustionHardFail:
-				c.TurnExhaustionPolicy = TurnExhaustionHardFail
-			default:
-				return fmt.Errorf("QUINE_TURN_EXHAUSTION_POLICY=%q: must be %q",
-					policy, TurnExhaustionHardFail)
-			}
-		}
-	}
-
 	// --- Prompt metaphor mode ---
 	metaphor := os.Getenv(EnvPromptMetaphor)
 	if metaphor == "" {
@@ -1365,7 +1296,6 @@ func (c *Config) baseEnv(depth int, parentSession string) []string {
 		envKV(EnvSelfReentryMode, string(c.SelfReentryMode)),
 		envKV(EnvMaxTurns, strconv.Itoa(c.MaxTurns)),
 		envKV(EnvWallClockExitSeconds, strconv.Itoa(c.WallClockExitSeconds)),
-		envKV(EnvTurnExhaustionPolicy, string(c.TurnExhaustionPolicy)),
 		envKV(EnvPromptMetaphor, string(c.PromptMetaphor)),
 		envKV(EnvPromptSelfModel, string(c.SelfModelMode())),
 		envKV(EnvPromptInstructionSurface, string(c.InstructionSurfaceMode())),
@@ -1404,23 +1334,8 @@ func (c *Config) baseEnv(depth int, parentSession string) []string {
 		)
 	}
 
-	// Pass through QUINE_WISDOM_* env vars for state transfer across exec boundaries
-	for key, value := range c.Wisdom {
-		env = append(env, wisdomPrefix+key+"="+value)
-	}
-
 	if configDir := os.Getenv(EnvConfigDir); configDir != "" {
 		env = append(env, envKV(EnvConfigDir, configDir))
-	}
-
-	// Propagate smart config to children for escalation
-	if c.SmartModelID != "" {
-		env = append(env,
-			envKV(EnvSmartModelID, c.SmartModelID),
-			envKV(EnvSmartAPIKey, c.SmartAPIKey),
-			envKV(EnvSmartAPIBase, c.SmartAPIBase),
-			envKV(EnvSmartAPIType, c.SmartProvider),
-		)
 	}
 
 	// Propagate custom User-Agent if set
@@ -1559,7 +1474,6 @@ func (c *Config) ChildEnv() ([]string, error) {
 //   - DEPTH is NOT incremented (same logical quine, new image)
 //   - SESSION_ID is preserved (same logical quine across incarnations)
 //   - PARENT_SESSION is preserved unchanged
-//   - All QUINE_WISDOM_* vars are preserved (learned insights survive)
 //
 // Note: QUINE_TAPE_ID is preserved for legacy tape continuity across exec.
 func (c *Config) ExecEnv() ([]string, error) {
@@ -1569,6 +1483,56 @@ func (c *Config) ExecEnv() ([]string, error) {
 		envKV(EnvTapeID, c.TapeID),
 	)
 	return env, nil
+}
+
+// ResolvedEnv renders the current resolved capability position as the body of
+// the agent-root config/resolved.env read surface and the inc/<n>/config.env
+// birth snapshots (registry-design-brief § B, work order T2.1).
+//
+// Content-source decision: the serialization is the exec-boundary env —
+// ExecEnv()'s payload (baseEnv plus the exec-carried identity envs
+// QUINE_SESSION_ID / QUINE_TAPE_ID) — because the self-reentry envp IS the
+// capability position: env is the only injection channel at the process
+// boundary. Two deliberate fidelity deviations from ExecEnv():
+//
+//   - QUINE_DEPTH renders the CURRENT depth (c.Depth), not the constant 0
+//     that ExecEnv passes for the exec handover. resolved.env is a readout of
+//     this process's position, not the next process's envp.
+//   - QUINE_API_KEY is redacted to presence-only. The registry pins APIKey as
+//     operator-only auth material whose value is never disclosed ("prompt
+//     discloses only presence/absence, never the value"), and the
+//     inc/<n>/config.env birth snapshots derived from this rendering are
+//     retained lineage history — a raw credential must not land there.
+//
+// The rendering is a runtime-owned readout, never a config source: Load()
+// reads envp only (preserved invariant 2). Lines are the raw boundary ABI
+// "KEY=VALUE" strings with no shell quoting (brief D2's zero-translation
+// stance).
+func (c *Config) ResolvedEnv() []byte {
+	env := c.baseEnv(c.Depth, c.ParentSession)
+	env = append(env,
+		envKV(EnvSessionID, c.SessionID),
+		envKV(EnvTapeID, c.TapeID),
+	)
+	var b strings.Builder
+	b.WriteString("# Quine resolved capability position (env syntax).\n")
+	b.WriteString("# Runtime-owned readout: regenerated at bootstrap and after in-process config\n")
+	b.WriteString("# mutation (workspace revision switch). Never read back as config — Load()\n")
+	b.WriteString("# reads the process env only. Lines are raw KEY=VALUE boundary strings.\n")
+	apiKeyPrefix := EnvAPIKey + "="
+	for _, kv := range env {
+		if strings.HasPrefix(kv, apiKeyPrefix) {
+			if strings.TrimSpace(strings.TrimPrefix(kv, apiKeyPrefix)) == "" {
+				b.WriteString("# " + EnvAPIKey + " is unset.\n")
+			} else {
+				b.WriteString("# " + EnvAPIKey + " is set; value redacted (auth material never lands on the config surface).\n")
+			}
+			continue
+		}
+		b.WriteString(kv)
+		b.WriteByte('\n')
+	}
+	return []byte(b.String())
 }
 
 // CanRestoreWorld reports whether the current workspace configuration
@@ -1740,28 +1704,4 @@ func nextTapeID(dir string) (string, error) {
 	}
 
 	return fmt.Sprintf("%04d", maxID+1), nil
-}
-
-// wisdomPrefix is the environment variable prefix for wisdom transfer.
-const wisdomPrefix = "QUINE_WISDOM_"
-
-// loadWisdom scans all environment variables and collects those starting
-// with QUINE_WISDOM_. It returns a map with keys stripped of the prefix.
-func loadWisdom() map[string]string {
-	wisdom := make(map[string]string)
-	for _, env := range os.Environ() {
-		if strings.HasPrefix(env, wisdomPrefix) {
-			// Split on first "=" to get key=value
-			key, value, found := strings.Cut(env, "=")
-			if !found {
-				continue
-			}
-			// Strip the prefix from the key
-			shortKey := strings.TrimPrefix(key, wisdomPrefix)
-			if shortKey != "" && value != "" {
-				wisdom[shortKey] = value
-			}
-		}
-	}
-	return wisdom
 }
