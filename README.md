@@ -142,8 +142,9 @@ A plain `dvc pull` is not the public restore contract. Each experimental paper
 under `public/` reads completely without the tapes; the tapes are the raw
 evidence behind its result tables.
 
-## Follow
+## Connect with Me
 
+- email: i@kehao.me
 - X: [@kehao95](https://x.com/kehao95)
 - Substack: [kehao95.substack.com](https://kehao95.substack.com/)
 
