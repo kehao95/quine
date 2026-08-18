@@ -37,19 +37,19 @@ first. Date is the earliest of submitted/accepted/published (whichever is
 recorded). Full descriptions, PDFs, and experiment data live under
 [`public/`](./public/README.md).
 
-| Date | Work | Venue | Status |
-|------|------|-------|--------|
-| 2026-07-03 | [A Tumor in the Repository (essay)](./public/tumor-in-the-repository-essay/) | Blog essay (Substack) | published |
-| 2026-07-02 | [Structure Grows](./public/structure-grows/) | Blog essay (Substack) | published |
-| 2026-07-02 | [A Tumor in the Repository](./public/computational-neoplasm/) | ALIFE 2026 LBA | accepted |
-| 2026-06-26 | [Structural Elicitation in a Frozen POSIX Agent](./public/structural-elicitation/) | ALIFE 2026 LBA | accepted |
-| 2026-06-18 | [Facultative Self-Reproduction in Quine](./public/facultative-self-reproduction/) | ALIFE 2026 LBA | accepted |
-| 2026-06-14 | [From Simulated Worlds to Process Habitats](./public/agentic-alife-workshop/) | ALIFE 2026 workshop | accepted |
-| 2026-04-12 | [Coordination Under Existential Unawareness](./public/minimal-perceptual-prerequisites/) | ALIFE 2026 | accepted |
-| 2026-03-27 | [The Autopoietic Repository](./public/the-autopoietic-repository/) | Blog essay (Substack) | published |
-| 2026-03-17 | [Harness Engineering Is Architectural Amnesia](./public/harness-engineering-is-architectural-amnesia/) | Blog essay (Substack) | published |
-| 2026-03-15 | [Why Terminal Bench 2 Is Broken, and Why I Still Love It](./public/terminal-bench-2-love-letter/) | Blog essay (Substack) | published |
-| 2026-03-08 | [Quine: Realizing LLM Agents as Native POSIX Processes](./public/quine-arxiv/) | arXiv:2603.18030 | published |
+| Date | Work | Venue |
+|------|------|-------|
+| 2026-07-03 | [A Tumor in the Repository (essay)](./public/tumor-in-the-repository-essay/) | Blog essay (Substack) |
+| 2026-07-02 | [Structure Grows](./public/structure-grows/) | Blog essay (Substack) |
+| 2026-07-02 | [A Tumor in the Repository](./public/computational-neoplasm/) | ALIFE 2026 LBA |
+| 2026-06-26 | [Structural Elicitation in a Frozen POSIX Agent](./public/structural-elicitation/) | ALIFE 2026 LBA |
+| 2026-06-18 | [Facultative Self-Reproduction in Quine](./public/facultative-self-reproduction/) | ALIFE 2026 LBA |
+| 2026-06-14 | [From Simulated Worlds to Process Habitats](./public/agentic-alife-workshop/) | ALIFE 2026 workshop |
+| 2026-04-12 | [Coordination Under Existential Unawareness](./public/minimal-perceptual-prerequisites/) | ALIFE 2026 |
+| 2026-03-27 | [The Autopoietic Repository](./public/the-autopoietic-repository/) | Blog essay (Substack) |
+| 2026-03-17 | [Harness Engineering Is Architectural Amnesia](./public/harness-engineering-is-architectural-amnesia/) | Blog essay (Substack) |
+| 2026-03-15 | [Why Terminal Bench 2 Is Broken, and Why I Still Love It](./public/terminal-bench-2-love-letter/) | Blog essay (Substack) |
+| 2026-03-08 | [Quine: Realizing LLM Agents as Native POSIX Processes](./public/quine-arxiv/) | arXiv:2603.18030 |
 
 ## Documentation
 
