@@ -68,8 +68,10 @@ const (
 	EnvSuppressInitialBegin     = "QUINE_SUPPRESS_INITIAL_BEGIN"
 	EnvInitialUserMessage       = "QUINE_INITIAL_USER_MESSAGE"
 	EnvSelfSourceCodeEnabled    = "QUINE_SELF_SOURCE_CODE_ENABLED"
+	EnvSelfSourceProjection     = "QUINE_SELF_SOURCE_PROJECTION"
 	EnvUserAgent                = "QUINE_USER_AGENT"
 	EnvContextTape              = "QUINE_CONTEXT_TAPE"
+	EnvContextBootstrap         = "QUINE_CONTEXT_BOOTSTRAP"
 	EnvWorkspaceRoot            = "QUINE_WORKSPACE_ROOT"
 	EnvWorkspace                = "QUINE_WORKSPACE"
 	EnvWorkspaceBackend         = "QUINE_WORKSPACE_BACKEND"
@@ -85,11 +87,17 @@ const (
 	EnvDebugRequestBodyDir      = "QUINE_DEBUG_REQUEST_BODY_DIR"
 )
 
+// ProcessIdentityEnvNames is the runtime-emitted family: names the runtime
+// itself writes into the processes it builds and never inherits blindly. It is
+// kept equal to the registry's MutRuntimeEmitted class by
+// TestRegistryProcessIdentityMutability, which makes it the derivation source
+// for the shared env mask (envmodel.go).
 var ProcessIdentityEnvNames = []string{
 	EnvSessionID,
 	EnvRunID,
 	EnvTapeID,
 	EnvContextTape,
+	EnvContextBootstrap,
 	EnvWorkspaceSession,
 	EnvWorkspaceOwner,
 	EnvWorkspaceBootstrap,

@@ -26,10 +26,6 @@ func (s *subjectiveFS) commandEnv() []string {
 	return nil
 }
 
-func (s *subjectiveFS) childEnvOverrides() []string {
-	return nil
-}
-
 func (s *subjectiveFS) bootstrapWorkspaceState() error {
 	return nil
 }

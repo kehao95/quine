@@ -232,7 +232,7 @@ var Registry = []Knob{
 		Type: strT(), Default: defRequired(),
 		Scope: "auth / sentinel", Class: ClassTransport,
 		Surfaces: surf(true, false, true, true), Mutability: MutOperatorOnly,
-		Notes: "raw key or OAuth sentinel such as codex-oauth, kimi-oauth, copilot-oauth, claude-oauth; prompt discloses only presence/absence, never the value",
+		Notes: "raw key or OAuth sentinel such as codex-oauth, kimi-oauth, copilot-oauth, claude-oauth; prompt discloses only presence/absence, never the value. The runtime never renders a process's own environment back to it (self-readout is /proc/<pid>/environ), so the key value only ever exists in envp, never on a config surface",
 		ImplSites: []string{
 			"internal/config/config.go:loadRequiredIdentityAndTransport",
 			"internal/llm/transport",
@@ -243,9 +243,9 @@ var Registry = []Knob{
 		Type: strT(), Default: defValue(""),
 		Scope: "OAuth token/config storage", Class: ClassTransport,
 		Surfaces: surf(false, false, true, true), Mutability: MutOperatorOnly,
-		Notes: "not loaded into Config: OAuth transports read the process env directly, and baseEnv passes it through to children only when set",
+		Notes: "not loaded into Config: OAuth transports read the process env directly. Free at every boundary, so a child inherits it when the operator set it and does not see it when they did not",
 		ImplSites: []string{
-			"internal/config/config.go:baseEnv",
+			"internal/config/envmodel.go:BuildChildEnv",
 			"internal/llm/transport/codexoauth.go",
 			"internal/llm/claudeoauth/claudeoauth.go",
 		},
@@ -288,7 +288,7 @@ var Registry = []Knob{
 		Type: strT(), Default: defValue(""),
 		Scope: "debug dump", Class: ClassPath,
 		Surfaces: surf(false, false, true, true), Mutability: MutOperatorOnly,
-		Notes: "debug-only request/response dump directory for failed calls; launch-local (never propagated via baseEnv)",
+		Notes: "debug-only request/response dump directory for failed calls; free at every boundary, so children inherit it exactly when the operator set it",
 		ImplSites: []string{
 			"internal/config/config.go:loadRequiredIdentityAndTransport",
 			"internal/llm/provider.go",
@@ -366,11 +366,11 @@ var Registry = []Knob{
 		Type: strT(), Default: defRuntime(),
 		Scope: "world lineage state", Axes: []string{axEnaction}, Class: ClassIdentity,
 		Surfaces: surf(true, false, true, false), Mutability: MutRuntimeEmitted,
-		Notes: "runtime-propagated current revision handle, updated after sh/switch_world (the only post-D9 in-process cfg mutation); stripped from child envs via filterProcessIdentity; not a user-authored knob",
+		Notes: "runtime-emitted current revision handle, updated after sh/switch_world (the only in-process cfg mutation). Masked at every boundary: it names a revision in THIS process's workspace state, so an sh or fork child inheriting it would hold a handle into a workspace it is not in. Re-stamped only at exec, where the same process continues in the same workspace. Not a user-authored knob",
 		ImplSites: []string{
 			"internal/config/config.go:loadWorkspaceConfig",
+			"internal/config/envstamps.go:SelfReentryStamps",
 			"internal/runtime/tool_handlers.go",
-			"internal/tools/fork.go:filterProcessIdentity",
 		},
 	},
 	{
@@ -381,10 +381,10 @@ var Registry = []Knob{
 		Couples: []Coupling{
 			{Peer: "WorkspaceRoot", Kind: CoupleRequires, Note: "setting WORKSPACE_SESSION alone enables workspace physics, which then requires a root"},
 		},
-		Notes: "stable overlay-state namespace under QUINE_DATA_DIR; defaults to SessionID when workspace physics are enabled; stripped from fork children (they get a fresh session or a bootstrap lineage)",
+		Notes: "stable overlay-state namespace under QUINE_DATA_DIR; defaults to SessionID when workspace physics are enabled. Masked at every boundary and re-stamped only at exec: a fork child gets a fresh session, or the parent's as a WORKSPACE_BOOTSTRAP lineage handle, never as its own",
 		ImplSites: []string{
 			"internal/config/config.go:loadIdentityAndPathConfig",
-			"internal/tools/fork.go:filterProcessIdentity",
+			"internal/config/envstamps.go:SelfReentryStamps",
 		},
 	},
 	{
@@ -392,10 +392,11 @@ var Registry = []Knob{
 		Type: boolT(), Default: defValue("1"),
 		Scope: "ownership bit", Axes: []string{axEnaction}, Class: ClassIdentity,
 		Surfaces: surf(false, false, true, false), Mutability: MutRuntimeEmitted,
-		Notes: "internal propagation for the process that commits/rolls back workspace state; fork children are always stripped to 0 by ChildEnv",
+		Notes: "ownership bit for the process that commits/rolls back workspace state. Masked at every boundary and re-stamped where it means something: fork/spawn children are always stamped 0 (a child borrows a view of its parent's workspace, it does not own it), and exec carries the current value forward",
 		ImplSites: []string{
 			"internal/config/config.go:loadWorkspaceConfig",
-			"internal/config/config.go:ChildEnv",
+			"internal/config/envstamps.go:ForkChildStamps",
+			"internal/config/envstamps.go:SelfReentryStamps",
 			"internal/tools/workspace_overlay_linux.go",
 		},
 	},
@@ -415,10 +416,10 @@ var Registry = []Knob{
 		Type: strT(), Default: defRuntime(),
 		Scope: "bootstrap lineage source", Axes: []string{axEnaction}, Class: ClassIdentity,
 		Surfaces: surf(false, false, true, false), Mutability: MutRuntimeEmitted,
-		Notes: "runtime-propagated lineage source identity: ChildEnv rewrites it to the parent's WorkspaceSession so fork children can adopt lineage; stripped from inherited env otherwise",
+		Notes: "runtime-emitted lineage source identity: the fork/spawn boundary stamps it with the parent's WorkspaceSession so a child adopts the lineage instead of starting a fresh one. Masked everywhere else — an inherited bootstrap handle would adopt a lineage nobody chose",
 		ImplSites: []string{
 			"internal/config/config.go:loadWorkspaceConfig",
-			"internal/config/config.go:ChildEnv",
+			"internal/config/envstamps.go:ForkChildStamps",
 		},
 	},
 	{
@@ -507,7 +508,7 @@ var Registry = []Knob{
 	},
 	{
 		Name: "VisionEnabled", Env: EnvVisionEnabled,
-		Type: boolT(), Default: defValue("1"),
+		Type: boolT(), Default: defValue("0"),
 		Scope: "vision capability", Axes: []string{axSelfRelation}, Class: ClassCapability,
 		Surfaces: surf(true, true, true, false), Mutability: MutExecBoundary,
 		Notes: "schema + runtime gate for the image-read tool",
@@ -626,7 +627,21 @@ var Registry = []Knob{
 		Type: boolT(), Default: defValue("0"),
 		Scope: "source-code self surface", Axes: []string{axSelfRelation}, Class: ClassCapability,
 		Surfaces: surf(true, false, true, false), Mutability: MutExecBoundary,
-		Notes: "projects the read-only source-code/ self-description surface and discloses it in prompt when enabled",
+		Notes: "legacy binary gate for the read-only source-code/ self-description surface; when QUINE_SELF_SOURCE_PROJECTION is set, the three-valued projection selector takes precedence",
+		ImplSites: []string{
+			"internal/config/config.go:loadToolGates",
+			"internal/runtime/self_source.go:syncSelfSourceSurface",
+		},
+	},
+	{
+		Name: "SelfSourceProjection", Env: EnvSelfSourceProjection,
+		Type: enumT("none", "runtime", "repo"), Default: defValue("none"),
+		Scope: "source-code self-surface projection shape", Axes: []string{axSelfRelation, axDisclosure}, Class: ClassCapability,
+		Surfaces: surf(true, false, true, false), Mutability: MutExecBoundary,
+		Couples: []Coupling{
+			{Peer: "SelfSourceCodeEnabled", Kind: CoupleOverrides, Note: "when explicitly set, none disables projection and runtime/repo enable it regardless of the legacy boolean gate"},
+		},
+		Notes: "none omits source-code; runtime projects only the embedded buildable Quine runtime tree; repo projects the complete embedded repository bundle",
 		ImplSites: []string{
 			"internal/config/config.go:loadToolGates",
 			"internal/runtime/self_source.go:syncSelfSourceSurface",
@@ -844,11 +859,11 @@ var Registry = []Knob{
 		Name: "MaxDepth", Env: EnvMaxDepth,
 		Type: intT(), Default: defValue("0"),
 		Scope: "recursion limit", Axes: []string{axContinuity}, Class: ClassBudget,
-		Surfaces: surf(true, false, true, false), Mutability: MutExecBoundary,
+		Surfaces: surf(true, false, true, false), Mutability: MutOperatorOnly,
 		Couples: []Coupling{
 			{Peer: "Depth", Kind: CoupleRequires, Note: "Load fails with ErrDepthExceeded when MaxDepth > 0 and Depth >= MaxDepth"},
 		},
-		Notes: "0 disables depth enforcement",
+		Notes: "absent or 0 means no depth enforcement — it is not a budget of zero. Operator-only: a process-tree resource bound belongs to whoever launched the tree, so a lineage cannot relax its own limit through a mediated channel",
 		ImplSites: []string{
 			"internal/config/config.go:loadLimitConfig",
 			"internal/runtime/tool_dispatch.go:precheckProcessCreation",
@@ -859,19 +874,19 @@ var Registry = []Knob{
 		Type: intT(), Default: defValue("0"),
 		Scope: "current process-tree depth", Axes: []string{axContinuity}, Class: ClassIdentity,
 		Surfaces: surf(true, false, true, false), Mutability: MutSubstratePinned,
-		Notes: "runtime-propagated lineage counter: fork children get Depth+1, exec re-entry resets it to 0 for same-process replacement; agent-staging it would fake lineage, so it is pinned even though Load() adopts inbound values",
+		Notes: "lineage counter: fork/spawn children are stamped Depth+1, and exec PRESERVES the current depth — exec is a new image of the same process, not a birth, and resetting it there would refill the MaxDepth budget enforcement reads from memory. Masked at the sh boundary: a program started from a shell is not a member of this agent tree. Pinned against agent staging even though Load() adopts inbound values, because faking it would fake lineage",
 		ImplSites: []string{
 			"internal/config/config.go:loadLimitConfig",
-			"internal/config/config.go:ChildEnv",
-			"internal/config/config.go:ExecEnv",
+			"internal/config/envstamps.go:ForkChildStamps",
+			"internal/config/envstamps.go:SelfReentryStamps",
 		},
 	},
 	{
 		Name: "MaxAgents", Env: EnvMaxAgents,
 		Type: intT(), Default: defValue("0"),
 		Scope: "process-tree slot limit", Axes: []string{axSocial}, Class: ClassBudget,
-		Surfaces: surf(true, false, true, false), Mutability: MutExecBoundary,
-		Notes: "0 disables slot enforcement",
+		Surfaces: surf(true, false, true, false), Mutability: MutOperatorOnly,
+		Notes: "absent or 0 means no slot enforcement — it is not a budget of zero. Operator-only for the same reason as MaxDepth: the bound is on the tree, not on the individual",
 		ImplSites: []string{
 			"internal/config/config.go:loadLimitConfig",
 			"internal/runtime/semaphore.go:NewAgentRegistry",
@@ -881,8 +896,8 @@ var Registry = []Knob{
 		Name: "MaxConcurrent", Env: EnvMaxConcurrent,
 		Type: intT(), Default: defValue("0"),
 		Scope: "shared inference concurrency", Axes: []string{axSocial}, Class: ClassBudget,
-		Surfaces: surf(false, false, true, false), Mutability: MutExecBoundary,
-		Notes: "0 disables semaphore enforcement",
+		Surfaces: surf(false, false, true, false), Mutability: MutOperatorOnly,
+		Notes: "absent or 0 means no semaphore enforcement — it is not a budget of zero. Operator-only: the inference slots are shared across the tree, so one member must not widen them for itself",
 		ImplSites: []string{
 			"internal/config/config.go:loadLimitConfig",
 			"internal/runtime/semaphore.go:NewSemaphore",
@@ -1166,11 +1181,11 @@ var Registry = []Knob{
 		Type: strT(), Default: defRuntime(),
 		Scope: "stable session identity", Axes: []string{axSocial}, Class: ClassIdentity,
 		Surfaces: surf(false, false, true, false), Mutability: MutRuntimeEmitted,
-		Notes: "auto-generated when unset; passing it at bootstrap is the explicit resume/adoption mechanism; preserved across exec (ExecEnv appends it) but never passed to fork children (they generate their own); stripped by filterProcessIdentity",
+		Notes: "auto-generated when unset; passing it at bootstrap is the explicit resume/adoption mechanism. Masked at every boundary and re-stamped where it means something: exec carries it forward (same quine, new image), while each fork/spawn child is injected with its own by the fork executor, and an sh child gets none at all",
 		ImplSites: []string{
 			"internal/config/config.go:loadIdentityAndPathConfig",
-			"internal/config/config.go:ExecEnv",
-			"internal/tools/fork.go:filterProcessIdentity",
+			"internal/config/envstamps.go:SelfReentryStamps",
+			"internal/tools/fork.go:launchChildSession",
 		},
 	},
 	{
@@ -1189,10 +1204,11 @@ var Registry = []Knob{
 		Type: strT(), Default: defRuntime(),
 		Scope: "tape/log identity", Class: ClassIdentity,
 		Surfaces: surf(false, false, true, false), Mutability: MutRuntimeEmitted,
-		Notes: "auto-incremented when unset (next numeric id in the session tape dir); preserved across exec for legacy tape continuity; internal trace identity, not a live context contract; stripped from sh/fork env as process-private",
+		Notes: "auto-incremented when unset (next numeric id in the session tape dir); re-stamped at exec for tape continuity; internal trace identity, not a live context contract. Masked at the sh and fork boundaries as process-private",
 		ImplSites: []string{
 			"internal/config/config.go:loadIdentityAndPathConfig",
 			"internal/config/config.go:nextTapeID",
+			"internal/config/envstamps.go:SelfReentryStamps",
 		},
 	},
 	{
@@ -1200,10 +1216,22 @@ var Registry = []Knob{
 		Type: strT(), Default: defRuntime(),
 		Scope: "exec-only process identity", Class: ClassIdentity,
 		Surfaces: surf(false, false, true, false), Mutability: MutRuntimeEmitted,
-		Notes: "runtime-emitted, process-private; not read by Load() at all — it exists to stage context across the exec barrier and to be defensively stripped from child/exec env alongside the other ProcessIdentityEnvNames; runtime-emitted entrypoints are owned by runtime-surface.md",
+		Notes: "runtime-emitted, process-private; not read by Load() at all — it exists to stage context across the exec barrier. Masked at every boundary by its runtime-emitted mutability, so no process this runtime builds can inherit another's; runtime-emitted entrypoints are owned by runtime-surface.md",
 		ImplSites: []string{
-			"internal/tools/fork.go:filterProcessIdentity",
+			"internal/config/envmodel.go:BoundaryBehavior",
 			"internal/runtime/tool_handlers.go",
+		},
+	},
+	{
+		Name: "ContextBootstrap", Env: EnvContextBootstrap,
+		Type: strT(), Default: defRuntime(),
+		Scope: "context handover signal", Class: ClassIdentity,
+		Surfaces: surf(false, false, true, false), Mutability: MutRuntimeEmitted,
+		Notes: "runtime-emitted, process-private; not read by Load() at all — the runtime points a successor or child at a staged context tree with it and the receiver unsets it after import, so it must never be inherited by an unrelated process. Registered as a knob (rather than a hardcoded exception) so the env mask derives from Mutability alone",
+		ImplSites: []string{
+			"internal/tools/fs_copy.go",
+			"internal/tools/exec.go:Execute",
+			"internal/runtime/runtime.go:importBootstrappedContext",
 		},
 	},
 	{
@@ -1211,10 +1239,11 @@ var Registry = []Knob{
 		Type: strT(), Default: defValue(""),
 		Scope: "parent/child lineage link", Axes: []string{axSocial}, Class: ClassIdentity,
 		Surfaces: surf(false, false, true, false), Mutability: MutSubstratePinned,
-		Notes: "process-tree linkage surface: fork children get the current SessionID as parent, exec preserves the existing parent; runtime-managed at every boundary (baseEnv rewrites it), so agent-staging it would fake lineage even though Load() adopts inbound values",
+		Notes: "process-tree linkage surface: fork/spawn children are stamped with the current SessionID as parent, and exec preserves the existing one (a new image does not acquire a new parent). Masked at the sh boundary — a program started from a shell is not a member of this tree. Pinned against agent staging: faking it would fake lineage, even though Load() adopts inbound values",
 		ImplSites: []string{
 			"internal/config/config.go:loadWorkspaceConfig",
-			"internal/config/config.go:baseEnv",
+			"internal/config/envstamps.go:ForkChildStamps",
+			"internal/config/envstamps.go:SelfReentryStamps",
 		},
 	},
 }

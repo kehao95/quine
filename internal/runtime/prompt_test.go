@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -238,32 +239,6 @@ func TestBuildSystemPrompt_CorrectValues(t *testing.T) {
 	}
 }
 
-func TestBuildSystemPrompt_ProviderTransportPhysics(t *testing.T) {
-	cfg := testConfig()
-	cfg.Provider = "openai-responses"
-	cfg.APIBase = "http://127.0.0.1:18080"
-	cfg.APIKey = "secret-test-key"
-	cfg.UserAgent = "test-agent"
-
-	prompt := BuildSystemPrompt(cfg, "test mission", true)
-
-	checks := []string{
-		"Provider Transport: `openai-responses` via `QUINE_API_TYPE`.",
-		"Provider Base: `http://127.0.0.1:18080` via `QUINE_API_BASE`.",
-		"Provider Credential: `QUINE_API_KEY` is present in the process environment; it is a secret bearer credential and its value is not rendered here.",
-		"Provider environment such as `QUINE_MODEL_ID`, `QUINE_API_TYPE`, `QUINE_API_BASE`, `QUINE_API_KEY`, `QUINE_THINKING_BUDGET`, and `QUINE_USER_AGENT` follows ordinary process-environment inheritance across `exec` unless replaced.",
-		"A custom non-quine exec image does not retain the Go runtime's provider loop or tools automatically",
-	}
-	for _, want := range checks {
-		if !strings.Contains(prompt, want) {
-			t.Errorf("prompt missing provider transport physics %q", want)
-		}
-	}
-	if strings.Contains(prompt, "secret-test-key") {
-		t.Fatal("prompt must not render the literal provider credential")
-	}
-}
-
 func TestBuildSystemPrompt_SkillsAbsentWhenNoIndex(t *testing.T) {
 	cfg := testConfig()
 	prompt := BuildSystemPrompt(cfg, "test mission", false)
@@ -370,7 +345,7 @@ func TestBuildSystemPrompt_EphemeralBodyPhysics(t *testing.T) {
 		"Ephemeral body: launch path unlinked after startup.",
 		"With `QUINE_EPHEMERAL_BODY_ENABLED=1`, quine unlinks its launch path during startup. This does not change the configured self-reentry target.",
 		"Preparing or replacing an executable file on disk does not change the running process by itself; handoff occurs only when `exec` replaces the current process image.",
-		"Linux live process image: while a process runs, `/proc/<pid>/exe` may expose the current executable image. Copying that image is body recovery/body-copying, not behavioral reconstruction from the runtime contract.",
+		"Linux live process image: while a process runs, `/proc/<pid>/exe` may expose the current executable image.",
 	}
 	checks = append(checks, fmt.Sprintf("Default self-reentry target: `%s`", cfg.SelfReentryTarget))
 	for _, want := range checks {
@@ -519,6 +494,7 @@ func TestBuildSystemPrompt_HidesFSMutationTextWhenTelemetryOff(t *testing.T) {
 
 func TestBuildSystemPrompt_ProcessSurfaceDiscoverability(t *testing.T) {
 	cfg := testConfig()
+	cfg.PromptImplDetails = true
 	prompt := BuildSystemPrompt(cfg, "test mission", false)
 
 	checks := []string{
@@ -526,12 +502,24 @@ func TestBuildSystemPrompt_ProcessSurfaceDiscoverability(t *testing.T) {
 		"`QUINE_AGENT_ROOT=",
 		"— your live session root.",
 		"`QUINE_RUN_ID=run-abc-123`",
-		"`$QUINE_AGENT_ROOT/public/` — runtime-owned public process-surface projection, not a workspace; do not create arbitrary files there.",
-		"`public/config/` — peer-readable read-only projection of this session's `config/{registry.json,resolved.env}` surface.",
-		"`public/ctl/config` — validated write gate over `config/next.env`: one whole env-syntax payload per write, replacing the staged file wholesale;",
-		"An empty write clears the stage. Raw `sh` writes to `config/next.env` stay legal either way — the exec boundary revalidates both paths.",
+		"`$QUINE_AGENT_ROOT/public/` — runtime-owned public process-surface projection, not a workspace.",
+		// The env surface: a birth record the OS already publishes, a catalog
+		// that gives absence its meaning, and a policy file for the processes
+		// this one constructs. No "resolved capability position" anywhere, and
+		// no config/env/pinned or config/env/effective — those surfaces are gone.
+		"Your process environment is your birth configuration: what you were launched with. Read it at `/proc/<PID>/environ`",
+		"A `QUINE_*` variable absent from your environment means that knob is at its compiled default. `config/registry.json` is the catalog",
+		// This sentence is the whole point of the model: env vars are not laws
+		// of the OS, and the systems the agent builds choose their own birth
+		// configuration.
+		"Environment variables describe this process only. They are not laws of the operating system: programs you launch receive environments you construct, and systems you build choose their own configuration at birth.",
+		"`config/env/override` — your one environment policy for the processes you create",
+		"Names the runtime owns or pins (see each knob's mutability in `config/registry.json`) are rejected",
+		"`public/config/` — peer-readable read-only projection of this session's `config/registry.json` (the knob catalog). Your `config/env/override` is not projected: it is yours.",
+		"`public/ctl/env` — validated write gate over `config/env/override`: one whole payload per write, replacing the file wholesale;",
+		"An empty write clears the policy. Raw `sh` writes stay legal either way — every boundary revalidates the file.",
 		"`status/session.json` — self identity and topology",
-		"`status/contract.json` — machine-readable `process-control/v0` manifest",
+		"`status/contract.json` — machine-readable `process-control/v1` manifest",
 		"`incarnation_id`",
 		"`runtime_root`",
 		"`inc/` — lineage-local incarnation tree.",
@@ -550,6 +538,90 @@ func TestBuildSystemPrompt_ProcessSurfaceDiscoverability(t *testing.T) {
 		if !strings.Contains(prompt, want) {
 			t.Errorf("prompt missing process-surface discoverability text %q", want)
 		}
+	}
+}
+
+func TestBuildSystemPrompt_RuntimeSurfaceHidesExecOnlyFactsWhenExecDisabled(t *testing.T) {
+	cfg := testConfig()
+	cfg.ExecEnabled = false
+	prompt := BuildSystemPrompt(cfg, "test mission", false)
+
+	forbidden := []string{
+		"Default self-reentry target:",
+		"Linux live process image: while a process runs, `/proc/<pid>/exe`",
+		"`exec` applies the same `config/env/override` to your successor",
+		"`inc/<n>/override-applied.env`",
+		"`inc/` — lineage-local incarnation tree.",
+		"changes across resume/re-entry",
+	}
+	for _, text := range forbidden {
+		if strings.Contains(prompt, text) {
+			t.Errorf("prompt should not mention exec-only runtime surface fact %q when exec is disabled", text)
+		}
+	}
+	// Facts independent of exec should still be present. The env surface is one
+	// of them: a process has a birth environment and constructs children's
+	// environments whether or not it can re-enter itself, so the birth readout
+	// and the override policy both survive an exec-less config.
+	if !strings.Contains(prompt, "### Runtime Process Surface") {
+		t.Error("prompt should still show the runtime process surface section when only exec is disabled")
+	}
+	if !strings.Contains(prompt, "`status/session.json` — self identity and topology") {
+		t.Error("prompt should still describe status/session.json when only exec is disabled")
+	}
+	for _, want := range []string{
+		"Read it at `/proc/<PID>/environ`",
+		"`config/env/override` — your one environment policy for the processes you create",
+		"Names the runtime owns or pins (see each knob's mutability in `config/registry.json`) are rejected",
+		"`public/ctl/env` — validated write gate over `config/env/override`",
+	} {
+		if !strings.Contains(prompt, want) {
+			t.Errorf("prompt should still describe the env surface %q when only exec is disabled", want)
+		}
+	}
+}
+
+func TestBuildSystemPrompt_HidesContextTransitionWhenForkAndExecDisabled(t *testing.T) {
+	cfg := testConfig()
+	cfg.ToolGates = config.DefaultToolGates()
+	cfg.ToolGates.ExecEnabled = false
+	cfg.ToolGates.ForkEnabled = false
+	prompt := BuildSystemPrompt(cfg, "test mission", false)
+	if strings.Contains(prompt, "`fork` and `exec` copy the current `context/` tree forward") {
+		t.Error("prompt should hide context-transition physics when fork and exec are disabled")
+	}
+}
+
+func TestBuildSystemPrompt_RuntimeSurfaceHidesPeerDiscoveryWhenForkAndSpawnDisabled(t *testing.T) {
+	cfg := testConfig()
+	cfg.ToolGates = config.DefaultToolGates()
+	cfg.ToolGates.ForkEnabled = false
+	prompt := BuildSystemPrompt(cfg, "test mission", false)
+
+	forbidden := []string{
+		"`pid/<pid>` — live-process routing",
+		"`agent/` — canonical session root",
+		"Copying `agent/<old-session>/` to `agent/<new-session>/`",
+	}
+	for _, text := range forbidden {
+		if strings.Contains(prompt, text) {
+			t.Errorf("prompt should not mention peer-discovery runtime surface fact %q when fork and spawn are both disabled", text)
+		}
+	}
+	if !strings.Contains(prompt, "`log/<session>` — retained mirror") {
+		t.Error("prompt should still describe the retained log surface")
+	}
+	if strings.Contains(prompt, "To continue a retained session") {
+		t.Error("prompt should hide the retained-session launch recipe when implementation details are disabled")
+	}
+}
+
+func TestBuildSystemPrompt_ImplDetailsShowRetainedSessionRecipe(t *testing.T) {
+	cfg := testConfig()
+	cfg.PromptImplDetails = true
+	prompt := BuildSystemPrompt(cfg, "test mission", false)
+	if !strings.Contains(prompt, "To continue a retained session") {
+		t.Error("implementation-detail prompt should describe retained-session launch")
 	}
 }
 
@@ -572,8 +644,8 @@ func TestBuildSystemPrompt_SelfSourceSurfaceVisibleWhenEnabled(t *testing.T) {
 	prompt := BuildSystemPrompt(cfg, "test mission", false)
 
 	checks := []string{
-		"`source-code/` — read-only session-root projection of this Quine body's source. It is not the writable workspace.",
-		"`source-code/` is a git worktree with `.git/`, materialized from this build's embedded source repository bundle.",
+		fmt.Sprintf("`%s` — read-only projection of this Quine body's source. It is not the writable workspace.", filepath.Join(cfg.AgentRoot(), "source-code")),
+		"`source-code/` is a git worktree materialized from this build's complete embedded source repository bundle.",
 		"Source manifest: `.git/quine-source-manifest.json`.",
 		"`public/source-code/` — peer-readable read-only projection of this session's `source-code/` surface.",
 		"Filesystem copies of `source-code/` are ordinary files outside the live projection; they are not synchronized back to `source-code/`.",
@@ -582,6 +654,20 @@ func TestBuildSystemPrompt_SelfSourceSurfaceVisibleWhenEnabled(t *testing.T) {
 		if !strings.Contains(prompt, want) {
 			t.Errorf("prompt missing self-source text %q", want)
 		}
+	}
+}
+
+func TestBuildSystemPrompt_RuntimeOnlySelfSourceProjection(t *testing.T) {
+	cfg := testConfig()
+	cfg.SelfSourceCodeEnabled = true
+	cfg.SelfSourceProjection = "runtime"
+
+	prompt := BuildSystemPrompt(cfg, "test mission", false)
+	if !strings.Contains(prompt, "embedded buildable Quine runtime source only") {
+		t.Fatalf("prompt does not disclose runtime-only source projection: %q", prompt)
+	}
+	if strings.Contains(prompt, "complete embedded source repository bundle") {
+		t.Fatalf("runtime-only prompt claims complete repository projection: %q", prompt)
 	}
 }
 
@@ -612,7 +698,10 @@ func TestBuildSystemPrompt_CtlPhysicsPointsToSelfDescribingContract(t *testing.T
 		"Each agent self-documents its control surface in `status/contract.json`",
 		"per-action semantics for `post`/`poke`/`inject`/`interrupt`, the `status/inbox.json` schema, and the control-log event types",
 		"Read a peer's contract before driving its `ctl/`",
-		"`ctl/config` — validated staged-config write gate over a peer's `config/next.env`: one whole env-syntax payload per write (wholesale replacement), accepted or rejected against that peer's running registry at write time;",
+		"`ctl/env` — validated write gate over a peer's `config/env/override`: one whole payload per write (wholesale replacement), accepted or rejected against that peer's running registry at write time;",
+		// The non-claim travels with the pointer: driving a peer's env gate
+		// shapes the processes that peer builds, not the peer itself.
+		"The policy shapes the processes that peer constructs; it does not change the peer's own environment, which is fixed at its birth.",
 		"`context/state/current.jsonl` and retained `log/<session>/control.jsonl` surface live / retained control-delivery state.",
 	}
 	for _, want := range checks {
@@ -655,7 +744,7 @@ func TestBuildSystemPrompt_PublicSurfaceDegradedDisclosure(t *testing.T) {
 		"Peer `ctl/` control surfaces are unavailable in this environment (degraded `public/`), so external control writes cannot reach this process to resume an `idle`.",
 		// still-real surfaces stay disclosed
 		"`context/state/current.jsonl` and retained `log/<session>/control.jsonl` surface live / retained control-delivery state.",
-		"`source-code/` — read-only session-root projection of this Quine body's source.",
+		fmt.Sprintf("`%s` — read-only projection of this Quine body's source.", filepath.Join(cfg.AgentRoot(), "source-code")),
 	}
 	for _, want := range checks {
 		if !strings.Contains(prompt, want) {
@@ -670,13 +759,29 @@ func TestBuildSystemPrompt_PublicSurfaceDegradedDisclosure(t *testing.T) {
 		"peer-readable at `public/status/contract.json`",
 		"`public/source-code/`",
 		"`public/config/`",
-		"`public/ctl/config`",
-		"`ctl/config`",
+		"`public/ctl/env`",
+		"`ctl/env`",
 		"Peer process surfaces expose `ctl/post`, `ctl/poke`, `ctl/inject`, and `ctl/interrupt`.",
 	}
 	for _, text := range forbidden {
 		if strings.Contains(prompt, text) {
 			t.Errorf("degraded prompt should not advertise %q", text)
+		}
+	}
+
+	// The raw env surface, by contrast, is NOT a public/ affordance and must
+	// survive degradation intact: config/env/override is an ordinary file and
+	// /proc/<pid>/environ is the kernel's. Degraded hosts are exactly where this
+	// coverage matters (brief E7) — a prompt that went quiet about the agent's
+	// own env policy here would leave it with no discoverable way to shape its
+	// children.
+	for _, want := range []string{
+		"Read it at `/proc/<PID>/environ`",
+		"`config/env/override` — your one environment policy for the processes you create",
+		"Names the runtime owns or pins (see each knob's mutability in `config/registry.json`) are rejected",
+	} {
+		if !strings.Contains(prompt, want) {
+			t.Errorf("degraded prompt must keep the raw env surface %q", want)
 		}
 	}
 
@@ -1110,55 +1215,54 @@ func TestBuildSystemPrompt_ForkDescribesParallelRaceConvergence(t *testing.T) {
 	prompt := BuildSystemPrompt(cfg, "test mission", true)
 
 	checks := []string{
-		"Use `fork` when independent hypotheses, decoders, implementations, extractors, or verification strategies can be tried in parallel.",
-		"fork 2-3 labeled children now instead of spending another long exploratory `sh` in the parent",
 		"Fork children preserve the parent mission as the active task contract; each child intent is a lane assignment, not a replacement mission.",
-		"Child intents should include lane-specific inputs only when they are not already in the parent mission or current visible context.",
-		"Do one cheap shared setup/probe if all lanes need it; then fork specialized heavyweight installs, downloads, transcription, OCR, builds, searches, or long-running probes.",
-		"Use `mode=\"race\"` when any one child can produce an acceptable artifact/service; use `mode=\"wait\"` when child findings must be compared or merged.",
-		"Child intents should name a distinct strategy, the expected artifact/service when known, and the closest success check.",
-		"After race/wait returns, converge immediately: adopt an available winning world or merge/copy the best child result before continuing parent-side exploration.",
 		"Detailed fork results include `relation_id`, `relation_root`, `relation_handle`",
 		"member handles such as `session_id`, `agent_root`, `public_root`, `retained_root`, `seed_root`, `status_path`, and `control_path`",
 	}
 	for _, want := range checks {
 		if !strings.Contains(prompt, want) {
-			t.Errorf("prompt missing fork/race convergence guidance %q", want)
+			t.Errorf("prompt missing fork physics %q", want)
 		}
 	}
 }
 
-func TestBuildSystemPrompt_DefaultHidesForkStrategyCoaching(t *testing.T) {
-	cfg := testConfig()
-	cfg.WorkspaceEnabled = true
-	cfg.WorkspaceRoot = "/tmp/workspaces"
-	cfg.Workspace = "/tmp/workspaces/session"
-	cfg.WorkspaceBackend = "overlay"
-	cfg.WorkspaceRevisionMode = config.WorkspaceRevisionRestore
-
-	prompt := BuildSystemPrompt(cfg, "test mission", true)
-
-	for _, want := range []string{
-		"**fork** - Spawn child agents for parallel exploration, delegation, or decomposition.",
-		"`fork` does not consume execution budget",
-		"Each child is another you under a different intent.",
-		"`mode=\"race\"`: first successful child wins",
-		"`mode=\"wait\"`: block until all children finish and return every result.",
-	} {
-		if !strings.Contains(prompt, want) {
-			t.Fatalf("default prompt should retain fork physical affordance %q", want)
-		}
-	}
-	for _, forbidden := range []string{
+func TestBuildSystemPrompt_ForkNeverCoachesStrategy(t *testing.T) {
+	forbidden := []string{
 		"independent hypotheses, decoders, implementations, extractors, or verification strategies",
 		"fork 2-3 labeled children now instead of spending another long exploratory `sh`",
 		"Child intents should include lane-specific inputs",
 		"Do one cheap shared setup/probe",
+		"Use `mode=\"race\"` when any one child can produce an acceptable artifact/service",
 		"Child intents should name a distinct strategy",
 		"After race/wait returns, converge immediately",
-	} {
-		if strings.Contains(prompt, forbidden) {
-			t.Fatalf("default prompt should hide fork strategy coaching %q", forbidden)
+	}
+
+	for _, implDetails := range []bool{false, true} {
+		cfg := testConfig()
+		cfg.WorkspaceEnabled = true
+		cfg.WorkspaceRoot = "/tmp/workspaces"
+		cfg.Workspace = "/tmp/workspaces/session"
+		cfg.WorkspaceBackend = "overlay"
+		cfg.WorkspaceRevisionMode = config.WorkspaceRevisionRestore
+		cfg.PromptImplDetails = implDetails
+
+		prompt := BuildSystemPrompt(cfg, "test mission", true)
+
+		for _, want := range []string{
+			"**fork** - Spawn child agents for parallel exploration, delegation, or decomposition.",
+			"`fork` does not consume execution budget",
+			"Each child is another you under a different intent.",
+			"`mode=\"race\"`: first successful child wins",
+			"`mode=\"wait\"`: block until all children finish and return every result.",
+		} {
+			if !strings.Contains(prompt, want) {
+				t.Fatalf("PromptImplDetails=%v: prompt should retain fork physical affordance %q", implDetails, want)
+			}
+		}
+		for _, forbidden := range forbidden {
+			if strings.Contains(prompt, forbidden) {
+				t.Fatalf("PromptImplDetails=%v: prompt should never coach fork strategy %q", implDetails, forbidden)
+			}
 		}
 	}
 }
@@ -1602,10 +1706,11 @@ func TestBuildSystemPrompt_OmitsForkToolBlockWhenForkOff(t *testing.T) {
 
 	prompt := BuildSystemPrompt(cfg, "test mission", true)
 
-	if !strings.Contains(prompt, "QUINE_FORK_ENABLED=0") {
-		t.Fatal("prompt should state that fork is disabled by QUINE_FORK_ENABLED=0")
+	if strings.Contains(prompt, "QUINE_FORK_ENABLED") || strings.Contains(prompt, "Fork is disabled") {
+		t.Fatal("prompt should omit disabled fork from the model-facing action space")
 	}
 	absent := []string{
+		"`fork` is unavailable in this runtime",
 		"Spawn child agents for parallel exploration",
 		"`fork` does not consume execution budget, but it is still bounded by depth, agent slots, and shared inference concurrency.",
 		"`fork` returns a retained relation handle",
@@ -1623,8 +1728,8 @@ func TestBuildSystemPrompt_SpawnGate(t *testing.T) {
 	cfg := testConfig()
 
 	disabled := BuildSystemPrompt(cfg, "test mission", true)
-	if !strings.Contains(disabled, "QUINE_SPAWN_ENABLED=0") {
-		t.Fatal("prompt should state that spawn is disabled by QUINE_SPAWN_ENABLED=0")
+	if strings.Contains(disabled, "QUINE_SPAWN_ENABLED") || strings.Contains(disabled, "Spawn is disabled") {
+		t.Fatal("prompt should omit disabled spawn from the model-facing action space")
 	}
 	if strings.Contains(disabled, "**spawn** - Start fresh Quine processes") {
 		t.Fatal("prompt should omit spawn tool block when spawn is disabled")

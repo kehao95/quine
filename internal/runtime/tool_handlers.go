@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kehao95/quine/internal/config"
 	"github.com/kehao95/quine/internal/tape"
 	"github.com/kehao95/quine/internal/tools"
 )
@@ -281,7 +280,7 @@ func (r *Runtime) handleSpawnEnabled(tc tape.ToolCall) {
 	}
 
 	if r.spawn == nil {
-		r.spawn = tools.NewSpawnExecutor(r.cfg, r.childEnvBase)
+		r.spawn = tools.NewSpawnExecutor(r.cfg)
 		r.spawn.ProcessStarted = func(proc *os.Process) {
 			r.activeProcess.Store(proc)
 		}
@@ -299,39 +298,30 @@ func (r *Runtime) handleSpawnEnabled(tc tape.ToolCall) {
 	r.appendToolResult(result)
 }
 
+// forkChildEnv rebuilds the fork/spawn boundary environment from the CURRENT
+// process environ, the CURRENT config, and the override as it stands on disk
+// right now. Called immediately before every fork and spawn: the agent may have
+// rewritten config/env/override in the shell command before this one, and a
+// child born from a cached policy would be born from a policy the agent has
+// already replaced.
+func (r *Runtime) forkChildEnv() []string {
+	return tools.ForkChildEnv(r.cfg, func(err error) {
+		r.log("child-env override ignored for this child: %v", err)
+	})
+}
+
 func (r *Runtime) refreshForkEnv() {
 	if r.fork == nil {
 		return
 	}
-	r.fork.Env = tools.MergeEnv(withoutProcessIdentity(os.Environ()), append([]string(nil), r.childEnvBase...))
+	r.fork.Env = r.forkChildEnv()
 }
 
 func (r *Runtime) refreshSpawnEnv() {
 	if r.spawn == nil {
 		return
 	}
-	r.spawn.Env = tools.MergeEnv(withoutProcessIdentity(os.Environ()), append([]string(nil), r.childEnvBase...))
-}
-
-func withoutProcessIdentity(env []string) []string {
-	out := make([]string, 0, len(env))
-	for _, entry := range env {
-		if isProcessIdentityEnv(entry) {
-			continue
-		}
-		out = append(out, entry)
-	}
-	return out
-}
-
-func isProcessIdentityEnv(entry string) bool {
-	for _, name := range config.ProcessIdentityEnvNames {
-		if strings.HasPrefix(entry, name+"=") {
-			return true
-		}
-	}
-	return strings.HasPrefix(entry, tools.ContextBootstrapEnv+"=") ||
-		strings.HasPrefix(entry, config.EnvContextTape+"=")
+	r.spawn.Env = r.forkChildEnv()
 }
 
 // handleExec processes an exec tool call.
@@ -462,25 +452,17 @@ func (r *Runtime) syncWorldRevisionSurface() {
 	revisionChanged := revision != r.cfg.WorkspaceCurrentRevision
 	r.cfg.WorkspaceCurrentRevision = revision
 	if revisionChanged {
-		if childEnv, err := r.cfg.ChildEnv(); err == nil {
-			r.childEnvBase = childEnv
-			if r.fork != nil {
-				started := r.fork.ProcessStarted
-				ended := r.fork.ProcessEnded
-				r.fork = tools.NewForkExecutor(r.cfg, childEnv)
-				r.fork.ProcessStarted = started
-				r.fork.ProcessEnded = ended
-			}
-		}
+		// The fork executor used to be rebuilt here, solely to refresh a cached
+		// child env that carried QUINE_WORKSPACE_CURRENT_REVISION. Fork children
+		// no longer receive that name — a revision handle names a place in THIS
+		// process's workspace state, and a child mounts its own view — and the
+		// fork env is rebuilt before every call regardless. Nothing to refresh.
 		if r.tape != nil {
 			systemPrompt, err := r.currentSystemPrompt()
 			if err == nil {
 				r.tape.SetSystemPrompt(systemPrompt)
 			}
 		}
-		// The workspace revision switch is (post-D9) the only in-process
-		// config mutation; keep the config/resolved.env readout current.
-		r.onConfigMutated()
 	}
 	if !r.agentRootBootstrapped {
 		return

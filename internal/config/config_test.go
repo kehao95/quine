@@ -99,6 +99,7 @@ var envVars = []string{
 	"QUINE_SELF_REENTRY_MODE",
 	"QUINE_SELF_REENTRY_TARGET",
 	"QUINE_SELF_SOURCE_CODE_ENABLED",
+	"QUINE_SELF_SOURCE_PROJECTION",
 }
 
 // clearEnv unsets all managed env vars and returns a restore function.
@@ -234,13 +235,106 @@ func TestLoadRejectsDefaultSelfModeOnNonLinuxWhenReentryIsEnabled(t *testing.T) 
 	}
 }
 
-func containsEnv(env []string, want string) bool {
-	for _, e := range env {
-		if e == want {
-			return true
+// --- the child-env oracle ---
+//
+// The environment of a process this runtime creates is no longer SYNTHESIZED
+// from resolved Config values. The deleted Config.baseEnv/ChildEnv/ExecEnv
+// serialized ~50 knobs — compiled defaults included — into every child, which
+// is how a succ-52 founder came to read `QUINE_SPAWN_ENABLED=0`, a line no
+// operator authored, and conclude that constructing a successor was physically
+// impossible.
+//
+// What replaces them is one pipeline (envmodel.go):
+//
+//	child = stamps(boundary) ⊕ override ⊕ (environ − mask(boundary))
+//
+// So "does knob X reach my children?" is now a question about INHERITANCE from
+// this process's own environ, not about a serializer's key list. The claim
+// survives; the oracle changes. These helpers are the new oracle, and they
+// drive the real production path: the real BuildChildEnv, over the real
+// os.Environ(), with the real per-boundary stamp builders.
+//
+// Design authority:
+//
+//	Paper/theory/views/runtime-capability/env-process-boundary-brief.md
+
+// childEnvAt builds the actual environment this process would hand a child at
+// boundary b — real environ, real stamps, no override.
+func childEnvAt(t *testing.T, c *Config, b Boundary) map[string]string {
+	t.Helper()
+	var stamps []string
+	switch b {
+	case BoundaryShell:
+		stamps = c.ShellStamps()
+	case BoundaryChild:
+		stamps = c.ForkChildStamps()
+	case BoundarySelf:
+		stamps = c.SelfReentryStamps()
+	default:
+		t.Fatalf("childEnvAt: unknown boundary %q", b)
+	}
+	return envMapOf(BuildChildEnv(b, os.Environ(), nil, stamps))
+}
+
+func envMapOf(env []string) map[string]string {
+	m := make(map[string]string, len(env))
+	for _, kv := range env {
+		k, v, ok := strings.Cut(kv, "=")
+		if !ok || k == "" {
+			continue
+		}
+		m[k] = v
+	}
+	return m
+}
+
+// assertCrossesEveryBoundary is the successor to the ~34 `ChildEnv() should
+// propagate KNOB=V` assertions. A knob the OPERATOR SET reaches every process
+// the runtime builds — sh, fork/spawn, exec — carrying the operator's exact
+// string, because it is inherited rather than re-serialized.
+//
+// It is strictly stronger than what it replaces: the old assertions checked one
+// or two boundaries against a synthesizer, this checks all three against the
+// real pipeline. Reclassifying a knob as runtime-emitted (masked) would silently
+// stop it crossing; that fails here.
+func assertCrossesEveryBoundary(t *testing.T, c *Config, want string) {
+	t.Helper()
+	name, value, ok := strings.Cut(want, "=")
+	if !ok {
+		t.Fatalf("assertCrossesEveryBoundary: %q is not NAME=VALUE", want)
+	}
+	for _, b := range Boundaries() {
+		got, present := childEnvAt(t, c, b)[name]
+		if !present {
+			t.Fatalf("boundary %s: %s is ABSENT from the child env, want %q — the operator set it, so it must cross (BoundaryBehavior=%s)", b, name, value, BoundaryBehavior(name, b))
+		}
+		if got != value {
+			t.Fatalf("boundary %s: %s=%q, want %q — an inherited knob crosses byte-exact; the runtime does not re-serialize a normalized value", b, name, got, value)
 		}
 	}
-	return false
+}
+
+// assertAbsentFromEveryBoundary is the INVERSE, and it is the whole point of
+// this migration: a knob nobody set is ABSENT from every child env. Absence is
+// how "compiled default" is spelled, and config/registry.json is the catalog
+// that says what absence means.
+//
+// The old TestChildEnv looped a ~35-key list asserting every knob is ALWAYS
+// present, defaults included. That test certified the defect. This is what
+// replaces it.
+func assertAbsentFromEveryBoundary(t *testing.T, c *Config, names ...string) {
+	t.Helper()
+	for _, b := range Boundaries() {
+		env := childEnvAt(t, c, b)
+		for _, name := range names {
+			if v, present := env[name]; present {
+				t.Errorf("boundary %s: %s=%q appears in the child env, but NO OPERATOR SET IT.\n"+
+					"This is the manufactured-evidence defect (brief Layer 0): a founder read `QUINE_SPAWN_ENABLED=0`,\n"+
+					"a line nobody authored, and concluded process creation was impossible. An unset knob is spelled\n"+
+					"by its ABSENCE; the child's own Load() supplies the compiled default.", b, name, v)
+			}
+		}
+	}
 }
 
 func writeSkill(t *testing.T, root string, name string, description string) string {
@@ -531,8 +625,8 @@ func TestDefaults(t *testing.T) {
 	if !c.ForkEnabled() {
 		t.Errorf("ForkEnabled = false, want true by default")
 	}
-	if !c.VisionEnabled {
-		t.Errorf("VisionEnabled = false, want true by default")
+	if c.VisionEnabled {
+		t.Errorf("VisionEnabled = true, want false by default")
 	}
 	if !c.ShInteractiveEnabled() {
 		t.Errorf("ShInteractiveEnabled = false, want true by default")
@@ -695,13 +789,7 @@ func TestShTimeoutOverrideCanBeDisabledAndPropagates(t *testing.T) {
 		t.Fatal("ShTimeoutOverrideEnabled() should be false when QUINE_SH_TIMEOUT_OVERRIDE_ENABLED=0")
 	}
 
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_SH_TIMEOUT_OVERRIDE_ENABLED=0") {
-		t.Fatalf("ChildEnv() should propagate QUINE_SH_TIMEOUT_OVERRIDE_ENABLED=0, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_SH_TIMEOUT_OVERRIDE_ENABLED=0")
 }
 
 func TestShNetworkParsesAndPropagates(t *testing.T) {
@@ -717,13 +805,7 @@ func TestShNetworkParsesAndPropagates(t *testing.T) {
 		t.Fatalf("ShNetwork = %q, want none", c.ShNetwork)
 	}
 
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_SH_NETWORK=none") {
-		t.Fatalf("ChildEnv() should propagate QUINE_SH_NETWORK=none, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_SH_NETWORK=none")
 }
 
 func TestShNetworkRejectsUnsupportedValue(t *testing.T) {
@@ -750,13 +832,7 @@ func TestForkDefaultTimeoutSecondsParsesAndPropagates(t *testing.T) {
 		t.Fatalf("ForkDefaultTimeoutSeconds = %d, want 17", c.ForkDefaultTimeoutSeconds)
 	}
 
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_FORK_DEFAULT_TIMEOUT_SECONDS=17") {
-		t.Fatalf("ChildEnv() should propagate QUINE_FORK_DEFAULT_TIMEOUT_SECONDS=17, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_FORK_DEFAULT_TIMEOUT_SECONDS=17")
 }
 
 func TestSpawnEnabledParsesAndPropagates(t *testing.T) {
@@ -779,13 +855,7 @@ func TestSpawnEnabledParsesAndPropagates(t *testing.T) {
 	if !c.SpawnEnabled() {
 		t.Fatal("SpawnEnabled() should be true when QUINE_SPAWN_ENABLED=1")
 	}
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_SPAWN_ENABLED=1") {
-		t.Fatalf("ChildEnv() should propagate QUINE_SPAWN_ENABLED=1, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_SPAWN_ENABLED=1")
 
 	os.Setenv("QUINE_FORK_ENABLED", "0")
 	os.Setenv("QUINE_EXEC_ENABLED", "0")
@@ -819,13 +889,7 @@ func TestWorkspaceCommitOnSignalParsesAndPropagates(t *testing.T) {
 	if !c.WorkspaceCommitOnSignal {
 		t.Fatal("WorkspaceCommitOnSignal = false, want true")
 	}
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_WORKSPACE_COMMIT_ON_SIGNAL=1") {
-		t.Fatalf("ChildEnv() should propagate QUINE_WORKSPACE_COMMIT_ON_SIGNAL=1, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_WORKSPACE_COMMIT_ON_SIGNAL=1")
 }
 
 func TestEmptyAssistantSuccessParsesAndPropagates(t *testing.T) {
@@ -840,13 +904,7 @@ func TestEmptyAssistantSuccessParsesAndPropagates(t *testing.T) {
 	if !c.EmptyAssistantSuccess {
 		t.Fatal("EmptyAssistantSuccess = false, want true")
 	}
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_EMPTY_ASSISTANT_SUCCESS=1") {
-		t.Fatalf("ChildEnv() should propagate QUINE_EMPTY_ASSISTANT_SUCCESS=1, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_EMPTY_ASSISTANT_SUCCESS=1")
 }
 
 func TestReadyTextAutoIdleParsesAndPropagates(t *testing.T) {
@@ -861,13 +919,7 @@ func TestReadyTextAutoIdleParsesAndPropagates(t *testing.T) {
 	if !c.ReadyTextAutoIdle {
 		t.Fatal("ReadyTextAutoIdle = false, want true")
 	}
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_READY_TEXT_AUTO_IDLE=1") {
-		t.Fatalf("ChildEnv() should propagate QUINE_READY_TEXT_AUTO_IDLE=1, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_READY_TEXT_AUTO_IDLE=1")
 }
 
 func TestWallClockExitSecondsParsesAndPropagates(t *testing.T) {
@@ -882,13 +934,7 @@ func TestWallClockExitSecondsParsesAndPropagates(t *testing.T) {
 	if c.WallClockExitSeconds != 870 {
 		t.Fatalf("WallClockExitSeconds = %d, want 870", c.WallClockExitSeconds)
 	}
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_WALL_CLOCK_EXIT_SECONDS=870") {
-		t.Fatalf("ChildEnv() should propagate QUINE_WALL_CLOCK_EXIT_SECONDS=870, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_WALL_CLOCK_EXIT_SECONDS=870")
 }
 
 func TestForkDefaultTimeoutSecondsRejectsNegative(t *testing.T) {
@@ -947,7 +993,15 @@ func TestBooleanEnvRejectsNonBinaryValues(t *testing.T) {
 	}
 }
 
-func TestPositiveToolGateInversionsDefaultAndPropagate(t *testing.T) {
+// TestPositiveToolGateInversionsDefaultAbsentDisabledPropagates replaces
+// TestPositiveToolGateInversionsDefaultAndPropagate, whose "default" half
+// asserted that an UNSET gate is serialized into every child as `KEY=1`.
+//
+// That assertion certified the defect. A gate nobody set is now ABSENT from the
+// child's environ, and the child's own Load() applies the same compiled default
+// that made this process's gate true. The operator-set half of the claim
+// survives unchanged, and now holds at all three boundaries rather than two.
+func TestPositiveToolGateInversionsDefaultAbsentDisabledPropagates(t *testing.T) {
 	tests := []struct {
 		name    string
 		key     string
@@ -963,9 +1017,8 @@ func TestPositiveToolGateInversionsDefaultAndPropagate(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name+" default", func(t *testing.T) {
-			clearEnv(t)
-			setRequired(t)
+		t.Run(tc.name+" default is absent from children", func(t *testing.T) {
+			resetRegistryEnv(t)
 
 			c, err := Load()
 			if err != nil {
@@ -975,26 +1028,14 @@ func TestPositiveToolGateInversionsDefaultAndPropagate(t *testing.T) {
 				t.Fatalf("%s should default enabled", tc.key)
 			}
 
-			childEnv, err := c.ChildEnv()
-			if err != nil {
-				t.Fatalf("ChildEnv() error: %v", err)
-			}
-			if !containsEnv(childEnv, envKV(tc.key, "1")) {
-				t.Fatalf("ChildEnv() should propagate %s=1, got %v", tc.key, childEnv)
-			}
-
-			execEnv, err := c.ExecEnv()
-			if err != nil {
-				t.Fatalf("ExecEnv() error: %v", err)
-			}
-			if !containsEnv(execEnv, envKV(tc.key, "1")) {
-				t.Fatalf("ExecEnv() should propagate %s=1, got %v", tc.key, execEnv)
-			}
+			// The gate is ON by compiled default, and nobody authored it.
+			// Therefore it must not appear in ANY child env — the child reaches
+			// the same default the same way this process did.
+			assertAbsentFromEveryBoundary(t, c, tc.key)
 		})
 
-		t.Run(tc.name+" disabled", func(t *testing.T) {
-			clearEnv(t)
-			setRequired(t)
+		t.Run(tc.name+" disabled propagates", func(t *testing.T) {
+			resetRegistryEnv(t)
 			os.Setenv(tc.key, "0")
 
 			c, err := Load()
@@ -1005,21 +1046,7 @@ func TestPositiveToolGateInversionsDefaultAndPropagate(t *testing.T) {
 				t.Fatalf("%s should be disabled when set to 0", tc.key)
 			}
 
-			childEnv, err := c.ChildEnv()
-			if err != nil {
-				t.Fatalf("ChildEnv() error: %v", err)
-			}
-			if !containsEnv(childEnv, envKV(tc.key, "0")) {
-				t.Fatalf("ChildEnv() should propagate %s=0, got %v", tc.key, childEnv)
-			}
-
-			execEnv, err := c.ExecEnv()
-			if err != nil {
-				t.Fatalf("ExecEnv() error: %v", err)
-			}
-			if !containsEnv(execEnv, envKV(tc.key, "0")) {
-				t.Fatalf("ExecEnv() should propagate %s=0, got %v", tc.key, execEnv)
-			}
+			assertCrossesEveryBoundary(t, c, envKV(tc.key, "0"))
 		})
 	}
 }
@@ -1037,13 +1064,7 @@ func TestForkEnabledCanBeDisabledAndPropagates(t *testing.T) {
 		t.Fatal("ForkEnabled() should be false when QUINE_FORK_ENABLED=0")
 	}
 
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_FORK_ENABLED=0") {
-		t.Fatalf("ChildEnv() should propagate QUINE_FORK_ENABLED=0, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_FORK_ENABLED=0")
 }
 
 func TestAnchorMarkEnabled_DefaultsTrue(t *testing.T) {
@@ -1070,13 +1091,7 @@ func TestAnchorMarkCanBeDisabledAndPropagatesUnderAnchorMemory(t *testing.T) {
 	if c.AnchorMarkEnabled() {
 		t.Fatal("AnchorMarkEnabled() should be false when QUINE_ANCHOR_MARK_ENABLED=0")
 	}
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_ANCHOR_MARK_ENABLED=0") {
-		t.Fatalf("ChildEnv() should propagate QUINE_ANCHOR_MARK_ENABLED=0 under anchor memory, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_ANCHOR_MARK_ENABLED=0")
 }
 
 func TestAnchorFoldEnabled_DefaultsTrue(t *testing.T) {
@@ -1106,13 +1121,7 @@ func TestAnchorFoldCanBeDisabledAndPropagatesUnderAnchorMemory(t *testing.T) {
 		t.Fatal("AnchorFoldEnabled() should be false when QUINE_ANCHOR_FOLD_ENABLED=0")
 	}
 
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_ANCHOR_FOLD_ENABLED=0") {
-		t.Fatalf("ChildEnv() should propagate QUINE_ANCHOR_FOLD_ENABLED=0 under anchor memory, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_ANCHOR_FOLD_ENABLED=0")
 }
 
 func TestShInteractiveCanBeDisabledAndPropagates(t *testing.T) {
@@ -1128,13 +1137,7 @@ func TestShInteractiveCanBeDisabledAndPropagates(t *testing.T) {
 		t.Fatal("ShInteractiveEnabled() should be false when QUINE_SH_INTERACTIVE_ENABLED=0")
 	}
 
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_SH_INTERACTIVE_ENABLED=0") {
-		t.Fatalf("ChildEnv() should propagate QUINE_SH_INTERACTIVE_ENABLED=0, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_SH_INTERACTIVE_ENABLED=0")
 }
 
 func TestFSMutationTelemetryCanBeDisabledAndPropagates(t *testing.T) {
@@ -1150,21 +1153,7 @@ func TestFSMutationTelemetryCanBeDisabledAndPropagates(t *testing.T) {
 		t.Fatal("FSMutationTelemetryEnabled() should be false when QUINE_FS_MUTATION_TELEMETRY_ENABLED=0")
 	}
 
-	childEnv, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(childEnv, "QUINE_FS_MUTATION_TELEMETRY_ENABLED=0") {
-		t.Fatalf("ChildEnv() should propagate QUINE_FS_MUTATION_TELEMETRY_ENABLED=0, got %v", childEnv)
-	}
-
-	execEnv, err := c.ExecEnv()
-	if err != nil {
-		t.Fatalf("ExecEnv() error: %v", err)
-	}
-	if !containsEnv(execEnv, "QUINE_FS_MUTATION_TELEMETRY_ENABLED=0") {
-		t.Fatalf("ExecEnv() should propagate QUINE_FS_MUTATION_TELEMETRY_ENABLED=0, got %v", execEnv)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_FS_MUTATION_TELEMETRY_ENABLED=0")
 }
 
 func TestPromptCtlCanBeHiddenAndPropagates(t *testing.T) {
@@ -1180,21 +1169,7 @@ func TestPromptCtlCanBeHiddenAndPropagates(t *testing.T) {
 		t.Fatal("PromptCtlPhysics should be false when QUINE_PROMPT_CTL=0")
 	}
 
-	childEnv, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(childEnv, "QUINE_PROMPT_CTL=0") {
-		t.Fatalf("ChildEnv() should propagate QUINE_PROMPT_CTL=0, got %v", childEnv)
-	}
-
-	execEnv, err := c.ExecEnv()
-	if err != nil {
-		t.Fatalf("ExecEnv() error: %v", err)
-	}
-	if !containsEnv(execEnv, "QUINE_PROMPT_CTL=0") {
-		t.Fatalf("ExecEnv() should propagate QUINE_PROMPT_CTL=0, got %v", execEnv)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_PROMPT_CTL=0")
 }
 
 func TestPeerDiscoveryEnabledCanBeEnabledAndPropagates(t *testing.T) {
@@ -1214,27 +1189,8 @@ func TestPeerDiscoveryEnabledCanBeEnabledAndPropagates(t *testing.T) {
 		t.Fatalf("PeerDiscoveryHeartbeatMS = %d, want 2000", c.PeerDiscoveryHeartbeatMS)
 	}
 
-	childEnv, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(childEnv, "QUINE_PEER_DISCOVERY_ENABLED=1") {
-		t.Fatalf("ChildEnv() should propagate QUINE_PEER_DISCOVERY_ENABLED=1, got %v", childEnv)
-	}
-	if !containsEnv(childEnv, "QUINE_PEER_DISCOVERY_HEARTBEAT_INTERVAL_MS=2000") {
-		t.Fatalf("ChildEnv() should propagate QUINE_PEER_DISCOVERY_HEARTBEAT_INTERVAL_MS=2000, got %v", childEnv)
-	}
-
-	execEnv, err := c.ExecEnv()
-	if err != nil {
-		t.Fatalf("ExecEnv() error: %v", err)
-	}
-	if !containsEnv(execEnv, "QUINE_PEER_DISCOVERY_ENABLED=1") {
-		t.Fatalf("ExecEnv() should propagate QUINE_PEER_DISCOVERY_ENABLED=1, got %v", execEnv)
-	}
-	if !containsEnv(execEnv, "QUINE_PEER_DISCOVERY_HEARTBEAT_INTERVAL_MS=2000") {
-		t.Fatalf("ExecEnv() should propagate QUINE_PEER_DISCOVERY_HEARTBEAT_INTERVAL_MS=2000, got %v", execEnv)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_PEER_DISCOVERY_ENABLED=1")
+	assertCrossesEveryBoundary(t, c, "QUINE_PEER_DISCOVERY_HEARTBEAT_INTERVAL_MS=2000")
 }
 
 func TestPromptImplDetailsCanBeEnabledAndPropagates(t *testing.T) {
@@ -1250,21 +1206,7 @@ func TestPromptImplDetailsCanBeEnabledAndPropagates(t *testing.T) {
 		t.Fatal("PromptImplDetails should be true when QUINE_PROMPT_IMPL_DETAILS=1")
 	}
 
-	childEnv, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(childEnv, "QUINE_PROMPT_IMPL_DETAILS=1") {
-		t.Fatalf("ChildEnv() should propagate QUINE_PROMPT_IMPL_DETAILS=1, got %v", childEnv)
-	}
-
-	execEnv, err := c.ExecEnv()
-	if err != nil {
-		t.Fatalf("ExecEnv() error: %v", err)
-	}
-	if !containsEnv(execEnv, "QUINE_PROMPT_IMPL_DETAILS=1") {
-		t.Fatalf("ExecEnv() should propagate QUINE_PROMPT_IMPL_DETAILS=1, got %v", execEnv)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_PROMPT_IMPL_DETAILS=1")
 }
 
 func TestMemoryStrategyHintsCanBeDisabledAndPropagates(t *testing.T) {
@@ -1280,26 +1222,16 @@ func TestMemoryStrategyHintsCanBeDisabledAndPropagates(t *testing.T) {
 		t.Fatal("MemoryStrategyHints should be false when QUINE_MEMORY_STRATEGY_HINTS=0")
 	}
 
-	childEnv, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(childEnv, "QUINE_MEMORY_STRATEGY_HINTS=0") {
-		t.Fatalf("ChildEnv() should propagate QUINE_MEMORY_STRATEGY_HINTS=0, got %v", childEnv)
-	}
-
-	execEnv, err := c.ExecEnv()
-	if err != nil {
-		t.Fatalf("ExecEnv() error: %v", err)
-	}
-	if !containsEnv(execEnv, "QUINE_MEMORY_STRATEGY_HINTS=0") {
-		t.Fatalf("ExecEnv() should propagate QUINE_MEMORY_STRATEGY_HINTS=0, got %v", execEnv)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_MEMORY_STRATEGY_HINTS=0")
 }
 
-func TestAgentsMDDisabledByDefaultAndPropagates(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
+// TestAgentsMDDisabledByDefaultIsAbsentFromChildren replaces
+// TestAgentsMDDisabledByDefaultAndPropagates, which asserted that an unset
+// AGENTS.md gate is written into every child as `QUINE_AGENTS_MD_ENABLED=0`.
+// Nobody authored that line. It is now absent, and the child's Load() defaults
+// it false exactly as this process's did.
+func TestAgentsMDDisabledByDefaultIsAbsentFromChildren(t *testing.T) {
+	resetRegistryEnv(t)
 
 	c, err := Load()
 	if err != nil {
@@ -1312,13 +1244,7 @@ func TestAgentsMDDisabledByDefaultAndPropagates(t *testing.T) {
 		t.Fatalf("AgentsMDPath = %q, want empty", c.AgentsMDPath)
 	}
 
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_AGENTS_MD_ENABLED=0") {
-		t.Fatalf("ChildEnv() should propagate QUINE_AGENTS_MD_ENABLED=0, got %v", env)
-	}
+	assertAbsentFromEveryBoundary(t, c, "QUINE_AGENTS_MD_ENABLED")
 }
 
 func TestAgentsMDEnabledFindsSingleFileAndPropagates(t *testing.T) {
@@ -1347,13 +1273,7 @@ func TestAgentsMDEnabledFindsSingleFileAndPropagates(t *testing.T) {
 		t.Fatalf("AgentsMDPath = %q, want %q", c.AgentsMDPath, agentsPath)
 	}
 
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_AGENTS_MD_ENABLED=1") {
-		t.Fatalf("ChildEnv() should propagate QUINE_AGENTS_MD_ENABLED=1, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_AGENTS_MD_ENABLED=1")
 }
 
 func TestAgentsMDEnabledRejectsInvalidGateValue(t *testing.T) {
@@ -1390,9 +1310,10 @@ func TestAgentsMDEnabledRejectsMultipleFiles(t *testing.T) {
 	}
 }
 
-func TestAgentSkillsDisabledByDefaultAndPropagates(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
+// TestAgentSkillsDisabledByDefaultIsAbsentFromChildren: same inversion as the
+// AGENTS.md gate above.
+func TestAgentSkillsDisabledByDefaultIsAbsentFromChildren(t *testing.T) {
+	resetRegistryEnv(t)
 
 	c, err := Load()
 	if err != nil {
@@ -1405,13 +1326,7 @@ func TestAgentSkillsDisabledByDefaultAndPropagates(t *testing.T) {
 		t.Fatalf("Skills length = %d, want 0", len(c.Skills))
 	}
 
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_AGENTS_SKILLS_ENABLED=0") {
-		t.Fatalf("ChildEnv() should propagate QUINE_AGENTS_SKILLS_ENABLED=0, got %v", env)
-	}
+	assertAbsentFromEveryBoundary(t, c, "QUINE_AGENTS_SKILLS_ENABLED")
 }
 
 func TestAgentSkillsEnabledLoadsIndexAndPropagates(t *testing.T) {
@@ -1444,13 +1359,7 @@ func TestAgentSkillsEnabledLoadsIndexAndPropagates(t *testing.T) {
 		t.Fatalf("second skill = %#v", c.Skills[1])
 	}
 
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_AGENTS_SKILLS_ENABLED=1") {
-		t.Fatalf("ChildEnv() should propagate QUINE_AGENTS_SKILLS_ENABLED=1, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_AGENTS_SKILLS_ENABLED=1")
 }
 
 func TestAgentSkillsEnabledRejectsInvalidGateValue(t *testing.T) {
@@ -1649,13 +1558,7 @@ func TestIdleEnabledCanBeEnabledAndPropagates(t *testing.T) {
 		t.Fatal("IdleToolEnabled() should be true when QUINE_IDLE_ENABLED=1")
 	}
 
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_IDLE_ENABLED=1") {
-		t.Fatalf("ChildEnv() should propagate QUINE_IDLE_ENABLED=1, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_IDLE_ENABLED=1")
 }
 
 func TestTapeIDAutoIncrementsPerSession(t *testing.T) {
@@ -1947,263 +1850,257 @@ func TestMemoryDeathThreshold_InvalidOrdering(t *testing.T) {
 
 // --- ChildEnv / ExecEnv tests ---
 
-func TestChildEnv(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
-	// Don't set QUINE_SESSION_ID - let it be auto-generated based on current PID
+// TestForkChildEnvOmitsUnsetKnobs is the INVERSE of the deleted TestChildEnv.
+//
+// TestChildEnv looped a ~35-key list asserting every one of those knobs is
+// ALWAYS present in a fork child — defaults included, whether or not anyone had
+// authored them. That is the manufactured-evidence defect, and the test
+// certified it: `QUINE_SPAWN_ENABLED=0` and `QUINE_MAX_DEPTH=0` were on that
+// list, and they are the two lines that taught a succ-52 founder its successor
+// was physically impossible.
+//
+// The same knob list is used here, inverted: the operator set NONE of them, so
+// NONE of them may appear. What survives from the original are the claims that
+// were always true — the required transport fields pass through by inheritance,
+// and per-process identity (session/run/tape) never crosses.
+func TestForkChildEnvOmitsUnsetKnobs(t *testing.T) {
+	resetRegistryEnv(t)
+	// Deliberately do NOT set QUINE_SESSION_ID: let it be auto-generated.
 
 	c, err := Load()
 	if err != nil {
 		t.Fatalf("Load() error: %v", err)
 	}
 
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
+	// The old expectedKeys list, minus the four the operator actually set
+	// (setRequired) and minus the names the runtime legitimately stamps
+	// (QUINE_DEPTH, QUINE_PARENT_SESSION, QUINE_DATA_DIR — see envstamps.go:
+	// a child would derive a WRONG value for each without them).
+	neverAuthored := []string{
+		"QUINE_MAX_DEPTH", "QUINE_MAX_CONCURRENT", "QUINE_MAX_AGENTS",
+		"QUINE_SH_DEFAULT_TIMEOUT_SECONDS", "QUINE_SH_TIMEOUT_OVERRIDE_ENABLED",
+		"QUINE_SH_STDIN_ENABLED", "QUINE_SH_DETACH_ENABLED", "QUINE_OUTPUT_TRUNCATE",
+		"QUINE_SHELL", "QUINE_SH_NETWORK", "QUINE_MAX_TURNS",
+		"QUINE_PROMPT_METAPHOR", "QUINE_PROMPT_SELF_MODEL",
+		"QUINE_PROMPT_INSTRUCTION_SURFACE", "QUINE_PROMPT_RUNTIME_SURFACE",
+		"QUINE_PROMPT_PERSONA", "QUINE_PROMPT_CTL", "QUINE_PROMPT_IMPL_DETAILS",
+		"QUINE_PEER_DISCOVERY_ENABLED", "QUINE_PEER_DISCOVERY_HEARTBEAT_INTERVAL_MS",
+		"QUINE_FAIL_ON_IMPOSSIBLE", "QUINE_FS_MUTATION_TELEMETRY_ENABLED",
+		"QUINE_READY_TEXT_AUTO_IDLE", "QUINE_CONTEXT_WINDOW",
+		"QUINE_MEMORY_WARN_TOKENS", "QUINE_MEMORY_DANGER_TOKENS",
+		"QUINE_MEMORY_DEATH_TOKENS", "QUINE_FORK_ENABLED", "QUINE_EXEC_ENABLED",
+		"QUINE_SPAWN_ENABLED", "QUINE_AGENTS_MD_ENABLED", "QUINE_AGENTS_SKILLS_ENABLED",
+		"QUINE_VISION_ENABLED", "QUINE_SH_INTERACTIVE_ENABLED",
+		"QUINE_SELF_REENTRY_MODE", "QUINE_SELF_SOURCE_CODE_ENABLED",
+		"QUINE_SELF_SOURCE_PROJECTION",
 	}
+	assertAbsentFromEveryBoundary(t, c, neverAuthored...)
 
-	m := make(map[string]string)
-	for _, e := range env {
-		k, v, _ := strings.Cut(e, "=")
-		m[k] = v
-	}
+	m := childEnvAt(t, c, BoundaryChild)
 
-	// Depth should be incremented
-	childDepth, err := strconv.Atoi(m["QUINE_DEPTH"])
-	if err != nil {
-		t.Fatalf("parsing child QUINE_DEPTH: %v", err)
-	}
-	if childDepth != c.Depth+1 {
-		t.Errorf("child QUINE_DEPTH = %d, want %d", childDepth, c.Depth+1)
-	}
-
-	// Parent session should be current session (auto-generated)
-	if m["QUINE_PARENT_SESSION"] != c.SessionID {
-		t.Errorf("QUINE_PARENT_SESSION = %q, want %q", m["QUINE_PARENT_SESSION"], c.SessionID)
-	}
-
-	// Session ID should NOT be present — each child generates its own
-	if _, hasSessionID := m["QUINE_SESSION_ID"]; hasSessionID {
-		t.Error("ChildEnv should NOT include QUINE_SESSION_ID (children generate their own)")
-	}
-	if _, hasRunID := m["QUINE_RUN_ID"]; hasRunID {
-		t.Error("ChildEnv should NOT include QUINE_RUN_ID (children generate their own)")
-	}
-	if _, hasTapeID := m["QUINE_TAPE_ID"]; hasTapeID {
-		t.Error("ChildEnv should NOT include QUINE_TAPE_ID (children generate their own)")
-	}
-
-	// All 4 required fields passed through
-	if m["QUINE_MODEL_ID"] != "claude-sonnet-4-20250514" {
-		t.Errorf("QUINE_MODEL_ID = %q, want %q", m["QUINE_MODEL_ID"], "claude-sonnet-4-20250514")
-	}
-	if m["QUINE_API_TYPE"] != "anthropic" {
-		t.Errorf("QUINE_API_TYPE = %q, want anthropic", m["QUINE_API_TYPE"])
-	}
-	if m["QUINE_API_BASE"] != "https://api.anthropic.com" {
-		t.Errorf("QUINE_API_BASE = %q, want https://api.anthropic.com", m["QUINE_API_BASE"])
-	}
-	if m["QUINE_API_KEY"] != "sk-test-key" {
-		t.Errorf("QUINE_API_KEY = %q, want sk-test-key", m["QUINE_API_KEY"])
-	}
-
-	// MaxTurns should be propagated
-	if m["QUINE_MAX_TURNS"] != strconv.Itoa(c.MaxTurns) {
-		t.Errorf("QUINE_MAX_TURNS = %q, want %q", m["QUINE_MAX_TURNS"], strconv.Itoa(c.MaxTurns))
-	}
-
-	// All expected keys present
-	expectedKeys := []string{
-		"QUINE_MODEL_ID", "QUINE_API_TYPE", "QUINE_API_BASE", "QUINE_API_KEY",
-		"QUINE_MAX_DEPTH", "QUINE_DEPTH", "QUINE_PARENT_SESSION",
-		"QUINE_MAX_CONCURRENT", "QUINE_MAX_AGENTS", "QUINE_SH_DEFAULT_TIMEOUT_SECONDS", "QUINE_SH_TIMEOUT_OVERRIDE_ENABLED", "QUINE_SH_STDIN_ENABLED", "QUINE_SH_DETACH_ENABLED", "QUINE_OUTPUT_TRUNCATE",
-		"QUINE_DATA_DIR", "QUINE_SHELL", "QUINE_SH_NETWORK", "QUINE_MAX_TURNS",
-		"QUINE_PROMPT_METAPHOR", "QUINE_PROMPT_SELF_MODEL", "QUINE_PROMPT_INSTRUCTION_SURFACE", "QUINE_PROMPT_RUNTIME_SURFACE", "QUINE_PROMPT_PERSONA", "QUINE_PROMPT_CTL", "QUINE_PROMPT_IMPL_DETAILS", "QUINE_PEER_DISCOVERY_ENABLED", "QUINE_PEER_DISCOVERY_HEARTBEAT_INTERVAL_MS", "QUINE_FAIL_ON_IMPOSSIBLE",
-		"QUINE_FS_MUTATION_TELEMETRY_ENABLED",
-		"QUINE_READY_TEXT_AUTO_IDLE",
-		"QUINE_CONTEXT_WINDOW",
-		"QUINE_MEMORY_WARN_TOKENS",
-		"QUINE_MEMORY_DANGER_TOKENS",
-		"QUINE_MEMORY_DEATH_TOKENS",
-		"QUINE_FORK_ENABLED",
-		"QUINE_EXEC_ENABLED",
-		"QUINE_SPAWN_ENABLED",
-		"QUINE_AGENTS_MD_ENABLED",
-		"QUINE_AGENTS_SKILLS_ENABLED",
-		"QUINE_VISION_ENABLED",
-		"QUINE_SH_INTERACTIVE_ENABLED",
-		"QUINE_SH_STDIN_ENABLED",
-		"QUINE_SH_DETACH_ENABLED",
-		"QUINE_SELF_REENTRY_MODE",
-		"QUINE_SELF_SOURCE_CODE_ENABLED",
-	}
-	for _, k := range expectedKeys {
-		if _, ok := m[k]; !ok {
-			t.Errorf("missing key %s in ChildEnv", k)
+	// What the operator DID set crosses, by inheritance, byte-exact.
+	for name, want := range map[string]string{
+		"QUINE_MODEL_ID": "claude-sonnet-4-20250514",
+		"QUINE_API_TYPE": "anthropic",
+		"QUINE_API_BASE": "https://api.anthropic.com",
+		"QUINE_API_KEY":  "sk-test-key",
+	} {
+		if m[name] != want {
+			t.Errorf("%s = %q, want %q — an operator-set knob must reach the child", name, m[name], want)
 		}
 	}
-	if c.RetentionDir != "" {
-		if _, ok := m["QUINE_RETENTION_DIR"]; !ok {
-			t.Error("missing key QUINE_RETENTION_DIR in ChildEnv")
+
+	// Per-process identity never crosses: each child mints its own.
+	for _, name := range []string{"QUINE_SESSION_ID", "QUINE_RUN_ID", "QUINE_TAPE_ID"} {
+		if v, present := m[name]; present {
+			t.Errorf("%s=%q crossed into a fork child — identity is runtime-emitted and masked; a child that inherited its parent's would lie about who it is", name, v)
 		}
 	}
 }
 
-func TestChildEnv_PropagatesAnchorMemoryFlag(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
+// TestForkChildStampsLineage: the facts a fork child CANNOT derive for itself
+// are stamped, and stamping them is not synthesis (envstamps.go's test: "would
+// the child derive a WRONG value without this?"). Depth+1 and the parent's
+// session are exactly that — tree membership is not something a process can
+// work out by looking around.
+func TestForkChildStampsLineage(t *testing.T) {
+	resetRegistryEnv(t)
+	// This process must be a genuine tree MEMBER, carrying real lineage marks in
+	// its own environ. Without that the sh-mask assertion below would be vacuous
+	// — there would be nothing available to leak, and it would pass even if the
+	// mask were deleted. (That vacuity is exactly what made the old TestExecEnv
+	// worthless; a mutation run caught the same flaw in the first draft of this
+	// test.)
+	os.Setenv("QUINE_MAX_DEPTH", "5")
+	os.Setenv("QUINE_DEPTH", "2")
+	os.Setenv("QUINE_PARENT_SESSION", "parent-of-this-process")
+
+	c, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error: %v", err)
+	}
+	if c.Depth != 2 || c.ParentSession != "parent-of-this-process" {
+		t.Fatalf("precondition: want a depth-2 process with a real parent, got depth=%d parent=%q", c.Depth, c.ParentSession)
+	}
+
+	m := childEnvAt(t, c, BoundaryChild)
+	childDepth, err := strconv.Atoi(m["QUINE_DEPTH"])
+	if err != nil {
+		t.Fatalf("parsing child QUINE_DEPTH %q: %v", m["QUINE_DEPTH"], err)
+	}
+	if childDepth != c.Depth+1 {
+		t.Errorf("child QUINE_DEPTH = %d, want %d (parent depth + 1) — the stamp must beat the inherited value, or the child claims its parent's position in the tree", childDepth, c.Depth+1)
+	}
+	if m["QUINE_PARENT_SESSION"] != c.SessionID {
+		t.Errorf("QUINE_PARENT_SESSION = %q, want %q — a fork child descends from THIS session, not from this process's own parent", m["QUINE_PARENT_SESSION"], c.SessionID)
+	}
+
+	// An sh child gets NO lineage marks (brief E4): a program started from a
+	// shell is generic computation, a new founder, not a member of this tree.
+	// Both marks are live in this process's environ, so the mask is what keeps
+	// them out.
+	sh := childEnvAt(t, c, BoundaryShell)
+	for _, name := range []string{"QUINE_DEPTH", "QUINE_PARENT_SESSION"} {
+		if v, present := sh[name]; present {
+			t.Errorf("sh child carries lineage mark %s=%q — an sh child is an unmarked new root (brief E4); a founder must not look like a descendant", name, v)
+		}
+	}
+}
+
+// TestAnchorMemoryFlagCrossesButThresholdsStayAbsent replaces
+// TestChildEnv_PropagatesAnchorMemoryFlag. Its first claim survives (an
+// operator-set QUINE_ANCHOR_MEMORY=1 reaches children); its second did not —
+// it asserted the memory THRESHOLDS and QUINE_MEMORY_STRATEGY_HINTS=1 are
+// written into every child at their compiled defaults, which nobody authored.
+func TestAnchorMemoryFlagCrossesButThresholdsStayAbsent(t *testing.T) {
+	resetRegistryEnv(t)
 	os.Setenv("QUINE_ANCHOR_MEMORY", "1")
 
 	c, err := Load()
 	if err != nil {
 		t.Fatalf("Load() error: %v", err)
 	}
-	env, err := c.ChildEnv()
+
+	assertCrossesEveryBoundary(t, c, "QUINE_ANCHOR_MEMORY=1")
+	assertAbsentFromEveryBoundary(t, c,
+		"QUINE_MEMORY_WARN_TOKENS",
+		"QUINE_MEMORY_DANGER_TOKENS",
+		"QUINE_MEMORY_DEATH_TOKENS",
+		"QUINE_MEMORY_STRATEGY_HINTS",
+	)
+}
+
+// TestSelfReentryPreservesNonzeroDepth is the E11 regression guard, and the
+// reason the old TestExecEnv had to be DELETED rather than ported.
+//
+// TestExecEnv asserted `QUINE_DEPTH` is RESET TO 0 at exec. Two things were
+// wrong with it. It was vacuous: it never set a nonzero depth, so it verified
+// 0 == 0 and would have passed no matter what exec did. And the behavior it
+// named is a live MaxDepth BYPASS — depth enforcement reads the in-memory Depth
+// (precheckProcessCreation), never the child's env, so a fork → exec → fork
+// chain refilled its own depth budget at every exec and walked straight out of
+// QUINE_MAX_DEPTH.
+//
+// exec is not a birth. The successor is the same quine wearing a new image, and
+// it keeps the tree position it already had. This test starts from a genuinely
+// nonzero depth, which is what makes it non-vacuous.
+func TestSelfReentryPreservesNonzeroDepth(t *testing.T) {
+	resetRegistryEnv(t)
+	os.Setenv("QUINE_MAX_DEPTH", "3")
+	os.Setenv("QUINE_DEPTH", "2")
+
+	c, err := Load()
 	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
+		t.Fatalf("Load() error: %v", err)
 	}
-	found := false
-	for _, e := range env {
-		if e == "QUINE_ANCHOR_MEMORY=1" {
-			found = true
-			break
-		}
+	if c.Depth != 2 {
+		t.Fatalf("Depth = %d, want 2 — the test is only meaningful from a nonzero depth", c.Depth)
 	}
-	if !found {
-		t.Error("ChildEnv should propagate QUINE_ANCHOR_MEMORY=1 when enabled")
+
+	successor := childEnvAt(t, c, BoundarySelf)
+	if successor["QUINE_DEPTH"] != "2" {
+		t.Fatalf("exec successor QUINE_DEPTH = %q, want \"2\" — exec must PRESERVE depth, not reset it. A reset refills the depth budget, and fork → exec → fork escapes QUINE_MAX_DEPTH entirely (brief E11)", successor["QUINE_DEPTH"])
 	}
-	if !containsEnv(env, "QUINE_MEMORY_WARN_TOKENS="+strconv.Itoa(c.MemoryWarnTokens)) {
-		t.Error("ChildEnv should propagate QUINE_MEMORY_WARN_TOKENS")
-	}
-	if !containsEnv(env, "QUINE_MEMORY_DANGER_TOKENS="+strconv.Itoa(c.MemoryDangerTokens)) {
-		t.Error("ChildEnv should propagate QUINE_MEMORY_DANGER_TOKENS")
-	}
-	if !containsEnv(env, "QUINE_MEMORY_DEATH_TOKENS="+strconv.Itoa(c.MemoryDeathTokens)) {
-		t.Error("ChildEnv should propagate QUINE_MEMORY_DEATH_TOKENS")
-	}
-	if !containsEnv(env, "QUINE_MEMORY_STRATEGY_HINTS=1") {
-		t.Error("ChildEnv should propagate QUINE_MEMORY_STRATEGY_HINTS=1 by default")
+
+	// The consequence that makes it a bypass, stated directly: the successor's
+	// own fork children sit at depth 3, against the ceiling — not at depth 1
+	// with two generations of headroom handed back.
+	if got := childEnvAt(t, c, BoundaryChild)["QUINE_DEPTH"]; got != "3" {
+		t.Fatalf("fork child of a depth-2 process = %q, want \"3\"", got)
 	}
 }
 
-func TestExecEnv(t *testing.T) {
-	clearEnv(t)
-	setRequired(t)
+// TestSelfReentryEnvKeepsLineageAndOmitsUnsetKnobs carries the claims of the
+// deleted TestExecEnv that were TRUE, and inverts the ~25 that were not.
+//
+// TestExecEnv asserted a long list of compiled defaults (QUINE_SPAWN_ENABLED=0,
+// QUINE_PROMPT_SELF_MODEL=advanced, QUINE_VISION_ENABLED=0, …) are written into
+// the successor's env. Nobody authored those lines. The successor now inherits
+// this process's environ and re-derives every default with its own Load().
+func TestSelfReentryEnvKeepsLineageAndOmitsUnsetKnobs(t *testing.T) {
+	resetRegistryEnv(t)
 	os.Setenv("QUINE_SESSION_ID", "exec-parent-uuid")
 
 	c, err := Load()
 	if err != nil {
 		t.Fatalf("Load() error: %v", err)
 	}
+	m := childEnvAt(t, c, BoundarySelf)
 
-	env, err := c.ExecEnv()
-	if err != nil {
-		t.Fatalf("ExecEnv() error: %v", err)
-	}
-
-	m := make(map[string]string)
-	for _, e := range env {
-		k, v, _ := strings.Cut(e, "=")
-		m[k] = v
-	}
-
-	// Depth should be reset to 0
-	if m["QUINE_DEPTH"] != "0" {
-		t.Errorf("QUINE_DEPTH = %q, want 0", m["QUINE_DEPTH"])
-	}
-
+	// Lineage continuity: a successor that minted a fresh session/tape would be
+	// a different agent occupying the same process.
 	if m["QUINE_SESSION_ID"] != c.SessionID {
-		t.Errorf("QUINE_SESSION_ID = %q, want %q", m["QUINE_SESSION_ID"], c.SessionID)
-	}
-	if _, hasRunID := m["QUINE_RUN_ID"]; hasRunID {
-		t.Error("ExecEnv should NOT include QUINE_RUN_ID (new process activation generates its own)")
-	}
-	if m["QUINE_PARENT_SESSION"] != c.ParentSession {
-		t.Errorf("QUINE_PARENT_SESSION = %q, want %q", m["QUINE_PARENT_SESSION"], c.ParentSession)
+		t.Errorf("QUINE_SESSION_ID = %q, want %q — exec preserves identity", m["QUINE_SESSION_ID"], c.SessionID)
 	}
 	if m["QUINE_TAPE_ID"] != c.TapeID {
-		t.Errorf("QUINE_TAPE_ID = %q, want %q", m["QUINE_TAPE_ID"], c.TapeID)
+		t.Errorf("QUINE_TAPE_ID = %q, want %q — exec preserves the tape", m["QUINE_TAPE_ID"], c.TapeID)
+	}
+	if m["QUINE_PARENT_SESSION"] != c.ParentSession {
+		t.Errorf("QUINE_PARENT_SESSION = %q, want %q — exec does not create a generation; the successor's parent is whoever forked its predecessor", m["QUINE_PARENT_SESSION"], c.ParentSession)
+	}
+	if v, present := m["QUINE_RUN_ID"]; present {
+		t.Errorf("QUINE_RUN_ID=%q crossed exec — a run id names one physical activation, and the successor is a new one", v)
+	}
+	if v, present := m["QUINE_CONFIG_DIR"]; present {
+		t.Errorf("QUINE_CONFIG_DIR=%q appeared though nobody set it", v)
 	}
 
-	if _, ok := m["QUINE_CONFIG_DIR"]; ok {
-		t.Errorf("QUINE_CONFIG_DIR should not be set when empty")
-	}
-	if m["QUINE_FORK_ENABLED"] != "1" {
-		t.Errorf("QUINE_FORK_ENABLED = %q, want 1", m["QUINE_FORK_ENABLED"])
-	}
-	if m["QUINE_PROMPT_SELF_MODEL"] != "advanced" {
-		t.Errorf("QUINE_PROMPT_SELF_MODEL = %q, want advanced", m["QUINE_PROMPT_SELF_MODEL"])
-	}
-	if m["QUINE_PROMPT_INSTRUCTION_SURFACE"] != "standard" {
-		t.Errorf("QUINE_PROMPT_INSTRUCTION_SURFACE = %q, want standard", m["QUINE_PROMPT_INSTRUCTION_SURFACE"])
-	}
-	if m["QUINE_PROMPT_RUNTIME_SURFACE"] != "visible" {
-		t.Errorf("QUINE_PROMPT_RUNTIME_SURFACE = %q, want visible", m["QUINE_PROMPT_RUNTIME_SURFACE"])
-	}
-	if m["QUINE_PROMPT_PERSONA"] != "" {
-		t.Errorf("QUINE_PROMPT_PERSONA = %q, want empty", m["QUINE_PROMPT_PERSONA"])
-	}
-	if m["QUINE_PROMPT_CTL"] != "1" {
-		t.Errorf("QUINE_PROMPT_CTL = %q, want 1", m["QUINE_PROMPT_CTL"])
-	}
-	if m["QUINE_PROMPT_IMPL_DETAILS"] != "0" {
-		t.Errorf("QUINE_PROMPT_IMPL_DETAILS = %q, want 0", m["QUINE_PROMPT_IMPL_DETAILS"])
-	}
-	if m["QUINE_PEER_DISCOVERY_ENABLED"] != "0" {
-		t.Errorf("QUINE_PEER_DISCOVERY_ENABLED = %q, want 0", m["QUINE_PEER_DISCOVERY_ENABLED"])
-	}
-	if m["QUINE_PEER_DISCOVERY_HEARTBEAT_INTERVAL_MS"] != "5000" {
-		t.Errorf("QUINE_PEER_DISCOVERY_HEARTBEAT_INTERVAL_MS = %q, want 5000", m["QUINE_PEER_DISCOVERY_HEARTBEAT_INTERVAL_MS"])
-	}
-	if m["QUINE_READY_TEXT_AUTO_IDLE"] != "0" {
-		t.Errorf("QUINE_READY_TEXT_AUTO_IDLE = %q, want 0", m["QUINE_READY_TEXT_AUTO_IDLE"])
-	}
-	if m["QUINE_FAIL_ON_IMPOSSIBLE"] != "1" {
-		t.Errorf("QUINE_FAIL_ON_IMPOSSIBLE = %q, want 1", m["QUINE_FAIL_ON_IMPOSSIBLE"])
-	}
-	if m["QUINE_EXEC_ENABLED"] != "1" {
-		t.Errorf("QUINE_EXEC_ENABLED = %q, want 1", m["QUINE_EXEC_ENABLED"])
-	}
-	if m["QUINE_SPAWN_ENABLED"] != "0" {
-		t.Errorf("QUINE_SPAWN_ENABLED = %q, want 0", m["QUINE_SPAWN_ENABLED"])
-	}
-	if m["QUINE_AGENTS_MD_ENABLED"] != "0" {
-		t.Errorf("QUINE_AGENTS_MD_ENABLED = %q, want 0", m["QUINE_AGENTS_MD_ENABLED"])
-	}
-	if m["QUINE_AGENTS_SKILLS_ENABLED"] != "0" {
-		t.Errorf("QUINE_AGENTS_SKILLS_ENABLED = %q, want 0", m["QUINE_AGENTS_SKILLS_ENABLED"])
-	}
-	if m["QUINE_SELF_REENTRY_MODE"] != string(c.SelfReentryMode) {
-		t.Errorf("QUINE_SELF_REENTRY_MODE = %q, want %q", m["QUINE_SELF_REENTRY_MODE"], c.SelfReentryMode)
-	}
-	if m["QUINE_VISION_ENABLED"] != "1" {
-		t.Errorf("QUINE_VISION_ENABLED = %q, want 1", m["QUINE_VISION_ENABLED"])
-	}
-	if m["QUINE_SH_INTERACTIVE_ENABLED"] != "1" {
-		t.Errorf("QUINE_SH_INTERACTIVE_ENABLED = %q, want 1", m["QUINE_SH_INTERACTIVE_ENABLED"])
-	}
-	if m["QUINE_SH_STDIN_ENABLED"] != "1" {
-		t.Errorf("QUINE_SH_STDIN_ENABLED = %q, want 1", m["QUINE_SH_STDIN_ENABLED"])
-	}
-	if m["QUINE_SH_DETACH_ENABLED"] != "1" {
-		t.Errorf("QUINE_SH_DETACH_ENABLED = %q, want 1", m["QUINE_SH_DETACH_ENABLED"])
-	}
-	if m["QUINE_EPHEMERAL_BODY_ENABLED"] != "0" {
-		t.Errorf("QUINE_EPHEMERAL_BODY_ENABLED = %q, want 0", m["QUINE_EPHEMERAL_BODY_ENABLED"])
-	}
-	if m["QUINE_SUPPRESS_INITIAL_BEGIN"] != "0" {
-		t.Errorf("QUINE_SUPPRESS_INITIAL_BEGIN = %q, want 0", m["QUINE_SUPPRESS_INITIAL_BEGIN"])
-	}
-	if m["QUINE_SELF_SOURCE_CODE_ENABLED"] != "0" {
-		t.Errorf("QUINE_SELF_SOURCE_CODE_ENABLED = %q, want 0", m["QUINE_SELF_SOURCE_CODE_ENABLED"])
-	}
+	// Everything the operator never authored stays absent — the successor's own
+	// Load() reaches the same compiled defaults this process reached.
+	assertAbsentFromEveryBoundary(t, c,
+		"QUINE_FORK_ENABLED", "QUINE_EXEC_ENABLED", "QUINE_SPAWN_ENABLED",
+		"QUINE_PROMPT_SELF_MODEL", "QUINE_PROMPT_INSTRUCTION_SURFACE",
+		"QUINE_PROMPT_RUNTIME_SURFACE", "QUINE_PROMPT_PERSONA", "QUINE_PROMPT_CTL",
+		"QUINE_PROMPT_IMPL_DETAILS", "QUINE_PEER_DISCOVERY_ENABLED",
+		"QUINE_PEER_DISCOVERY_HEARTBEAT_INTERVAL_MS", "QUINE_READY_TEXT_AUTO_IDLE",
+		"QUINE_FAIL_ON_IMPOSSIBLE", "QUINE_AGENTS_MD_ENABLED",
+		"QUINE_AGENTS_SKILLS_ENABLED", "QUINE_SELF_REENTRY_MODE",
+		"QUINE_VISION_ENABLED", "QUINE_SH_INTERACTIVE_ENABLED",
+		"QUINE_SH_STDIN_ENABLED", "QUINE_SH_DETACH_ENABLED",
+		"QUINE_EPHEMERAL_BODY_ENABLED", "QUINE_SUPPRESS_INITIAL_BEGIN",
+		"QUINE_SELF_SOURCE_CODE_ENABLED", "QUINE_SELF_SOURCE_PROJECTION",
+	)
 }
 
+// TestProcessEnvFixtureExactOutput replaces the fixture of the same name.
+//
+// The old one pinned the byte-exact, index-positional output of the deleted
+// synthesizer: 56 lines per child, 50-odd of them compiled defaults nobody
+// authored, asserted by ORDINAL (`wantExec[5] = ...`). It was a faithful
+// fixture of the defect.
+//
+// This is the same idea applied to the pipeline that replaced it —
+// `child = stamps ⊕ override ⊕ (environ − mask)` — and the fixture is the
+// argument: a fork child of a fully-populated Config now carries SEVEN names,
+// not 56. Every one of them is either something the operator authored or a
+// runtime-owned fact the child could not derive. Nothing else. If someone
+// reintroduces a synthesizer under any name, this fixture grows and fails.
 func TestProcessEnvFixtureExactOutput(t *testing.T) {
 	cfg := &Config{
 		Identity: Identity{
 			ModelID:       "test-model",
 			SessionID:     "session-1",
+			RunID:         "run-9",
 			TapeID:        "0007",
 			ParentSession: "parent-0",
 			Depth:         2,
@@ -2233,78 +2130,56 @@ func TestProcessEnvFixtureExactOutput(t *testing.T) {
 		Paths:        Paths{DataDir: "/tmp/data", WorkDir: "/tmp/work", Shell: "/bin/sh", ShNetwork: "host", SelfReentryMode: SelfReentryModeExecutablePath},
 	}
 
-	wantChild := []string{
+	// The birth record this process was actually given. Note what is in it:
+	// two knobs an operator authored, one foreign var, and four runtime-owned
+	// names it was stamped with at ITS birth.
+	environ := []string{
+		"PATH=/usr/bin",
 		envKV(EnvModelID, "test-model"),
-		envKV(EnvAPIType, "anthropic"),
-		envKV(EnvAPIBase, "https://api.example.invalid"),
 		envKV(EnvAPIKey, "sk-test"),
-		envKV(EnvMaxDepth, "4"),
-		envKV(EnvDepth, "3"),
-		envKV(EnvParentSession, "session-1"),
-		envKV(EnvMaxConcurrent, "5"),
-		envKV(EnvMaxAgents, "6"),
-		envKV(EnvForkDefaultTimeout, "7"),
-		envKV(EnvShDefaultTimeout, "8"),
-		envKV(EnvShTimeoutOverride, "1"),
-		envKV(EnvShStdinEnabled, "1"),
-		envKV(EnvShDetachEnabled, "1"),
-		envKV(EnvOutputTruncate, "9"),
-		envKV(EnvDataDir, "/tmp/data"),
-		envKV(EnvWorkDir, "/tmp/work"),
-		envKV(EnvShell, "/bin/sh"),
-		envKV(EnvShNetwork, "host"),
-		envKV(EnvSelfReentryMode, string(SelfReentryModeExecutablePath)),
 		envKV(EnvMaxTurns, "10"),
-		envKV(EnvWallClockExitSeconds, "11"),
-		envKV(EnvPromptMetaphor, ""),
-		envKV(EnvPromptSelfModel, string(PromptSelfModelAdvanced)),
-		envKV(EnvPromptInstructionSurface, string(PromptInstructionSurfaceStandard)),
-		envKV(EnvPromptRuntimeSurface, string(PromptRuntimeSurfaceVisible)),
-		envKV(EnvPromptPersona, ""),
-		envKV(EnvPromptCtl, "1"),
-		envKV(EnvPromptImplDetails, "0"),
-		envKV(EnvPeerDiscoveryEnabled, "0"),
-		envKV(EnvPeerDiscoveryHeartbeat, "5000"),
-		envKV(EnvFSMutationTelemetry, "1"),
-		envKV(EnvFailOnImpossible, "1"),
-		envKV(EnvNoMissionAutonomy, "off"),
-		envKV(EnvEmptyAssistantSuccess, "0"),
-		envKV(EnvReadyTextAutoIdle, "0"),
-		envKV(EnvContextWindow, "12"),
-		envKV(EnvMemoryWarnTokens, "13"),
-		envKV(EnvMemoryDangerTokens, "14"),
-		envKV(EnvMemoryDeathTokens, "15"),
-		envKV(EnvMemoryStrategyHints, "0"),
-		envKV(EnvIdleEnabled, "0"),
-		envKV(EnvExitEnabled, "1"),
-		envKV(EnvExecEnabled, "1"),
-		envKV(EnvSpawnEnabled, "0"),
-		envKV(EnvAgentsMDEnabled, "0"),
-		envKV(EnvAgentsSkillsEnabled, "0"),
-		envKV(EnvVisionEnabled, "1"),
-		envKV(EnvForkEnabled, "1"),
-		envKV(EnvShInteractiveEnabled, "1"),
-		envKV(EnvForkWorldEnabled, "0"),
-		envKV(EnvEphemeralBodyEnabled, "0"),
-		envKV(EnvSuppressInitialBegin, "0"),
-		envKV(EnvSelfSourceCodeEnabled, "0"),
+		envKV(EnvDepth, "2"),
+		envKV(EnvSessionID, "session-1"),
+		envKV(EnvRunID, "run-9"),
+		envKV(EnvWorkspaceCurrentRevision, "rev-3"),
+		envKV(EnvAgentRoot, "/old/root"),
 	}
 
-	childEnv, err := cfg.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	assertEnvExact(t, "ChildEnv", childEnv, wantChild)
+	// fork/spawn: lineage stamped, identity masked, defaults ABSENT.
+	assertEnvExact(t, "fork child", BuildChildEnv(BoundaryChild, environ, nil, cfg.ForkChildStamps()), []string{
+		"PATH=/usr/bin",
+		envKV(EnvModelID, "test-model"),
+		envKV(EnvAPIKey, "sk-test"), // the real credential: a child quine cannot reach the provider without it (E13)
+		envKV(EnvMaxTurns, "10"),    // operator-authored, inherited byte-exact
+		envKV(EnvDepth, "3"),        // stamped: parent+1. Overwrites the inherited "2" in place.
+		envKV(EnvParentSession, "session-1"),
+		envKV(EnvDataDir, "/tmp/data"),
+	})
 
-	wantExec := append([]string(nil), wantChild...)
-	wantExec[5] = envKV(EnvDepth, "0")
-	wantExec[6] = envKV(EnvParentSession, "parent-0")
-	wantExec = append(wantExec, envKV(EnvSessionID, "session-1"), envKV(EnvTapeID, "0007"))
-	execEnv, err := cfg.ExecEnv()
-	if err != nil {
-		t.Fatalf("ExecEnv() error: %v", err)
-	}
-	assertEnvExact(t, "ExecEnv", execEnv, wantExec)
+	// exec: SAME depth (E11 — not a birth, no budget refill), same identity.
+	assertEnvExact(t, "exec successor", BuildChildEnv(BoundarySelf, environ, nil, cfg.SelfReentryStamps()), []string{
+		"PATH=/usr/bin",
+		envKV(EnvModelID, "test-model"),
+		envKV(EnvAPIKey, "sk-test"),
+		envKV(EnvMaxTurns, "10"),
+		envKV(EnvDepth, "2"),
+		envKV(EnvSessionID, "session-1"),
+		envKV(EnvTapeID, "0007"),
+		envKV(EnvParentSession, "parent-0"),
+		envKV(EnvDataDir, "/tmp/data"),
+	})
+
+	// sh: generic computation. No lineage marks at all (E4), and the
+	// QUINE_WORKSPACE_CURRENT_REVISION leak of the old synthesizer is closed.
+	assertEnvExact(t, "sh child", BuildChildEnv(BoundaryShell, environ, nil, cfg.ShellStamps()), []string{
+		"PATH=/usr/bin",
+		envKV(EnvModelID, "test-model"),
+		envKV(EnvAPIKey, "sk-test"),
+		envKV(EnvMaxTurns, "10"),
+		envKV(EnvRunID, "run-9"),
+		envKV(EnvAgentRoot, cfg.AgentRoot()),
+		envKV(EnvDataDir, "/tmp/data"),
+	})
 }
 
 func assertEnvExact(t *testing.T, name string, got []string, want []string) {
@@ -2332,21 +2207,9 @@ func TestConfigDirPassthrough(t *testing.T) {
 		t.Fatalf("Load() error: %v", err)
 	}
 
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-
-	found := false
-	for _, e := range env {
-		if e == "QUINE_CONFIG_DIR=/tmp/quine-config" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Errorf("QUINE_CONFIG_DIR should be passed through")
-	}
+	// QUINE_CONFIG_DIR is operator-only → PINNED: inherited verbatim by every
+	// process the runtime builds, and not settable through config/env/override.
+	assertCrossesEveryBoundary(t, c, "QUINE_CONFIG_DIR=/tmp/quine-config")
 }
 
 func TestEphemeralBodyPropagatesAcrossProcessTransitions(t *testing.T) {
@@ -2365,26 +2228,16 @@ func TestEphemeralBodyPropagatesAcrossProcessTransitions(t *testing.T) {
 		t.Fatal("SelfReentryMode should be populated")
 	}
 
-	childEnv, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(childEnv, "QUINE_EPHEMERAL_BODY_ENABLED=1") {
-		t.Fatalf("ChildEnv() should propagate QUINE_EPHEMERAL_BODY_ENABLED=1, got %v", childEnv)
-	}
-	if !containsEnv(childEnv, "QUINE_SELF_REENTRY_MODE="+string(c.SelfReentryMode)) {
-		t.Fatalf("ChildEnv() should preserve self reentry mode, got %v", childEnv)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_EPHEMERAL_BODY_ENABLED=1")
 
-	execEnv, err := c.ExecEnv()
-	if err != nil {
-		t.Fatalf("ExecEnv() error: %v", err)
-	}
-	if !containsEnv(execEnv, "QUINE_EPHEMERAL_BODY_ENABLED=1") {
-		t.Fatalf("ExecEnv() should propagate QUINE_EPHEMERAL_BODY_ENABLED=1, got %v", execEnv)
-	}
-	if !containsEnv(execEnv, "QUINE_SELF_REENTRY_MODE="+string(c.SelfReentryMode)) {
-		t.Fatalf("ExecEnv() should preserve self reentry mode, got %v", execEnv)
+	// QUINE_SELF_REENTRY_MODE is only carried when the operator authored it.
+	// On Linux the compiled default ("self") is reached by the child's own
+	// Load(), so absence is the correct spelling; setRequired sets the knob
+	// explicitly off-Linux, where the default is not legal.
+	if _, authored := os.LookupEnv("QUINE_SELF_REENTRY_MODE"); authored {
+		assertCrossesEveryBoundary(t, c, "QUINE_SELF_REENTRY_MODE="+string(c.SelfReentryMode))
+	} else {
+		assertAbsentFromEveryBoundary(t, c, "QUINE_SELF_REENTRY_MODE")
 	}
 }
 
@@ -2401,21 +2254,16 @@ func TestSelfReentryTargetPropagatesAcrossProcessTransitions(t *testing.T) {
 		t.Fatalf("SelfReentryTarget = %q, want %q", c.SelfReentryTarget, wantSelfReentryTarget)
 	}
 
-	childEnv, err := c.ChildEnv()
+	// The mode itself is a knob: it crosses only if the operator authored it
+	// (see TestEphemeralBodyPropagatesAcrossProcessTransitions). The TARGET is
+	// substrate-pinned and re-derived by each process from its own image, which
+	// is why it is not stamped anywhere.
+	os.Setenv("QUINE_SELF_REENTRY_MODE", string(c.SelfReentryMode))
+	c, err = Load()
 	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
+		t.Fatalf("Load() with explicit self-reentry mode error: %v", err)
 	}
-	if !containsEnv(childEnv, "QUINE_SELF_REENTRY_MODE="+string(c.SelfReentryMode)) {
-		t.Fatalf("ChildEnv() should propagate QUINE_SELF_REENTRY_MODE, got %v", childEnv)
-	}
-
-	execEnv, err := c.ExecEnv()
-	if err != nil {
-		t.Fatalf("ExecEnv() error: %v", err)
-	}
-	if !containsEnv(execEnv, "QUINE_SELF_REENTRY_MODE="+string(c.SelfReentryMode)) {
-		t.Fatalf("ExecEnv() should propagate QUINE_SELF_REENTRY_MODE, got %v", execEnv)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_SELF_REENTRY_MODE="+string(c.SelfReentryMode))
 }
 
 func TestSelfSourceCodeEnabledPropagatesAcrossProcessTransitions(t *testing.T) {
@@ -2431,21 +2279,13 @@ func TestSelfSourceCodeEnabledPropagatesAcrossProcessTransitions(t *testing.T) {
 		t.Fatal("SelfSourceCodeEnabled should be enabled when QUINE_SELF_SOURCE_CODE_ENABLED=1")
 	}
 
-	childEnv, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(childEnv, "QUINE_SELF_SOURCE_CODE_ENABLED=1") {
-		t.Fatalf("ChildEnv() should propagate QUINE_SELF_SOURCE_CODE_ENABLED=1, got %v", childEnv)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_SELF_SOURCE_CODE_ENABLED=1")
 
-	execEnv, err := c.ExecEnv()
-	if err != nil {
-		t.Fatalf("ExecEnv() error: %v", err)
-	}
-	if !containsEnv(execEnv, "QUINE_SELF_SOURCE_CODE_ENABLED=1") {
-		t.Fatalf("ExecEnv() should propagate QUINE_SELF_SOURCE_CODE_ENABLED=1, got %v", execEnv)
-	}
+	// QUINE_SELF_SOURCE_PROJECTION is DERIVED from the knob above
+	// (SelfSourceProjectionMode()). The old synthesizer re-serialized the
+	// derived mode into every child; it is absent now, and the child re-derives
+	// the identical mode from the inherited QUINE_SELF_SOURCE_CODE_ENABLED.
+	assertAbsentFromEveryBoundary(t, c, "QUINE_SELF_SOURCE_PROJECTION")
 }
 
 func TestThinkingBudgetAcceptsXHigh(t *testing.T) {
@@ -2475,6 +2315,15 @@ func TestThinkingBudgetDefaultsHighWhenUnset(t *testing.T) {
 	}
 }
 
+// TestServiceTierNormalizesFastToCodexPriority keeps its Load()-side claim
+// (`fast` normalizes to `priority`) and re-expresses its child-side one.
+//
+// The old assertion was that the child receives the NORMALIZED value
+// (`QUINE_MODEL_SERVICE_TIER=priority`), because the synthesizer re-serialized
+// resolved Config fields. The child now inherits the OPERATOR'S RAW STRING
+// (`fast`) and runs the identical normalization in its own Load(). The two are
+// end-to-end equivalent, and this test proves that rather than asserting it:
+// it feeds the child's env back through Load().
 func TestServiceTierNormalizesFastToCodexPriority(t *testing.T) {
 	clearEnv(t)
 	setRequired(t)
@@ -2487,12 +2336,20 @@ func TestServiceTierNormalizesFastToCodexPriority(t *testing.T) {
 	if c.ServiceTier != "priority" {
 		t.Fatalf("ServiceTier = %q, want priority", c.ServiceTier)
 	}
-	env, err := c.ChildEnv()
+
+	// Raw string crosses, un-normalized (it is inherited, not re-serialized).
+	assertCrossesEveryBoundary(t, c, "QUINE_MODEL_SERVICE_TIER=fast")
+
+	// And the child resolves it to the same place. This is the general argument
+	// for dropping normalized re-serialization, made concrete on the one knob
+	// whose stored value differs from what the operator wrote.
+	os.Setenv("QUINE_MODEL_SERVICE_TIER", childEnvAt(t, c, BoundaryChild)["QUINE_MODEL_SERVICE_TIER"])
+	child, err := Load()
 	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
+		t.Fatalf("child Load() error: %v", err)
 	}
-	if !containsEnv(env, "QUINE_MODEL_SERVICE_TIER=priority") {
-		t.Fatalf("ChildEnv() should propagate QUINE_MODEL_SERVICE_TIER=priority, got %v", env)
+	if child.ServiceTier != c.ServiceTier {
+		t.Fatalf("child ServiceTier = %q, parent = %q — a child must reach the same resolved value from the inherited raw string", child.ServiceTier, c.ServiceTier)
 	}
 }
 
@@ -2533,13 +2390,7 @@ func TestPromptPersonaAcceptsKnownRoleAndPropagates(t *testing.T) {
 	if c.PromptPersona != PromptPersonaGardener {
 		t.Fatalf("PromptPersona = %q, want %q", c.PromptPersona, PromptPersonaGardener)
 	}
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_PROMPT_PERSONA=gardener") {
-		t.Fatalf("ChildEnv() should propagate QUINE_PROMPT_PERSONA=gardener, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_PROMPT_PERSONA=gardener")
 }
 
 func TestPromptPersonaRejectsInvalidValue(t *testing.T) {
@@ -2780,13 +2631,7 @@ func TestWorkspaceOverlayFuseDriverAcceptedAndPropagated(t *testing.T) {
 	if c.WorkspaceOverlayDriver != "fuse" {
 		t.Fatalf("WorkspaceOverlayDriver = %q, want fuse", c.WorkspaceOverlayDriver)
 	}
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_WORKSPACE_OVERLAY_DRIVER=fuse") {
-		t.Fatalf("child env should propagate forced overlay driver, got %#v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_WORKSPACE_OVERLAY_DRIVER=fuse")
 }
 
 func TestWorkspaceOverlayDriverRejectsUnknownValue(t *testing.T) {
@@ -3014,27 +2859,49 @@ func TestWorkspaceUnsupportedOnNonLinux(t *testing.T) {
 }
 
 // TestRuntimeSurfaceBackendEnvIsRetired asserts the control-surface collapse to
-// FUSE-only: QUINE_RUNTIME_SURFACE_BACKEND is no longer recognized, so setting
-// it neither errors nor propagates into the child environment.
-// See Paper/core/decisions/2026-06-control-surface-fuse-only.md.
+// FUSE-only (Paper/core/decisions/2026-06-control-surface-fuse-only.md): the
+// retired QUINE_RUNTIME_SURFACE_BACKEND is not recognized, so setting it changes
+// nothing and errors nowhere.
+//
+// Its old child-env clause ("and it does not propagate") was an artifact of the
+// synthesizer — a name absent from the key list simply could not be emitted.
+// The pipeline that replaced it INHERITS an unrecognized QUINE_* name rather
+// than dropping it, and that is deliberate: the version-skew stance (envmodel.go
+// BoundaryBehavior). A successor whose registry dropped a knob ignores the
+// inbound name instead of deadlocking on it, and a name no code reads is inert
+// wherever it sits. What actually enforces retirement is the mediated channel —
+// the override parser names the retirement and rejects the whole file — so that
+// is what this test now asserts.
 func TestRuntimeSurfaceBackendEnvIsRetired(t *testing.T) {
 	clearEnv(t)
 	setRequired(t)
 
 	os.Setenv("QUINE_RUNTIME_SURFACE_BACKEND", "legacy")
+	t.Cleanup(func() { os.Unsetenv("QUINE_RUNTIME_SURFACE_BACKEND") })
 
 	c, err := Load()
 	if err != nil {
 		t.Fatalf("Load() error: %v", err)
 	}
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
+	if _, live := KnobByEnv("QUINE_RUNTIME_SURFACE_BACKEND"); live {
+		t.Fatal("QUINE_RUNTIME_SURFACE_BACKEND is still a live registry knob; it was retired")
 	}
-	for _, kv := range env {
-		if strings.HasPrefix(kv, "QUINE_RUNTIME_SURFACE_BACKEND=") {
-			t.Fatalf("ChildEnv() should not propagate retired QUINE_RUNTIME_SURFACE_BACKEND, got %q", kv)
-		}
+	if _, retired := RetiredKnobByEnv("QUINE_RUNTIME_SURFACE_BACKEND"); !retired {
+		t.Fatal("QUINE_RUNTIME_SURFACE_BACKEND should be recorded as a retired knob")
+	}
+	// Nothing reads it, so nothing about the process changes.
+	if c.SessionID == "" {
+		t.Fatal("Load() should succeed and ignore the retired name entirely")
+	}
+
+	// The mediated channel is where retirement is enforced: an agent trying to
+	// pass it on is told it is gone, by name, and the whole file bounces.
+	_, err = ParseEnvOverride([]byte("QUINE_RUNTIME_SURFACE_BACKEND=legacy\n"))
+	if err == nil {
+		t.Fatal("config/env/override must reject a retired knob")
+	}
+	if !strings.Contains(err.Error(), "retired") {
+		t.Fatalf("override rejection should name the retirement, got %v", err)
 	}
 }
 
@@ -3070,13 +2937,7 @@ func TestForkWorldEnabled_EnabledPropagatesToChildEnv(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load() error: %v", err)
 	}
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, "QUINE_FORK_WORLD_ENABLED=1") {
-		t.Fatalf("ChildEnv() should propagate QUINE_FORK_WORLD_ENABLED=1, got %v", env)
-	}
+	assertCrossesEveryBoundary(t, c, "QUINE_FORK_WORLD_ENABLED=1")
 }
 
 func TestForkWorldEnabledRequiresExplicitWorkspacePhysics(t *testing.T) {
@@ -3093,7 +2954,22 @@ func TestForkWorldEnabledRequiresExplicitWorkspacePhysics(t *testing.T) {
 	}
 }
 
-func TestChildEnvIncludesWorkspacePhysics(t *testing.T) {
+// TestForkChildStampsWorkspacePhysics (was TestChildEnvIncludesWorkspacePhysics).
+//
+// Workspace coordinates ARE stamped into a fork child, and they pass the stamp
+// test rather than the synthesis test: QUINE_WORKSPACE defaults to the startup
+// cwd, so a child re-deriving it from its own cwd would land in a different
+// scope entirely — a WRONG value, silently. The runtime knows the scope; it says
+// so.
+//
+// One assertion is inverted from the original. It asserted QUINE_WORKSPACE_OWNER
+// is ABSENT from the child (leaving the child's Load() to default it false).
+// It is now stamped "0" explicitly: a child never owns its parent's workspace,
+// it borrows a view of it, and stating that is cheaper than depending on a
+// default to mean it. QUINE_WORKSPACE_SESSION stays absent — the child gets its
+// own — with the parent's session handed over as QUINE_WORKSPACE_BOOTSTRAP so
+// the child can adopt the lineage.
+func TestForkChildStampsWorkspacePhysics(t *testing.T) {
 	clearEnv(t)
 	setRequired(t)
 	if runtime.GOOS != "linux" {
@@ -3121,36 +2997,51 @@ func TestChildEnvIncludesWorkspacePhysics(t *testing.T) {
 		t.Fatalf("Load() error: %v", err)
 	}
 
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
+	m := childEnvAt(t, c, BoundaryChild)
+
+	for name, want := range map[string]string{
+		"QUINE_WORKSPACE_ROOT":      rootReal,
+		"QUINE_WORKSPACE":           childReal,
+		"QUINE_WORKSPACE_OWNER":     "0",
+		"QUINE_WORKSPACE_BOOTSTRAP": c.WorkspaceSession,
+	} {
+		if m[name] != want {
+			t.Errorf("%s = %q, want %q", name, m[name], want)
+		}
 	}
 
-	m := make(map[string]string)
-	for _, e := range env {
-		k, v, _ := strings.Cut(e, "=")
-		m[k] = v
+	// INVERTED ASSERTION (was: BACKEND="overlay", REVISION_MODE="restore").
+	//
+	// Those two — with OVERLAY_DRIVER and COMMIT_ON_SIGNAL — used to be stamped at
+	// their resolved values whenever physics were on. The operator authored none of
+	// them: they are backend-conditional Load() defaults derived from the workspace
+	// root, which this child is being handed. So the child computes the identical
+	// values by itself, and the stamps carried nothing but the appearance of a
+	// choice — including QUINE_WORKSPACE_COMMIT_ON_SIGNAL=0, a default-valued
+	// negative in every workspace-enabled child's permanent birth record. That is
+	// the QUINE_SPAWN_ENABLED=0 morphology (brief Layer 0) wearing the word "stamp".
+	//
+	// The parent's own resolved values prove the derivation is not lossy: the child
+	// will reach exactly these from the root alone.
+	if c.WorkspaceBackend != "overlay" || c.WorkspaceRevisionMode != WorkspaceRevisionRestore {
+		t.Fatalf("premise: an unauthored workspace resolves to overlay/restore, got %q/%q", c.WorkspaceBackend, c.WorkspaceRevisionMode)
+	}
+	for _, name := range []string{
+		"QUINE_WORKSPACE_BACKEND", "QUINE_WORKSPACE_OVERLAY_DRIVER",
+		"QUINE_WORKSPACE_REVISION_MODE", "QUINE_WORKSPACE_COMMIT_ON_SIGNAL",
+	} {
+		if v, present := m[name]; present {
+			t.Errorf("%s=%q was stamped into a fork child, but nobody authored it and the child derives the same value from the workspace root it is given. A stamp must be a fact the child CANNOT derive; a resolved default is the synthesizer under another name", name, v)
+		}
 	}
 
-	if m["QUINE_WORKSPACE_ROOT"] != rootReal {
-		t.Fatalf("QUINE_WORKSPACE_ROOT = %q, want %q", m["QUINE_WORKSPACE_ROOT"], rootReal)
+	if v, present := m["QUINE_WORKSPACE_SESSION"]; present {
+		t.Errorf("QUINE_WORKSPACE_SESSION=%q crossed into a fork child — it is runtime-emitted; the child gets its own and adopts the lineage through QUINE_WORKSPACE_BOOTSTRAP", v)
 	}
-	if m["QUINE_WORKSPACE"] != childReal {
-		t.Fatalf("QUINE_WORKSPACE = %q, want %q", m["QUINE_WORKSPACE"], childReal)
-	}
-	if m["QUINE_WORKSPACE_BACKEND"] != "overlay" {
-		t.Fatalf("QUINE_WORKSPACE_BACKEND = %q, want overlay", m["QUINE_WORKSPACE_BACKEND"])
-	}
-	if m["QUINE_WORKSPACE_REVISION_MODE"] != "restore" {
-		t.Fatalf("QUINE_WORKSPACE_REVISION_MODE = %q, want restore", m["QUINE_WORKSPACE_REVISION_MODE"])
-	}
-	if _, ok := m["QUINE_WORKSPACE_SESSION"]; ok {
-		t.Fatalf("child env should not inherit QUINE_WORKSPACE_SESSION, got %q", m["QUINE_WORKSPACE_SESSION"])
-	}
-	if _, ok := m["QUINE_WORKSPACE_OWNER"]; ok {
-		t.Fatalf("child env should not inherit QUINE_WORKSPACE_OWNER, got %q", m["QUINE_WORKSPACE_OWNER"])
-	}
-	if m["QUINE_WORKSPACE_BOOTSTRAP"] != c.WorkspaceSession {
-		t.Fatalf("QUINE_WORKSPACE_BOOTSTRAP = %q, want %q", m["QUINE_WORKSPACE_BOOTSTRAP"], c.WorkspaceSession)
+	// The revision handle names a place in the PARENT's workspace state. A child
+	// mounts its own view and computes its own; inheriting one is meaningless.
+	// (Under the old synthesizer this leaked into sh children too — Layer 2 #8.)
+	if v, present := m["QUINE_WORKSPACE_CURRENT_REVISION"]; present {
+		t.Errorf("QUINE_WORKSPACE_CURRENT_REVISION=%q crossed into a fork child", v)
 	}
 }

@@ -289,7 +289,7 @@ func TestPeerContractEndpoint(t *testing.T) {
 		t.Fatalf("type = %q", got.Type)
 	}
 	m, ok := got.Contract.(map[string]any)
-	if !ok || m["contract_version"] != "process-control/v0" {
+	if !ok || m["contract_version"] != "process-control/v1" {
 		t.Fatalf("contract = %#v", got.Contract)
 	}
 }
@@ -473,7 +473,7 @@ func makeTestAgent(t *testing.T) Agent {
 	if err := os.WriteFile(filepath.Join(publicRoot, "status", "inbox.json"), []byte(`{"pending_count":0}`+"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(publicRoot, "status", "contract.json"), []byte(`{"contract_version":"process-control/v0","control_actions":{"inject":{"description":"queue-and-deliver"}}}`+"\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(publicRoot, "status", "contract.json"), []byte(`{"contract_version":"process-control/v1","control_actions":{"inject":{"description":"queue-and-deliver"}}}`+"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	contextLine := `{"type":"message","data":{"role":"assistant","content":"hello from context","timestamp":1}}` + "\n"

@@ -23,20 +23,17 @@ import (
 // The runtime-owned-cache-file shape already had a single shared primitive
 // — writeFile / writeTextFile / writeJSONFile (runtime.go) — used by all
 // three surface-sync call sites T4.2 names (syncPublicSurface's degraded
-// marker, the config_surface.go family's resolved.env, and
-// syncInspectableWorldSurface's status.json/resources.json/workspace_root/
-// workspace/events.jsonl/fs-mutations.latest), so no further extraction was
-// needed for that half.
+// marker, the config_surface.go family, and syncInspectableWorldSurface's
+// status.json/resources.json/workspace_root/workspace/events.jsonl/
+// fs-mutations.latest), so no further extraction was needed for that half.
 //
-// The raw/read-only shape's write+chmod tail, by contrast, was independently
-// reimplemented three times — all within config_surface.go: registry.json
-// (syncConfigRegistrySurface), the inc/<n>/config.env birth snapshot
-// (writeIncarnationConfigSnapshot), and the inc/<n-1>/config-applied.env
-// staged-config archive (consumeAppliedStagedConfig). writeReadOnlyFile below
-// is the extracted tail; each call site keeps its own distinct guard (a
-// content-diff skip, an Lstat-exists skip, or no guard) since those guards
-// are the genuinely different part of each call site, not the duplicated
-// part.
+// The raw/read-only shape's write+chmod tail, by contrast, is used within
+// config_surface.go by the drift-refreshed registry.json projection and the
+// inc/<n-1>/override-applied.env archive (consumeAppliedEnvOverride).
+// writeReadOnlyFile below is the extracted tail; each call site keeps its own
+// distinct guard (a content-diff skip or an Lstat-exists skip) since those
+// guards are the genuinely different part of each call site, not the
+// duplicated part.
 //
 // syncPublicSurface's degraded marker and syncInspectableWorldSurface were
 // deliberately left out of this extraction: neither one chmods anything

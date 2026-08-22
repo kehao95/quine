@@ -9,13 +9,3 @@ Within our sample, task closure persisted whenever any quantitative environmenta
 In one case, agents completed a shared task while their reasoning traces suggested incompatible causal models—a proof-of-possibility that macro-level coordination does not strictly require aligned micro-level representations.
 
 We contribute a subtractive methodology—information ablation under existential unawareness—that locates coordination boundaries from above. Broader conclusions await larger samples, factorial manipulation, cross-model replication, and formal transcript analysis, but the methodology itself is applicable beyond our specific substrate.
-
-# Acknowledgements {-}
-
-This research was conducted independently by the authors, with no external
-funding or departmental support. The studied system uses LLM-driven agents as
-the object of study; separately, the authors used AI assistance for software
-and experiment support and for manuscript copy-editing. All research design,
-analysis, and claims are the authors' own, and the authors take full
-responsibility for the content. The authors thank the ALIFE reviewers for their
-time and evaluation.

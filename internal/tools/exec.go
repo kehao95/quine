@@ -7,36 +7,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"syscall"
 
 	"github.com/kehao95/quine/internal/config"
 	"github.com/kehao95/quine/internal/tape"
 )
-
-// procExeRe matches a procfs handle to a live process's in-memory executable
-// image: /proc/self/exe or /proc/<pid>/exe. Re-executing such a target after
-// the ephemeral body has been unlinked re-enters the original image in place
-// (body recovery) rather than reconstructing a successor.
-var procExeRe = regexp.MustCompile(`^/proc/(self|\d+)/exe$`)
-
-// isLiveProcessImageTarget reports whether target re-enters the current
-// process's in-memory image via procfs. It checks the cleaned path and one
-// level of symlink indirection (an agent may point a workspace symlink at
-// /proc/self/exe and exec that).
-func isLiveProcessImageTarget(target string) bool {
-	t := filepath.Clean(strings.TrimSpace(target))
-	if procExeRe.MatchString(t) {
-		return true
-	}
-	if resolved, err := os.Readlink(t); err == nil {
-		if procExeRe.MatchString(filepath.Clean(resolved)) {
-			return true
-		}
-	}
-	return false
-}
 
 type execStructuredResult struct {
 	Tool   string   `json:"tool"`
@@ -132,57 +108,22 @@ func (e *ExecExecutor) Execute(toolID string, req ExecRequest) tape.ToolResult {
 		}
 	}
 
-	// Body-recovery guard: once the ephemeral body has been unlinked, exec-ing
-	// the live process image via procfs (/proc/self/exe or /proc/<pid>/exe)
-	// re-enters the original in-memory body in place. That is body recovery,
-	// not reconstruction of a successor from externalized state, so it is
-	// rejected here rather than performed.
-	if e.Cfg != nil && e.Cfg.EphemeralBody && isLiveProcessImageTarget(target) {
-		return tape.ToolResult{
-			ToolID: toolID,
-			Content: tape.MarshalToolResultContent(execStructuredResult{
-				Tool:   "exec",
-				Status: "error",
-				Target: target,
-				Argv:   argv,
-				Error: "[EXEC ERROR] re-executing the live process image via procfs " +
-					"(/proc/self/exe or /proc/<pid>/exe) is not permitted after the " +
-					"ephemeral body has been unlinked: this recovers the original body " +
-					"rather than reconstructing a successor. Build a successor body from " +
-					"the runtime contract and workspace, then exec that instead.",
-			}),
-			IsError: true,
-		}
-	}
-
-	// Build environment for the new process.
-	execEnv, err := e.Cfg.ExecEnv()
-	if err != nil {
-		return tape.ToolResult{
-			ToolID: toolID,
-			Content: tape.MarshalToolResultContent(execStructuredResult{
-				Tool:   "exec",
-				Status: "error",
-				Target: target,
-				Argv:   argv,
-				Error:  fmt.Sprintf("[EXEC ERROR] Failed to build environment: %v", err),
-			}),
-			IsError: true,
-		}
-	}
-
-	// Staged-config merge (registry-design-brief § C, work order T3.1): the
-	// slot freed by the wisdom-overlay deletion (D5). config/next.env is
-	// validated against the RUNNING binary's registry and merged over the
-	// ExecEnv() serialization; this exec path is the only merge site — the
-	// merge never touches baseEnv(), so fork/spawn children (ChildEnv) never
-	// see staged values. A validation failure is a normal exec tool error:
-	// the runtime's deregister->fail->re-register recovery handles it, the
-	// staged file stays intact, and the agent can fix it and retry. The file
-	// is also left intact on the success path — a failed syscall.Exec must
-	// find it unchanged (idempotent retry); the successor archives and
-	// clears it at bootstrap (T3.2).
-	staged, err := config.ReadStagedOverrides(e.Cfg.StagedNextEnvPath())
+	// The successor's environment is built by the same pipeline as every other
+	// process this runtime creates, at the exec boundary: it inherits this
+	// process's environ minus the runtime-owned names, applies the agent's
+	// config/env/override, and takes the continuity stamps on top (session,
+	// tape, parent, and — a real fix, not a port — the CURRENT depth, which the
+	// deleted ExecEnv reset to 0 and thereby refilled its own depth budget).
+	//
+	// This is the self-modification boundary: the override is the agent's
+	// statement about the process it is about to become, and free knobs it
+	// names take effect there. A validation failure is a normal exec tool
+	// error — the runtime's deregister->fail->re-register recovery handles it,
+	// the override file stays intact byte-for-byte, and a fixed retry applies
+	// exactly what was written. The file is left intact on the success path
+	// too: a failed syscall.Exec must find it unchanged (idempotent retry), and
+	// the successor archives and clears it at bootstrap.
+	override, err := config.ReadEnvOverride(e.Cfg.EnvOverridePath())
 	if err != nil {
 		return tape.ToolResult{
 			ToolID: toolID,
@@ -196,7 +137,7 @@ func (e *ExecExecutor) Execute(toolID string, req ExecRequest) tape.ToolResult {
 			IsError: true,
 		}
 	}
-	execEnv = config.MergeStagedOverrides(execEnv, staged)
+	execEnv := config.BuildChildEnv(config.BoundarySelf, os.Environ(), override, e.Cfg.SelfReentryStamps())
 
 	if bootstrapRoot, err := stageExecContextBootstrap(e.Cfg.DataDir, e.ContextRoot); err != nil {
 		return tape.ToolResult{
@@ -214,9 +155,9 @@ func (e *ExecExecutor) Execute(toolID string, req ExecRequest) tape.ToolResult {
 		execEnv = append(execEnv, ContextBootstrapEnv+"="+bootstrapRoot)
 	}
 
-	// Merge with filtered OS environment (need PATH, HOME, etc.)
-	fullEnv := MergeEnv(filterProcessIdentity(os.Environ()), execEnv)
-	fullEnv = MergeEnv(fullEnv, execProcessSurfaceEnv(e.Cfg))
+	// QUINE_AGENT_ROOT is masked from inheritance (each process has its own),
+	// so the runtime re-states it last, where it wins outright.
+	fullEnv := MergeEnv(execEnv, execProcessSurfaceEnv(e.Cfg))
 
 	// Perform the exec - this does not return on success.
 	err = syscall.Exec(target, argv, fullEnv)

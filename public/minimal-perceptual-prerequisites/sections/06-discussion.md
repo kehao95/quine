@@ -14,7 +14,7 @@ Framed through inadvertent social information theory [@Danchin2004ISI], the emer
 
 ## Coordination Without Representational Alignment
 
-The misalignment case (Section 5.6, Table 3) is perhaps the most striking observation for a self-organization perspective: macro-level coordination emerged while micro-level internal models were not merely different but contradictory. The task completed not because agents converged on a shared model, but because their independently motivated responses happened to produce complementary environmental modifications.
+The misalignment case (Table 3) is perhaps the most striking observation for a self-organization perspective: macro-level coordination emerged while micro-level internal models were not merely different but contradictory. The task completed not because agents converged on a shared model, but because their independently motivated responses happened to produce complementary environmental modifications.
 
 This single observation (N=1, not formally coded) is consistent with *structural coupling* [@MaturanaVarela1987TreeOfKnowledge]: coordination through reciprocal environmental perturbation rather than shared mental models. It constitutes a proof-of-possibility that functional coordination does not strictly require aligned causal narratives---but whether such cases are common or rare remains unknown and replication is needed before drawing broader conclusions.
 
@@ -34,7 +34,7 @@ Our contribution is methodological and empirical: a subtractive ablation design 
 
 **Single model and task.** All runs use GPT-5.4, a closed-source model, so exact replication by independent parties is not guaranteed. Whether the threshold generalizes across model families or task structures remains untested.
 
-**Informal transcript coding.** Peer-awareness annotations reflect both authors' unanimous reading of reasoning traces using criteria in Section 4. This is not formal qualitative coding with inter-rater reliability; more granular distinctions would require formal methods.
+**Informal transcript coding.** Peer-awareness annotations reflect both authors' unanimous reading of reasoning traces using criteria in the Method section. This is not formal qualitative coding with inter-rater reliability; more granular distinctions would require formal methods.
 
 **Step D contamination.** Five of eight Step D runs were contaminated by agents reading hidden-state files or source code—actions that constitute prompt violations (Appendix B). Notably, no prompt violations occurred in Steps A--C, where quantitative signals provided legitimate channels for anomaly resolution, consistent with signal deprivation encouraging boundary-testing behavior.
 

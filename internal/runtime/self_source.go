@@ -32,21 +32,23 @@ var selfSourceGitSentinelFiles = []string{
 }
 
 type selfSourceManifest struct {
-	Format string `json:"format"`
-	Files  int    `json:"files"`
-	Size   int    `json:"size"`
-	SHA256 string `json:"sha256"`
+	Format     string `json:"format"`
+	Projection string `json:"projection"`
+	Files      int    `json:"files"`
+	Size       int    `json:"size"`
+	SHA256     string `json:"sha256"`
 }
 
 func (r *Runtime) syncSelfSourceSurface(agentRoot string) error {
 	sourceRoot := filepath.Join(agentRoot, "source-code")
-	if !r.cfg.SelfSourceCodeEnabled {
+	projection := r.cfg.SelfSourceProjectionMode()
+	if projection == "none" {
 		if err := removeSelfSourceSurface(sourceRoot); err != nil {
 			return fmt.Errorf("remove disabled self-source surface: %w", err)
 		}
 		return nil
 	}
-	if selfSourceSurfaceReady(sourceRoot) {
+	if selfSourceSurfaceReady(sourceRoot, projection) {
 		return nil
 	}
 	if err := removeSelfSourceSurface(sourceRoot); err != nil {
@@ -55,7 +57,7 @@ func (r *Runtime) syncSelfSourceSurface(agentRoot string) error {
 	if err := os.MkdirAll(sourceRoot, 0o755); err != nil {
 		return fmt.Errorf("mkdir self-source root: %w", err)
 	}
-	if err := materializeSelfSourceSurface(sourceRoot); err != nil {
+	if err := materializeSelfSourceSurface(sourceRoot, projection); err != nil {
 		_ = removeSelfSourceSurface(sourceRoot)
 		return err
 	}
@@ -66,8 +68,8 @@ func (r *Runtime) syncSelfSourceSurface(agentRoot string) error {
 	return nil
 }
 
-func selfSourceSurfaceReady(root string) bool {
-	want, err := currentSelfSourceManifest()
+func selfSourceSurfaceReady(root, projection string) bool {
+	want, err := currentSelfSourceManifestForProjection(projection)
 	if err != nil {
 		return false
 	}
@@ -92,8 +94,15 @@ func selfSourceSurfaceReady(root string) bool {
 	return true
 }
 
-func materializeSelfSourceSurface(root string) error {
-	return materializeSelfSourceRepoSurface(root)
+func materializeSelfSourceSurface(root, projection string) error {
+	switch projection {
+	case "runtime":
+		return materializeRuntimeSelfSourceSurface(root)
+	case "repo":
+		return materializeSelfSourceRepoSurface(root)
+	default:
+		return fmt.Errorf("unsupported self-source projection %q", projection)
+	}
 }
 
 func materializeSelfSourceRepoSurface(root string) error {
@@ -123,7 +132,20 @@ func materializeSelfSourceRepoSurface(root string) error {
 	if err := commitSelfSourceOverlay(root); err != nil {
 		return err
 	}
-	return writeSelfSourceManifest(root)
+	return writeSelfSourceManifest(root, "repo")
+}
+
+func materializeRuntimeSelfSourceSurface(root string) error {
+	if err := runSelfSourceGit("", "init", "-q", root); err != nil {
+		return err
+	}
+	if err := overlayEmbeddedSelfSource(root); err != nil {
+		return err
+	}
+	if err := commitSelfSourceOverlay(root); err != nil {
+		return err
+	}
+	return writeSelfSourceManifest(root, "runtime")
 }
 
 func overlayEmbeddedSelfSource(root string) error {
@@ -209,8 +231,8 @@ func selfSourceGitHasStagedChanges(root string) (bool, error) {
 	return false, fmt.Errorf("git diff --cached --quiet: %w: %s", err, strings.TrimSpace(stderr.String()))
 }
 
-func writeSelfSourceManifest(root string) error {
-	currentManifest, err := currentSelfSourceManifest()
+func writeSelfSourceManifest(root, projection string) error {
+	currentManifest, err := currentSelfSourceManifestForProjection(projection)
 	if err != nil {
 		return err
 	}
@@ -226,22 +248,34 @@ func writeSelfSourceManifest(root string) error {
 }
 
 func currentSelfSourceManifest() (selfSourceManifest, error) {
+	return currentSelfSourceManifestForProjection("repo")
+}
+
+func currentSelfSourceManifestForProjection(projection string) (selfSourceManifest, error) {
 	bundle, err := quineroot.ReadSelfSourceBundle()
 	if err != nil {
 		return selfSourceManifest{}, err
 	}
 	hash := sha256.New()
-	hash.Write([]byte("bundle\x00"))
-	hash.Write(bundle)
+	hash.Write([]byte("projection\x00" + projection + "\x00"))
+	size := 0
+	if projection == "repo" {
+		hash.Write([]byte("bundle\x00"))
+		hash.Write(bundle)
+		size += len(bundle)
+	} else if projection != "runtime" {
+		return selfSourceManifest{}, fmt.Errorf("unsupported self-source projection %q", projection)
+	}
 	hash.Write([]byte("\x00embedded\x00"))
 	embeddedSize, err := hashEmbeddedSelfSource(hash)
 	if err != nil {
 		return selfSourceManifest{}, err
 	}
 	return selfSourceManifest{
-		Format: "quine-source-repo/v1",
-		Size:   len(bundle) + embeddedSize,
-		SHA256: hex.EncodeToString(hash.Sum(nil)),
+		Format:     "quine-source-repo/v1",
+		Projection: projection,
+		Size:       size + embeddedSize,
+		SHA256:     hex.EncodeToString(hash.Sum(nil)),
 	}, nil
 }
 

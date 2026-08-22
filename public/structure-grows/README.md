@@ -1,3 +1,7 @@
+---
+source: Paper/papers/structure-grows
+---
+
 # Structure Grows
 
 > How a Living Repository Differentiates Its Organs. A blog essay — published on Substack.

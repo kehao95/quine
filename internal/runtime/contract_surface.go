@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	processControlContractVersion = "process-control/v0"
+	processControlContractVersion = "process-control/v1"
 	worldSurfaceContractVersion   = "world/v0"
 )
 
@@ -66,15 +66,15 @@ func (r *Runtime) runtimeContractManifest() runtimeContractManifest {
 		AgentRoot:       r.cfg.AgentRoot(),
 		PublicRoot:      publicRoot,
 		RuntimeRoot:     r.cfg.RuntimeRoot(),
-		Usage:           "To drive a peer process, read its public/status/contract.json, then write the named file under its public ctl/. Reads of status/*, config/*, and this contract are scan-safe; writes to ctl/* are the only effectful actions. Retrieve queued payloads from status/inbox.json. The live_context surface is the canonical complete-cell context (provider input); live_generation is a transient display-only stream of in-flight generation deltas and is never provider input or recovery state.",
+		Usage:           "To drive a peer process, read its public/status/contract.json, then write the named file under its public ctl/. Reads of status/*, config/*, and this contract are scan-safe; writes to ctl/* are the only effectful actions. Retrieve queued payloads from status/inbox.json. config/registry.json is the knob catalog — a QUINE_* name absent from a process's environment is at its compiled default, and each knob's mutability says whether config/env/override may set it. A process's own environment is published by the OS at /proc/<pid>/environ; the runtime does not re-render it. The live_context surface is the canonical complete-cell context (provider input); live_generation is a transient display-only stream of in-flight generation deltas and is never provider input or recovery state.",
 		Surfaces: runtimeContractSurfaces{
 			Contract:        "status/contract.json",
 			Identity:        "status/session.json",
 			Inbox:           "status/inbox.json",
 			Control:         "ctl",
 			ControlLog:      "log/control.jsonl",
-			Config:          "config",                         // config/{registry.json,resolved.env}: peer-readable capability position, read-only
-			ConfigControl:   "ctl/config",                     // validated write gate over the peer's staged config/next.env; see control_actions.config
+			Config:          "config",                         // config/registry.json: the peer-readable knob catalog, read-only (config/env/override is the agent's own and is not projected)
+			ConfigControl:   "ctl/env",                        // validated write gate over the peer's config/env/override; see control_actions.env
 			LiveContext:     "../context/state/current.jsonl", // complete cells, provider input, recovered
 			LiveGeneration:  "../context/state/live.jsonl",    // transient generation deltas, display-only, never input, never recovered
 			PromptFragments: "../context/prompt",
@@ -106,9 +106,9 @@ func (r *Runtime) runtimeContractManifest() runtimeContractManifest {
 				Interrupts:     true,
 				EmptyWrite:     "request interrupt without new payload",
 			},
-			"config": {
-				Description: "validated staged-config write gate: a write must be one whole config/next.env payload (env syntax) and REPLACES the staged file wholesale; it lands atomically only when every line is legal against this process's compiled capability registry, otherwise the whole transaction is rejected at close and nothing lands. Reading the file back returns the staged content, its validation state, registry coupling warnings, and the violations of the last rejected write. Not a message action: nothing queues, wakes, or injects; staged values apply only at this process's next self-reentry exec.",
-				EmptyWrite:  "clears the staged file (no overrides for the next incarnation)",
+			"env": {
+				Description: "validated child-env policy gate: a write must be one whole config/env/override payload (KEY=VALUE sets, a bare KEY unsets, # comments) and REPLACES the file wholesale; it lands atomically only when every line is legal against this process's compiled capability registry, otherwise the whole transaction is rejected at close and nothing lands. Reading the file back returns the current policy, its validation state, registry coupling warnings, and the violations of the last rejected write. The policy shapes the environment of processes this peer CONSTRUCTS (sh children, fork/spawn children, and its next self-reentry exec); it does not change this peer's own environment, which is fixed at its birth. Not a message action: nothing queues, wakes, or injects.",
+				EmptyWrite:  "clears the policy (this peer's children inherit unchanged)",
 			},
 		},
 		InboxSchema: map[string]string{
@@ -124,6 +124,8 @@ func (r *Runtime) runtimeContractManifest() runtimeContractManifest {
 		},
 		NonClaims: []string{
 			"no broad ctl/* tree",
+			"ctl writes are whole-file and last-close-wins; concurrent writers to one action are not serialized",
+			"env pins bind the mediated channels (ctl/env, config/env/override, and the boundaries this runtime constructs); they do not bind programs the peer starts itself through sh",
 			"no callback/correlation/routing protocol",
 			"no full inference-preemption guarantee for interrupt",
 			"no total private world contract",

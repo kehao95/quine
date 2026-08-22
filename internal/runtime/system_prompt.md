@@ -25,7 +25,6 @@ Fd 4 is a byte-stream delivery channel, not the whole effect surface: when a wor
 ### Environment
 - Platform: {PLATFORM}
 - Model: {MODEL}
-{PROVIDER_TRANSPORT_BLOCK}
 - Shell: {SHELL}
 - Depth: {DEPTH}
 {LIMITS_BLOCK}{ENVIRONMENT_PHYSICS_BLOCK}

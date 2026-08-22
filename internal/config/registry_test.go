@@ -98,8 +98,10 @@ var registryEnvUniverse = []string{
 	EnvSuppressInitialBegin,
 	EnvInitialUserMessage,
 	EnvSelfSourceCodeEnabled,
+	EnvSelfSourceProjection,
 	EnvUserAgent,
 	EnvContextTape,
+	EnvContextBootstrap,
 	EnvWorkspaceRoot,
 	EnvWorkspace,
 	EnvWorkspaceBackend,
@@ -120,6 +122,7 @@ var registryEnvUniverse = []string{
 var nonLoadedRegistryEnvs = map[string]string{
 	EnvRunID:                  "regenerated on every activation; TestRegistryRuntimeEmittedLoadBehavior",
 	EnvContextTape:            "never read by Load(); TestRegistryRuntimeEmittedLoadBehavior",
+	EnvContextBootstrap:       "never read by Load(); consumed by the runtime's context import and unset after; TestRegistryRuntimeEmittedLoadBehavior",
 	EnvConfigDir:              "not stored on Config; baseEnv passthrough; TestRegistryConfigDirPassthrough",
 	EnvPromptBudgetVisibility: "read directly by internal/world, unvalidated; TestRegistryUnvalidatedEnvsLoadCleanly",
 	EnvWorldOnePerShell:       "read directly by internal/world, unvalidated; TestRegistryUnvalidatedEnvsLoadCleanly",
@@ -235,6 +238,8 @@ func buildLoadProbes(t *testing.T) map[string]loadProbe {
 			get: b01get(func(c *Config) bool { return c.ToolGates.AgentsSkillsEnabled })},
 		EnvSelfSourceCodeEnabled: {set: "1",
 			get: b01get(func(c *Config) bool { return c.ToolGates.SelfSourceCodeEnabled })},
+		EnvSelfSourceProjection: {set: "runtime",
+			get: func(c *Config) string { return c.SelfSourceProjectionMode() }},
 		EnvPeerDiscoveryEnabled: {set: "1",
 			get: b01get(func(c *Config) bool { return c.ToolGates.PeerDiscoveryEnabled })},
 		EnvFSMutationTelemetry: {set: "0",
@@ -767,6 +772,12 @@ func TestRegistryUnvalidatedEnvsLoadCleanly(t *testing.T) {
 	}
 }
 
+// TestRegistryConfigDirPassthrough: QUINE_CONFIG_DIR is the one registry knob
+// Load() never stores on Config — it is consumed at load time and reaches
+// children only by passing through. Under the deleted synthesizer that required
+// a hand-written baseEnv special case. It is now the default behavior of the
+// pipeline (operator-only → pinned → inherited verbatim), which is why the claim
+// is re-expressed against BuildChildEnv rather than a serializer.
 func TestRegistryConfigDirPassthrough(t *testing.T) {
 	resetRegistryEnv(t)
 	os.Setenv(EnvConfigDir, "/tmp/quine-registry-config")
@@ -774,11 +785,11 @@ func TestRegistryConfigDirPassthrough(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load() error: %v", err)
 	}
-	env, err := c.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
-	}
-	if !containsEnv(env, EnvConfigDir+"=/tmp/quine-registry-config") {
-		t.Errorf("ChildEnv() should pass %s through when set", EnvConfigDir)
+	assertCrossesEveryBoundary(t, c, EnvConfigDir+"=/tmp/quine-registry-config")
+
+	// And it is not settable through the mediated channel: pinned means the
+	// operator's call, not the agent's.
+	if _, err := ParseEnvOverride([]byte(EnvConfigDir + "=/tmp/agent-chosen\n")); err == nil {
+		t.Errorf("config/env/override must reject %s (operator-only → pinned)", EnvConfigDir)
 	}
 }

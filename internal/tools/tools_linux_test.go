@@ -30,7 +30,7 @@ func TestWorkspaceOverlayStartJobRequestsMountNamespace(t *testing.T) {
 		Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"},
 	}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	if err := b.Prepare(); err != nil {
 		t.Skipf("workspace physics unsupported in this Linux environment: %v", err)
 	}

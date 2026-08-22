@@ -138,7 +138,7 @@ func decodeContextEntries(t *testing.T, data []byte) []tape.TapeEntry {
 func TestNewForkExecutorLeavesDefaultTimeoutDisabled(t *testing.T) {
 	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "fork-timeout-default"}, Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 123}, Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh", SelfReentryTarget: "/tmp/quine-self-reentry"}}
 
-	fork := NewForkExecutor(cfg, nil)
+	fork := NewForkExecutor(cfg)
 	if fork.QuinePath != cfg.SelfReentryTarget {
 		t.Fatalf("QuinePath = %q, want %q", fork.QuinePath, cfg.SelfReentryTarget)
 	}
@@ -150,7 +150,7 @@ func TestNewForkExecutorLeavesDefaultTimeoutDisabled(t *testing.T) {
 func TestNewForkExecutorUsesConfiguredDefaultTimeout(t *testing.T) {
 	cfg := &config.Config{Identity: config.Identity{SessionID: "fork-timeout-configured"}, Limits: config.Limits{ForkDefaultTimeoutSeconds: 7}, Paths: config.Paths{DataDir: t.TempDir(), SelfReentryTarget: "/tmp/quine-self-reentry"}}
 
-	fork := NewForkExecutor(cfg, nil)
+	fork := NewForkExecutor(cfg)
 	if fork.DefaultTimeout != 7*time.Second {
 		t.Fatalf("DefaultTimeout = %v, want 7s", fork.DefaultTimeout)
 	}
@@ -159,7 +159,7 @@ func TestNewForkExecutorUsesConfiguredDefaultTimeout(t *testing.T) {
 func TestNewForkExecutor_UsesSelfReentryTargetWhenEphemeralBodyEnabled(t *testing.T) {
 	cfg := &config.Config{Identity: config.Identity{SessionID: "fork-ephemeral-target"}, ToolGates: config.ToolGates{EphemeralBody: true}, Paths: config.Paths{DataDir: t.TempDir(), ExecutablePath: "/tmp/launch-path-quine", SelfReentryTarget: "/proc/self/exe"}}
 
-	fork := NewForkExecutor(cfg, nil)
+	fork := NewForkExecutor(cfg)
 	if got, want := fork.QuinePath, cfg.SelfReentryTarget; got != want {
 		t.Fatalf("QuinePath = %q, want %q", got, want)
 	}
@@ -383,54 +383,81 @@ func TestParseForkArgs_ForkWorldEnabled_WorldRejectedWhenDisabled(t *testing.T) 
 	}
 }
 
-func TestFilterProcessIdentity(t *testing.T) {
-	env := []string{
-		"PATH=/usr/bin",
-		"QUINE_SESSION_ID=old-session",
-		"QUINE_RUN_ID=old-run",
-		"QUINE_TAPE_ID=tape-session",
-		ContextBootstrapEnv + "=bootstrap-dir",
-		"QUINE_WORKSPACE_SESSION=workspace-session",
-		"QUINE_WORKSPACE_OWNER=1",
-		"QUINE_WORKSPACE_BOOTSTRAP=parent-workspace",
-		"QUINE_WORKSPACE_CURRENT_REVISION=wr4",
-		"QUINE_DEPTH=1",
-		"HOME=/home/user",
+// TestForkChildEnvMaskSubsumesProcessIdentityFilter is the successor to
+// TestFilterProcessIdentity. That function is gone: its hand-kept strip list and
+// the registry's runtime-emitted class were the same eight names maintained in
+// two places, and the mask in config.BoundaryBehavior is now derived from the
+// registry instead. This test is the proof of subsumption — it plants the exact
+// eight names the old filter listed, in the real process environ, and drives the
+// real fork-boundary constructor.
+//
+// It also asserts what the old filter could NOT: QUINE_DEPTH is not merely
+// stripped-and-reintroduced-by-synthesis, it is stamped from the parent's
+// in-memory depth and wins over whatever the environ said.
+func TestForkChildEnvMaskSubsumesProcessIdentityFilter(t *testing.T) {
+	// The eight names the deleted filterProcessIdentity stripped by hand.
+	stale := map[string]string{
+		"QUINE_SESSION_ID":                 "old-session",
+		"QUINE_RUN_ID":                     "old-run",
+		"QUINE_TAPE_ID":                    "tape-session",
+		ContextBootstrapEnv:                "bootstrap-dir",
+		"QUINE_WORKSPACE_SESSION":          "workspace-session",
+		"QUINE_WORKSPACE_OWNER":            "1",
+		"QUINE_WORKSPACE_BOOTSTRAP":        "parent-workspace",
+		"QUINE_WORKSPACE_CURRENT_REVISION": "wr4",
 	}
-	filtered := filterProcessIdentity(env)
+	for name, value := range stale {
+		t.Setenv(name, value)
+	}
+	t.Setenv("QUINE_DEPTH", "1")
+	t.Setenv("FORK_MASK_FOREIGN", "kept")
 
-	// Should not contain per-process or per-lineage identity.
-	for _, e := range filtered {
-		if strings.HasPrefix(e, "QUINE_SESSION_ID=") {
-			t.Errorf("filtered env should not contain QUINE_SESSION_ID: %v", filtered)
-		}
-		if strings.HasPrefix(e, "QUINE_RUN_ID=") {
-			t.Errorf("filtered env should not contain QUINE_RUN_ID: %v", filtered)
-		}
-		if strings.HasPrefix(e, "QUINE_TAPE_ID=") {
-			t.Errorf("filtered env should not contain QUINE_TAPE_ID: %v", filtered)
-		}
-		if strings.HasPrefix(e, ContextBootstrapEnv+"=") {
-			t.Errorf("filtered env should not contain %s: %v", ContextBootstrapEnv, filtered)
-		}
-		if strings.HasPrefix(e, "QUINE_WORKSPACE_SESSION=") {
-			t.Errorf("filtered env should not contain QUINE_WORKSPACE_SESSION: %v", filtered)
-		}
-		if strings.HasPrefix(e, "QUINE_WORKSPACE_OWNER=") {
-			t.Errorf("filtered env should not contain QUINE_WORKSPACE_OWNER: %v", filtered)
-		}
-		if strings.HasPrefix(e, "QUINE_WORKSPACE_BOOTSTRAP=") {
-			t.Errorf("filtered env should not contain QUINE_WORKSPACE_BOOTSTRAP: %v", filtered)
-		}
-		if strings.HasPrefix(e, "QUINE_WORKSPACE_CURRENT_REVISION=") {
-			t.Errorf("filtered env should not contain QUINE_WORKSPACE_CURRENT_REVISION: %v", filtered)
+	cfg := &config.Config{
+		Identity:  config.Identity{ModelID: "test-model", SessionID: "mask-parent", Depth: 2},
+		Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"},
+		Limits:    config.Limits{MaxDepth: 5, OutputTruncate: 20480},
+		Paths:     config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"},
+	}
+	env := envSliceToMap(ForkChildEnv(cfg, nil))
+
+	for name := range stale {
+		if got, present := env[name]; present {
+			t.Errorf("%s must not be inherited by a fork child (mask), got %q", name, got)
 		}
 	}
 
-	// Should contain other entries
-	if len(filtered) != 3 {
-		t.Errorf("expected 3 entries, got %d: %v", len(filtered), filtered)
+	// The parent's own environ still crosses the boundary untouched.
+	if env["FORK_MASK_FOREIGN"] != "kept" {
+		t.Errorf("foreign var = %q, want kept — the mask must only remove runtime-owned names", env["FORK_MASK_FOREIGN"])
 	}
+	if env["PATH"] == "" {
+		t.Error("PATH missing from fork child env")
+	}
+
+	// Lineage: stamped from the parent's in-memory depth, not inherited.
+	if env["QUINE_DEPTH"] != "3" {
+		t.Errorf("QUINE_DEPTH = %q, want 3 (parent depth 2 + 1, stamped over the inherited 1)", env["QUINE_DEPTH"])
+	}
+	if env["QUINE_PARENT_SESSION"] != "mask-parent" {
+		t.Errorf("QUINE_PARENT_SESSION = %q, want mask-parent", env["QUINE_PARENT_SESSION"])
+	}
+}
+
+// TestForkChildEnvOmitsUnsetKnobs is the fork-boundary half of the
+// manufactured-evidence inversion (the sh half is TestShChildOmitsUnsetKnobs).
+// The deleted ChildEnv serialized every registry knob into every child, defaults
+// included. A knob nobody set is now ABSENT, and absence is what "compiled
+// default" is spelled as.
+func TestForkChildEnvOmitsUnsetKnobs(t *testing.T) {
+	cfg := &config.Config{
+		Identity:  config.Identity{ModelID: "test-model", SessionID: "unset-knob-parent"},
+		Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"},
+		// Resolved values an operator never authored. None of them may appear.
+		Limits:    config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 10, OutputTruncate: 20480, MaxTurns: 20},
+		ToolGates: config.ToolGates{},
+		Paths:     config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"},
+	}
+	assertNoUnauthoredKnobs(t, "fork", envSliceToMap(ForkChildEnv(cfg, nil)), cfg.ForkChildStamps())
 }
 
 func TestCurrentRevisionFromWorldRevisionBlock(t *testing.T) {

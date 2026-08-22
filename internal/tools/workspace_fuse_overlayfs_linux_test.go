@@ -110,7 +110,7 @@ func TestWorkspaceOverlayFuseDriverRunsAndCommits(t *testing.T) {
 		},
 	}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	defer b.Close(false)
 	requireWorkspaceSupport(t, b)
 	result := b.Execute("tool-fuse-driver", "test \"${QUINE_WORKSPACE_OVERLAY_DRIVER:-}\" = fuse && printf 'fuse ok\\n' > result.txt", 0, 0, false, false, "")

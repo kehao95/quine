@@ -110,6 +110,14 @@ func TestRefreshForkEnvDoesNotLeakParentWorkspaceIdentity(t *testing.T) {
 	os.Setenv(tools.ContextBootstrapEnv, "leaked-context-bootstrap")
 	os.Setenv("QUINE_CONTEXT_TAPE", "leaked-context-tape")
 
+	// The absence assertions below are about what the runtime does NOT
+	// manufacture, so the ambient environment must not be able to supply these
+	// names behind the test's back: a developer shell exporting QUINE_MAX_DEPTH
+	// would otherwise make the assertion pass or fail for the wrong reason.
+	for _, name := range []string{"QUINE_MAX_DEPTH", "QUINE_SPAWN_ENABLED", "QUINE_FORK_ENABLED", "QUINE_OUTPUT_TRUNCATE"} {
+		clearEnvForTest(t, name)
+	}
+
 	rt := NewWithProvider(cfg, &mockProvider{})
 	rt.refreshForkEnv()
 	rt.refreshSpawnEnv()
@@ -120,23 +128,59 @@ func TestRefreshForkEnvDoesNotLeakParentWorkspaceIdentity(t *testing.T) {
 		envMap[k] = v
 	}
 
+	// The parent's own workspace identity is runtime-emitted, therefore masked:
+	// none of the four leaked values above may cross the fork boundary. What the
+	// child gets instead is what the runtime stamps, and only that.
+
+	// Adoption, not inheritance: the child takes the parent's workspace SESSION
+	// as its BOOTSTRAP so it joins the lineage — and it is the parent's real
+	// session, not the "leaked-bootstrap" that was sitting in the environ.
 	if got := envMap["QUINE_WORKSPACE_BOOTSTRAP"]; got != cfg.WorkspaceSession {
-		t.Fatalf("QUINE_WORKSPACE_BOOTSTRAP = %q, want %q", got, cfg.WorkspaceSession)
+		t.Fatalf("QUINE_WORKSPACE_BOOTSTRAP = %q, want the parent's workspace session %q", got, cfg.WorkspaceSession)
 	}
-	if got := envMap["QUINE_WORKSPACE_CURRENT_REVISION"]; got != cfg.WorkspaceCurrentRevision {
-		t.Fatalf("QUINE_WORKSPACE_CURRENT_REVISION = %q, want %q", got, cfg.WorkspaceCurrentRevision)
+	// A child never owns its parent's workspace; it borrows a view of one. The
+	// stamp says so explicitly, and it beats the leaked owner=1 in the environ.
+	if got, ok := envMap["QUINE_WORKSPACE_OWNER"]; !ok || got != "0" {
+		t.Fatalf("QUINE_WORKSPACE_OWNER = %q (present=%v), want the stamped \"0\" — a child borrows a workspace, it does not own one", got, ok)
 	}
+	// INVERSION (brief E-matrix, fork row): this used to assert that the child
+	// inherits the PARENT's QUINE_WORKSPACE_CURRENT_REVISION ("wr3"). That is
+	// exactly the leak this test is named after. A revision handle names a place
+	// in the parent's own workspace state; the child mounts its own view and
+	// computes its own revision. Neither the parent's real revision nor the
+	// leaked "wr999" may appear.
+	if got, ok := envMap["QUINE_WORKSPACE_CURRENT_REVISION"]; ok {
+		t.Fatalf("QUINE_WORKSPACE_CURRENT_REVISION = %q, want ABSENT: a revision handle is a place in the PARENT's workspace state, not a fact about the child", got)
+	}
+	// The child gets its own session id from the fork executor, never the
+	// parent's workspace session.
 	if _, ok := envMap["QUINE_WORKSPACE_SESSION"]; ok {
 		t.Fatalf("fork env should not include QUINE_WORKSPACE_SESSION, got %q", envMap["QUINE_WORKSPACE_SESSION"])
-	}
-	if _, ok := envMap["QUINE_WORKSPACE_OWNER"]; ok {
-		t.Fatalf("fork env should not include QUINE_WORKSPACE_OWNER, got %q", envMap["QUINE_WORKSPACE_OWNER"])
 	}
 	if _, ok := envMap[tools.ContextBootstrapEnv]; ok {
 		t.Fatalf("fork env should not include %s, got %q", tools.ContextBootstrapEnv, envMap[tools.ContextBootstrapEnv])
 	}
 	if _, ok := envMap["QUINE_CONTEXT_TAPE"]; ok {
 		t.Fatalf("fork env should not include QUINE_CONTEXT_TAPE, got %q", envMap["QUINE_CONTEXT_TAPE"])
+	}
+	// Tree membership: the fork boundary is where lineage marks are stamped, and
+	// this is the boundary where they mean something (contrast BoundaryShell,
+	// where they are masked — a program started from a shell is not a member of
+	// this agent tree).
+	if got := envMap["QUINE_DEPTH"]; got != "1" {
+		t.Fatalf("QUINE_DEPTH = %q, want \"1\" (parent depth 0 + 1)", got)
+	}
+	if got := envMap["QUINE_PARENT_SESSION"]; got != cfg.SessionID {
+		t.Fatalf("QUINE_PARENT_SESSION = %q, want %q", got, cfg.SessionID)
+	}
+	// The manufactured-evidence inversion, at the fork boundary: a knob nobody
+	// set is ABSENT from the child's env. cfg.MaxDepth is 5 and the tool gates
+	// are off, but no operator authored those, so no child may read them as if
+	// someone had.
+	for _, unset := range []string{"QUINE_MAX_DEPTH", "QUINE_SPAWN_ENABLED", "QUINE_FORK_ENABLED", "QUINE_OUTPUT_TRUNCATE"} {
+		if got, ok := envMap[unset]; ok {
+			t.Fatalf("fork child env manufactures %s=%q for a knob nobody set; absence is how an unset knob is spelled", unset, got)
+		}
 	}
 	if rt.spawn == nil {
 		t.Fatal("spawn executor should be initialized when spawn is enabled")

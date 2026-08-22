@@ -293,9 +293,23 @@ exit "$status"
 type ShExecutor struct {
 	Shell     string
 	MaxOutput int
-	Env       []string
-	Timeout   time.Duration
-	Network   string
+	// Env is the base environment of every sh child, as of construction.
+	//
+	// It is a snapshot, and a snapshot is not enough: the agent edits
+	// config/env/override with an ordinary shell write, and the very next
+	// command must see it. commandBaseEnv() rebuilds this from cfg at each
+	// command, and every command-construction site calls that, not this field.
+	// Env remains the value for executors built without a cfg (tests) and the
+	// fallback when the override on disk is unreadable.
+	Env     []string
+	Timeout time.Duration
+	Network string
+
+	// cfg is retained solely so the boundary can be rebuilt per command. A
+	// stale child-env policy is a design violation, not a performance
+	// trade-off: reading one small file per sh call is the price of the
+	// override meaning what it says.
+	cfg *config.Config
 
 	// WorkDir is the working directory for shell commands.
 	// If empty, defaults to the session's job directory.
@@ -404,73 +418,26 @@ func shellErrorResult(toolID string, message string) tape.ToolResult {
 	}
 }
 
-// NewShExecutor creates a ShExecutor from config with the given child
-// environment. The childEnv slice should contain QUINE_* overrides (from
-// Config.ChildEnv). These are merged with os.Environ() so that spawned
-// commands inherit a complete environment with QUINE_* vars overlaid.
+// NewShExecutor creates a ShExecutor from config.
 //
-// QUINE_RUN_ID is explicitly added from cfg.RunID so tools like world binary
-// can identify the current physical run without overloading stable session
-// lineage. QUINE_SESSION_ID stays out of ordinary tool environments so shell-
-// spawned quine processes do not accidentally resume the parent session.
+// An sh child inherits this process's environment minus the runtime-owned
+// names, with the agent's config/env/override applied on top, plus the few
+// facts it cannot derive for itself (config.ShellStamps: run id, agent root,
+// resolved runtime root). It does NOT receive a synthesized copy of this
+// process's policy: a knob nobody set is absent from a shell child exactly as
+// it is absent here, and `./quine` launched from a shell is a new founder, not
+// a marked descendant.
 //
-// QUINE_TAPE_ID and internal context bootstrap env are stripped so child/tool
-// subprocesses do not inherit process-private bootstrap state.
-func NewShExecutor(cfg *config.Config, childEnv []string) *ShExecutor {
-	// Filter out process-private bootstrap env from childEnv.
-	filteredChildEnv := make([]string, 0, len(childEnv))
-	for _, entry := range childEnv {
-		if strings.HasPrefix(entry, config.EnvSessionID+"=") {
-			continue
-		}
-		if strings.HasPrefix(entry, config.EnvTapeID+"=") {
-			continue
-		}
-		if strings.HasPrefix(entry, config.EnvRunID+"=") {
-			continue
-		}
-		if strings.HasPrefix(entry, ContextBootstrapEnv+"=") {
-			continue
-		}
-		if strings.HasPrefix(entry, config.EnvContextTape+"=") {
-			continue
-		}
-		filteredChildEnv = append(filteredChildEnv, entry)
-	}
-
-	// Filter out process-private bootstrap env from os.Environ() too.
-	filteredOsEnv := make([]string, 0, len(os.Environ()))
-	for _, entry := range os.Environ() {
-		if strings.HasPrefix(entry, config.EnvSessionID+"=") {
-			continue
-		}
-		if strings.HasPrefix(entry, config.EnvTapeID+"=") {
-			continue
-		}
-		if strings.HasPrefix(entry, config.EnvRunID+"=") {
-			continue
-		}
-		if strings.HasPrefix(entry, ContextBootstrapEnv+"=") {
-			continue
-		}
-		if strings.HasPrefix(entry, config.EnvContextTape+"=") {
-			continue
-		}
-		filteredOsEnv = append(filteredOsEnv, entry)
-	}
-
-	// Default git identity for shell commands. Quine is the sole author of
-	// work it does in its workspace, so give every shell a usable git profile
-	// out of the box instead of forcing each incarnation to run `git config`
-	// before it can commit. These are a base layer: a real GIT_* value in the
-	// inherited or child environment still wins.
-	mergedEnv := MergeEnv(append(defaultGitIdentityEnv(), filteredOsEnv...), filteredChildEnv)
-	mergedEnv = append(mergedEnv, config.EnvRunID+"="+cfg.RunID)
-
+// The old code hand-rolled two strip loops over childEnv and os.Environ(); the
+// shared mask in config.BoundaryBehavior subsumes both, and it is derived from
+// the registry rather than kept by hand, so a new runtime-emitted knob cannot
+// forget to be masked.
+func NewShExecutor(cfg *config.Config) *ShExecutor {
 	return &ShExecutor{
 		Shell:                      cfg.Shell,
 		MaxOutput:                  cfg.OutputTruncate,
-		Env:                        mergedEnv,
+		cfg:                        cfg,
+		Env:                        shBoundaryEnv(cfg, nil),
 		Timeout:                    time.Duration(cfg.ShTimeout) * time.Second,
 		Network:                    cfg.ShNetwork,
 		WorkDir:                    cfg.WorkDir,
@@ -480,6 +447,62 @@ func NewShExecutor(cfg *config.Config, childEnv []string) *ShExecutor {
 		FSMutationTelemetryEnabled: cfg.FSMutationTelemetryEnabled(),
 		subjective:                 newSubjectiveFS(cfg),
 	}
+}
+
+// shBoundaryEnv builds the sh-boundary environment for cfg.
+//
+// The default git identity is a BASE layer, beneath everything else: Quine is
+// the sole author of the work it does in its workspace, so every shell gets a
+// usable git profile out of the box rather than having to run `git config`
+// before its first commit — but a real GIT_* value in the inherited environment
+// or the override still wins.
+//
+// A malformed override is reported through onError and then ignored: an
+// unparseable policy file must not take the shell down with it. Enforcement is
+// unaffected — an illegal line was never going to be applied.
+func shBoundaryEnv(cfg *config.Config, onError func(error)) []string {
+	if cfg == nil {
+		return defaultGitIdentityEnv()
+	}
+	override, err := config.ReadEnvOverride(cfg.EnvOverridePath())
+	if err != nil && onError != nil {
+		onError(err)
+	}
+	env := config.BuildChildEnv(config.BoundaryShell, os.Environ(), override, cfg.ShellStamps())
+	return MergeEnv(defaultGitIdentityEnv(), env)
+}
+
+// commandBaseEnv is the environment every sh command starts from. It re-reads
+// config/env/override at each call: the agent's child-env policy is live, and a
+// policy that took effect one command late would be a lie the surface tells
+// about itself.
+func (b *ShExecutor) commandBaseEnv() []string {
+	if b == nil {
+		return nil
+	}
+	if b.cfg == nil {
+		return b.Env
+	}
+	return shBoundaryEnv(b.cfg, func(err error) {
+		// Best-effort visibility; the sh path has no logger of its own. The
+		// override surface's own read-back reports the violations in full.
+		fmt.Fprintf(os.Stderr, "[quine] child-env override ignored: %v\n", err)
+	})
+}
+
+// jobWrapperEnv is the QUINE_JOB_* plumbing the shell job wrapper reads back:
+// the shell it runs under, the command it was given, its session dir, and its
+// network regime. Runtime-emitted per job — masked from inheritance, stamped
+// here, where the job is actually known. Extra names (stdin file, interactive
+// marker) differ per job kind and are passed by the caller.
+func jobWrapperEnv(shell, command, sessionDir, network string, extra ...string) []string {
+	env := []string{
+		"QUINE_JOB_SHELL=" + shell,
+		"QUINE_JOB_COMMAND=" + command,
+		"QUINE_JOB_SESSION_DIR=" + sessionDir,
+		"QUINE_JOB_NETWORK=" + network,
+	}
+	return append(env, extra...)
 }
 
 // defaultGitIdentityEnv returns the default git author/committer identity for
@@ -685,13 +708,9 @@ func (b *ShExecutor) startJob(command string, detach bool, stdin string) (*manag
 	isolateNetwork := b.Network == "none"
 	cmd.SysProcAttr = jobSysProcAttr(detach, useOverlayWorkspace, isolateNetwork)
 
-	cmd.Env = MergeEnv(b.Env, []string{
-		"QUINE_JOB_SHELL=" + b.Shell,
-		"QUINE_JOB_COMMAND=" + command,
-		"QUINE_JOB_SESSION_DIR=" + jobSessionRoot,
-		"QUINE_JOB_STDIN_FILE=" + stdinFile,
-		"QUINE_JOB_NETWORK=" + b.Network,
-	})
+	cmd.Env = MergeEnv(b.commandBaseEnv(), jobWrapperEnv(b.Shell, command, jobSessionRoot, b.Network,
+		"QUINE_JOB_STDIN_FILE="+stdinFile,
+	))
 	// Under workspace physics, the wrapper is responsible for entering
 	// QUINE_WORKSPACE after the subjective view is mounted. Starting the
 	// outer process in a narrower workspace path can fail before the mount
@@ -1289,13 +1308,6 @@ func (b *ShExecutor) ResetWorkspaceAfterExternalCommit() {
 	defer b.mu.Unlock()
 	b.subjective.initialized = false
 	b.subjective.currentRevision = ""
-}
-
-func (b *ShExecutor) ChildEnvOverrides() []string {
-	if b.subjective == nil {
-		return nil
-	}
-	return b.subjective.childEnvOverrides()
 }
 
 // Numeric tool-argument coercion lives in arg_coerce.go (intFromAny / IntArg),

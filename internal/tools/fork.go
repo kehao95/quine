@@ -68,16 +68,25 @@ type ForkExecutor struct {
 	subjective *subjectiveFS
 }
 
-// NewForkExecutor creates a ForkExecutor from config with the given child
-// environment. The childEnv slice should contain QUINE_* overrides.
-func NewForkExecutor(cfg *config.Config, childEnv []string) *ForkExecutor {
+// NewForkExecutor creates a ForkExecutor from config.
+//
+// A fork child inherits this process's environment minus the runtime-owned
+// names, with config/env/override applied, plus the stamps that make it a
+// member of this agent tree (config.ForkChildStamps: depth+1, parent session,
+// the runtime root it must join, the workspace coordinates it must not
+// re-derive). Its own QUINE_SESSION_ID is injected per child in
+// launchChildSession — only that call knows each child's id.
+//
+// Env is rebuilt before every fork/spawn call (runtime.refreshForkEnv), so the
+// override is never stale.
+func NewForkExecutor(cfg *config.Config) *ForkExecutor {
 	contextRoot := filepath.Join(cfg.AgentRoot(), "context")
 
 	return &ForkExecutor{
 		QuinePath:                  strings.TrimSpace(cfg.SelfReentryTarget),
 		DataDir:                    cfg.DataDir,
 		SessionID:                  cfg.SessionID,
-		Env:                        MergeEnv(filterProcessIdentity(os.Environ()), childEnv),
+		Env:                        ForkChildEnv(cfg, nil),
 		ContextRoot:                contextRoot,
 		DefaultTimeout:             time.Duration(cfg.ForkDefaultTimeoutSeconds) * time.Second,
 		MaxOutput:                  cfg.OutputTruncate,
@@ -94,40 +103,26 @@ func NewForkExecutor(cfg *config.Config, childEnv []string) *ForkExecutor {
 	}
 }
 
-// filterProcessIdentity removes per-process identity from an environment slice.
-func filterProcessIdentity(env []string) []string {
-	result := make([]string, 0, len(env))
-	for _, e := range env {
-		if strings.HasPrefix(e, config.EnvSessionID+"=") {
-			continue
-		}
-		if strings.HasPrefix(e, config.EnvRunID+"=") {
-			continue
-		}
-		if strings.HasPrefix(e, config.EnvTapeID+"=") {
-			continue
-		}
-		if strings.HasPrefix(e, config.EnvWorkspaceSession+"=") {
-			continue
-		}
-		if strings.HasPrefix(e, config.EnvWorkspaceOwner+"=") {
-			continue
-		}
-		if strings.HasPrefix(e, config.EnvWorkspaceBootstrap+"=") {
-			continue
-		}
-		if strings.HasPrefix(e, config.EnvWorkspaceCurrentRevision+"=") {
-			continue
-		}
-		if strings.HasPrefix(e, ContextBootstrapEnv+"=") {
-			continue
-		}
-		if strings.HasPrefix(e, config.EnvContextTape+"=") {
-			continue
-		}
-		result = append(result, e)
+// ForkChildEnv builds the environment of a managed fork/spawn child: the
+// BoundaryChild pipeline (inherit − mask, override, stamps).
+//
+// It replaces the hand-kept filterProcessIdentity strip list. That list and the
+// registry's runtime-emitted class were the same eight names maintained in two
+// places; the mask is now derived from the registry, so a new runtime-emitted
+// knob cannot be added without also being masked.
+//
+// A malformed override is reported through onError and then ignored — a child
+// still gets a correct, governed environment; only the agent's own additions
+// are dropped, and the override surface reports why.
+func ForkChildEnv(cfg *config.Config, onError func(error)) []string {
+	if cfg == nil {
+		return nil
 	}
-	return result
+	override, err := config.ReadEnvOverride(cfg.EnvOverridePath())
+	if err != nil && onError != nil {
+		onError(err)
+	}
+	return config.BuildChildEnv(config.BoundaryChild, os.Environ(), override, cfg.ForkChildStamps())
 }
 
 func (f *ForkExecutor) waitContext() (context.Context, context.CancelFunc) {

@@ -1,3 +1,7 @@
+---
+source: Paper/essays/papers/terminal-bench-2-love-letter
+---
+
 # Why Terminal Bench 2 Is Broken, and Why I Still Love It
 
 > A benchmark critique, with credit. A blog essay — published on Substack.

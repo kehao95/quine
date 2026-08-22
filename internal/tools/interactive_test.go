@@ -251,7 +251,7 @@ func TestInteractiveOverlayJobCreatesAdoptableWorld(t *testing.T) {
 		},
 		Paths: config.Paths{DataDir: dataDir, Shell: "/bin/sh"},
 	}
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	defer b.Close(false)
 	requireWorkspaceSupport(t, b)
 

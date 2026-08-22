@@ -56,12 +56,22 @@ Budget visibility shows remaining budget in `world get` output (e.g., `[budget: 
 
 **Full Disclosure (A)**: 4/4 success. Resets/time/turns: 0 / 8.8 min / 118.
 
-**Zero Explicit (B)**: 4/4 success (xhigh reasoning). Resets/time/turns: 2.2 / 24.8 min / 138. Includes the semantic-misalignment case (Section 5.6, Table 3).
+**Zero Explicit (B)**: 4/4 success (xhigh reasoning). Resets/time/turns: 2.2 / 24.8 min / 138. Includes the semantic-misalignment case (Table 3).
 
 **fs\_mutations Disabled (C)**: 4/4 success. Resets/time/turns: 3.2 / 40.6 min / 213.
 
 **Pure Zero (D)**: 8 analyzed, 4 excluded (infrastructure issues). 0/8 legitimate success, 3/8 accepted after violation, 5/8 contaminated, 8/8 peer-awareness. Resets/time/turns over 3 non-violating runs: 5.7 / 57.3 min / 240. All manually terminated (lower bounds).
 
 **Coordination**: *Bilateral* = both agents used shared scripts; *Unilateral* = one created, one used. Both bilateral D cases later contaminated.
+
+# Acknowledgements {-}
+
+This research was conducted independently by the authors, with no external
+funding or departmental support. The studied system uses LLM-driven agents as
+the object of study; separately, the authors used AI assistance for software
+and experiment support and for manuscript copy-editing. All research design,
+analysis, and claims are the authors' own, and the authors take full
+responsibility for the content. The authors thank the ALIFE reviewers for their
+time and evaluation.
 
 \bibliography{references}

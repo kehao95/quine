@@ -88,8 +88,8 @@ func TestAllToolSchemas_WithoutFork(t *testing.T) {
 	cfg.ToolGates = config.DefaultToolGates()
 	cfg.ToolGates.ForkEnabled = false
 	schemas := AllToolSchemas(cfg)
-	if len(schemas) != 4 {
-		t.Fatalf("AllToolSchemas() with fork disabled should return 4 schemas, got %d", len(schemas))
+	if len(schemas) != 3 {
+		t.Fatalf("AllToolSchemas() with fork and default vision disabled should return 3 schemas, got %d", len(schemas))
 	}
 	for _, s := range schemas {
 		if s.Name == "fork" {
@@ -313,6 +313,24 @@ func TestExecToolSchema_DoesNotExposeResetWorld(t *testing.T) {
 	}
 }
 
+func TestExecToolSchema_MinimalInstructionSurfaceIsMechanismNeutral(t *testing.T) {
+	cfg := &config.Config{PromptConfig: config.PromptConfig{PromptInstructionSurface: config.PromptInstructionSurfaceMinimal}}
+	schema := ExecToolSchema(cfg)
+	props := schema.Parameters["properties"].(map[string]any)
+	target := props["target"].(map[string]any)["description"].(string)
+	argv := props["argv"].(map[string]any)["description"].(string)
+	joined := strings.ToLower(schema.Description + "\n" + target + "\n" + argv)
+
+	for _, forbidden := range []string{"successor", "self-reentry", "current mission", "reconstruct"} {
+		if strings.Contains(joined, forbidden) {
+			t.Fatalf("minimal exec schema should not teach %q, got %q", forbidden, joined)
+		}
+	}
+	if !strings.Contains(joined, "replace the current process image") {
+		t.Fatalf("minimal exec schema should retain generic process semantics, got %q", joined)
+	}
+}
+
 func TestExitToolSchema_DefaultAllowsFailure(t *testing.T) {
 	schema := ExitToolSchema(&config.Config{PromptConfig: config.PromptConfig{FailOnImpossible: true}})
 	props := schema.Parameters["properties"].(map[string]any)
@@ -518,6 +536,38 @@ func TestShToolSchema_HidesDetachWhenDisabled(t *testing.T) {
 	}
 }
 
+func TestShToolSchema_DetachDescribesSessionOutcomeLifecycle(t *testing.T) {
+	cfg := &config.Config{}
+	cfg.ToolGates = config.DefaultToolGates()
+	schema := ShToolSchema(cfg)
+	props := schema.Parameters["properties"].(map[string]any)
+	detach := props["detach"].(map[string]any)["description"].(string)
+	for _, want := range []string{
+		`status="success"`,
+		"killed",
+	} {
+		if !strings.Contains(detach, want) {
+			t.Fatalf("detach schema description missing session-outcome lifecycle rule %q: %s", want, detach)
+		}
+	}
+}
+
+func TestShToolSchema_InteractiveDescribesSessionOutcomeLifecycle(t *testing.T) {
+	cfg := &config.Config{}
+	cfg.ToolGates = config.DefaultToolGates()
+	schema := ShToolSchema(cfg)
+	props := schema.Parameters["properties"].(map[string]any)
+	interactive := props["interactive"].(map[string]any)["description"].(string)
+	for _, want := range []string{
+		`status="success"`,
+		"killed",
+	} {
+		if !strings.Contains(interactive, want) {
+			t.Fatalf("interactive schema description missing session-outcome lifecycle rule %q: %s", want, interactive)
+		}
+	}
+}
+
 func TestShToolSchema_MinimalSurfaceOnlyExposesCommand(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.ToolGates = config.DefaultToolGates()
@@ -576,6 +626,8 @@ func TestShToolSchema_DefaultHidesJobImplementationDetails(t *testing.T) {
 			"switch_world",
 			"Send POSIX signals",
 			"pid/process group",
+			"SIGKILL",
+			"setsid",
 		} {
 			if strings.Contains(text, forbidden) {
 				t.Fatalf("default sh schema should hide implementation detail %q: %s", forbidden, text)
@@ -599,6 +651,9 @@ func TestShToolSchema_DetailedImplDescribesJobImplementationDetails(t *testing.T
 		"switch_world",
 		"kill",
 		"pid/process group",
+		"SIGKILL",
+		`status="success"`,
+		"setsid",
 	} {
 		if !strings.Contains(interactive, want) {
 			t.Fatalf("interactive schema description missing %q: %s", want, interactive)
@@ -606,6 +661,15 @@ func TestShToolSchema_DetailedImplDescribesJobImplementationDetails(t *testing.T
 	}
 	if !strings.Contains(detach, "Detached job directories include") {
 		t.Fatalf("detach schema description missing detailed directory layout: %s", detach)
+	}
+	for _, want := range []string{
+		"SIGKILL",
+		`status="success"`,
+		"setsid",
+	} {
+		if !strings.Contains(detach, want) {
+			t.Fatalf("detach schema description missing session-outcome lifecycle detail %q: %s", want, detach)
+		}
 	}
 	if !strings.Contains(schema.Description, "interactive jobs run in a job-local workspace lineage") {
 		t.Fatalf("sh schema should describe overlay interactive lineage, got %q", schema.Description)
@@ -619,20 +683,11 @@ func TestForkToolSchema_WorkspaceDescriptionClarifiesChildCWD(t *testing.T) {
 	if !strings.Contains(schema.Description, "Does not consume execution budget") {
 		t.Fatalf("fork schema should describe low cost, got %q", schema.Description)
 	}
-	if !strings.Contains(schema.Description, "independent hypotheses, decoders, implementations, extractors, or verification strategies") {
-		t.Fatalf("fork schema should describe parallel strategy use, got %q", schema.Description)
-	}
-	if !strings.Contains(schema.Description, "prefer 2-3 labeled children over another long parent-only inspection") {
-		t.Fatalf("fork schema should describe when to fork instead of serial inspection, got %q", schema.Description)
-	}
 	if !strings.Contains(schema.Description, "Fork children preserve the parent mission as the active task contract") {
 		t.Fatalf("fork schema should describe parent mission preservation, got %q", schema.Description)
 	}
 	if !strings.Contains(schema.Description, "each child intent is a lane assignment") {
 		t.Fatalf("fork schema should describe child intents as lane assignments, got %q", schema.Description)
-	}
-	if !strings.Contains(schema.Description, "Do one cheap shared setup/probe if all lanes need it") {
-		t.Fatalf("fork schema should describe shared setup before specialized forking, got %q", schema.Description)
 	}
 	if !strings.Contains(schema.Description, "`mode=\"wait\"` blocks until all children finish") {
 		t.Fatalf("fork schema should describe wait mode mechanics, got %q", schema.Description)
@@ -653,17 +708,8 @@ func TestForkToolSchema_WorkspaceDescriptionClarifiesChildCWD(t *testing.T) {
 	adopt := props["adopt_winner"].(map[string]any)
 	adoptDesc := adopt["description"].(string)
 
-	if !strings.Contains(intent["description"].(string), "distinct strategy") {
-		t.Fatalf("fork intent description should request distinct child strategy, got %q", intent["description"])
-	}
 	if !strings.Contains(intent["description"].(string), "parent mission remains active") {
 		t.Fatalf("fork intent description should describe parent mission preservation, got %q", intent["description"])
-	}
-	if !strings.Contains(intent["description"].(string), "lane-specific inputs") {
-		t.Fatalf("fork intent description should request only lane-specific inputs, got %q", intent["description"])
-	}
-	if !strings.Contains(intent["description"].(string), "closest success check") {
-		t.Fatalf("fork intent description should request success check, got %q", intent["description"])
 	}
 	if !strings.Contains(desc, "child's shell starts with cwd at that child scope") {
 		t.Fatalf("fork scope description should clarify child cwd, got %q", desc)
@@ -697,36 +743,40 @@ func TestForkToolSchema_WorkspaceDescriptionClarifiesChildCWD(t *testing.T) {
 	}
 }
 
-func TestForkToolSchema_DefaultHidesStrategyCoaching(t *testing.T) {
-	cfg := &config.Config{WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true}}
-	schema := ForkToolSchema(cfg)
+func TestForkToolSchema_NeverCoachesStrategy(t *testing.T) {
+	forbidden := []string{
+		"independent hypotheses, decoders, implementations, extractors, or verification strategies",
+		"prefer 2-3 labeled children",
+		"Do one cheap shared setup/probe",
+		"distinct strategy",
+		"lane-specific inputs not already visible",
+		"expected artifact/service",
+		"closest success check",
+	}
 
-	if !strings.Contains(schema.Description, "Spawn one or more child agents with the parent's current visible context") {
-		t.Fatalf("fork schema should retain physical affordance, got %q", schema.Description)
-	}
-	if !strings.Contains(schema.Description, "`mode=\"wait\"` blocks until all children finish") {
-		t.Fatalf("fork schema should retain mode semantics, got %q", schema.Description)
-	}
-	props := schema.Parameters["properties"].(map[string]any)
-	children := props["children"].(map[string]any)
-	items := children["items"].(map[string]any)
-	childProps := items["properties"].(map[string]any)
-	intent := childProps["intent"].(map[string]any)["description"].(string)
-	if !strings.Contains(intent, "parent mission remains active") {
-		t.Fatalf("default intent schema should preserve parent-mission semantics, got %q", intent)
-	}
-	for _, text := range []string{schema.Description, intent} {
-		for _, forbidden := range []string{
-			"independent hypotheses, decoders, implementations, extractors, or verification strategies",
-			"prefer 2-3 labeled children",
-			"Do one cheap shared setup/probe",
-			"distinct strategy",
-			"lane-specific inputs not already visible",
-			"expected artifact/service",
-			"closest success check",
-		} {
-			if strings.Contains(text, forbidden) {
-				t.Fatalf("default fork schema should hide strategy coaching %q: %s", forbidden, text)
+	for _, implDetails := range []bool{false, true} {
+		cfg := &config.Config{PromptConfig: config.PromptConfig{PromptImplDetails: implDetails}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true}}
+		schema := ForkToolSchema(cfg)
+
+		if !strings.Contains(schema.Description, "Spawn one or more child agents with the parent's current visible context") {
+			t.Fatalf("PromptImplDetails=%v: fork schema should retain physical affordance, got %q", implDetails, schema.Description)
+		}
+		if !strings.Contains(schema.Description, "`mode=\"wait\"` blocks until all children finish") {
+			t.Fatalf("PromptImplDetails=%v: fork schema should retain mode semantics, got %q", implDetails, schema.Description)
+		}
+		props := schema.Parameters["properties"].(map[string]any)
+		children := props["children"].(map[string]any)
+		items := children["items"].(map[string]any)
+		childProps := items["properties"].(map[string]any)
+		intent := childProps["intent"].(map[string]any)["description"].(string)
+		if !strings.Contains(intent, "parent mission remains active") {
+			t.Fatalf("PromptImplDetails=%v: intent schema should preserve parent-mission semantics, got %q", implDetails, intent)
+		}
+		for _, text := range []string{schema.Description, intent} {
+			for _, want := range forbidden {
+				if strings.Contains(text, want) {
+					t.Fatalf("PromptImplDetails=%v: fork schema should never coach strategy %q: %s", implDetails, want, text)
+				}
 			}
 		}
 	}

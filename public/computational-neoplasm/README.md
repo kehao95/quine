@@ -1,3 +1,7 @@
+---
+source: Paper/papers/computational-neoplasm/lba
+---
+
 # A Tumor in the Repository
 
 > Function-Decoupled Self-Maintenance in an LLM-Agent Substrate. Late-Breaking
@@ -5,8 +9,8 @@
 > `2026-07-06`).
 
 This entry is the self-contained public record of the late-breaking abstract: the
-manuscript source, bibliography, the built 2-page PDF, and the concrete
-incident-point artifacts the assay studies.
+manuscript source, bibliography, the built 2-page PDF, the ALIFE 2026 poster,
+and the concrete incident-point artifacts the assay studies.
 
 ## What the abstract says
 
@@ -34,6 +38,7 @@ not yet a natural history.
 | [`manuscript.md`](manuscript.md) | The abstract source |
 | [`references.bib`](references.bib) | Bibliography |
 | [`output/`](output/) | The built 2-page PDF |
+| [`presentation/LB119_Repository_Tumor_Ke.pdf`](presentation/LB119_Repository_Tumor_Ke.pdf) | ALIFE 2026 LBA poster (LB119, presented 2026-08-20) |
 | [`metadata.yaml`](metadata.yaml) | Title / author / abstract metadata |
 | [`artifacts/`](artifacts/) | The incident-point structure and validator the paper studies (see below) |
 

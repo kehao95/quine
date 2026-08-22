@@ -118,7 +118,7 @@ type ToolGates struct {
 	SpawnEnabledFlag         bool   // QUINE_SPAWN_ENABLED (default false)
 	AgentsMDEnabled          bool   // QUINE_AGENTS_MD_ENABLED (default false)
 	AgentsSkillsEnabled      bool   // QUINE_AGENTS_SKILLS_ENABLED (default false)
-	VisionEnabled            bool   // QUINE_VISION_ENABLED (default true)
+	VisionEnabled            bool   // QUINE_VISION_ENABLED (default false)
 	ShTimeoutOverrideEnabled bool   // QUINE_SH_TIMEOUT_OVERRIDE_ENABLED (default true)
 	ShStdinEnabled           bool   // QUINE_SH_STDIN_ENABLED (default true)
 	ShDetachEnabled          bool   // QUINE_SH_DETACH_ENABLED (default true)
@@ -131,6 +131,7 @@ type ToolGates struct {
 	SuppressInitialBegin     bool   // QUINE_SUPPRESS_INITIAL_BEGIN (default false)
 	InitialUserMessage       string // QUINE_INITIAL_USER_MESSAGE: overrides the synthetic TTY "Begin." user message (default "")
 	SelfSourceCodeEnabled    bool   // QUINE_SELF_SOURCE_CODE_ENABLED (default false)
+	SelfSourceProjection     string // QUINE_SELF_SOURCE_PROJECTION: none | runtime | repo (default derived from legacy gate)
 	PeerDiscoveryEnabled     bool   // QUINE_PEER_DISCOVERY_ENABLED (default false)
 	EmptyAssistantSuccess    bool   // QUINE_EMPTY_ASSISTANT_SUCCESS (default false)
 	ReadyTextAutoIdle        bool   // QUINE_READY_TEXT_AUTO_IDLE (default false)
@@ -141,7 +142,6 @@ type ToolGates struct {
 func DefaultToolGates() ToolGates {
 	return ToolGates{
 		ExecEnabled:              true,
-		VisionEnabled:            true,
 		ShTimeoutOverrideEnabled: true,
 		ShStdinEnabled:           true,
 		ShDetachEnabled:          true,
@@ -1237,7 +1237,7 @@ func loadToolGates(c *Config) error {
 			return err
 		}
 	}
-	c.VisionEnabled, err = envBoolDefault(EnvVisionEnabled, true)
+	c.VisionEnabled, err = envBoolDefault(EnvVisionEnabled, false)
 	if err != nil {
 		return err
 	}
@@ -1254,10 +1254,26 @@ func loadToolGates(c *Config) error {
 	if err != nil {
 		return err
 	}
-	c.SelfSourceCodeEnabled, err = envBoolDefault(EnvSelfSourceCodeEnabled, false)
-	if err != nil {
-		return err
+	projection := strings.TrimSpace(os.Getenv(EnvSelfSourceProjection))
+	if projection == "" {
+		c.SelfSourceCodeEnabled, err = envBoolDefault(EnvSelfSourceCodeEnabled, false)
+		if err != nil {
+			return err
+		}
+		if c.SelfSourceCodeEnabled {
+			projection = "repo"
+		} else {
+			projection = "none"
+		}
+	} else {
+		switch projection {
+		case "none", "runtime", "repo":
+		default:
+			return fmt.Errorf("%s must be one of none, runtime, repo (got %q)", EnvSelfSourceProjection, projection)
+		}
+		c.SelfSourceCodeEnabled = projection != "none"
 	}
+	c.SelfSourceProjection = projection
 	c.PeerDiscoveryEnabled, err = envBoolDefault(EnvPeerDiscoveryEnabled, false)
 	if err != nil {
 		return err
@@ -1269,270 +1285,24 @@ func loadToolGates(c *Config) error {
 	return nil
 }
 
-// baseEnv returns the common environment variable slice shared by
-// ChildEnv and ExecEnv. depth and parentSession are parameterized
-// since they differ between the two callers.
-func (c *Config) baseEnv(depth int, parentSession string) []string {
-	env := []string{
-		envKV(EnvModelID, c.ModelID),
-		envKV(EnvAPIType, c.Provider),
-		envKV(EnvAPIBase, c.APIBase),
-		envKV(EnvAPIKey, c.APIKey),
-		envKV(EnvMaxDepth, strconv.Itoa(c.MaxDepth)),
-		envKV(EnvDepth, strconv.Itoa(depth)),
-		envKV(EnvParentSession, parentSession),
-		envKV(EnvMaxConcurrent, strconv.Itoa(c.MaxConcurrent)),
-		envKV(EnvMaxAgents, strconv.Itoa(c.MaxAgents)),
-		envKV(EnvForkDefaultTimeout, strconv.Itoa(c.ForkDefaultTimeoutSeconds)),
-		envKV(EnvShDefaultTimeout, strconv.Itoa(c.ShTimeout)),
-		envKV(EnvShTimeoutOverride, bool01(c.ShTimeoutOverrideEnabled())),
-		envKV(EnvShStdinEnabled, bool01(c.ShStdinEnabled())),
-		envKV(EnvShDetachEnabled, bool01(c.ShDetachEnabled())),
-		envKV(EnvOutputTruncate, strconv.Itoa(c.OutputTruncate)),
-		envKV(EnvDataDir, c.DataDir),
-		envKV(EnvWorkDir, c.WorkDir),
-		envKV(EnvShell, c.Shell),
-		envKV(EnvShNetwork, c.ShNetwork),
-		envKV(EnvSelfReentryMode, string(c.SelfReentryMode)),
-		envKV(EnvMaxTurns, strconv.Itoa(c.MaxTurns)),
-		envKV(EnvWallClockExitSeconds, strconv.Itoa(c.WallClockExitSeconds)),
-		envKV(EnvPromptMetaphor, string(c.PromptMetaphor)),
-		envKV(EnvPromptSelfModel, string(c.SelfModelMode())),
-		envKV(EnvPromptInstructionSurface, string(c.InstructionSurfaceMode())),
-		envKV(EnvPromptRuntimeSurface, string(c.RuntimeSurfaceMode())),
-		envKV(EnvPromptPersona, string(c.PersonaMode())),
-		envKV(EnvPromptCtl, bool01(c.PromptCtlPhysics)),
-		envKV(EnvPromptImplDetails, bool01(c.PromptImplDetails)),
-		envKV(EnvPeerDiscoveryEnabled, bool01(c.PeerDiscoveryEnabled)),
-		envKV(EnvPeerDiscoveryHeartbeat, strconv.Itoa(c.PeerDiscoveryHeartbeatMS)),
-		envKV(EnvFSMutationTelemetry, bool01(c.FSMutationTelemetryEnabled())),
-		envKV(EnvFailOnImpossible, bool01(c.FailOnImpossible)),
-		envKV(EnvNoMissionAutonomy, c.NoMissionAutonomyLevel()),
-		envKV(EnvEmptyAssistantSuccess, bool01(c.EmptyAssistantSuccess)),
-		envKV(EnvReadyTextAutoIdle, bool01(c.ReadyTextAutoIdle)),
-		envKV(EnvContextWindow, strconv.Itoa(c.ContextWindow)),
-		envKV(EnvMemoryWarnTokens, strconv.Itoa(c.MemoryWarnTokens)),
-		envKV(EnvMemoryDangerTokens, strconv.Itoa(c.MemoryDangerTokens)),
-		envKV(EnvMemoryDeathTokens, strconv.Itoa(c.MemoryDeathTokens)),
-		envKV(EnvMemoryStrategyHints, bool01(c.MemoryStrategyHints)),
+// SelfSourceProjectionMode returns the resolved self-source projection shape.
+func (c *Config) SelfSourceProjectionMode() string {
+	if c == nil {
+		return "none"
 	}
-	if c.RetentionDir != "" {
-		env = append(env, envKV(EnvRetentionDir, c.RetentionDir))
-	}
-
-	if c.WorkspaceEnabled {
-		env = append(env,
-			envKV(EnvWorkspaceRoot, c.WorkspaceRoot),
-			envKV(EnvWorkspace, c.Workspace),
-			envKV(EnvWorkspaceBackend, c.WorkspaceBackend),
-			envKV(EnvWorkspaceOverlayDriver, c.WorkspaceOverlayDriver),
-			envKV(EnvWorkspaceRevisionMode, string(c.WorkspaceRevisionMode)),
-			envKV(EnvWorkspaceCurrentRevision, c.WorkspaceCurrentRevision),
-			envKV(EnvWorkspaceSession, c.WorkspaceSession),
-			envKV(EnvWorkspaceOwner, bool01(c.WorkspaceOwner)),
-			envKV(EnvWorkspaceCommitOnSignal, bool01(c.WorkspaceCommitOnSignal)),
-		)
-	}
-
-	if configDir := os.Getenv(EnvConfigDir); configDir != "" {
-		env = append(env, envKV(EnvConfigDir, configDir))
-	}
-
-	// Propagate custom User-Agent if set
-	if c.UserAgent != "" {
-		env = append(env, envKV(EnvUserAgent, c.UserAgent))
-	}
-
-	// Propagate thinking budget if set
-	if c.ThinkingBudget != "" {
-		env = append(env, envKV(EnvThinkingBudget, c.ThinkingBudget))
-	}
-	if c.ServiceTier != "" {
-		env = append(env, envKV(EnvModelServiceTier, c.ServiceTier))
-	}
-	if c.AnchorMemoryEnabled {
-		env = append(env, envKV(EnvAnchorMemory, "1"))
-		if !c.AnchorFoldEnabled() {
-			env = append(env, envKV(EnvAnchorFoldEnabled, "0"))
+	switch c.SelfSourceProjection {
+	case "none", "runtime", "repo":
+		return c.SelfSourceProjection
+	default:
+		if c.SelfSourceCodeEnabled {
+			return "repo"
 		}
-		if !c.AnchorMarkEnabled() {
-			env = append(env, envKV(EnvAnchorMarkEnabled, "0"))
-		}
+		return "none"
 	}
-	if c.IdleEnabled {
-		env = append(env, envKV(EnvIdleEnabled, "1"))
-	} else {
-		env = append(env, envKV(EnvIdleEnabled, "0"))
-	}
-	if c.ExitEnabled() {
-		env = append(env, envKV(EnvExitEnabled, "1"))
-	} else {
-		env = append(env, envKV(EnvExitEnabled, "0"))
-	}
-	if c.ExecEnabled {
-		env = append(env, envKV(EnvExecEnabled, "1"))
-	} else {
-		env = append(env, envKV(EnvExecEnabled, "0"))
-	}
-	if c.SpawnEnabled() {
-		env = append(env, envKV(EnvSpawnEnabled, "1"))
-	} else {
-		env = append(env, envKV(EnvSpawnEnabled, "0"))
-	}
-	if c.AgentsMDEnabled {
-		env = append(env, envKV(EnvAgentsMDEnabled, "1"))
-	} else {
-		env = append(env, envKV(EnvAgentsMDEnabled, "0"))
-	}
-	if c.AgentsSkillsEnabled {
-		env = append(env, envKV(EnvAgentsSkillsEnabled, "1"))
-	} else {
-		env = append(env, envKV(EnvAgentsSkillsEnabled, "0"))
-	}
-	if c.VisionEnabled {
-		env = append(env, envKV(EnvVisionEnabled, "1"))
-	} else {
-		env = append(env, envKV(EnvVisionEnabled, "0"))
-	}
-	if c.ForkEnabled() {
-		env = append(env, envKV(EnvForkEnabled, "1"))
-	} else {
-		env = append(env, envKV(EnvForkEnabled, "0"))
-	}
-	if c.ShInteractiveEnabled() {
-		env = append(env, envKV(EnvShInteractiveEnabled, "1"))
-	} else {
-		env = append(env, envKV(EnvShInteractiveEnabled, "0"))
-	}
-	if c.ForkWorldEnabled {
-		env = append(env, envKV(EnvForkWorldEnabled, "1"))
-	} else {
-		env = append(env, envKV(EnvForkWorldEnabled, "0"))
-	}
-	if c.EphemeralBody {
-		env = append(env, envKV(EnvEphemeralBodyEnabled, "1"))
-	} else {
-		env = append(env, envKV(EnvEphemeralBodyEnabled, "0"))
-	}
-	if c.SuppressInitialBegin {
-		env = append(env, envKV(EnvSuppressInitialBegin, "1"))
-	} else {
-		env = append(env, envKV(EnvSuppressInitialBegin, "0"))
-	}
-	if c.InitialUserMessage != "" {
-		env = append(env, envKV(EnvInitialUserMessage, c.InitialUserMessage))
-	}
-	if c.SelfSourceCodeEnabled {
-		env = append(env, envKV(EnvSelfSourceCodeEnabled, "1"))
-	} else {
-		env = append(env, envKV(EnvSelfSourceCodeEnabled, "0"))
-	}
-
-	return env
 }
 
 func envKV(key, value string) string {
 	return key + "=" + value
-}
-
-// ChildEnv returns a slice of "KEY=VALUE" environment variable strings
-// suitable for spawning a child process. The child gets:
-//   - QUINE_DEPTH incremented by 1
-//   - QUINE_PARENT_SESSION set to the current SessionID
-//   - All other config values inherited
-//
-// Note: QUINE_SESSION_ID and QUINE_TAPE_ID are intentionally NOT included.
-// Each child ./quine process generates its own unique session/tape identity.
-func (c *Config) ChildEnv() ([]string, error) {
-	env := c.baseEnv(c.Depth+1, c.SessionID)
-	if !c.WorkspaceEnabled {
-		return env, nil
-	}
-
-	filtered := make([]string, 0, len(env)+1)
-	for _, entry := range env {
-		switch {
-		case strings.HasPrefix(entry, EnvWorkspaceSession+"="):
-			continue
-		case strings.HasPrefix(entry, EnvWorkspaceOwner+"="):
-			continue
-		case strings.HasPrefix(entry, EnvWorkspaceBootstrap+"="):
-			continue
-		default:
-			filtered = append(filtered, entry)
-		}
-	}
-
-	if strings.TrimSpace(c.WorkspaceSession) != "" {
-		filtered = append(filtered, envKV(EnvWorkspaceBootstrap, c.WorkspaceSession))
-	}
-	return filtered, nil
-}
-
-// ExecEnv returns a slice of "KEY=VALUE" environment variable strings
-// suitable for exec'ing a fresh process (metamorphosis). Unlike ChildEnv:
-//   - DEPTH is NOT incremented (same logical quine, new image)
-//   - SESSION_ID is preserved (same logical quine across incarnations)
-//   - PARENT_SESSION is preserved unchanged
-//
-// Note: QUINE_TAPE_ID is preserved for legacy tape continuity across exec.
-func (c *Config) ExecEnv() ([]string, error) {
-	env := c.baseEnv(0, c.ParentSession)
-	env = append(env,
-		envKV(EnvSessionID, c.SessionID),
-		envKV(EnvTapeID, c.TapeID),
-	)
-	return env, nil
-}
-
-// ResolvedEnv renders the current resolved capability position as the body of
-// the agent-root config/resolved.env read surface and the inc/<n>/config.env
-// birth snapshots (registry-design-brief § B, work order T2.1).
-//
-// Content-source decision: the serialization is the exec-boundary env —
-// ExecEnv()'s payload (baseEnv plus the exec-carried identity envs
-// QUINE_SESSION_ID / QUINE_TAPE_ID) — because the self-reentry envp IS the
-// capability position: env is the only injection channel at the process
-// boundary. Two deliberate fidelity deviations from ExecEnv():
-//
-//   - QUINE_DEPTH renders the CURRENT depth (c.Depth), not the constant 0
-//     that ExecEnv passes for the exec handover. resolved.env is a readout of
-//     this process's position, not the next process's envp.
-//   - QUINE_API_KEY is redacted to presence-only. The registry pins APIKey as
-//     operator-only auth material whose value is never disclosed ("prompt
-//     discloses only presence/absence, never the value"), and the
-//     inc/<n>/config.env birth snapshots derived from this rendering are
-//     retained lineage history — a raw credential must not land there.
-//
-// The rendering is a runtime-owned readout, never a config source: Load()
-// reads envp only (preserved invariant 2). Lines are the raw boundary ABI
-// "KEY=VALUE" strings with no shell quoting (brief D2's zero-translation
-// stance).
-func (c *Config) ResolvedEnv() []byte {
-	env := c.baseEnv(c.Depth, c.ParentSession)
-	env = append(env,
-		envKV(EnvSessionID, c.SessionID),
-		envKV(EnvTapeID, c.TapeID),
-	)
-	var b strings.Builder
-	b.WriteString("# Quine resolved capability position (env syntax).\n")
-	b.WriteString("# Runtime-owned readout: regenerated at bootstrap and after in-process config\n")
-	b.WriteString("# mutation (workspace revision switch). Never read back as config — Load()\n")
-	b.WriteString("# reads the process env only. Lines are raw KEY=VALUE boundary strings.\n")
-	apiKeyPrefix := EnvAPIKey + "="
-	for _, kv := range env {
-		if strings.HasPrefix(kv, apiKeyPrefix) {
-			if strings.TrimSpace(strings.TrimPrefix(kv, apiKeyPrefix)) == "" {
-				b.WriteString("# " + EnvAPIKey + " is unset.\n")
-			} else {
-				b.WriteString("# " + EnvAPIKey + " is set; value redacted (auth material never lands on the config surface).\n")
-			}
-			continue
-		}
-		b.WriteString(kv)
-		b.WriteByte('\n')
-	}
-	return []byte(b.String())
 }
 
 // CanRestoreWorld reports whether the current workspace configuration

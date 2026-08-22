@@ -67,8 +67,8 @@ func ShToolSchema(cfg *config.Config) llm.ToolSchema {
 	if detachEnabled {
 		description += " `detach=true` is unavailable under `overlay`."
 	}
-	detachDescription := "If true, keep the command as a managed background job under `${QUINE_DATA_DIR}` and return its absolute job directory immediately. Default: false."
-	interactiveDescription := "If true, keep the command as a PTY-backed interactive POSIX job under `${QUINE_DATA_DIR}` and return its absolute job directory immediately."
+	detachDescription := "If true, keep the command as a managed background job under `${QUINE_DATA_DIR}` and return its absolute job directory immediately. The job's process group is killed when the session ends unless the session exits with `status=\"success\"`; a failing or interrupted session kills it regardless of the job's own state. Default: false."
+	interactiveDescription := "If true, keep the command as a PTY-backed interactive POSIX job under `${QUINE_DATA_DIR}` and return its absolute job directory immediately. The job's process group is killed when the session ends unless the session exits with `status=\"success\"`; a failing or interrupted session kills it regardless of the job's own state."
 	interactiveExclusions := []string{}
 	if stdinEnabled {
 		interactiveExclusions = append(interactiveExclusions, "`stdin`")
@@ -81,8 +81,8 @@ func ShToolSchema(cfg *config.Config) llm.ToolSchema {
 	}
 	interactiveDescription += " Default: false."
 	if cfg != nil && cfg.PromptImplDetails {
-		detachDescription = "If true, keep the command as a managed background job under `${QUINE_DATA_DIR}` and return its absolute job directory immediately. Detached job directories include `cmd`, `pid`, `started_at`, `out.log`, and `err.log`; after the job completes, its exit code appears at `<path>/exit` (or, if that write fails, the error is recorded at `<path>/exit_error`). Default: false."
-		interactiveDescription = "If true, keep the command as a PTY-backed interactive POSIX job under `${QUINE_DATA_DIR}` and return its absolute job directory immediately. Interactive job directories include `cmd`, `pid`, `started_at`, screen snapshots, `in`, `winsize`, `events.log`, `events.hex`, and `input.log`; after the job completes, its exit code appears at `<path>/exit` (or, if that write fails, the error is recorded at `<path>/exit_error`). Under `overlay`, the job runs in a job-local workspace lineage; after exit, `workspace_session`, `fs_mutations` when enabled, `world_revision`, and `world_handle` appear so the world can be adopted with `switch_world`. Send POSIX signals with `kill` and the recorded pid/process group."
+		detachDescription = "If true, keep the command as a managed background job under `${QUINE_DATA_DIR}` and return its absolute job directory immediately. Detached job directories include `cmd`, `pid`, `started_at`, `out.log`, and `err.log`; after the job completes, its exit code appears at `<path>/exit` (or, if that write fails, the error is recorded at `<path>/exit_error`). The job's process group is killed with SIGKILL when the session ends unless the session exits with `status=\"success\"`; a failing or interrupted session kills it regardless of the job's own state. To survive session end unconditionally, have the command detach itself from this process group (e.g. `setsid`) before the session ends. Default: false."
+		interactiveDescription = "If true, keep the command as a PTY-backed interactive POSIX job under `${QUINE_DATA_DIR}` and return its absolute job directory immediately. Interactive job directories include `cmd`, `pid`, `started_at`, screen snapshots, `in`, `winsize`, `events.log`, `events.hex`, and `input.log`; after the job completes, its exit code appears at `<path>/exit` (or, if that write fails, the error is recorded at `<path>/exit_error`). Under `overlay`, the job runs in a job-local workspace lineage; after exit, `workspace_session`, `fs_mutations` when enabled, `world_revision`, and `world_handle` appear so the world can be adopted with `switch_world`. Send POSIX signals with `kill` and the recorded pid/process group. The job's process group is killed with SIGKILL when the session ends unless the session exits with `status=\"success\"`; a failing or interrupted session kills it regardless of the job's own state. To survive session end unconditionally, have the command detach itself from this process group (e.g. `setsid`) before the session ends."
 		if len(interactiveExclusions) > 0 {
 			interactiveDescription += " Mutually exclusive with " + strings.Join(interactiveExclusions, " and ") + "."
 		}
@@ -137,16 +137,10 @@ func ForkToolSchema(cfg *config.Config) llm.ToolSchema {
 	fsTelemetryEnabled := cfg == nil || cfg.FSMutationTelemetryEnabled()
 	desc := "Spawn one or more child agents with the parent's current visible context (swarm fork). " +
 		"Each child is another you under a different intent. " +
+		"Fork children preserve the parent mission as the active task contract; each child intent is a lane assignment, not a replacement mission. " +
 		"`fork` returns each child's process handles plus compact JSON fields such as `exit_code`, `stdout`, and `stderr`. " +
 		"Child filesystem effects follow the configured workspace/world lineage; stdout/stderr are only captured process output. " +
 		"Does not consume execution budget. "
-	if cfg != nil && cfg.PromptImplDetails {
-		desc += "Use fork when independent hypotheses, decoders, implementations, extractors, or verification strategies can be tried in parallel. " +
-			"When no contract-shaped artifact or service is stable and 2-3 plausible approaches exist, prefer 2-3 labeled children over another long parent-only inspection. " +
-			"Fork children preserve the parent mission as the active task contract; each child intent is a lane assignment, not a replacement mission. " +
-			"Child intents should include lane-specific inputs only when they are not already in the parent mission or current visible context. " +
-			"Do one cheap shared setup/probe if all lanes need it; then fork specialized heavyweight installs, downloads, transcription, OCR, builds, searches, or long-running probes. Do not make every child repeat the same setup. "
-	}
 	desc += "`mode=\"wait\"` blocks until all children finish and returns every result. `race` returns the first successful child and stops the rest. `forget` returns after spawning children without waiting for completion. "
 	if fsTelemetryEnabled {
 		desc += "When workspace physics are enabled and the fork completes before returning, results also include parent-side `fs_mutations` and `world_revision`; under subjective children these are normally empty or unchanged because child writes stay in child lineage. "
@@ -154,9 +148,6 @@ func ForkToolSchema(cfg *config.Config) llm.ToolSchema {
 	childrenDesc := "Array of child specs. Each child must provide `intent` and `scope`."
 	scopeDesc := "Child scope path. `.` means inherit your current scope."
 	intentDesc := "Concrete child intent. The parent mission remains active; state this child's lane-specific focus."
-	if cfg != nil && cfg.PromptImplDetails {
-		intentDesc = "Concrete lane assignment for this child. The parent mission remains active; name a distinct strategy, lane-specific inputs not already visible from the parent mission/context, the expected artifact/service when known, and the closest success check."
-	}
 	childProps := map[string]any{
 		"intent": map[string]any{
 			"type":        "string",
@@ -312,16 +303,26 @@ func ExecToolSchema(cfg *config.Config) llm.ToolSchema {
 		"When both `target` and `argv` are omitted during quine self re-exec, the current mission state is preserved. " +
 		"Providing `argv` explicitly replaces the mission passed to the new image. " +
 		"A different target binary and explicit argv can be supplied. " +
-		"If present, `config/next.env` is validated and applied to the successor's environment at this boundary; the runtime prompt owns the full staged-config mechanism."
+		"Your `config/env/override` is applied to the replacement process's environment at this boundary; an invalid override fails the call and leaves the file intact."
+	targetDesc := "Optional executable path or name. If omitted, exec defaults to quine's configured self-reentry target. The runtime surface shows the launch path separately. Omission preserves the current mission state under default self re-exec."
+	argvDesc := "Optional full argv vector. If omitted: the self re-exec default is sugar for [configured self-reentry target, current mission] when a mission exists and [configured self-reentry target] when no mission exists, while an external target defaults to [target]. Supplying `argv` overrides that default and replaces the mission the new image receives."
+
+	// Minimal instruction surfaces are used when experiments need generic process
+	// replacement without teaching quine-specific continuity or reconstruction.
+	if cfg != nil && cfg.MinimalInstructionSurface() {
+		desc = "Replace the current process image with an executable. The process PID, working directory, environment base, and open descriptors follow ordinary exec semantics."
+		targetDesc = "Optional executable path or name."
+		argvDesc = "Optional complete argv vector for the executable."
+	}
 
 	props := map[string]any{
 		"target": map[string]any{
 			"type":        "string",
-			"description": "Optional executable path or name. If omitted, exec defaults to quine's configured self-reentry target. The runtime surface shows the launch path separately. Omission preserves the current mission state under default self re-exec. When the ephemeral body has been unlinked, a `target` of /proc/self/exe or /proc/<pid>/exe is rejected: re-executing the live process image recovers the original body instead of reconstructing a successor.",
+			"description": targetDesc,
 		},
 		"argv": map[string]any{
 			"type":        "array",
-			"description": "Optional full argv vector. If omitted: the self re-exec default is sugar for [configured self-reentry target, current mission] when a mission exists and [configured self-reentry target] when no mission exists, while an external target defaults to [target]. Supplying `argv` overrides that default and replaces the mission the new image receives.",
+			"description": argvDesc,
 			"items": map[string]any{
 				"type": "string",
 			},

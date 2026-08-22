@@ -1,3 +1,7 @@
+---
+source: Paper/papers/structural-elicitation/lba
+---
+
 # Structural Elicitation in a Frozen POSIX Agent
 
 > Environmental Affordance Fields for Artificial Agency. Late-Breaking
@@ -5,8 +9,8 @@
 > `2026-07-06`).
 
 This entry is the self-contained public record of the late-breaking abstract:
-the manuscript source, bibliography, the built 2-page PDF, and the experiment
-skeletons that produced the reported numbers.
+the manuscript source, bibliography, the built 2-page PDF, the ALIFE 2026
+poster, and the experiment skeletons that produced the reported numbers.
 
 ## What the abstract says
 
@@ -39,6 +43,7 @@ behavior; mechanism is left to future work.
 | [`manuscript.md`](manuscript.md) | The abstract source |
 | [`references.bib`](references.bib) | Bibliography |
 | [`output/`](output/) | The built 2-page PDF |
+| [`presentation/LB116_Frozen_POSIX_Agent_Ke.pdf`](presentation/LB116_Frozen_POSIX_Agent_Ke.pdf) | ALIFE 2026 LBA poster (LB116, presented 2026-08-20) |
 | [`metadata.yaml`](metadata.yaml) | Title / authors / abstract metadata |
 
 The runtime this abstract studies is the code at the repository root

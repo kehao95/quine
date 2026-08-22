@@ -120,21 +120,6 @@ func (s *subjectiveFS) commandEnv() []string {
 	}
 }
 
-func (s *subjectiveFS) childEnvOverrides() []string {
-	if !s.enabled || s.usesDirectBackend() {
-		return nil
-	}
-	return []string{
-		config.EnvWorkspaceRoot + "=" + s.workspaceRoot,
-		config.EnvWorkspace + "=" + s.workspace,
-		config.EnvWorkspaceBackend + "=overlay",
-		config.EnvWorkspaceOverlayDriver + "=" + s.overlayDriver,
-		config.EnvWorkspaceSession + "=" + s.workspaceSession,
-		config.EnvWorkspaceCurrentRevision + "=" + s.currentWorldRevision(),
-		config.EnvWorkspaceOwner + "=" + fmt.Sprintf("%t", s.workspaceOwner),
-	}
-}
-
 func (s *subjectiveFS) commit() error {
 	if !s.enabled || !s.workspaceOwner || s.usesDirectBackend() {
 		return nil

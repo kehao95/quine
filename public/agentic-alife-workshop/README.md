@@ -1,10 +1,15 @@
+---
+source: Paper/papers/agentic-alife-workshop
+---
+
 # From Simulated Worlds to Process Habitats
 
 > POSIX as a Substrate for Generative Artificial Life. Workshop paper, accepted
 > at the Agentic & Generative AI as Artificial Life workshop, ALIFE 2026.
 
 This entry is the self-contained public record of the workshop paper: the
-manuscript source, bibliography, and the built PDF.
+manuscript source, bibliography, the built PDF, and the ALIFE 2026 workshop
+talk slides.
 
 ## What the paper says
 
@@ -28,6 +33,7 @@ experimentally observable.
 | [`manuscript.md`](manuscript.md) | The manuscript source |
 | [`references.bib`](references.bib) | Bibliography |
 | [`output/`](output/) | The built PDF |
+| [`presentation/deck.pdf`](presentation/deck.pdf) | ALIFE 2026 workshop talk slides (10-min contributed talk, presented 2026-08-20) |
 | [`metadata.yaml`](metadata.yaml) | Title / authors / abstract metadata |
 
 The runtime this paper describes is the code at the repository root

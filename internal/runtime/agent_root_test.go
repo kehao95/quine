@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"os"
@@ -557,6 +558,47 @@ func TestBootstrapAgentRootProjectsSelfSourceSurfaceWhenEnabled(t *testing.T) {
 	}
 }
 
+func TestBootstrapAgentRootProjectsRuntimeOnlySelfSourceSurface(t *testing.T) {
+	cfg := testCfg(t)
+	cfg.SelfSourceCodeEnabled = true
+	cfg.SelfSourceProjection = "runtime"
+	rt := NewWithProvider(cfg, &mockProvider{})
+	silenceRuntime(rt)
+	rt.originalInput = "sync runtime-only self source"
+	t.Cleanup(func() {
+		if err := rt.cleanupAgentRoot(); err != nil {
+			t.Fatalf("cleanupAgentRoot failed: %v", err)
+		}
+	})
+
+	if err := rt.bootstrapAgentRoot(); err != nil {
+		t.Fatalf("bootstrapAgentRoot failed: %v", err)
+	}
+
+	sourceRoot := filepath.Join(cfg.AgentRoot(), "source-code")
+	for _, rel := range []string{"go.mod", filepath.Join("cmd", "quine", "main.go"), filepath.Join("internal", "runtime", "runtime.go")} {
+		if _, err := os.Stat(filepath.Join(sourceRoot, rel)); err != nil {
+			t.Fatalf("runtime projection missing %s: %v", rel, err)
+		}
+	}
+	for _, rel := range []string{"Paper", "experiments", filepath.Join("cmd", "world")} {
+		if _, err := os.Stat(filepath.Join(sourceRoot, rel)); !errors.Is(err, os.ErrNotExist) {
+			t.Fatalf("runtime projection unexpectedly exposes %s: %v", rel, err)
+		}
+	}
+	manifestData, err := os.ReadFile(selfSourceManifestPath(sourceRoot))
+	if err != nil {
+		t.Fatalf("read runtime projection manifest: %v", err)
+	}
+	var manifest selfSourceManifest
+	if err := json.Unmarshal(manifestData, &manifest); err != nil {
+		t.Fatalf("unmarshal runtime projection manifest: %v", err)
+	}
+	if manifest.Projection != "runtime" {
+		t.Fatalf("manifest projection = %q, want runtime", manifest.Projection)
+	}
+}
+
 func TestBootstrapAgentRootRefreshesSelfSourceSurfaceWhenManifestDrifts(t *testing.T) {
 	cfg := testCfg(t)
 	cfg.SelfSourceCodeEnabled = true
@@ -909,20 +951,31 @@ func TestBootstrapAgentRootProjectsFusePublicSurface(t *testing.T) {
 }
 
 // TestBootstrapAgentRootProjectsFuseConfigSurface covers the peer-facing
-// public/config/ projection (registry-design-brief § B): live FUSE views over
-// the agent-root config/ SSTs, read-only, current-content-on-read (a peer
-// reading resolved.env after onConfigMutated sees the switched position), with
-// the raw API key never visible and the surface advertised to peers through
-// status/contract.json.
+// public/config/ projection: live FUSE views over the agent-root config/ files,
+// read-only, current-content-on-read, with the raw API key never visible and the
+// surface advertised to peers through status/contract.json.
+//
+// The critical property is negative. public/config/ and public/config/env/ are
+// FIXED enumerations, not directory scans, because config/env/override is the
+// agent's own policy for its own children — a scanning node would publish it to
+// every peer on the host the moment the agent wrote one. The
+// "override is not peer-visible" assertions below are the whole reason the
+// separate fuseConfigEnvDirNode exists; do not relax them into a scan.
+//
+// Design authority:
+//
+//	Paper/theory/views/runtime-capability/env-process-boundary-brief.md
+// TestBootstrapAgentRootProjectsFuseConfigSurface: public/config/ projects
+// exactly one file, registry.json — a fixed, byte-parity, read-only view of
+// the backing config/registry.json. There is no public/config/env/ at all:
+// config/env/override is the agent's own policy, and the only peer-facing
+// path onto it is the public/ctl/env gate (covered by
+// TestBootstrapAgentRootFuseEnvGateTransactions), not a config/ projection.
 func TestBootstrapAgentRootProjectsFuseConfigSurface(t *testing.T) {
 	requireRuntimeSurfaceFUSESupport(t)
 
+	t.Setenv(config.EnvAPIKey, "sk-live-do-not-leak")
 	cfg := testCfg(t)
-	cfg.WorkspaceEnabled = true
-	cfg.WorkspaceRoot = t.TempDir()
-	cfg.Workspace = cfg.WorkspaceRoot
-	cfg.WorkspaceBackend = "direct"
-	cfg.WorkspaceCurrentRevision = "rev-birth"
 	rt := NewWithProvider(cfg, &mockProvider{})
 	silenceRuntime(rt)
 	useRealPublicSurface(rt)
@@ -938,67 +991,63 @@ func TestBootstrapAgentRootProjectsFuseConfigSurface(t *testing.T) {
 	})
 
 	publicConfig := filepath.Join(cfg.AgentRoot(), "public", "config")
+	backingConfig := filepath.Join(cfg.AgentRoot(), "config")
 	if info, err := os.Lstat(publicConfig); err != nil {
 		t.Fatalf("stat public config dir: %v", err)
 	} else if !info.IsDir() {
 		t.Fatalf("public config should be a FUSE directory, got mode %v", info.Mode())
 	}
-	for _, name := range []string{"registry.json", "resolved.env"} {
-		path := filepath.Join(publicConfig, name)
-		if info, err := os.Lstat(path); err != nil {
-			t.Fatalf("stat public config file %s: %v", path, err)
-		} else if info.Mode()&os.ModeType != 0 {
-			t.Fatalf("public config file %s should be a regular FUSE file, got mode %v", path, info.Mode())
-		}
-		publicData, err := os.ReadFile(path)
-		if err != nil {
-			t.Fatalf("read public config file %s: %v", path, err)
-		}
-		targetData, err := os.ReadFile(filepath.Join(cfg.AgentRoot(), "config", name))
-		if err != nil {
-			t.Fatalf("read config target %s: %v", name, err)
-		}
-		if string(publicData) != string(targetData) {
-			t.Fatalf("public config file %s drifted from target", name)
-		}
-		if f, err := os.OpenFile(path, os.O_WRONLY, 0); err == nil {
-			f.Close()
-			t.Fatalf("public config file %s should reject write access", path)
-		}
+
+	// The child set is a fixed enumeration, exactly one name.
+	entries, err := os.ReadDir(publicConfig)
+	if err != nil {
+		t.Fatalf("read public config dir: %v", err)
+	}
+	var names []string
+	for _, entry := range entries {
+		names = append(names, entry.Name())
+	}
+	if len(names) != 1 || names[0] != "registry.json" {
+		t.Fatalf("public/config must enumerate exactly {registry.json}, got %v", names)
 	}
 
-	resolved, err := os.ReadFile(filepath.Join(publicConfig, "resolved.env"))
+	// Byte-parity of the projection against the backing file, plus EACCES on a
+	// write open: the projection is transparency, never a write path.
+	path := filepath.Join(publicConfig, "registry.json")
+	if info, err := os.Lstat(path); err != nil {
+		t.Fatalf("stat public config file registry.json: %v", err)
+	} else if info.Mode()&os.ModeType != 0 {
+		t.Fatalf("public config file registry.json should be a regular FUSE file, got mode %v", info.Mode())
+	}
+	publicData, err := os.ReadFile(path)
 	if err != nil {
-		t.Fatalf("read public resolved.env: %v", err)
+		t.Fatalf("read public config file registry.json: %v", err)
 	}
-	if strings.Contains(string(resolved), config.EnvAPIKey+"=") {
-		t.Fatalf("public resolved.env must not carry a raw %s= line:\n%s", config.EnvAPIKey, resolved)
+	targetData, err := os.ReadFile(filepath.Join(backingConfig, "registry.json"))
+	if err != nil {
+		t.Fatalf("read config target registry.json: %v", err)
 	}
-	if strings.Contains(string(resolved), cfg.APIKey) {
-		t.Fatal("public resolved.env must not contain the raw API key value")
+	if !bytes.Equal(publicData, targetData) {
+		t.Fatalf("public config file registry.json drifted from its backing file")
 	}
-	if !strings.Contains(string(resolved), config.EnvWorkspaceCurrentRevision+"=rev-birth\n") {
-		t.Fatalf("public resolved.env should carry the bootstrap-time revision:\n%s", resolved)
+	f, err := os.OpenFile(path, os.O_WRONLY, 0)
+	if err == nil {
+		f.Close()
+		t.Fatalf("public config file registry.json should reject a write open")
+	}
+	if !errors.Is(err, syscall.EACCES) {
+		t.Fatalf("write open of registry.json = %v, want EACCES", err)
 	}
 
-	// The projection is a live view: after the sole post-D9 in-process config
-	// mutation (workspace revision switch), a peer re-reading resolved.env
-	// through the mount must see the new position without a re-mount.
-	rt.cfg.WorkspaceCurrentRevision = "rev-switched"
-	rt.onConfigMutated()
-	mutated, err := os.ReadFile(filepath.Join(publicConfig, "resolved.env"))
-	if err != nil {
-		t.Fatalf("re-read public resolved.env after mutation: %v", err)
+	// CRITICAL: config/env/override is the agent's own policy. It exists on the
+	// agent root and it must not exist under public/ at all — not as a file, not
+	// as a directory, and not in any listing.
+	overridePath := writeEnvOverrideFile(t, cfg, "FOO=bar\nQUINE_MAX_TURNS=64\n")
+	if _, err := os.Stat(overridePath); err != nil {
+		t.Fatalf("the agent's own override should exist on the agent root: %v", err)
 	}
-	if !strings.Contains(string(mutated), config.EnvWorkspaceCurrentRevision+"=rev-switched\n") {
-		t.Fatalf("public resolved.env should reflect the switched position:\n%s", mutated)
-	}
-	backing, err := os.ReadFile(filepath.Join(cfg.AgentRoot(), "config", "resolved.env"))
-	if err != nil {
-		t.Fatalf("read backing resolved.env after mutation: %v", err)
-	}
-	if string(mutated) != string(backing) {
-		t.Fatal("public resolved.env drifted from the backing SST after mutation")
+	if _, err := os.Lstat(filepath.Join(publicConfig, config.EnvOverrideDirName)); !os.IsNotExist(err) {
+		t.Fatalf("public/config/env must never be peer-visible (stat err = %v)", err)
 	}
 
 	// Peers discover the surface from the peer-readable contract.
@@ -1017,22 +1066,21 @@ func TestBootstrapAgentRootProjectsFuseConfigSurface(t *testing.T) {
 	}
 }
 
-// TestBootstrapAgentRootFuseConfigGateTransactions covers the public/ctl/config
-// validated write gate through the real mount (registry-design-brief § C
-// feedback layer, work order T3.3): a valid write transaction lands
-// config/next.env byte-equal at close, an invalid one is rejected synchronously
-// at close (EINVAL) without creating or clobbering the staged file and its
-// violations are readable back from the gate, coupling warnings surface for
-// accepted stages of Couples-bearing knobs, and an empty write clears the
-// stage. Peers discover the gate from status/contract.json.
-func TestBootstrapAgentRootFuseConfigGateTransactions(t *testing.T) {
+// TestBootstrapAgentRootFuseEnvGateTransactions covers the public/ctl/env
+// validated write gate through the real mount: a valid write transaction lands
+// config/env/override byte-equal at close, an invalid one is rejected
+// synchronously at close (EINVAL) leaving the target file byte-identical and its
+// violations readable back from the gate, coupling warnings surface for accepted
+// policies naming Couples-bearing knobs, and an empty write clears the policy.
+// Peers discover the gate from the process-control/v1 contract.
+func TestBootstrapAgentRootFuseEnvGateTransactions(t *testing.T) {
 	requireRuntimeSurfaceFUSESupport(t)
 
 	cfg := testCfg(t)
 	rt := NewWithProvider(cfg, &mockProvider{})
 	silenceRuntime(rt)
 	useRealPublicSurface(rt)
-	rt.originalInput = "exercise the fuse config gate"
+	rt.originalInput = "exercise the fuse env gate"
 
 	if err := rt.bootstrapAgentRoot(); err != nil {
 		t.Fatalf("bootstrapAgentRoot failed: %v", err)
@@ -1043,76 +1091,96 @@ func TestBootstrapAgentRootFuseConfigGateTransactions(t *testing.T) {
 		}
 	})
 
-	gatePath := filepath.Join(cfg.AgentRoot(), "public", "ctl", "config")
-	stagedPath := cfg.StagedNextEnvPath()
+	gatePath := filepath.Join(cfg.AgentRoot(), "public", "ctl", string(controlActionEnv))
+	overridePath := cfg.EnvOverridePath()
 	if info, err := os.Lstat(gatePath); err != nil {
-		t.Fatalf("stat public ctl/config: %v", err)
+		t.Fatalf("stat public ctl/env: %v", err)
 	} else if info.Mode()&os.ModeType != 0 {
-		t.Fatalf("public ctl/config should be a regular FUSE file, got mode %v", info.Mode())
+		t.Fatalf("public ctl/env should be a regular FUSE file, got mode %v", info.Mode())
 	}
 
-	// Read before any stage: gate self-description + empty state.
+	// Read before any policy: gate self-description + empty state.
 	summary, err := os.ReadFile(gatePath)
 	if err != nil {
-		t.Fatalf("read public ctl/config summary: %v", err)
+		t.Fatalf("read public ctl/env summary: %v", err)
 	}
-	for _, want := range []string{"control_file: config", "mode: validated-config-stage", "staged: none"} {
+	for _, want := range []string{"control_file: env", "mode: validated-child-env-policy", "policy: none"} {
 		if !strings.Contains(string(summary), want) {
 			t.Fatalf("initial gate summary missing %q:\n%s", want, summary)
 		}
 	}
 
-	// Valid transaction: lands next.env byte-equal, synchronously at close.
-	payload := "QUINE_MAX_TURNS=64\n"
+	// Valid transaction: lands config/env/override byte-equal, synchronously at
+	// close. A foreign name rides along — the override is a general child-env
+	// manager, not a knob poker (brief E9).
+	// Staged names/values are deliberately not the gate's static example
+	// (QUINE_MAX_TURNS=64, FOO=bar), so the value-echo check below cannot trip on
+	// the usage help text.
+	payload := "QUINE_OUTPUT_TRUNCATE=51234\nGATE_PROBE_XYZ=zzz9\n"
 	if err := os.WriteFile(gatePath, []byte(payload), 0o666); err != nil {
 		t.Fatalf("valid gate write should be accepted: %v", err)
 	}
-	landed, err := os.ReadFile(stagedPath)
+	landed, err := os.ReadFile(overridePath)
 	if err != nil {
-		t.Fatalf("read landed config/next.env: %v", err)
+		t.Fatalf("read landed config/env/override: %v", err)
 	}
 	if string(landed) != payload {
-		t.Fatalf("landed next.env = %q, want byte-equal %q", landed, payload)
+		t.Fatalf("landed override = %q, want byte-equal %q", landed, payload)
 	}
 	summary, err = os.ReadFile(gatePath)
 	if err != nil {
 		t.Fatalf("re-read gate summary: %v", err)
 	}
-	for _, want := range []string{"QUINE_MAX_TURNS=64", "validation: valid against the running capability registry"} {
+	for _, want := range []string{"policy_names: QUINE_OUTPUT_TRUNCATE (set), GATE_PROBE_XYZ (set)", "validation: valid against the running capability registry"} {
 		if !strings.Contains(string(summary), want) {
 			t.Fatalf("post-accept gate summary missing %q:\n%s", want, summary)
 		}
 	}
+	// The gate read side is peer-readable: it must name the policy, never quote
+	// its values (the override is the agent's own file, deliberately not
+	// projected to peers by the FUSE config node).
+	if strings.Contains(string(summary), "GATE_PROBE_XYZ=zzz9") || strings.Contains(string(summary), "zzz9") || strings.Contains(string(summary), "51234") {
+		t.Fatalf("public/ctl/env echoed policy values to a peer-readable node:\n%s", summary)
+	}
 
-	// Accepted stage of a Couples-bearing knob replaces the file wholesale
-	// and surfaces the registry edge as a warning, not an error.
+	// An accepted policy naming a Couples-bearing knob replaces the file
+	// wholesale and surfaces the registry edge as a warning, not an error.
 	coupled := "QUINE_EPHEMERAL_BODY_ENABLED=1\n"
 	if err := os.WriteFile(gatePath, []byte(coupled), 0o666); err != nil {
 		t.Fatalf("coupled gate write should be accepted (warnings are not errors): %v", err)
 	}
 	summary, err = os.ReadFile(gatePath)
 	if err != nil {
-		t.Fatalf("re-read gate summary after coupled stage: %v", err)
+		t.Fatalf("re-read gate summary after the coupled policy: %v", err)
 	}
 	if !strings.Contains(string(summary), "QUINE_EPHEMERAL_BODY_ENABLED couples with QUINE_SELF_REENTRY_MODE (hazard):") {
-		t.Fatalf("gate summary missing coupling warning:\n%s", summary)
+		t.Fatalf("gate summary missing the coupling warning:\n%s", summary)
 	}
 
 	// Invalid transaction: rejected at close with the pattern's transaction
-	// errno; the pre-existing staged file survives a rejected replacement.
-	writeErr := os.WriteFile(gatePath, []byte("QUINE_TOTALLY_UNKNOWN_KNOB=1\n"), 0o666)
+	// errno. The target file survives byte-identical — a rejected write lands
+	// NOTHING, so the policy in force is exactly the one that was in force
+	// before. QUINE_MAX_DEPTH is the pinned case (E5: tree budgets belong to the
+	// operator, and a lineage must not relax its own depth budget through a
+	// mediated channel).
+	before, err := os.ReadFile(overridePath)
+	if err != nil {
+		t.Fatalf("read override before the rejected write: %v", err)
+	}
+	invalid := "QUINE_TOTALLY_UNKNOWN_KNOB=1\nQUINE_MAX_DEPTH=99\n"
+	writeErr := os.WriteFile(gatePath, []byte(invalid), 0o666)
 	if writeErr == nil {
 		t.Fatal("invalid gate write should be rejected at close")
 	}
 	if !errors.Is(writeErr, syscall.EINVAL) {
 		t.Fatalf("invalid gate write errno = %v, want EINVAL", writeErr)
 	}
-	surviving, err := os.ReadFile(stagedPath)
+	surviving, err := os.ReadFile(overridePath)
 	if err != nil {
-		t.Fatalf("staged file should survive a rejected replacement: %v", err)
+		t.Fatalf("the override should survive a rejected replacement: %v", err)
 	}
-	if string(surviving) != coupled {
-		t.Fatalf("rejected replacement clobbered next.env: got %q, want %q", surviving, coupled)
+	if !bytes.Equal(surviving, before) {
+		t.Fatalf("a rejected write must leave the target byte-identical: got %q, want %q", surviving, before)
 	}
 	summary, err = os.ReadFile(gatePath)
 	if err != nil {
@@ -1121,38 +1189,52 @@ func TestBootstrapAgentRootFuseConfigGateTransactions(t *testing.T) {
 	for _, want := range []string{
 		"last_rejected_write: rejected in full, nothing landed:",
 		"QUINE_TOTALLY_UNKNOWN_KNOB: unknown env name",
+		`QUINE_MAX_DEPTH: mutability "operator-only" — pinned`,
 	} {
 		if !strings.Contains(string(summary), want) {
 			t.Fatalf("post-rejection gate summary missing %q:\n%s", want, summary)
 		}
 	}
 
-	// Empty write: wholesale replacement with nothing = clear the stage.
+	// Empty write: wholesale replacement with nothing = clear the policy.
 	if err := os.WriteFile(gatePath, nil, 0o666); err != nil {
-		t.Fatalf("empty gate write should clear the stage: %v", err)
+		t.Fatalf("empty gate write should clear the policy: %v", err)
 	}
-	if _, err := os.Stat(stagedPath); !os.IsNotExist(err) {
-		t.Fatalf("staged file should be cleared by an empty write, got err=%v", err)
+	if _, err := os.Stat(overridePath); !os.IsNotExist(err) {
+		t.Fatalf("config/env/override should be cleared by an empty write, got err=%v", err)
 	}
 
-	// Peers discover the gate from the contract.
+	// Peers discover the gate from the contract. The surface rename ctl/config →
+	// ctl/env is a breaking change, so the contract version moved with it (E10):
+	// no dual-key window, no alias.
 	contractData, err := os.ReadFile(filepath.Join(cfg.AgentRoot(), "public", "status", "contract.json"))
 	if err != nil {
 		t.Fatalf("read public contract: %v", err)
 	}
 	var contract struct {
-		Surfaces       runtimeContractSurfaces          `json:"surfaces"`
-		ControlActions map[string]controlActionContract `json:"control_actions"`
+		ContractVersion string                           `json:"contract_version"`
+		Surfaces        runtimeContractSurfaces          `json:"surfaces"`
+		ControlActions  map[string]controlActionContract `json:"control_actions"`
 	}
 	if err := json.Unmarshal(contractData, &contract); err != nil {
 		t.Fatalf("unmarshal public contract: %v", err)
 	}
-	if contract.Surfaces.ConfigControl != "ctl/config" {
-		t.Fatalf("contract surfaces.config_control = %q, want %q", contract.Surfaces.ConfigControl, "ctl/config")
+	if contract.ContractVersion != "process-control/v1" {
+		t.Fatalf("contract_version = %q, want %q", contract.ContractVersion, "process-control/v1")
 	}
-	action, ok := contract.ControlActions["config"]
-	if !ok || !strings.Contains(action.Description, "validated staged-config write gate") {
-		t.Fatalf("contract control_actions.config missing self-describing gate semantics: %#v", contract.ControlActions["config"])
+	if contract.Surfaces.ConfigControl != "ctl/env" {
+		t.Fatalf("contract surfaces.config_control = %q, want %q", contract.Surfaces.ConfigControl, "ctl/env")
+	}
+	if _, stale := contract.ControlActions["config"]; stale {
+		t.Fatal("contract must not carry the retired control_actions.config key (no-alias cutover)")
+	}
+	action, ok := contract.ControlActions[string(controlActionEnv)]
+	if !ok || !strings.Contains(action.Description, "validated child-env policy gate") {
+		t.Fatalf("contract control_actions.env missing self-describing gate semantics: %#v", contract.ControlActions[string(controlActionEnv)])
+	}
+	// The gate's non-claim is part of the contract, not a footnote to it.
+	if !strings.Contains(action.Description, "it does not change this peer's own environment, which is fixed at its birth") {
+		t.Fatalf("contract control_actions.env must state the birth-fact non-claim: %q", action.Description)
 	}
 }
 

@@ -1,3 +1,7 @@
+---
+source: Paper/papers/the-autopoietic-repository
+---
+
 # The Autopoietic Repository
 
 > Strange Loops, Entropy, and the System That Rewrites Itself. A blog essay — published on Substack.

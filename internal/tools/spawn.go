@@ -74,8 +74,8 @@ type spawnStructuredResult struct {
 	Errors         []string                     `json:"errors,omitempty"`
 }
 
-func NewSpawnExecutor(cfg *config.Config, childEnv []string) *SpawnExecutor {
-	return &SpawnExecutor{ForkExecutor: NewForkExecutor(cfg, childEnv)}
+func NewSpawnExecutor(cfg *config.Config) *SpawnExecutor {
+	return &SpawnExecutor{ForkExecutor: NewForkExecutor(cfg)}
 }
 
 func ParseSpawnArgs(args map[string]any, cfg *config.Config) (SpawnRequest, error) {

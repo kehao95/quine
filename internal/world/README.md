@@ -4,25 +4,6 @@ The `world` package implements the budgeted cell-retrieval environment used in
 P8 population experiments. It provides a shared-resource task where multiple
 agents must cooperate to complete data collection under constrained budgets.
 
-## Projection Maintenance
-
-Source owner: `internal/world`, `cmd/world`, and P8 experiment runners own
-concrete behavior and fixture use. This file owns package-level world semantics
-and security-model guidance.
-
-Projection role: world package control-plane index. It keeps the budgeted
-environment's identity, spec, API, and experiment-setup contracts legible
-without replacing implementation or P8 experiment READMEs.
-
-Freshness trigger: update when world commands, environment variables, security
-model, spec layout, or P8 setup contract changes.
-
-Drift check: compare with `cmd/world`, `internal/world` tests, and
-`experiments/active/cooperation-dynamics/` runner/docs when world behavior changes.
-
-Absorption owner: experiment interpretation belongs in P8; implementation
-facts belong in code/tests; this file keeps package-level operating semantics.
-
 ## Security Model (2026-04-09)
 
 To prevent agents from circumventing per-agent limits, the world binary uses a

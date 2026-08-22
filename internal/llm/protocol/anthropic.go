@@ -405,7 +405,12 @@ func isAnthropicAssistantPrefill(msg anthropicMessage) bool {
 		return true
 	case []contentBlock:
 		for _, block := range content {
-			if block.Type != "text" {
+			switch block.Type {
+			case "thinking", "redacted_thinking", "text":
+				// These blocks are all generation content. Without a tool_use
+				// block, the turn is an unsupported assistant prefill and may
+				// be removed so the conversation ends on a user message.
+			default:
 				return false
 			}
 		}

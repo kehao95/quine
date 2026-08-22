@@ -6,11 +6,16 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+
+	"github.com/kehao95/quine/internal/config"
 )
 
 // ContextBootstrapEnv points a child process at a staged context tree that it
 // should import into its live agent root before entering the main turn loop.
-const ContextBootstrapEnv = "QUINE_CONTEXT_BOOTSTRAP"
+//
+// The name is owned by the capability registry (a runtime-emitted knob) so the
+// env mask derives from Mutability alone; this is the in-package spelling.
+const ContextBootstrapEnv = config.EnvContextBootstrap
 
 // CopyTreePreservingSymlinks recursively copies a tree, preserving directory
 // structure, file modes, and symlink targets.

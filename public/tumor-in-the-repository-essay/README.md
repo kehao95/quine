@@ -1,3 +1,7 @@
+---
+source: Paper/papers/tumor-in-the-repository-essay
+---
+
 # A Tumor in the Repository (essay)
 
 > The origin narrative behind the ALIFE 2026 LBA of the same name. A blog essay

@@ -127,7 +127,7 @@ func TestSpawnExecutor_WaitStartsFreshProcessWithoutContextBootstrap(t *testing.
 	t.Setenv("QUINE_CONTEXT_TAPE", "/parent/context/tape.jsonl")
 
 	cfg := &config.Config{Identity: config.Identity{SessionID: "parent-session"}, Limits: config.Limits{OutputTruncate: 20480}, Paths: config.Paths{DataDir: filepath.Join(tmpDir, "data"), RetentionDir: filepath.Join(tmpDir, "retained"), SelfReentryTarget: stub}}
-	spawn := NewSpawnExecutor(cfg, []string{"QUINE_PARENT_SESSION=parent-session"})
+	spawn := NewSpawnExecutor(cfg)
 
 	result := spawn.Execute("call_spawn", SpawnRequest{
 		Mode: SpawnModeWait,
@@ -183,15 +183,16 @@ func TestSpawnExecutor_WaitStartsFreshProcessWithoutContextBootstrap(t *testing.
 func TestSpawnExecutor_AppliesWorkspaceProjectionLikeFork(t *testing.T) {
 	tmpDir := t.TempDir()
 	stub := writeSpawnStubQuine(t, tmpDir)
-	cfg := &config.Config{Identity: config.Identity{SessionID: "parent-session"}, Limits: config.Limits{OutputTruncate: 20480}, ToolGates: config.ToolGates{ForkWorldEnabled: true}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: filepath.Join(tmpDir, "workspace"), Workspace: filepath.Join(tmpDir, "workspace"), WorkspaceBackend: "direct", WorkspaceRevisionMode: config.WorkspaceRevisionRestore}, Paths: config.Paths{DataDir: filepath.Join(tmpDir, "data"), RetentionDir: filepath.Join(tmpDir, "retained"), SelfReentryTarget: stub}}
+	// The lineage facts a child cannot derive (parent session, workspace
+	// bootstrap) are stamped from the parent's own Config now — they used to be
+	// hand-passed as a childEnv slice, which let a test assert a lineage the
+	// runtime never actually held. WorkspaceSession is the parent's live
+	// workspace session; the child adopts it as its bootstrap.
+	cfg := &config.Config{Identity: config.Identity{SessionID: "parent-session"}, Limits: config.Limits{OutputTruncate: 20480}, ToolGates: config.ToolGates{ForkWorldEnabled: true}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: filepath.Join(tmpDir, "workspace"), Workspace: filepath.Join(tmpDir, "workspace"), WorkspaceBackend: "direct", WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "parent-session"}, Paths: config.Paths{DataDir: filepath.Join(tmpDir, "data"), RetentionDir: filepath.Join(tmpDir, "retained"), SelfReentryTarget: stub}}
 	if err := os.MkdirAll(cfg.Workspace, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	spawn := NewSpawnExecutor(cfg, []string{
-		"QUINE_PARENT_SESSION=parent-session",
-		"QUINE_WORKSPACE_BOOTSTRAP=parent-session",
-		"QUINE_WORKSPACE_CURRENT_REVISION=wr7",
-	})
+	spawn := NewSpawnExecutor(cfg)
 
 	result := spawn.Execute("call_spawn_workspace", SpawnRequest{
 		Mode: SpawnModeWait,
@@ -236,7 +237,7 @@ func TestSpawnExecutor_ForgetReturnsProcessHandles(t *testing.T) {
 	tmpDir := t.TempDir()
 	stub := writeSpawnStubQuine(t, tmpDir)
 	cfg := &config.Config{Identity: config.Identity{SessionID: "parent-session"}, Limits: config.Limits{OutputTruncate: 20480}, Paths: config.Paths{DataDir: filepath.Join(tmpDir, "data"), RetentionDir: filepath.Join(tmpDir, "retained"), SelfReentryTarget: stub}}
-	spawn := NewSpawnExecutor(cfg, []string{"QUINE_PARENT_SESSION=parent-session"})
+	spawn := NewSpawnExecutor(cfg)
 
 	result := spawn.Execute("call_spawn_forget", SpawnRequest{
 		Mode:     SpawnModeForget,
@@ -263,7 +264,7 @@ func TestSpawnExecutor_RaceReturnsFirstSuccessfulFreshProcess(t *testing.T) {
 	tmpDir := t.TempDir()
 	stub := writeSpawnRaceStubQuine(t, tmpDir)
 	cfg := &config.Config{Identity: config.Identity{SessionID: "parent-session"}, Limits: config.Limits{OutputTruncate: 20480}, Paths: config.Paths{DataDir: filepath.Join(tmpDir, "data"), RetentionDir: filepath.Join(tmpDir, "retained"), SelfReentryTarget: stub}}
-	spawn := NewSpawnExecutor(cfg, []string{"QUINE_PARENT_SESSION=parent-session"})
+	spawn := NewSpawnExecutor(cfg)
 
 	result := spawn.Execute("call_spawn_race", SpawnRequest{
 		Mode: SpawnModeRace,
@@ -343,7 +344,7 @@ esac
 func TestSpawnExecutor_WaitMissingBinaryPreservesPerChildErrors(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfg := &config.Config{Identity: config.Identity{SessionID: "spawn-missing-parent"}, Limits: config.Limits{OutputTruncate: 20480}, Paths: config.Paths{DataDir: filepath.Join(tmpDir, "data"), RetentionDir: filepath.Join(tmpDir, "retained"), SelfReentryTarget: "/nonexistent/quine"}}
-	spawn := NewSpawnExecutor(cfg, nil)
+	spawn := NewSpawnExecutor(cfg)
 
 	result := spawn.Execute("tool-spawn-missing", SpawnRequest{
 		Mode:     SpawnModeWait,
@@ -376,7 +377,7 @@ func TestSpawnExecutor_RaceWinnerPreservesSpawnErrors(t *testing.T) {
 	}
 	stub := writeSpawnRaceStubQuine(t, tmpDir)
 	cfg := &config.Config{Identity: config.Identity{SessionID: "spawn-race-spawn-errors-parent"}, Limits: config.Limits{OutputTruncate: 20480}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: workspace, Workspace: workspace, WorkspaceBackend: "direct"}, Paths: config.Paths{DataDir: filepath.Join(tmpDir, "data"), RetentionDir: filepath.Join(tmpDir, "retained"), SelfReentryTarget: stub}}
-	spawn := NewSpawnExecutor(cfg, nil)
+	spawn := NewSpawnExecutor(cfg)
 
 	result := spawn.Execute("tool-spawn-race-errors", SpawnRequest{
 		Mode: SpawnModeRace,

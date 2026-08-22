@@ -90,14 +90,13 @@ type Runtime struct {
 	peerDiscoveryInitialized   bool
 
 	incarnationID         int
-	childEnvBase          []string
 	lastFSMutations       string
 	agentRootBootstrapped bool
 	control               *controlState
-	// configGate holds the public/ctl/config write-gate transaction feedback
+	// envGate holds the public/ctl/env write-gate transaction feedback
 	// (last rejected write's violations); see config_gate.go.
-	configGate configGateState
-	publicSurface         *fusePublicSurfaceBackend
+	envGate       envGateState
+	publicSurface *fusePublicSurfaceBackend
 	// publicSurfaceProbed/publicSurfaceDegraded memoize the FUSE availability
 	// probe: computed once, consumed by both the public-surface sync and the
 	// prompt disclosure. A non-empty publicSurfaceDegraded means public/ is a
@@ -179,14 +178,6 @@ func newRuntime(cfg *config.Config, provider llm.Provider) *Runtime {
 		shortID = shortID[:4]
 	}
 
-	// Compute child environment for recursive invocations.
-	// ChildEnv() returns QUINE_* vars with DEPTH+1, fresh SESSION_ID, etc.
-	// If it fails (e.g., crypto/rand error), fall back to no child overrides.
-	childEnv, err := cfg.ChildEnv()
-	if err != nil {
-		childEnv = nil
-	}
-
 	lockDir := cfg.LockDir()
 
 	// Create dedicated log file for operational messages (§10.2).
@@ -199,7 +190,7 @@ func newRuntime(cfg *config.Config, provider llm.Provider) *Runtime {
 	r := &Runtime{
 		cfg:           cfg,
 		provider:      provider,
-		sh:            tools.NewShExecutor(cfg, childEnv),
+		sh:            tools.NewShExecutor(cfg),
 		tools:         tools.AllToolSchemas(cfg),
 		semaphore:     NewSemaphore(lockDir, cfg.MaxConcurrent, cfg.RunID),
 		agentRegistry: NewAgentRegistry(lockDir, cfg.RuntimeRoot(), cfg.MaxAgents, cfg.SessionID, cfg.RunID),
@@ -207,15 +198,14 @@ func newRuntime(cfg *config.Config, provider llm.Provider) *Runtime {
 		stderr:        os.Stderr,
 		logFile:       logFile,
 		incarnationID: -1,
-		childEnvBase:  childEnv,
 		control:       newControlState(),
 	}
 	r.toolRegistry = newToolRegistry()
 	if cfg.ForkEnabled() {
-		r.fork = tools.NewForkExecutor(cfg, childEnv)
+		r.fork = tools.NewForkExecutor(cfg)
 	}
 	if cfg.SpawnEnabled() {
-		r.spawn = tools.NewSpawnExecutor(cfg, childEnv)
+		r.spawn = tools.NewSpawnExecutor(cfg)
 	}
 	if cfg.AnchorMemoryEnabled {
 		r.memory = tools.NewAnchorMemoryExecutor(
@@ -228,10 +218,10 @@ func newRuntime(cfg *config.Config, provider llm.Provider) *Runtime {
 		r.memory.FoldDisabled = !cfg.AnchorFoldEnabled()
 		r.memory.MemoryStrategyHints = cfg.MemoryStrategyHints
 	}
-	r.sh.Env = tools.MergeEnv(r.sh.Env, []string{
-		"QUINE_AGENT_ROOT=" + cfg.AgentRoot(),
-		config.EnvRunID + "=" + cfg.RunID,
-	})
+	// QUINE_AGENT_ROOT and QUINE_RUN_ID used to be re-stamped here, on top of a
+	// second stamp inside NewShExecutor. Both now live in config.ShellStamps,
+	// applied inside the sh boundary itself — one stamp path, rebuilt per
+	// command, with nothing to keep in sync.
 
 	// Wire the process's real stdin/stdout to the sh executor so that
 	// commands can use runtime side channels:
@@ -1545,14 +1535,14 @@ func (r *Runtime) bootstrapAgentRoot() error {
 	if err := removeSelfSourceSurface(filepath.Join(agentRoot, "genome")); err != nil {
 		return fmt.Errorf("remove stale genome surface: %w", err)
 	}
-	// Version-skew observability, then phase 2 of the staged-config
-	// transaction (brief § C, T3.2) — deliberately BEFORE syncConfigSurface
-	// so the archive+clear completes (or aborts bootstrap) before this
-	// incarnation's config surface and birth snapshot are declared; the
-	// consume step's doc comment records the full ordering rationale.
+	// Version-skew observability, then phase 2 of the exec-time env-override
+	// transaction — deliberately BEFORE syncConfigSurface so the archive+clear
+	// completes (or aborts bootstrap) before this incarnation's config surface
+	// and birth record are declared; the consume step's doc comment records the
+	// full ordering rationale.
 	r.logCapabilityEnvDrift()
-	if err := r.consumeAppliedStagedConfig(); err != nil {
-		return fmt.Errorf("consume applied staged config: %w", err)
+	if err := r.consumeAppliedEnvOverride(); err != nil {
+		return fmt.Errorf("consume applied env override: %w", err)
 	}
 	if err := r.syncConfigSurface(agentRoot); err != nil {
 		return fmt.Errorf("sync config surface: %w", err)

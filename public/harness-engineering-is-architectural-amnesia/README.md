@@ -1,3 +1,7 @@
+---
+source: Paper/papers/harness-engineering-is-architectural-amnesia
+---
+
 # Harness Engineering Is Architectural Amnesia
 
 > Stop rebuilding the operating system in user space. A blog essay — published on Substack.

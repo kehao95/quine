@@ -17,6 +17,7 @@ import (
 
 	fusefs "github.com/hanwen/go-fuse/v2/fs"
 	fusepkg "github.com/hanwen/go-fuse/v2/fuse"
+
 )
 
 type fusePublicSurfaceBackend struct {
@@ -302,13 +303,18 @@ func (n *fuseStatusDirNode) OnAdd(ctx context.Context) {
 	}
 }
 
-// fuseConfigDirNode projects the peer-readable slice of the agent-root
-// config/ read surface (registry-design-brief § B: the peer-readable
-// capability position) as live views over the backing SSTs — the status/*
-// computed-on-read vehicle: every read fetches the current backing file, so a
-// peer reading resolved.env after onConfigMutated sees the mutated position.
-// The child set is a fixed enumeration: the Phase-3 agent-writable
-// config/next.env staging file must never become peer-visible here.
+// fuseConfigDirNode projects the peer-readable slice of the agent-root config/
+// surface as live views over the backing files — the status/* computed-on-read
+// vehicle: every read fetches the current backing file, so a peer sees the
+// current content, not a snapshot taken at mount.
+//
+// The child set is a FIXED enumeration, deliberately not a directory scan, and
+// it is exactly one file: registry.json, the static knob catalog. config/env/ is
+// NOT projected: its only file is the agent-writable config/env/override, which
+// must never become peer-visible — it is the agent's own policy for its own
+// children. A peer that needs to drive this process's env writes the ctl/env
+// gate; it does not read the override. A directory scan would expose it the
+// moment it was created, so we enumerate, and we enumerate only registry.json.
 type fuseConfigDirNode struct {
 	fusefs.Inode
 	configDirTarget string
@@ -317,13 +323,11 @@ type fuseConfigDirNode struct {
 var _ = (fusefs.NodeOnAdder)((*fuseConfigDirNode)(nil))
 
 func (n *fuseConfigDirNode) OnAdd(ctx context.Context) {
-	for _, name := range []string{"registry.json", "resolved.env"} {
-		n.AddChild(name, n.NewPersistentInode(ctx, &fuseProjectedFileNode{
-			targetPath: filepath.Join(n.configDirTarget, name),
-		}, fusefs.StableAttr{
-			Mode: syscall.S_IFREG,
-		}), false)
-	}
+	n.AddChild("registry.json", n.NewPersistentInode(ctx, &fuseProjectedFileNode{
+		targetPath: filepath.Join(n.configDirTarget, "registry.json"),
+	}, fusefs.StableAttr{
+		Mode: syscall.S_IFREG,
+	}), false)
 }
 
 type fuseProjectedFileNode struct {
@@ -554,13 +558,13 @@ func (h *fuseControlActionHandle) Write(ctx context.Context, data []byte, off in
 }
 
 func (h *fuseControlActionHandle) Flush(ctx context.Context) syscall.Errno {
-	// The config gate is a validated transaction: commit at flush so the
-	// writer's close(2) observes acceptance or rejection synchronously
-	// (RELEASE carries no reply back to any syscall, so a release-time
-	// rejection would be invisible to the writer). The message actions keep
-	// their commit at release: their payloads cannot be rejected, so nothing
-	// is lost by the asynchronous ack.
-	if h.node.action == controlActionConfig {
+	// The env gate is a validated transaction: commit at flush so the writer's
+	// close(2) observes acceptance or rejection synchronously (RELEASE carries
+	// no reply back to any syscall, so a release-time rejection would be
+	// invisible to the writer). The message actions keep their commit at
+	// release: their payloads cannot be rejected, so nothing is lost by the
+	// asynchronous ack.
+	if h.node.action == controlActionEnv {
 		return h.commit()
 	}
 	return 0

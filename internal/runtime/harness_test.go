@@ -242,7 +242,7 @@ func requireOverlayWorkspaceSupport(t *testing.T) {
 	cfg.WorkspaceRevisionMode = config.WorkspaceRevisionRestore
 	cfg.WorkspaceSession = "overlay-workspace-probe"
 	cfg.WorkspaceOwner = true
-	sh := tools.NewShExecutor(cfg, nil)
+	sh := tools.NewShExecutor(cfg)
 	if err := sh.Prepare(); err != nil {
 		t.Skipf("overlay workspace unsupported in this Linux environment: %v", err)
 	}

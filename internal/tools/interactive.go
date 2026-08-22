@@ -912,13 +912,9 @@ func (b *ShExecutor) startInteractiveJob(command string) (*managedJob, error) {
 	}
 
 	cmd := exec.Command(b.Shell, "-c", jobWrapperScript)
-	cmd.Env = MergeEnv(b.Env, []string{
-		"QUINE_JOB_SHELL=" + b.Shell,
-		"QUINE_JOB_COMMAND=" + command,
-		"QUINE_JOB_SESSION_DIR=" + jobSessionRoot,
-		"QUINE_JOB_NETWORK=" + b.Network,
+	cmd.Env = MergeEnv(b.commandBaseEnv(), jobWrapperEnv(b.Shell, command, jobSessionRoot, b.Network,
 		"QUINE_JOB_INTERACTIVE=1",
-	})
+	))
 	useOverlayWorkspace := jobWorkspace != nil && jobWorkspace.enabled && jobWorkspace.usesOverlayBackend()
 	isolateNetwork := b.Network == "none"
 	if useOverlayWorkspace {

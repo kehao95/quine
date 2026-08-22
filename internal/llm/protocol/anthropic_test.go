@@ -114,6 +114,7 @@ func TestStripTrailingAnthropicAssistantPrefillPreservesToolUse(t *testing.T) {
 		{
 			Role: "assistant",
 			Content: []contentBlock{
+				{Type: "thinking", Thinking: strPtr("I should inspect it."), Signature: strPtr("signed")},
 				{Type: "text", Text: strPtr("I'll inspect it.")},
 				{Type: "tool_use", ID: "call_sh", Name: "sh", Input: map[string]any{"command": "pwd"}},
 			},
@@ -131,8 +132,44 @@ func TestStripTrailingAnthropicAssistantPrefillPreservesToolUse(t *testing.T) {
 	if !ok {
 		t.Fatalf("assistant content type = %T, want []contentBlock", got[1].Content)
 	}
-	if len(blocks) != 2 || blocks[1].Type != "tool_use" || blocks[1].ID != "call_sh" {
+	if len(blocks) != 3 || blocks[2].Type != "tool_use" || blocks[2].ID != "call_sh" {
 		t.Fatalf("assistant blocks = %+v, want preserved tool_use", blocks)
+	}
+}
+
+func TestStripTrailingAnthropicAssistantPrefillRemovesThinkingText(t *testing.T) {
+	tests := []struct {
+		name   string
+		blocks []contentBlock
+	}{
+		{
+			name: "visible thinking",
+			blocks: []contentBlock{
+				{Type: "thinking", Thinking: strPtr("reasoning"), Signature: strPtr("signed")},
+				{Type: "text", Text: strPtr("answer")},
+			},
+		},
+		{
+			name: "redacted thinking",
+			blocks: []contentBlock{
+				{Type: "redacted_thinking", Data: strPtr("opaque")},
+				{Type: "text", Text: strPtr("answer")},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			messages := []anthropicMessage{
+				{Role: "user", Content: "Begin."},
+				{Role: "assistant", Content: tt.blocks},
+			}
+
+			got := stripTrailingAnthropicAssistantPrefill(messages)
+			if len(got) != 1 || got[0].Role != "user" {
+				t.Fatalf("messages = %+v, want only the user turn", got)
+			}
+		})
 	}
 }
 

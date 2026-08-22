@@ -1,3 +1,7 @@
+---
+source: Paper/papers/quine-arxiv
+---
+
 # Quine: Realizing LLM Agents as Native POSIX Processes
 
 > Systems / runtime paper. Published as arXiv:2603.18030.

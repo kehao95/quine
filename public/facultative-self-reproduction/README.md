@@ -1,9 +1,21 @@
+---
+source: Paper/papers/boundary-paper/lba
+divergence-allowed: [metadata.yaml]
+---
+
 # Facultative Self-Reproduction in Quine
+
+> **Snapshot divergence (declared):** `metadata.yaml` differs from the source
+> by one line — `bibliography:` is rewritten from the lab-tree path
+> `../main-paper/references.bib` to the self-contained `references.bib` that
+> this public entry bundles. The public snapshot cannot reference the sibling
+> `main-paper/` directory, which does not exist in the released tree.
 
 > a Process-Native LLM Medium. Late-Breaking Abstract, accepted at ALIFE 2026.
 
 This entry is the self-contained public record of the late-breaking abstract:
-the manuscript source, bibliography, and the built 2-page PDF.
+the manuscript source, bibliography, the built 2-page PDF, and the ALIFE 2026
+poster.
 
 ## What the abstract says
 
@@ -31,6 +43,7 @@ externally posed demand).
 | [`manuscript.md`](manuscript.md) | The abstract source |
 | [`references.bib`](references.bib) | Bibliography |
 | [`output/`](output/) | The built 2-page PDF |
+| [`presentation/LB112_Facultative_Self_Reproduction_Ke.pdf`](presentation/LB112_Facultative_Self_Reproduction_Ke.pdf) | ALIFE 2026 LBA poster (LB112, presented 2026-08-20) |
 | [`metadata.yaml`](metadata.yaml) | Title / authors / abstract metadata |
 
 The runtime this abstract studies is the code at the repository root

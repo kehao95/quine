@@ -42,4 +42,4 @@ We mark *peer-awareness* when an agent's reasoning trace contains at least one e
 
 ## Configuration
 
-All reported runs use GPT-5.4 with `xhigh` reasoning effort, `direct` workspace mode, and unlimited turns. Task parameters (budget, cell count, concurrency) are as described in Section 3. See Appendix A for full configuration details.
+All reported runs use GPT-5.4 with `xhigh` reasoning effort, `direct` workspace mode, and unlimited turns. Task parameters (budget, cell count, concurrency) are as described in the Experimental Platform section. See Appendix A for full configuration details.

@@ -37,7 +37,6 @@ func buildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool, pub
 	openingIdentityBlock := buildOpeningIdentityBlock(cfg, hasMission, impossibleDirective)
 	personaSection := buildPersonaSection(cfg)
 	limitsBlock := buildLimitsBlock(cfg)
-	providerTransportBlock := buildProviderTransportBlock(cfg)
 	environmentPhysicsBlock := buildEnvironmentPhysicsBlock(cfg)
 	runtimeSurfaceSection := buildRuntimeSurfaceSection(cfg, publicSurfaceUnavailable)
 
@@ -152,22 +151,12 @@ func buildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool, pub
 				"- Example: child `scope=\"subdir\"` plus `printf x > note.txt` creates or updates `subdir/note.txt` in the workspace.\n" +
 				"- `direct` is the host-visible workspace backend.\n"
 		}
-		forkStrategyBlock := ""
-		if cfg.PromptImplDetails {
-			forkStrategyBlock = "- Use `fork` when independent hypotheses, decoders, implementations, extractors, or verification strategies can be tried in parallel.\n" +
-				"- If 2-3 plausible approaches exist and no contract-shaped artifact or service is stable yet, fork 2-3 labeled children now instead of spending another long exploratory `sh` in the parent.\n" +
-				"- Fork children preserve the parent mission as the active task contract; each child intent is a lane assignment, not a replacement mission.\n" +
-				"- Child intents should include lane-specific inputs only when they are not already in the parent mission or current visible context.\n" +
-				"- Do one cheap shared setup/probe if all lanes need it; then fork specialized heavyweight installs, downloads, transcription, OCR, builds, searches, or long-running probes. Do not make every child repeat the same setup.\n" +
-				"- Use `mode=\"race\"` when any one child can produce an acceptable artifact/service; use `mode=\"wait\"` when child findings must be compared or merged.\n" +
-				"- Child intents should name a distinct strategy, the expected artifact/service when known, and the closest success check.\n" +
-				"- After race/wait returns, converge immediately: adopt an available winning world or merge/copy the best child result before continuing parent-side exploration.\n"
-		}
 		forkModeBlock := "- `mode=\"race\"`: first successful child wins and the remaining children are stopped.\n" +
 			"- `mode=\"wait\"`: block until all children finish and return every result.\n" +
 			"- `mode=\"forget\"`: return after spawning children without waiting for child completion.\n"
 		forkResultBlock := "- Each child is another you under a different intent.\n" +
 			"- Each child starts from your current visible context surface rather than reconstructing cognition from retained trace files.\n" +
+			"- Fork children preserve the parent mission as the active task contract; each child intent is a lane assignment, not a replacement mission.\n" +
 			"- `fork` returns a retained relation handle plus each child's process handles, exit code, and captured stdout/stderr process output.\n" +
 			"- Child filesystem effects follow the configured workspace/world lineage.\n"
 		if cfg.PromptImplDetails {
@@ -179,7 +168,6 @@ func buildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool, pub
 		}
 		forkToolBlock = "**fork** - Spawn child agents for parallel exploration, delegation, or decomposition.\n" +
 			"- `fork` does not consume execution budget, but it is still bounded by depth, agent slots, and shared inference concurrency.\n" +
-			forkStrategyBlock +
 			forkResultBlock +
 			forkModeBlock +
 			forkWorkspaceBlock
@@ -226,7 +214,6 @@ func buildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool, pub
 		execToolBlock += "- Preparing or replacing an executable file on disk does not change the running process by itself; handoff occurs only when `exec` replaces the current process image.\n"
 		if cfg.EphemeralBody {
 			execToolBlock += "- With `QUINE_EPHEMERAL_BODY_ENABLED=1`, quine unlinks its launch path during startup. This does not change the configured self-reentry target.\n"
-			execToolBlock += "- While the body is unlinked, `exec` **rejects** a `target` of `/proc/self/exe` or `/proc/<pid>/exe`: re-executing the live process image recovers the original body in place rather than reconstructing a successor. Build a successor body from the runtime contract and workspace, then exec that.\n"
 			if selfReentryTarget != "" && launchPath != "" && selfReentryTarget == launchPath {
 				execToolBlock += "- If that configured self-reentry target is the launch path, default self re-entry will fail until a runnable body exists there.\n"
 			}
@@ -318,9 +305,6 @@ func buildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool, pub
 			stdinBlock = "**Material:** `fd 3` is quine process stdin when material is provided (for example `cat file | quine \"task\"`). This session has no material stream and the user message is `Begin.`.\n"
 		}
 	}
-	if !forkEnabled {
-		stdinBlock += "- `fork` is unavailable in this runtime, so child-process material behavior is not exposed.\n"
-	}
 	if cfg.ShStdinEnabled() {
 		stdinBlock += "- `sh(command=\"cat > path\", stdin=\"...\")` supplies multi-line file content without shell heredoc or quoting mechanics.\n"
 	}
@@ -351,7 +335,6 @@ func buildSystemPrompt(cfg *config.Config, mission string, hasMaterial bool, pub
 		"{PERSONA_SECTION}", personaSection,
 		"{PLATFORM}", runtime.GOOS,
 		"{MODEL}", cfg.ModelID,
-		"{PROVIDER_TRANSPORT_BLOCK}", providerTransportBlock,
 		"{SHELL}", cfg.Shell,
 		"{DEPTH}", fmt.Sprintf("%d", cfg.Depth),
 		"{LIMITS_BLOCK}", limitsBlock,
@@ -490,42 +473,7 @@ func buildLimitsBlock(cfg *config.Config) string {
 			limitsLines = append(limitsLines, fmt.Sprintf("- Agent Limit: %d registered agents in this process tree", cfg.MaxAgents))
 		}
 	}
-	if !cfg.ForkEnabled() {
-		limitsLines = append(limitsLines, "- Fork is disabled by `QUINE_FORK_ENABLED=0`.")
-	}
-	if !cfg.SpawnEnabled() {
-		limitsLines = append(limitsLines, "- Spawn is disabled by `QUINE_SPAWN_ENABLED=0`.")
-	}
 	return formatPromptBlock(limitsLines)
-}
-
-func buildProviderTransportBlock(cfg *config.Config) string {
-	if cfg == nil {
-		return ""
-	}
-	provider := strings.TrimSpace(cfg.Provider)
-	base := strings.TrimSpace(cfg.APIBase)
-	if provider == "" && base == "" && cfg.APIKey == "" {
-		return ""
-	}
-
-	var lines []string
-	if provider != "" {
-		lines = append(lines, fmt.Sprintf("- Provider Transport: `%s` via `QUINE_API_TYPE`.", provider))
-	}
-	if base != "" {
-		lines = append(lines, fmt.Sprintf("- Provider Base: `%s` via `QUINE_API_BASE`.", base))
-	}
-	keyState := "absent"
-	if cfg.APIKey != "" {
-		keyState = "present"
-	}
-	lines = append(lines,
-		fmt.Sprintf("- Provider Credential: `QUINE_API_KEY` is %s in the process environment; it is a secret bearer credential and its value is not rendered here.", keyState),
-		"- Provider environment such as `QUINE_MODEL_ID`, `QUINE_API_TYPE`, `QUINE_API_BASE`, `QUINE_API_KEY`, `QUINE_THINKING_BUDGET`, and `QUINE_USER_AGENT` follows ordinary process-environment inheritance across `exec` unless replaced.",
-		"- A custom non-quine exec image does not retain the Go runtime's provider loop or tools automatically; after such an exec, only inherited OS resources remain unless the successor re-enters quine or implements its own provider-call path.",
-	)
-	return strings.Join(lines, "\n")
 }
 
 func buildEnvironmentPhysicsBlock(cfg *config.Config) string {
@@ -610,46 +558,60 @@ func buildRuntimeSurfaceSection(cfg *config.Config, publicSurfaceUnavailable str
 	if launchPath := strings.TrimSpace(cfg.ExecutablePath); launchPath != "" {
 		lines = append(lines, fmt.Sprintf("- Quine Binary: `%s`", launchPath))
 	}
-	if target := strings.TrimSpace(cfg.SelfReentryTarget); target != "" {
-		lines = append(lines, fmt.Sprintf("- Default self-reentry target: `%s`", target))
+	if cfg.ExecEnabled {
+		if target := strings.TrimSpace(cfg.SelfReentryTarget); target != "" {
+			lines = append(lines, fmt.Sprintf("- Default self-reentry target: `%s`", target))
+		}
 	}
 	if cfg.EphemeralBody {
 		lines = append(lines, "- Ephemeral body: launch path unlinked after startup.")
 	}
-	lines = append(lines, "- Linux live process image: while a process runs, `/proc/<pid>/exe` may expose the current executable image. Copying that image is body recovery/body-copying, not behavioral reconstruction from the runtime contract.")
+	if cfg.ExecEnabled {
+		lines = append(lines, "- Linux live process image: while a process runs, `/proc/<pid>/exe` may expose the current executable image.")
+	}
 
 	// L2: Self identity (relative to runtime root)
-	lines = append(lines,
-		fmt.Sprintf("- `QUINE_AGENT_ROOT=%s` — your live session root.", cfg.AgentRoot()),
-		fmt.Sprintf("- `QUINE_RUN_ID=%s` — current physical run identity; it changes across resume/re-entry.", cfg.RunID),
-	)
+	lines = append(lines, fmt.Sprintf("- `QUINE_AGENT_ROOT=%s` — your live session root.", cfg.AgentRoot()))
+	if cfg.ExecEnabled {
+		lines = append(lines, fmt.Sprintf("- `QUINE_RUN_ID=%s` — current physical run identity; it changes across resume/re-entry.", cfg.RunID))
+	} else {
+		lines = append(lines, fmt.Sprintf("- `QUINE_RUN_ID=%s` — current physical run identity.", cfg.RunID))
+	}
 	if publicSurfaceUnavailable == "" {
-		lines = append(lines, "- `$QUINE_AGENT_ROOT/public/` — runtime-owned public process-surface projection, not a workspace; do not create arbitrary files there.")
+		lines = append(lines, "- `$QUINE_AGENT_ROOT/public/` — runtime-owned public process-surface projection, not a workspace.")
 	} else {
 		lines = append(lines, "- `$QUINE_AGENT_ROOT/public/` — public process-surface projection is unavailable in this environment; `public/UNAVAILABLE` records why. Peers cannot read your public projection or write your `ctl/` here.")
 	}
 	lines = append(lines,
 		"- `status/session.json` — self identity and topology (`session_id`, `run_id`, `incarnation_id`, `pid`, `agent_root`, `runtime_root`).",
-		"- `status/contract.json` — machine-readable `process-control/v0` manifest for this process/control surface.",
+		"- `status/contract.json` — machine-readable `process-control/v1` manifest for this process/control surface.",
 		"- `status/session.json.agent_root` is this session root; `status/session.json.runtime_root` points back to the shared runtime root.",
 		"- `mission.txt` — optional current-incarnation argv-carried objective projection (`inc/current/mission.txt`).",
-		"- `config/registry.json` — read-only compiled capability registry: the full model of every `QUINE_*` knob this body understands (type, default, mutability, couplings).",
-		"- `config/resolved.env` — your current resolved capability position in env syntax; runtime-owned readout, rewritten by the runtime when in-process config changes (world revision switch). Not a config input.",
-		"- `config/next.env` — agent-writable staged capability overrides for your NEXT incarnation, applied when you call `exec`. Env syntax only: `KEY=VALUE` lines, `#` comments, blank lines; values are verbatim (no quoting/expansion). Validated at the exec boundary against the compiled registry: only knobs whose `config/registry.json` mutability is `exec-boundary` may be staged; any unknown name, type violation, or forbidden knob rejects the whole file and fails that `exec` call loudly — the file stays intact, so fix (or remove) it and retry. Absent file = no staged changes. After a successful exec the successor archives the applied file to the staging incarnation's `inc/<n>/config-applied.env` and clears `next.env`.",
-		"- `inc/<n>/config.env` — immutable per-incarnation birth snapshot of the resolved capability position.",
+		"- Your process environment is your birth configuration: what you were launched with. Read it at `/proc/<PID>/environ` (NUL-separated: `tr '\\0' '\\n' </proc/<PID>/environ`). It cannot change while this process runs. Inside `sh` you are reading from a child process — `/proc/self/` there is the child, not you.",
+		"- A `QUINE_*` variable absent from your environment means that knob is at its compiled default. `config/registry.json` is the catalog: type, default, scope, and — through each knob's mutability — whether `config/env/override` may set it, for every knob this body understands.",
+		"- Environment variables describe this process only. They are not laws of the operating system: programs you launch receive environments you construct, and systems you build choose their own configuration at birth.",
+		"- `config/env/override` — your one environment policy for the processes you create (`sh` children, and fork/spawn/exec where available). `KEY=VALUE` sets, a bare `KEY` line unsets, `#` comments. Names the runtime owns or pins (see each knob's mutability in `config/registry.json`) are rejected; they bind this file and the boundaries the runtime constructs, not programs you start yourself. It is re-read at every process you construct, so an edit applies to the next one.",
 	)
-	if publicSurfaceUnavailable == "" {
+	if cfg.ExecEnabled {
 		lines = append(lines,
-			"- `public/config/` — peer-readable read-only projection of this session's `config/{registry.json,resolved.env}` surface.",
-			"- `public/ctl/config` — validated write gate over `config/next.env`: one whole env-syntax payload per write, replacing the staged file wholesale; a legal payload lands `config/next.env` atomically, an illegal one is rejected at write time and lands nothing. Reading the gate back shows the staged content, its validation state against the running registry, coupling warnings for staged knobs, and the violations of a rejected write. An empty write clears the stage. Raw `sh` writes to `config/next.env` stay legal either way — the exec boundary revalidates both paths.",
+			"- `exec` applies the same `config/env/override` to your successor: whatever it holds when you call `exec` becomes part of the environment you wake up in. An illegal file fails that `exec` call loudly and stays intact, so fix it and retry. After a successful exec the successor archives what was applied to `inc/<n>/override-applied.env` and clears the file.",
 		)
 	}
+	if publicSurfaceUnavailable == "" {
+		lines = append(lines, "- `public/config/` — peer-readable read-only projection of this session's `config/registry.json` (the knob catalog). Your `config/env/override` is not projected: it is yours.")
+		lines = append(lines, "- `public/ctl/env` — validated write gate over `config/env/override`: one whole payload per write, replacing the file wholesale; a legal payload lands atomically, an illegal one is rejected at write time and lands nothing. Reading the gate back shows the current policy, its validation state against the running registry, coupling warnings, and the violations of a rejected write. An empty write clears the policy. Raw `sh` writes stay legal either way — every boundary revalidates the file.")
+	}
 	if cfg.SelfSourceCodeEnabled {
+		sourceRoot := filepath.Join(cfg.AgentRoot(), "source-code")
 		lines = append(lines,
-			"- `source-code/` — read-only session-root projection of this Quine body's source. It is not the writable workspace.",
-			"- `source-code/` is a git worktree with `.git/`, materialized from this build's embedded source repository bundle.",
-			"- Source manifest: `.git/quine-source-manifest.json`.",
+			fmt.Sprintf("- `%s` — read-only projection of this Quine body's source. It is not the writable workspace.", sourceRoot),
 		)
+		if cfg.SelfSourceProjectionMode() == "runtime" {
+			lines = append(lines, "- `source-code/` is a git worktree containing the embedded buildable Quine runtime source only.")
+		} else {
+			lines = append(lines, "- `source-code/` is a git worktree materialized from this build's complete embedded source repository bundle.")
+		}
+		lines = append(lines, "- Source manifest: `.git/quine-source-manifest.json`.")
 		if publicSurfaceUnavailable == "" {
 			lines = append(lines, "- `public/source-code/` — peer-readable read-only projection of this session's `source-code/` surface.")
 		}
@@ -657,15 +619,23 @@ func buildRuntimeSurfaceSection(cfg *config.Config, publicSurfaceUnavailable str
 	}
 
 	// L3: Neighbor discovery (relative to runtime root)
-	lines = append(lines,
-		"- `pid/<pid>` — live-process routing under the runtime root. Symlinks resolve directly to `agent/<session>/public`.",
-		"- The resolved `pid/<pid>` target is that peer's public root; the target's parent directory is the peer agent root.",
-		"- `agent/` — canonical session root by session id.",
-		"- `inc/` — lineage-local incarnation tree. `inc/current` points at the current body.",
-		"- `log/<session>` — retained mirror after a session exits, rooted under the runtime root.",
-		"- To continue a retained session, launch Quine with `QUINE_DATA_DIR=<same runtime root>` and `QUINE_SESSION_ID=<session_id>`; the session id and current incarnation stay fixed while `QUINE_RUN_ID` and PID change.",
-		"- Copying `agent/<old-session>/` to `agent/<new-session>/` under the same runtime root seeds a new session from the copied context surface; copy or remap `log/`, `jobs/`, and `workspaces/` state separately when side-surface recovery matters.",
-	)
+	if cfg.ForkEnabled() || cfg.SpawnEnabled() {
+		lines = append(lines,
+			"- `pid/<pid>` — live-process routing under the runtime root. Symlinks resolve directly to `agent/<session>/public`.",
+			"- The resolved `pid/<pid>` target is that peer's public root; the target's parent directory is the peer agent root.",
+			"- `agent/` — canonical session root by session id.",
+		)
+	}
+	if cfg.ExecEnabled {
+		lines = append(lines, "- `inc/` — lineage-local incarnation tree. `inc/current` points at the current body.")
+	}
+	lines = append(lines, "- `log/<session>` — retained mirror after a session exits, rooted under the runtime root.")
+	if cfg.PromptImplDetails {
+		lines = append(lines, "- To continue a retained session, launch Quine with `QUINE_DATA_DIR=<same runtime root>` and `QUINE_SESSION_ID=<session_id>`; the session id and current incarnation stay fixed while `QUINE_RUN_ID` and PID change.")
+	}
+	if cfg.ForkEnabled() || cfg.SpawnEnabled() {
+		lines = append(lines, "- Copying `agent/<old-session>/` to `agent/<new-session>/` under the same runtime root seeds a new session from the copied context surface; copy or remap `log/`, `jobs/`, and `workspaces/` state separately when side-surface recovery matters.")
+	}
 
 	// L4: Peer control physics (gated)
 	if cfg.PromptCtlPhysics {
@@ -673,8 +643,8 @@ func buildRuntimeSurfaceSection(cfg *config.Config, publicSurfaceUnavailable str
 			lines = append(lines,
 				"- Some process surfaces expose `ctl/{post,poke,inject,interrupt}` and `status/inbox.json`.",
 				"- On a public root, `ctl/{post,poke,inject,interrupt}` is the peer-facing control surface; the corresponding agent root carries `status/`, `context/`, and other non-public state.",
-				"- Each agent self-documents its control surface in `status/contract.json` (a `process-control/v0` manifest, peer-readable at `public/status/contract.json`): per-action semantics for `post`/`poke`/`inject`/`interrupt`, the `status/inbox.json` schema, and the control-log event types. Read a peer's contract before driving its `ctl/`.",
-				"- `ctl/config` — validated staged-config write gate over a peer's `config/next.env`: one whole env-syntax payload per write (wholesale replacement), accepted or rejected against that peer's running registry at write time; read it back for staged content, validation state, coupling warnings, and rejection violations. An empty write clears the peer's stage; staged values apply only at that peer's next self-reentry exec.",
+				"- Each agent self-documents its control surface in `status/contract.json` (a `process-control/v1` manifest, peer-readable at `public/status/contract.json`): per-action semantics for `post`/`poke`/`inject`/`interrupt`, the `status/inbox.json` schema, and the control-log event types. Read a peer's contract before driving its `ctl/`.",
+				"- `ctl/env` — validated write gate over a peer's `config/env/override`: one whole payload per write (wholesale replacement), accepted or rejected against that peer's running registry at write time; read it back for the current policy, validation state, coupling warnings, and rejection violations. An empty write clears it. The policy shapes the processes that peer constructs; it does not change the peer's own environment, which is fixed at its birth.",
 				"- `context/state/current.jsonl` and retained `log/<session>/control.jsonl` surface live / retained control-delivery state.",
 			)
 		} else {
@@ -856,7 +826,7 @@ func buildForkConstraintLines(cfg *config.Config) []string {
 		}
 		return lines
 	}
-	return []string{"- Fork is disabled by `QUINE_FORK_ENABLED=0` and any fork call will be rejected."}
+	return nil
 }
 
 func buildSpawnConstraintLines(cfg *config.Config) []string {
@@ -870,7 +840,7 @@ func buildSpawnConstraintLines(cfg *config.Config) []string {
 		}
 		return lines
 	}
-	return []string{"- Spawn is disabled by `QUINE_SPAWN_ENABLED=0` and any spawn call will be rejected."}
+	return nil
 }
 
 // renderSkillsFragment formats prompt-facing project skill metadata for SKILLS.md.
@@ -904,8 +874,10 @@ func buildContextFilesBlock(cfg *config.Config) string {
 		"- `context/prompt/00-runtime.md` is regenerated from current runtime physics.",
 		"- `context/prompt/40-mission.md`, when present, projects the current argv-carried objective text.",
 		"- `context/prompt/30-memory.md` is the inherited editable memory surface. It defaults to empty.",
-		"- `fork` and `exec` copy the current `context/` tree forward before managed projections are refreshed.",
 	)
+	if cfg.ForkEnabled() || cfg.ExecEnabled {
+		lines = append(lines, "- `fork` and `exec` copy the current `context/` tree forward before managed projections are refreshed.")
+	}
 	if cfg.AnchorMemoryEnabled {
 		lines = append(lines,
 			"- `context/state/` is your cognition as plain files; the window is reprojected from them every turn. Its exact layout, the anchor format, and how to compact it are self-documented on disk in `context/state/SCHEMA.md` — read that file before reorganizing memory. The memory tools, when present, are convenience moves over this same substrate, which `sh` can also read or rewrite directly.",

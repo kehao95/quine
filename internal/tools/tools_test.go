@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	osexec "os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -469,105 +470,228 @@ func TestEnvPropagationViaSh(t *testing.T) {
 
 }
 
-func TestChildEnvDepthIncrement(t *testing.T) {
-	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", Depth: 2, SessionID: "parent-session-id"}, Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"}, Limits: config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 10, OutputTruncate: 20480}, Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"}}
+// writeEnvOverride plants a child-env policy under the agent root the way an
+// agent's own `sh` write does. Successor to writeStagedNextEnv: one file, one
+// validation, every boundary.
+func writeEnvOverride(t *testing.T, cfg *config.Config, content string) string {
+	t.Helper()
+	path := cfg.EnvOverridePath()
+	if path == "" {
+		t.Fatal("cfg has no agent root, so no override path")
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("mkdir override dir: %v", err)
+	}
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatalf("write override: %v", err)
+	}
+	return path
+}
 
-	childEnv, err := cfg.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv failed: %v", err)
+// assertNoUnauthoredKnobs is the manufactured-evidence guard, and it is derived
+// rather than listed: it walks the whole registry and demands that every knob
+// the operator did not set and the runtime does not stamp is ABSENT from the
+// child env.
+//
+// This is the inversion of the deleted TestChildEnv, which looped a ~35-key list
+// asserting every knob is ALWAYS present. That loop is how `QUINE_SPAWN_ENABLED=0`
+// — a line nobody authored — came to be quoted back to a founder as proof that
+// making another Quine was impossible. Absence is the correct spelling of an
+// unset knob; config/registry.json is the catalog that says what absence means.
+//
+// Because the knob list comes from the registry and the exemptions come from the
+// real stamp builders, a new knob cannot be quietly added to the synthesized set:
+// there is no synthesized set.
+func assertNoUnauthoredKnobs(t *testing.T, boundary string, childEnv map[string]string, stamps []string) {
+	t.Helper()
+
+	stamped := make(map[string]bool, len(stamps))
+	for _, kv := range stamps {
+		name, _, _ := strings.Cut(kv, "=")
+		stamped[name] = true
 	}
 
-	b := &ShExecutor{
-		Shell:     "/bin/sh",
-		MaxOutput: 20480,
-		Timeout:   30 * time.Second,
-		Env:       MergeEnv(os.Environ(), childEnv),
+	checked := 0
+	for _, knob := range config.Registry {
+		if stamped[knob.Env] {
+			continue // a runtime-owned fact about the child, not a policy default
+		}
+		if _, authored := os.LookupEnv(knob.Env); authored {
+			continue // the operator launched us with it; passing it on is inheritance
+		}
+		checked++
+		if got, present := childEnv[knob.Env]; present {
+			t.Errorf("%s child env carries %s=%q, but no operator set it and no stamp owns it — the synthesizer is back", boundary, knob.Env, got)
+		}
 	}
-	defer b.Close(false)
-
-	result := b.Execute("tool-depth", "echo $QUINE_DEPTH", 0, 0, false, false, "")
-	if result.IsError {
-		t.Fatalf("command failed:\n%s", result.Content)
-	}
-	if !strings.Contains(string(result.Content), "3") {
-		t.Errorf("expected QUINE_DEPTH=3 (parent depth 2 + 1), got:\n%s", result.Content)
-	}
-
-	result2 := b.Execute("tool-parent", "echo $QUINE_PARENT_SESSION", 0, 0, false, false, "")
-	if result2.IsError {
-		t.Fatalf("command failed:\n%s", result2.Content)
-	}
-	if !strings.Contains(string(result2.Content), "parent-session-id") {
-		t.Errorf("expected QUINE_PARENT_SESSION=parent-session-id, got:\n%s", result2.Content)
+	if checked == 0 {
+		t.Fatalf("%s: no unauthored knobs to check — the assertion would be vacuous", boundary)
 	}
 
-	result3 := b.Execute("tool-session", "echo \"SID=${QUINE_SESSION_ID:-unset}\"", 0, 0, false, false, "")
-	if result3.IsError {
-		t.Fatalf("command failed:\n%s", result3.Content)
-	}
-	if !strings.Contains(string(result3.Content), "SID=unset") {
-		t.Errorf("expected QUINE_SESSION_ID to be unset, got:\n%s", result3.Content)
-	}
-
-	result4 := b.Execute("tool-tape", "echo \"TID=${QUINE_TAPE_ID:-unset}\"", 0, 0, false, false, "")
-	if result4.IsError {
-		t.Fatalf("command failed:\n%s", result4.Content)
-	}
-	if !strings.Contains(string(result4.Content), "TID=unset") {
-		t.Errorf("expected QUINE_TAPE_ID to be unset, got:\n%s", result4.Content)
+	// The succ-52 witnesses, named explicitly so the regression stays legible.
+	for _, name := range []string{config.EnvSpawnEnabled, config.EnvMaxDepth, config.EnvForkEnabled} {
+		if _, authored := os.LookupEnv(name); authored {
+			continue
+		}
+		if got, present := childEnv[name]; present {
+			t.Errorf("%s child env carries %s=%q — this exact line is what taught a founder that process creation was impossible", boundary, name, got)
+		}
 	}
 }
 
-func TestNewShExecutorWithChildEnv(t *testing.T) {
-	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", Depth: 1, SessionID: "parent-abc", RunID: "run-parent-abc"}, Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"}, Limits: config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 10, OutputTruncate: 20480}, Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"}}
-
-	childEnv, err := cfg.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv failed: %v", err)
+// TestShChildIsUnmarkedNewRoot replaces TestNewShExecutorWithChildEnv and
+// TestChildEnvDepthIncrement, and asserts the OPPOSITE of both.
+//
+// Those tests asserted that an sh child sees QUINE_DEPTH=<parent+1> and
+// QUINE_PARENT_SESSION=<parent>. That was the bug, not the contract: a program
+// started from a shell is generic computation, not a member of this agent tree,
+// and a `./quine` launched there is a new founder (brief E4). Depth enforcement
+// never read the child's env anyway — it is a parent-side check — so nothing
+// real is lost, and a founder stops inheriting a lineage it does not have.
+//
+// What an sh child DOES get is the three facts it cannot derive: which run it
+// belongs to, where the live session root is, and which runtime root this
+// process actually joined.
+func TestShChildIsUnmarkedNewRoot(t *testing.T) {
+	dataDir := t.TempDir()
+	cfg := &config.Config{
+		Identity:  config.Identity{ModelID: "claude-sonnet-4-20250514", Depth: 2, SessionID: "parent-abc", RunID: "run-parent-abc", TapeID: "tape-parent-abc"},
+		Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"},
+		Limits:    config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 10, OutputTruncate: 20480},
+		Paths:     config.Paths{DataDir: dataDir, Shell: "/bin/sh"},
 	}
 
-	b := NewShExecutor(cfg, childEnv)
+	b := NewShExecutor(cfg)
 	defer b.Close(false)
 
-	result := b.Execute("tool-ctor", "echo $QUINE_DEPTH", 0, 0, false, false, "")
+	// No lineage marks: the shell child is not in this tree (E4).
+	result := b.Execute("tool-lineage", `echo "DEPTH=${QUINE_DEPTH:-unset} PARENT=${QUINE_PARENT_SESSION:-unset} SID=${QUINE_SESSION_ID:-unset} TID=${QUINE_TAPE_ID:-unset}"`, 0, 0, false, false, "")
 	if result.IsError {
 		t.Fatalf("command failed:\n%s", result.Content)
 	}
-	if !strings.Contains(string(result.Content), "2") {
-		t.Errorf("expected QUINE_DEPTH=2, got:\n%s", result.Content)
+	for _, want := range []string{"DEPTH=unset", "PARENT=unset", "SID=unset", "TID=unset"} {
+		if !strings.Contains(string(result.Content), want) {
+			t.Errorf("sh child must carry no lineage mark; missing %q in:\n%s", want, result.Content)
+		}
 	}
 
-	resultRun := b.Execute("tool-run", "echo \"RUN_ID=${QUINE_RUN_ID:-unset} SID=${QUINE_SESSION_ID:-unset}\"", 0, 0, false, false, "")
-	if resultRun.IsError {
-		t.Fatalf("command failed:\n%s", resultRun.Content)
+	// The facts it cannot derive are stamped.
+	stamps := b.Execute("tool-stamps", `echo "RUN_ID=${QUINE_RUN_ID:-unset} ROOT=${QUINE_AGENT_ROOT:-unset} DATA=${QUINE_DATA_DIR:-unset}"`, 0, 0, false, false, "")
+	if stamps.IsError {
+		t.Fatalf("command failed:\n%s", stamps.Content)
 	}
-	if !strings.Contains(string(resultRun.Content), "RUN_ID=run-parent-abc") {
-		t.Errorf("expected QUINE_RUN_ID in sh env, got:\n%s", resultRun.Content)
-	}
-	if !strings.Contains(string(resultRun.Content), "SID=unset") {
-		t.Errorf("expected QUINE_SESSION_ID to be absent in sh env, got:\n%s", resultRun.Content)
+	for _, want := range []string{
+		"RUN_ID=run-parent-abc",
+		"ROOT=" + cfg.AgentRoot(),
+		"DATA=" + dataDir,
+	} {
+		if !strings.Contains(string(stamps.Content), want) {
+			t.Errorf("sh child missing stamp %q in:\n%s", want, stamps.Content)
+		}
 	}
 
-	result2 := b.Execute("tool-path", "which echo", 0, 0, false, false, "")
-	if result2.IsError {
-		t.Fatalf("'which echo' failed — PATH not propagated:\n%s", result2.Content)
+	// The ordinary environment still crosses.
+	if path := b.Execute("tool-path", "which echo", 0, 0, false, false, ""); path.IsError {
+		t.Fatalf("'which echo' failed — PATH not propagated:\n%s", path.Content)
 	}
 }
 
-func TestNewShExecutorStripsContextBootstrapEnv(t *testing.T) {
-	t.Setenv(ContextBootstrapEnv, "/tmp/bootstrap-context")
+// TestShChildOmitsUnsetKnobs is the headline inversion: a knob nobody set is
+// absent from a shell child. See assertNoUnauthoredKnobs for why this matters.
+func TestShChildOmitsUnsetKnobs(t *testing.T) {
+	cfg := &config.Config{
+		Identity:  config.Identity{ModelID: "claude-sonnet-4-20250514", Depth: 1, SessionID: "unset-knob-sh", RunID: "run-unset-knob"},
+		Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"},
+		// Every one of these is a resolved value nobody authored.
+		Limits: config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 10, OutputTruncate: 20480, MaxTurns: 20},
+		Paths:  config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"},
+	}
 
-	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "parent-abc", RunID: "run-parent-abc"}, Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"}}
-
-	b := NewShExecutor(cfg, []string{ContextBootstrapEnv + "=/tmp/child-bootstrap"})
+	b := NewShExecutor(cfg)
 	defer b.Close(false)
 
-	result := b.Execute("tool-bootstrap", "echo \"CTX_BOOTSTRAP=${QUINE_CONTEXT_BOOTSTRAP:-unset}\"", 0, 0, false, false, "")
+	assertNoUnauthoredKnobs(t, "sh", envSliceToMap(b.commandBaseEnv()), cfg.ShellStamps())
+
+	// And end-to-end through a real shell, because that is where the founder read it.
+	result := b.Execute("tool-unset", `echo "SPAWN=${QUINE_SPAWN_ENABLED:-absent} MAXDEPTH=${QUINE_MAX_DEPTH:-absent}"`, 0, 0, false, false, "")
 	if result.IsError {
 		t.Fatalf("command failed:\n%s", result.Content)
 	}
-	if !strings.Contains(string(result.Content), "CTX_BOOTSTRAP=unset") {
-		t.Errorf("expected QUINE_CONTEXT_BOOTSTRAP to be unset in sh env, got:\n%s", result.Content)
+	if !strings.Contains(string(result.Content), "SPAWN=absent") || !strings.Contains(string(result.Content), "MAXDEPTH=absent") {
+		t.Errorf("a shell child must not be told about knobs nobody set, got:\n%s", result.Content)
+	}
+}
+
+// TestShChildMasksRuntimeEmittedEnv is the successor to
+// TestNewShExecutorStripsContextBootstrapEnv. That test's claim (the bootstrap
+// pointer must not cross into a shell child) survives, but it is no longer a
+// special case: QUINE_CONTEXT_BOOTSTRAP is a registry knob in the
+// runtime-emitted class, and the shared registry-derived mask closes it along
+// with the whole class.
+//
+// This test therefore plants the ENTIRE runtime-emitted class in the parent's
+// real environ and asserts none of it crosses. Two of these are behavior
+// corrections the old strip loop did not make: QUINE_WORKSPACE_CURRENT_REVISION
+// leaked into sh children (brief Layer 2 #8), and QUINE_WORKSPACE_BOOTSTRAP /
+// _SESSION / _OWNER leaked straight from the parent's own environ because the
+// old loop removed only five names.
+func TestShChildMasksRuntimeEmittedEnv(t *testing.T) {
+	leaked := []string{
+		ContextBootstrapEnv,
+		"QUINE_SESSION_ID",
+		"QUINE_TAPE_ID",
+		"QUINE_CONTEXT_TAPE",
+		"QUINE_WORKSPACE_SESSION",
+		"QUINE_WORKSPACE_OWNER",
+		"QUINE_WORKSPACE_BOOTSTRAP",
+		"QUINE_WORKSPACE_CURRENT_REVISION",
+	}
+	for _, name := range leaked {
+		t.Setenv(name, "stale-"+name)
+	}
+
+	cfg := &config.Config{
+		Identity:  config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "mask-sh", RunID: "run-mask-sh"},
+		Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"},
+		Limits:    config.Limits{OutputTruncate: 20480, ShTimeout: 10},
+		Paths:     config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"},
+	}
+
+	b := NewShExecutor(cfg)
+	defer b.Close(false)
+
+	env := envSliceToMap(b.commandBaseEnv())
+	for _, name := range leaked {
+		if got, present := env[name]; present {
+			t.Errorf("%s=%q crossed into an sh child; runtime-emitted names are masked", name, got)
+		}
+	}
+}
+
+// TestShAndForkChildrenGetDataDirStamp guards the world-binary divergence.
+//
+// QUINE_DATA_DIR's compiled default is the RELATIVE ".quine/", and the `world`
+// binary resolves its spec from this name. A child that had to fall back to the
+// default from a different cwd would silently read a DIFFERENT world file: no
+// error, no signal, just two processes disagreeing about reality. The runtime
+// knows which root it joined, so it says so — at both boundaries.
+func TestShAndForkChildrenGetDataDirStamp(t *testing.T) {
+	dataDir := t.TempDir()
+	cfg := &config.Config{
+		Identity:  config.Identity{ModelID: "test-model", SessionID: "datadir-parent", RunID: "run-datadir"},
+		Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"},
+		Limits:    config.Limits{OutputTruncate: 20480, ShTimeout: 10},
+		Paths:     config.Paths{DataDir: dataDir, Shell: "/bin/sh"},
+	}
+
+	b := NewShExecutor(cfg)
+	defer b.Close(false)
+
+	if got := envSliceToMap(b.commandBaseEnv())[config.EnvDataDir]; got != dataDir {
+		t.Errorf("sh child QUINE_DATA_DIR = %q, want %q — an unstamped child resolves .quine/ from its own cwd", got, dataDir)
+	}
+	if got := envSliceToMap(ForkChildEnv(cfg, nil))[config.EnvDataDir]; got != dataDir {
+		t.Errorf("fork child QUINE_DATA_DIR = %q, want %q — an unstamped child joins a different runtime root and the tree splits", got, dataDir)
 	}
 }
 
@@ -583,7 +707,7 @@ func TestWorkspaceOverlayReportsMutationsAndCommitsOnSuccess(t *testing.T) {
 	dataDir := t.TempDir()
 	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "sandbox-success"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "workspace-session-success", WorkspaceOwner: true}, Paths: config.Paths{DataDir: dataDir, Shell: "/bin/sh"}}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	defer b.Close(false)
 	requireWorkspaceSupport(t, b)
 	result := b.Execute("tool-sandbox-success", "printf 'hello overlay\\n' > result.txt", 0, 0, false, false, "")
@@ -621,7 +745,7 @@ func TestWorkspaceOverlayCanCommitWithoutKeepingDetachedJobs(t *testing.T) {
 	dataDir := t.TempDir()
 	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "sandbox-signal-commit"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "workspace-session-signal-commit", WorkspaceOwner: true}, Paths: config.Paths{DataDir: dataDir, Shell: "/bin/sh"}}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	defer b.Close(false)
 	requireWorkspaceSupport(t, b)
 	result := b.Execute("tool-signal-commit", "printf 'signal-safe\\n' > result.txt", 0, 0, false, false, "")
@@ -657,7 +781,7 @@ func TestWorkspaceOverlayCanHideFSMutationTelemetry(t *testing.T) {
 		ToolGates: gates, Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "sandbox-hidden-fs-mutations"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "workspace-session-hidden-fs-mutations", WorkspaceOwner: true}, Paths: config.Paths{DataDir: dataDir, Shell: "/bin/sh"},
 	}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	defer b.Close(false)
 	requireWorkspaceSupport(t, b)
 	result := b.Execute("tool-sandbox-hidden-fs", "printf 'hello overlay\\n' > result.txt", 0, 0, false, false, "")
@@ -687,7 +811,7 @@ func TestWorkspaceDirectReportsMutationsAndPersistsOnFailure(t *testing.T) {
 	root := t.TempDir()
 	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "workspace-direct-failure"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceBackend: "direct", WorkspaceRevisionMode: config.WorkspaceRevisionNone, WorkspaceSession: "workspace-direct-failure-session", WorkspaceOwner: true}, Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"}}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	requireWorkspaceSupport(t, b)
 	result := b.Execute("tool-direct-failure", "printf 'shared\\n' > doomed.txt; exit 1", 0, 0, false, false, "")
 	if !result.IsError {
@@ -718,10 +842,10 @@ func TestWorkspaceDirectObservesPeerMutationOnNextShellBoundary(t *testing.T) {
 		return &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: sessionID}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceBackend: "direct", WorkspaceRevisionMode: config.WorkspaceRevisionNone, WorkspaceSession: "workspace-direct-shared-session", WorkspaceOwner: true}, Paths: config.Paths{DataDir: dataDir, Shell: "/bin/sh"}}
 	}
 
-	observer := NewShExecutor(newDirectCfg("workspace-direct-observer"), nil)
+	observer := NewShExecutor(newDirectCfg("workspace-direct-observer"))
 	defer observer.Close(false)
 	requireWorkspaceSupport(t, observer)
-	peer := NewShExecutor(newDirectCfg("workspace-direct-peer"), nil)
+	peer := NewShExecutor(newDirectCfg("workspace-direct-peer"))
 	defer peer.Close(false)
 	requireWorkspaceSupport(t, peer)
 
@@ -755,7 +879,7 @@ func TestWorkspaceOverlayPreservesFailureAsRestorableRevision(t *testing.T) {
 	root := t.TempDir()
 	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "sandbox-failure"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "workspace-session-failure", WorkspaceOwner: true}, Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"}}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	requireWorkspaceSupport(t, b)
 	result := b.Execute("tool-sandbox-failure", "printf 'temporary\\n' > doomed.txt; exit 1", 0, 0, false, false, "")
 	if !result.IsError {
@@ -799,7 +923,7 @@ func TestWorkspaceOverlayTimeoutKillsShellAndPreservesBoundaryEffects(t *testing
 	root := t.TempDir()
 	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "sandbox-timeout"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "workspace-session-timeout", WorkspaceOwner: true}, Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"}}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	defer b.Close(false)
 	requireWorkspaceSupport(t, b)
 
@@ -859,7 +983,7 @@ func TestWorkspaceOverlayTracksAbsolutePaths(t *testing.T) {
 	root := t.TempDir()
 	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "sandbox-absolute"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "workspace-session-absolute", WorkspaceOwner: true}, Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"}}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	requireWorkspaceSupport(t, b)
 	absFile := filepath.Join(root, "absolute.txt")
 	result := b.Execute("tool-absolute", fmt.Sprintf("cd %q && printf 'abs\\n' > absolute.txt", root), 0, 0, false, false, "")
@@ -893,7 +1017,7 @@ func TestWorkspaceOverlayAllowsNarrowerWorkspaceAbsentFromHostRoot(t *testing.T)
 	subdir := filepath.Join(root, "subdir")
 	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "workspace-overlay-narrow-child"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: subdir, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "workspace-overlay-narrow-child-session", WorkspaceOwner: false}, Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"}}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	requireWorkspaceSupport(t, b)
 	result := b.Execute("tool-overlay-narrow-child", "printf 'child\\n' > child.txt", 0, 0, false, false, "")
 	if result.IsError {
@@ -994,7 +1118,7 @@ func TestWorkspaceOverlaySwitchWorldReusesTargetHandle(t *testing.T) {
 	root := t.TempDir()
 	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "workspace-overlay-restore"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "workspace-overlay-restore-session", WorkspaceOwner: true}, Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"}}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	requireWorkspaceSupport(t, b)
 
 	b.TurnID = 1
@@ -1073,7 +1197,7 @@ func TestWorkspaceOverlayVisionReaderSeesCommittedWorkspaceFiles(t *testing.T) {
 	root := t.TempDir()
 	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "workspace-overlay-vision"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "workspace-overlay-vision-session", WorkspaceOwner: true}, Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"}}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	requireWorkspaceSupport(t, b)
 
 	b.TurnID = 1
@@ -1111,7 +1235,7 @@ func TestWorkspaceOverlaySwitchWorldCanHideFSMutationTelemetry(t *testing.T) {
 		ToolGates: gates, Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "workspace-switch-hidden-fs-mutations"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "workspace-switch-hidden-fs-mutations-session", WorkspaceOwner: true}, Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"},
 	}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	defer b.Close(false)
 	requireWorkspaceSupport(t, b)
 
@@ -1147,11 +1271,11 @@ func TestWorkspaceOverlaySwitchWorldAdoptsChildHandle(t *testing.T) {
 	root := t.TempDir()
 	dataDir := t.TempDir()
 	parentCfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "workspace-parent"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "workspace-parent-session", WorkspaceOwner: true}, Paths: config.Paths{DataDir: dataDir, Shell: "/bin/sh"}}
-	parent := NewShExecutor(parentCfg, nil)
+	parent := NewShExecutor(parentCfg)
 	requireWorkspaceSupport(t, parent)
 
 	childCfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "workspace-child"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "workspace-child-session", WorkspaceOwner: true, WorkspaceBootstrap: parentCfg.WorkspaceSession}, Paths: config.Paths{DataDir: dataDir, Shell: "/bin/sh"}}
-	child := NewShExecutor(childCfg, nil)
+	child := NewShExecutor(childCfg)
 	requireWorkspaceSupport(t, child)
 
 	child.TurnID = 1
@@ -1194,7 +1318,7 @@ func TestWorkspaceNoopShellDoesNotAdvanceWorldRevision(t *testing.T) {
 	root := t.TempDir()
 	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "workspace-noop-revision"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "workspace-noop-revision-session", WorkspaceOwner: true}, Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"}}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	requireWorkspaceSupport(t, b)
 
 	b.TurnID = 1
@@ -1240,7 +1364,7 @@ func TestWorkspaceOverlayStateVersionBreakRejected(t *testing.T) {
 
 	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "workspace-legacy-state"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "legacy-session", WorkspaceOwner: true}, Paths: config.Paths{DataDir: dataDir, Shell: "/bin/sh"}}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	if err := b.Prepare(); err == nil {
 		t.Fatal("Prepare() unexpectedly succeeded for pre-lineage overlay state")
 	} else if !strings.Contains(err.Error(), "pre-lineage overlay state") {
@@ -1270,7 +1394,7 @@ func TestWorkspaceOverlayReportsDeletionAndReplacementMutations(t *testing.T) {
 
 	cfg := &config.Config{Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", SessionID: "workspace-overlay-mutations"}, Transport: config.Transport{APIKey: "test-key", APIBase: "https://api.example.com", Provider: "anthropic"}, Limits: config.Limits{OutputTruncate: 20480, ShTimeout: 10}, WorkspaceConfig: config.WorkspaceConfig{WorkspaceEnabled: true, WorkspaceRoot: root, Workspace: root, WorkspaceRevisionMode: config.WorkspaceRevisionRestore, WorkspaceSession: "workspace-overlay-mutations-session", WorkspaceOwner: true}, Paths: config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"}}
 
-	b := NewShExecutor(cfg, nil)
+	b := NewShExecutor(cfg)
 	requireWorkspaceSupport(t, b)
 
 	result := b.Execute("tool-overlay-mutations", `
@@ -1405,124 +1529,259 @@ func TestParseExecArgs(t *testing.T) {
 	}
 }
 
-func TestExecEnv(t *testing.T) {
-	cfg := &config.Config{
-		Identity: config.Identity{ModelID: "claude-sonnet-4-20250514", Depth: 3, SessionID: "pre-exec-session", RunID: "pre-exec-run", TapeID: "legacy-tape", ParentSession: "root-session"}, Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"}, Limits: config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 600, OutputTruncate: 20480, MaxTurns: 20}, Paths: config.Paths{DataDir: "/tmp/quine-test", Shell: "/bin/sh"},
-	}
+// --- the exec boundary ---
+//
+// exec replaces the running process, so the successful path cannot be observed
+// from inside the test process: syscall.Exec would take the test runner with it.
+// TestExecSelfReentryEnv therefore re-invokes this test binary as a throwaway
+// child, lets THAT process run the real ExecExecutor.Execute, and execs it into
+// a script that dumps its environ. What the parent reads back is a genuine
+// post-exec birth record, produced by the production pipeline end to end.
 
-	execEnv, err := cfg.ExecEnv()
-	if err != nil {
-		t.Fatalf("ExecEnv failed: %v", err)
-	}
+const (
+	execEnvProbeVar    = "QUINE_TEST_EXEC_ENV_PROBE"
+	execEnvProbeTarget = "QUINE_TEST_EXEC_ENV_TARGET"
+)
 
-	envMap := make(map[string]string)
-	for _, entry := range execEnv {
-		key, val, _ := strings.Cut(entry, "=")
-		envMap[key] = val
-	}
-
-	if envMap["QUINE_DEPTH"] != "0" {
-		t.Errorf("QUINE_DEPTH = %q, want 0 (reset for exec)", envMap["QUINE_DEPTH"])
-	}
-	if envMap["QUINE_PARENT_SESSION"] != "root-session" {
-		t.Errorf("QUINE_PARENT_SESSION = %q, want root-session", envMap["QUINE_PARENT_SESSION"])
-	}
-	if envMap["QUINE_SESSION_ID"] != "pre-exec-session" {
-		t.Errorf("QUINE_SESSION_ID = %q, want pre-exec-session", envMap["QUINE_SESSION_ID"])
-	}
-	if _, ok := envMap["QUINE_RUN_ID"]; ok {
-		t.Errorf("QUINE_RUN_ID should not be propagated across exec")
-	}
-	if envMap["QUINE_PARENT_SESSION"] != "root-session" {
-		t.Errorf("QUINE_PARENT_SESSION = %q, want root-session", envMap["QUINE_PARENT_SESSION"])
-	}
-	if envMap["QUINE_TAPE_ID"] != "legacy-tape" {
-		t.Errorf("QUINE_TAPE_ID = %q, want legacy-tape", envMap["QUINE_TAPE_ID"])
-	}
-	if envMap["QUINE_MODEL_ID"] != "claude-sonnet-4-20250514" {
-		t.Errorf("QUINE_MODEL_ID = %q, want claude-sonnet-4-20250514", envMap["QUINE_MODEL_ID"])
-	}
-	if envMap["QUINE_MAX_DEPTH"] != "5" {
-		t.Errorf("QUINE_MAX_DEPTH = %q, want 5", envMap["QUINE_MAX_DEPTH"])
+// execProbeConfig is built identically on both sides of the probe: the parent
+// needs it to locate the override file and the agent root, the child needs it to
+// be the process that execs.
+func execProbeConfig(dataDir string) *config.Config {
+	return &config.Config{
+		Identity:  config.Identity{ModelID: "claude-sonnet-4-20250514", Depth: 2, SessionID: "exec-probe-session", RunID: "exec-probe-run", TapeID: "exec-probe-tape", ParentSession: "exec-probe-parent"},
+		Transport: config.Transport{APIKey: "probe-secret-key", Provider: "anthropic"},
+		Limits:    config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 600, OutputTruncate: 20480, MaxTurns: 20},
+		Paths:     config.Paths{DataDir: dataDir, Shell: "/bin/sh"},
 	}
 }
 
-// writeStagedNextEnv plants a staged-override file under the agent-root
-// config/ dir the way an agent's sh call would.
-func writeStagedNextEnv(t *testing.T, cfg *config.Config, content string) string {
-	t.Helper()
-	path := cfg.StagedNextEnvPath()
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		t.Fatalf("mkdir staged config dir: %v", err)
+// probeChildEnv strips every QUINE_* name the developer's own shell might carry,
+// so the child process starts from a known launch environment and "this knob was
+// never authored" means exactly that.
+func probeChildEnv(extra ...string) []string {
+	base := make([]string, 0, len(os.Environ()))
+	for _, kv := range os.Environ() {
+		name, _, _ := strings.Cut(kv, "=")
+		if strings.HasPrefix(name, "QUINE_") {
+			continue
+		}
+		base = append(base, kv)
 	}
-	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
-		t.Fatalf("write staged config: %v", err)
-	}
-	return path
+	return append(base, extra...)
 }
 
-// TestStagedOverridesExecPathOnlyChildIsolation is the child-isolation
-// regression test required by registry-design-brief § C (F-3): the staged
-// next.env merge lives strictly in the exec path — fork/spawn children built
-// from ChildEnv() (which shares baseEnv with ExecEnv) must NEVER see staged
-// values.
-func TestStagedOverridesExecPathOnlyChildIsolation(t *testing.T) {
+// runExecEnvProbeChild is the child half. It never returns on success.
+func runExecEnvProbeChild(dataDir string) {
+	target := os.Getenv(execEnvProbeTarget)
+	execer := &ExecExecutor{
+		QuinePath: target,
+		Cfg:       execProbeConfig(dataDir),
+		Mission:   "exec env probe",
+	}
+	result := execer.Execute("probe", ExecRequest{Target: target})
+	fmt.Printf("PROBE-FAILED %s\n", result.Content)
+	os.Exit(1)
+}
+
+// TestExecSelfReentryEnv replaces TestExecEnv, and asserts the opposite of it on
+// the two claims that mattered.
+//
+//  1. DEPTH. The old test asserted `QUINE_DEPTH = 0` ("reset for exec") — and it
+//     was vacuous: it never set a nonzero depth, so it could not have caught the
+//     bug it was standing in front of. The reset is a live MaxDepth bypass:
+//     precheckProcessCreation reads the in-memory Depth, so a fork→exec→fork
+//     chain refilled its own budget and walked out of the tree limit. Here the
+//     predecessor is at depth 2 and the successor must still be at depth 2
+//     (brief E11). exec is not a birth; it does not refill a budget.
+//
+//  2. SYNTHESIS. The old test asserted `QUINE_MODEL_ID` and `QUINE_MAX_DEPTH`
+//     were PRESENT in the successor's env, having been serialized there from
+//     resolved config that nobody authored. They must now be ABSENT.
+//
+// It additionally covers the exec half of the override (E2/E9), the mask, and
+// the E13 constructor claim: real envp carries the secret.
+func TestExecSelfReentryEnv(t *testing.T) {
+	if dataDir := os.Getenv(execEnvProbeVar); dataDir != "" {
+		runExecEnvProbeChild(dataDir) // never returns
+	}
+
+	dataDir := t.TempDir()
+	cfg := execProbeConfig(dataDir)
+
+	// The agent's standing child-env policy, staged for its own successor.
+	writeEnvOverride(t, cfg, strings.Join([]string{
+		"# what I pass on to the process I am about to become",
+		"QUINE_MAX_TURNS=99",         // a free knob: self-modification
+		"EXEC_PROBE_FOREIGN=carried", // a foreign name (E9)
+		"EXEC_PROBE_INHERITED",       // bare KEY: unset what I was given
+		"",
+	}, "\n"))
+
+	script := filepath.Join(t.TempDir(), "dump-env.sh")
+	if err := os.WriteFile(script, []byte("#!/bin/sh\nenv\n"), 0o755); err != nil {
+		t.Fatalf("write env-dump target: %v", err)
+	}
+
+	cmd := osexec.Command(os.Args[0], "-test.run=^TestExecSelfReentryEnv$")
+	cmd.Env = probeChildEnv(
+		execEnvProbeVar+"="+dataDir,
+		execEnvProbeTarget+"="+script,
+		"QUINE_API_KEY=probe-secret-key",              // pinned: a real child needs the credential
+		"QUINE_RUN_ID=stale-run",                      // runtime-emitted: masked
+		ContextBootstrapEnv+"=stale-bootstrap",        // runtime-emitted: masked
+		"EXEC_PROBE_INHERITED=present-in-predecessor", // the override unsets this
+	)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("exec probe child failed: %v\nstdout:\n%s\nstderr:\n%s", err, stdout.String(), stderr.String())
+	}
+	if strings.Contains(stdout.String(), "PROBE-FAILED") {
+		t.Fatalf("the child never reached the exec syscall:\n%s", stdout.String())
+	}
+
+	// stdout is the successor's own environ, as `env` printed it.
+	successor := envSliceToMap(strings.Split(strings.TrimSpace(stdout.String()), "\n"))
+
+	// 1. Continuity: the successor is the SAME quine in a new image.
+	if got := successor["QUINE_DEPTH"]; got != "2" {
+		t.Errorf("QUINE_DEPTH = %q, want 2 — exec must PRESERVE depth (E11). A reset here is a live MaxDepth bypass: fork→exec→fork refills its own budget", got)
+	}
+	for name, want := range map[string]string{
+		"QUINE_SESSION_ID":     "exec-probe-session",
+		"QUINE_TAPE_ID":        "exec-probe-tape",
+		"QUINE_PARENT_SESSION": "exec-probe-parent",
+		"QUINE_AGENT_ROOT":     cfg.AgentRoot(),
+		"QUINE_DATA_DIR":       dataDir,
+	} {
+		if got := successor[name]; got != want {
+			t.Errorf("successor %s = %q, want %q", name, got, want)
+		}
+	}
+
+	// 2. No synthesis. The old ExecEnv wrote both of these from resolved config.
+	for _, name := range []string{"QUINE_MODEL_ID", "QUINE_MAX_DEPTH", "QUINE_MAX_CONCURRENT", "QUINE_SPAWN_ENABLED"} {
+		if got, present := successor[name]; present {
+			t.Errorf("successor carries %s=%q, but nobody authored it — absence is how an unset knob is spelled", name, got)
+		}
+	}
+
+	// 3. The mask: runtime-emitted names do not cross, even at exec.
+	for _, name := range []string{"QUINE_RUN_ID", ContextBootstrapEnv} {
+		if got, present := successor[name]; present {
+			t.Errorf("successor inherited masked %s=%q", name, got)
+		}
+	}
+
+	// 4. The override is the self-modification mechanism (E2): free knobs it
+	//    names take effect in the successor, foreign names are carried, and a
+	//    bare KEY unsets what the predecessor was given.
+	if got := successor["QUINE_MAX_TURNS"]; got != "99" {
+		t.Errorf("successor QUINE_MAX_TURNS = %q, want 99 — the override did not reach the exec boundary", got)
+	}
+	if got := successor["EXEC_PROBE_FOREIGN"]; got != "carried" {
+		t.Errorf("successor EXEC_PROBE_FOREIGN = %q, want carried", got)
+	}
+	if got, present := successor["EXEC_PROBE_INHERITED"]; present {
+		t.Errorf("successor EXEC_PROBE_INHERITED = %q, want it unset by the bare-KEY line", got)
+	}
+
+	// 5. E13, constructor half: real envp carries the credential. (The renderer
+	//    half — that no rendered surface ever does — lives in envmodel_test.go.)
+	if got := successor["QUINE_API_KEY"]; got != "probe-secret-key" {
+		t.Errorf("successor QUINE_API_KEY = %q, want the inherited key — a child quine cannot reach the provider without it", got)
+	}
+}
+
+// TestEnvOverrideAppliesAtEveryBoundary is the successor to
+// TestStagedOverridesExecPathOnlyChildIsolation, and it asserts the OPPOSITE
+// containment claim. This is a deliberate SEMANTIC CHANGE, not a mechanical port.
+//
+// The old test enforced registry-brief § C (F-3): the staged next.env merge lived
+// strictly in the exec path, and fork/spawn children must NEVER see staged
+// values. That isolation existed because next.env was a second, separate
+// env-authoring channel that only exec knew how to read — children could not be
+// given envs any other way.
+//
+// The new model deletes that duality (brief E2/E9): there is ONE override file,
+// and it is this process's child-env policy for every process it constructs — sh,
+// fork, spawn, and exec alike. "What I pass on" is a single, legible mental
+// model; per-boundary control comes from sequencing (set → fork → clear → exec),
+// which is well-defined because the agent loop is single-threaded at safe points.
+//
+// The surviving half of the old claim is the one that was always load-bearing:
+// the override is applied at the boundary, never to the running process. It is
+// never a config source for the process that wrote it (registry red line 2).
+func TestEnvOverrideAppliesAtEveryBoundary(t *testing.T) {
 	cfg := &config.Config{
-		Identity:  config.Identity{ModelID: "test-model", SessionID: "staged-isolation-session", TapeID: "tape-staged"},
+		Identity:  config.Identity{ModelID: "test-model", SessionID: "override-boundary-session", RunID: "run-override", TapeID: "tape-override"},
 		Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"},
 		Limits:    config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 10, OutputTruncate: 20480},
 		Paths:     config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"},
 	}
-	writeStagedNextEnv(t, cfg, "QUINE_OUTPUT_TRUNCATE=31337\n")
+	t.Setenv("OVERRIDE_BOUNDARY_INHERITED", "from-parent")
 
-	// Exec path: the staged value must be merged over the ExecEnv() output.
-	execEnv, err := cfg.ExecEnv()
-	if err != nil {
-		t.Fatalf("ExecEnv() error: %v", err)
-	}
-	staged, err := config.ReadStagedOverrides(cfg.StagedNextEnvPath())
-	if err != nil {
-		t.Fatalf("ReadStagedOverrides() error: %v", err)
-	}
-	merged := config.MergeStagedOverrides(execEnv, staged)
-	mergedMap := envSliceToMap(merged)
-	if mergedMap["QUINE_OUTPUT_TRUNCATE"] != "31337" {
-		t.Fatalf("exec path QUINE_OUTPUT_TRUNCATE = %q, want staged 31337", mergedMap["QUINE_OUTPUT_TRUNCATE"])
+	// The executors are constructed BEFORE the policy is written: nothing may
+	// cache it (E12). A policy that took effect one call late would be a lie the
+	// surface tells about itself.
+	sh := NewShExecutor(cfg)
+	defer sh.Close(false)
+
+	writeEnvOverride(t, cfg, "QUINE_OUTPUT_TRUNCATE=31337\nOVERRIDE_BOUNDARY_FOREIGN=set\nOVERRIDE_BOUNDARY_INHERITED\n")
+
+	for _, boundary := range []struct {
+		name string
+		env  map[string]string
+	}{
+		{"sh", envSliceToMap(sh.commandBaseEnv())},
+		{"fork", envSliceToMap(ForkChildEnv(cfg, nil))},
+	} {
+		if got := boundary.env["QUINE_OUTPUT_TRUNCATE"]; got != "31337" {
+			t.Errorf("%s child QUINE_OUTPUT_TRUNCATE = %q, want the override's 31337 — the override is policy for EVERY child, not just the exec successor", boundary.name, got)
+		}
+		if got := boundary.env["OVERRIDE_BOUNDARY_FOREIGN"]; got != "set" {
+			t.Errorf("%s child OVERRIDE_BOUNDARY_FOREIGN = %q, want set (E9: foreign names are free-form)", boundary.name, got)
+		}
+		if got, present := boundary.env["OVERRIDE_BOUNDARY_INHERITED"]; present {
+			t.Errorf("%s child OVERRIDE_BOUNDARY_INHERITED = %q, want unset by the bare-KEY line", boundary.name, got)
+		}
 	}
 
-	// Child path: fork/spawn children never see the staged value.
-	childEnv, err := cfg.ChildEnv()
-	if err != nil {
-		t.Fatalf("ChildEnv() error: %v", err)
+	// The half of the old isolation claim that survives, and the one that was
+	// always the point: the override authors the NEXT process's env. It never
+	// reconfigures the process that wrote it.
+	if cfg.OutputTruncate != 20480 {
+		t.Fatalf("in-process OutputTruncate = %d, want the launch value 20480 — the override must never be a config source for the running process", cfg.OutputTruncate)
 	}
-	childMap := envSliceToMap(childEnv)
-	if childMap["QUINE_OUTPUT_TRUNCATE"] != "20480" {
-		t.Fatalf("child QUINE_OUTPUT_TRUNCATE = %q, want the in-process 20480 — staged next.env leaked into ChildEnv", childMap["QUINE_OUTPUT_TRUNCATE"])
+	if got := os.Getenv("OVERRIDE_BOUNDARY_FOREIGN"); got != "" {
+		t.Fatalf("the override leaked into this process's own environ: %q", got)
 	}
 }
 
-func TestExecRejectsInvalidStagedConfigAndKeepsFileIntact(t *testing.T) {
+func TestExecRejectsInvalidEnvOverrideAndKeepsFileIntact(t *testing.T) {
 	cfg := &config.Config{
-		Identity:  config.Identity{ModelID: "test-model", SessionID: "staged-reject-session", TapeID: "tape-staged-reject"},
+		Identity:  config.Identity{ModelID: "test-model", SessionID: "override-reject-session", TapeID: "tape-override-reject"},
 		Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"},
 		Limits:    config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 10, OutputTruncate: 20480},
 		Paths:     config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"},
 	}
 	content := "QUINE_API_KEY=stolen\nQUINE_MAX_TURNS=soon\n"
-	path := writeStagedNextEnv(t, cfg, content)
+	path := writeEnvOverride(t, cfg, content)
 
-	exec := &ExecExecutor{QuinePath: "/nonexistent/quine", Cfg: cfg, Mission: "staged reject"}
-	result := exec.Execute("tool-exec-staged", ExecRequest{})
+	execer := &ExecExecutor{QuinePath: "/nonexistent/quine", Cfg: cfg, Mission: "override reject"}
+	result := execer.Execute("tool-exec-override", ExecRequest{})
 	if !result.IsError {
-		t.Fatal("exec with an invalid staged config should fail as a normal tool error")
+		t.Fatal("exec with an invalid child-env override should fail as a normal tool error")
 	}
 	text := string(result.Content)
 	for _, want := range []string{
 		"[EXEC ERROR]",
-		"QUINE_API_KEY",            // mutability violation named
-		"QUINE_MAX_TURNS",          // type violation named
-		"only exec-boundary knobs", // the whitelist, agent-legible
-		"left intact",              // fix-and-retry guidance
+		"QUINE_API_KEY",   // pin violation named
+		"pinned",          // ...and named as a pin, with the authority that holds it
+		"QUINE_MAX_TURNS", // type violation named
+		"invalid int",
+		"left intact", // fix-and-retry guidance
 	} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("exec rejection missing %q:\n%s", want, text)
@@ -1531,34 +1790,35 @@ func TestExecRejectsInvalidStagedConfigAndKeepsFileIntact(t *testing.T) {
 
 	after, err := os.ReadFile(path)
 	if err != nil {
-		t.Fatalf("re-read staged file: %v", err)
+		t.Fatalf("re-read override: %v", err)
 	}
 	if string(after) != content {
-		t.Fatalf("rejected exec must leave next.env intact: %q -> %q", content, after)
+		t.Fatalf("a rejected exec must leave config/env/override byte-identical: %q -> %q", content, after)
 	}
 }
 
-func TestExecAbsentStagedConfigIsNoOp(t *testing.T) {
+func TestExecAbsentEnvOverrideIsNoOp(t *testing.T) {
 	cfg := &config.Config{
-		Identity:  config.Identity{ModelID: "test-model", SessionID: "staged-absent-session", TapeID: "tape-staged-absent"},
+		Identity:  config.Identity{ModelID: "test-model", SessionID: "override-absent-session", TapeID: "tape-override-absent"},
 		Transport: config.Transport{APIKey: "test-key", Provider: "anthropic"},
 		Limits:    config.Limits{MaxDepth: 5, MaxConcurrent: 20, ShTimeout: 10, OutputTruncate: 20480},
 		Paths:     config.Paths{DataDir: t.TempDir(), Shell: "/bin/sh"},
 	}
 
-	// No next.env exists: exec proceeds to the syscall and fails only on the
-	// bogus target, not on staged validation.
-	exec := &ExecExecutor{QuinePath: "/nonexistent/quine", Cfg: cfg, Mission: "staged absent"}
-	result := exec.Execute("tool-exec-absent", ExecRequest{})
+	// No override exists: exec proceeds to the syscall and fails only on the
+	// bogus target. No policy is the normal state — children inherit what I was
+	// given — and it is not an error condition.
+	execer := &ExecExecutor{QuinePath: "/nonexistent/quine", Cfg: cfg, Mission: "no policy staged"}
+	result := execer.Execute("tool-exec-absent", ExecRequest{})
 	if !result.IsError {
 		t.Fatal("expected exec failure on the nonexistent target")
 	}
 	text := string(result.Content)
 	if !strings.Contains(text, "syscall.Exec failed") {
-		t.Fatalf("failure should come from the exec syscall, not staged validation:\n%s", text)
+		t.Fatalf("failure should come from the exec syscall, not override validation:\n%s", text)
 	}
-	if strings.Contains(text, "staged config") {
-		t.Fatalf("absent staged file must be a silent no-op:\n%s", text)
+	if strings.Contains(text, "child-env override") {
+		t.Fatalf("an absent override must be a silent no-op, not a validation complaint:\n%s", text)
 	}
 }
 

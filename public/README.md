@@ -10,6 +10,7 @@ acceptance (marked as such); this is not a mirror of the research tree.
 Sorted newest first; **Date** is the earliest of submitted/accepted/published
 that is on record for that entry.
 
+<!-- BEGIN GENERATED: public-readme:portfolio (generate-paper-projections.py — edit frontmatter, not this table) -->
 | Date | Paper | Venue | Status |
 |------|-------|-------|--------|
 | 2026-07-03 | [A Tumor in the Repository (essay)](tumor-in-the-repository-essay/) | Blog essay (Substack) | published |
@@ -23,6 +24,7 @@ that is on record for that entry.
 | 2026-03-17 | [Harness Engineering Is Architectural Amnesia](harness-engineering-is-architectural-amnesia/) | Blog essay (Substack) | published |
 | 2026-03-15 | [Why Terminal Bench 2 Is Broken, and Why I Still Love It](terminal-bench-2-love-letter/) | Blog essay (Substack) | published |
 | 2026-03-08 | [Quine: Realizing LLM Agents as Native POSIX Processes](quine-arxiv/) | arXiv:2603.18030 | published |
+<!-- END GENERATED: public-readme:portfolio -->
 
 ---
 
@@ -61,7 +63,7 @@ systemically. Ships the incident-point contract, constitution, and validator
 rather than the full run tapes. See also the companion
 [public essay](tumor-in-the-repository-essay/) narrating the same incident.
 
-[Read](computational-neoplasm/) · [PDF](computational-neoplasm/output/A_Tumor_in_the_Repository_LBA.pdf) · [Artifacts](computational-neoplasm/artifacts/)
+[Read](computational-neoplasm/) · [PDF](computational-neoplasm/output/A_Tumor_in_the_Repository_LBA.pdf) · [Poster](computational-neoplasm/presentation/LB119_Repository_Tumor_Ke.pdf) · [Artifacts](computational-neoplasm/artifacts/)
 
 ### [Structural Elicitation in a Frozen POSIX Agent](structural-elicitation/)
 
@@ -74,7 +76,7 @@ verified filesystem/exec event in 96 of 102 runs versus 0 of 85 matched
 controls, across three model families, with the pull replicating on non-code
 prose and persisting at a read-only substrate boundary.
 
-[Read](structural-elicitation/) · [PDF](structural-elicitation/output/Structural_Elicitation_in_a_Frozen_POSIX_Agent_LBA.pdf) · [Experiments](structural-elicitation/experiments/)
+[Read](structural-elicitation/) · [PDF](structural-elicitation/output/Structural_Elicitation_in_a_Frozen_POSIX_Agent_LBA.pdf) · [Poster](structural-elicitation/presentation/LB116_Frozen_POSIX_Agent_Ke.pdf) · [Experiments](structural-elicitation/experiments/)
 
 ### [Facultative Self-Reproduction in Quine](facultative-self-reproduction/)
 
@@ -84,7 +86,7 @@ Self-reproduction as a *facultative* outcome across real POSIX `exec` boundaries
 the same carried source becomes a rebuilt runtime or a degenerate stream body
 depending only on the demand it faces.
 
-[Read](facultative-self-reproduction/) · [PDF](facultative-self-reproduction/output/Facultative_Self_Reproduction_in_Quine_LBA.pdf) · [Experiments](facultative-self-reproduction/experiments/)
+[Read](facultative-self-reproduction/) · [PDF](facultative-self-reproduction/output/Facultative_Self_Reproduction_in_Quine_LBA.pdf) · [Poster](facultative-self-reproduction/presentation/LB112_Facultative_Self_Reproduction_Ke.pdf) · [Experiments](facultative-self-reproduction/experiments/)
 
 ### [From Simulated Worlds to Process Habitats](agentic-alife-workshop/)
 
@@ -94,7 +96,7 @@ Quine as a process-habitat substrate for generative ALife: withholding
 affordances for social knowledge and reproduction reveals heterogeneous
 coordination protocols and a successor morphospace.
 
-[Read](agentic-alife-workshop/) · [PDF](agentic-alife-workshop/output/From_Simulated_Worlds_to_Process_Habitats_POSIX_Generative_ALife.pdf) · [Experiments](agentic-alife-workshop/experiments/)
+[Read](agentic-alife-workshop/) · [PDF](agentic-alife-workshop/output/From_Simulated_Worlds_to_Process_Habitats_POSIX_Generative_ALife.pdf) · [Slides](agentic-alife-workshop/presentation/deck.pdf) · [Experiments](agentic-alife-workshop/experiments/)
 
 ### [Coordination Under Existential Unawareness](minimal-perceptual-prerequisites/)
 
@@ -104,7 +106,7 @@ Two LLM agents coordinate under shared scarcity with no hint that a peer exists 
 and a threshold separates coordination that *closes* from coordination that
 *stalls* (quantitative signals close it; qualitative ones do not).
 
-[Read](minimal-perceptual-prerequisites/) · [PDF](minimal-perceptual-prerequisites/output/Coordination_Under_Existential_Unawareness_Information_Ablation_and_Closure_Thresholds_in_LLM_Multi-Agent_Systems.pdf) · [Experiments](minimal-perceptual-prerequisites/experiments/) · [Reproduce](minimal-perceptual-prerequisites/REPRODUCE.md)
+[Read](minimal-perceptual-prerequisites/) · [PDF](minimal-perceptual-prerequisites/output/Coordination_Under_Existential_Unawareness_Information_Ablation_and_Closure_Thresholds_in_LLM_Multi-Agent_Systems.pdf) · [Poster](minimal-perceptual-prerequisites/presentation/P14_Existential_Unawareness_Ke.pdf) · [Experiments](minimal-perceptual-prerequisites/experiments/) · [Reproduce](minimal-perceptual-prerequisites/REPRODUCE.md)
 
 ### [The Autopoietic Repository](the-autopoietic-repository/)
 

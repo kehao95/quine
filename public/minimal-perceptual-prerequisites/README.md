@@ -1,11 +1,22 @@
+---
+source: Paper/papers/minimal-perceptual-prerequisites
+divergence-allowed: [experiment-data.yaml]
+---
+
 # Coordination Under Existential Unawareness
+
+> **Snapshot divergence (declared):** `experiment-data.yaml` differs from the
+> source only in its `experiment_dir:` values — each is trimmed from the
+> lab-internal nested layout to the flat public layout `experiments/coop-NN-...`,
+> so the released tree does not expose the internal experiment-grouping
+> directory structure.
 
 > Information Ablation and Closure Thresholds in LLM Multi-Agent Systems.
 > Accepted at ALIFE 2026. Experimental paper — full experimental closure included.
 
 This entry is the self-contained public record of the paper: manuscript source,
-the camera-ready PDF, the authoritative result data, the four experimental
-condition directories, and a reproduction protocol.
+the camera-ready PDF, the ALIFE 2026 poster, the authoritative result data, the
+four experimental condition directories, and a reproduction protocol.
 
 ## What the paper shows
 
@@ -35,6 +46,7 @@ suggesting macro-level coordination need not require aligned representations.
 | [`sections/`](sections/) | Manuscript source (introduction … appendix) |
 | [`figures/`](figures/) | The degradation-gradient figure |
 | [`output/`](output/) | The camera-ready PDF |
+| [`presentation/P14_Existential_Unawareness_Ke.pdf`](presentation/P14_Existential_Unawareness_Ke.pdf) | ALIFE 2026 poster (P14, presented 2026-08-18) |
 | [`references.bib`](references.bib) | Bibliography |
 | [`experiment-data.yaml`](experiment-data.yaml) | **Authoritative** result table — every number in the paper derives from here |
 | [`experiments/`](experiments/) | The four condition directories (README, prompts, `run.sh`, run tapes as DVC pointers) + a shared `_setup/` |
