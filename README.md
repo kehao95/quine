@@ -37,13 +37,26 @@ Full descriptions, PDFs, and experiment data live under
 
 ## Repository Map
 
-| Path | Role |
-|------|------|
-| [`public/`](./public/README.md) | Released research: papers, essays, and study-specific evidence and reproduction materials |
-| [`cmd/quine/`](./cmd/quine/) | CLI entrypoint for the experimental agent runtime |
-| [`cmd/world/`](./cmd/world/) | Habitat runtime used by environment-control studies |
-| [`internal/`](./internal/) | Runtime implementation: model protocols, tools, recording, lifecycle, and workspace behavior |
-| [`habitat/`](./habitat/) | Habitat world package used by `cmd/world` |
+| Path | Role | Availability |
+|------|------|--------------|
+| `Paper/` | Philosophy, developing theory, research questions, discovery procedures, and publication work | Private for now |
+| `experiments/` | Experimental designs, environments, runs, and analyses | Private for now; selected materials accompany released work |
+| [`public/`](./public/README.md) | Released papers, essays, evidence, and reproduction materials | Public |
+| [`cmd/`](./cmd/) | Entrypoints for the agent runtime, habitat worlds, and operator tools | `quine` and `world` public; `qcli` private for now |
+| [`internal/`](./internal/) | Runtime implementation: model protocols, tools, recording, lifecycle, and workspace behavior | Public |
+| [`habitat/`](./habitat/) | Habitat worlds and their runtime | Public |
+| `operator/` | Operator interfaces, including qcli | Private for now |
+| `principles/` | Working principles that participants interpret and revise | Private for now |
+| `development/` | Design work, prototypes, working contracts, and current status | Private for now |
+| `evolution/` | Records and interpretations of the repository's development | Private for now |
+| `profiles/` | Model and runtime configuration presets | Private for now |
+| `tests/` | Software verification, model evaluations, and retained baselines | Private for now |
+| [`scripts/`](./scripts/) | Development, validation, publication, and data tools | Public data restore script; other tools private for now |
+| [`.dvc/`](./.dvc/) | Artifact storage configuration and the public data manifest | Configuration and public manifest included |
+| `.githooks/` | Checks run at commit and push boundaries | Private for now |
+
+Parts of Quine are **private for now**. If you have research interests in any
+of these areas, please [reach out](mailto:i@kehao.me).
 
 ## Follow
 
