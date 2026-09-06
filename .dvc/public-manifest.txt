@@ -1,5 +1,4 @@
-# Exact `.dvc` pointer paths approved for publication into the isolated public
-# DVC store.
+# Exact `.dvc` pointer paths approved for the public release projection.
 #
 # One repo-root-relative `.dvc` path per line. Blank lines and `#` comments are
 # ignored. Every listed path MUST exist as a file in the checkout where sync/pull
@@ -7,8 +6,8 @@
 # both the lab `main` branch and the public `release` branch), never the
 # lab-internal `experiments/active/...` paths (denylisted off `release`).
 #
-# Publish:  ./scripts/sync-public-dvc-manifest.sh   (pushes blobs to public-localstore)
-# Restore:  ./scripts/pull-public-dvc-manifest.sh   (public readers; NOT plain `dvc pull`)
+# Restore: ./scripts/pull-public-dvc-manifest.sh (public readers; NOT plain
+# `dvc pull`)
 
 # --- minimal-perceptual-prerequisites (ALIFE 2026) ---
 public/minimal-perceptual-prerequisites/experiments/coop-18-zero-social-information/runs/20260409-013858-copilot-gpt-5.4-high-zero-social-condA-2ag.dvc

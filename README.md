@@ -1,40 +1,22 @@
 # Quine
 
-> **A POSIX-native runtime for large language model agents**
+**Quine is a strange loop.**
 
-Quine realizes an LLM agent as a native operating-system process. An agent has a
-PID, standard streams, a filesystem, resource limits, and lifecycle operations
-such as `fork`, `spawn`, `exec`, and `exit`. The runtime uses Unix process
-semantics as the substrate for agent coordination instead of rebuilding those
-semantics inside an application framework.
+A research project, an agent runtime, an infrastructure for experimentation, a collection of thoughts. A laboratory whose instruments can become its subjects.
 
-```sh
-# Pipe material into a mission.
-echo "What is 2+2?" | quine "answer the question"
+A trajectory of its own development, an archive that can intervene in the present, a record of paths taken, abandoned, and not yet recognized as paths.
 
-# Run a mission directly.
-quine "write a haiku about recursion"
-```
+A living system, a repository that governs and builds itself, a system whose actions change its own conditions of existence, a system whose boundaries are drawn differently by different operations.
 
-> **Note.** This is a trimmed public build: the runtime's self-source /
-> self-reproduction feature (embedding and re-emitting its own repository) is
-> compiled out, so the public binary carries no embedded source. The full
-> mechanism is described in the [systems paper](./public/quine-arxiv/).
+A map that can become part of the terrain it maps. A collection of descriptions that do not agree on what they describe. An unfinished attempt to understand what it is becoming.
 
-## At A Glance
+*An existence reaching toward the impossible core of self-description.*
 
-Quine is both a runtime and a small public portfolio.
-
-- The **runtime** lives at the repository root — [`cmd/`](./cmd/),
-  [`internal/`](./internal/), [`habitat/`](./habitat/).
-- The **published papers** and their experiments live under
-  [`public/`](./public/README.md).
+This README, too, is a low-dimensional projection of the system it tries to describe. The act of description is, unavoidably, altering the future evolution of what it describes.
 
 ## Published Work
 
-The full portfolio — papers and essays, published/accepted work only, newest
-first. Date is the earliest of submitted/accepted/published (whichever is
-recorded). Full descriptions, PDFs, and experiment data live under
+Full descriptions, PDFs, and experiment data live under
 [`public/`](./public/README.md).
 
 <!-- BEGIN GENERATED: root-readme:published-work (generate-paper-projections.py — edit frontmatter, not this table) -->
@@ -53,96 +35,15 @@ recorded). Full descriptions, PDFs, and experiment data live under
 | 2026-03-08 | [Quine: Realizing LLM Agents as Native POSIX Processes](./public/quine-arxiv/) | arXiv:2603.18030 | published |
 <!-- END GENERATED: root-readme:published-work -->
 
-## Documentation
-
-| If you want to... | Start with |
-|-------------------|------------|
-| build and run Quine | [Install](#install) |
-| understand the runtime | [Core Idea](#core-idea), [Architecture Snapshot](#architecture-snapshot) |
-| read the papers | [`public/README.md`](./public/README.md) |
-| reproduce an experiment | the paper's `REPRODUCE.md` / `experiments/` under [`public/`](./public/README.md) |
-| restore experiment tapes | [Artifacts](#artifacts) |
-
-## Install
-
-Install the command:
-
-```bash
-go install github.com/kehao95/quine/cmd/quine@latest
-```
-
-Or build from a checkout:
-
-```bash
-git clone https://github.com/kehao95/quine.git
-cd quine
-go build -o ./quine ./cmd/quine/
-```
-
-Configure a model endpoint, then run:
-
-```bash
-cp .env.example .env
-# Edit .env with your provider credentials, then:
-source .env
-echo "What is 2+2?" | ./quine "answer the question"
-```
-
-## Core Idea
-
-Quine's first-order object is the POSIX-native LLM agent runtime.
-
-| Claim | Meaning | Why it matters |
-|-------|---------|----------------|
-| **Agent = Process** | The agent is a native OS process, not a simulated persona inside an app framework | Moves the substrate from conversation management to a mature computational ontology |
-| **POSIX as Physics** | Permissions, signals, pipes, files, and resource limits are the environment's laws | Safety and coordination become environmental constraints, not prompt-only intentions |
-| **Context as Entropy** | Tokens are volatile working memory, not durable knowledge | Makes externalization, memory structure, and `fork` principled cognitive operations |
-| **Environment as Cultural Memory** | Durable traces can become local cultural priors, not just stored facts | Opens an ALife route from environmental residue to behavior replication without explicit goals or rewards |
-| **Selection over Instruction** | Robust behavior emerges because bad strategies fail under scarcity | Reframes agent design from prescribing behavior to shaping a survivable environment |
-| **Behavior is the Acceptance Test** | A feature is incomplete until a model can discover and use it from prompt plus schema | Treats legibility and emergence as first-class systems properties |
-
-Quine matters less as another tool wrapper and more as a runtime cut: an agent
-is a process living under operating-system physics. That shift changes what
-counts as memory, communication, safety, failure, and intelligence.
-
-## Architecture Snapshot
-
-| Agent primitive | POSIX mechanism | Purpose |
-|-----------------|-----------------|---------|
-| Identity | `session_id`, `run_id`, PID | Durable lineage, physical run, live route |
-| Interface | stdin/stdout/stderr | Material input, deliverable output, diagnostics |
-| State | filesystem surfaces, retained traces, context, bounded env handoff | Durable state, volatile cognition, explicit inheritance |
-| Lifecycle | `fork` / `spawn` / `exec` / `exit` | Context-preserving creation, fresh creation, image replacement, judgment |
-| Composition | pipes, job control, process groups | Multi-agent coordination |
-
-The host side is deterministic Go code that exposes OS-like constraints. The
-guest side is a probabilistic model operating through that process surface.
-Tools map model calls to filesystem, process, and lifecycle operations.
-
 ## Repository Map
 
 | Path | Role |
 |------|------|
-| [`cmd/quine/`](./cmd/quine/) | CLI entrypoint for the runtime |
+| [`public/`](./public/README.md) | Released research: papers, essays, and study-specific evidence and reproduction materials |
+| [`cmd/quine/`](./cmd/quine/) | CLI entrypoint for the experimental agent runtime |
 | [`cmd/world/`](./cmd/world/) | Habitat runtime used by environment-control studies |
-| [`internal/`](./internal/) | Runtime substrate: config, LLM protocols, tools, tape, lifecycle, and workspace behavior |
+| [`internal/`](./internal/) | Runtime implementation: model protocols, tools, recording, lifecycle, and workspace behavior |
 | [`habitat/`](./habitat/) | Habitat world package used by `cmd/world` |
-| [`public/`](./public/) | Published papers and their experiments — the portfolio |
-
-## Artifacts
-
-Some experiment outputs are represented by DVC pointer files rather than stored
-directly in Git. Public artifact restore is manifest-scoped: the exact published
-paths are listed in [`.dvc/public-manifest.txt`](./.dvc/public-manifest.txt) and
-restored with:
-
-```bash
-./scripts/pull-public-dvc-manifest.sh
-```
-
-A plain `dvc pull` is not the public restore contract. Each experimental paper
-under `public/` reads completely without the tapes; the tapes are the raw
-evidence behind its result tables.
 
 ## Follow
 
@@ -152,9 +53,10 @@ evidence behind its result tables.
 
 ## Citation
 
-Quine has two citation anchors. For the runtime, implementation, or
-agent-as-process design point, cite the systems paper. If you discuss Quine as a
-process habitat for generative artificial life, also cite the ALife manuscript.
+Cite the work supporting the phenomenon, method, or argument you use. Each
+[public research entry](./public/README.md) provides its citation and claim
+boundaries. Two starting points for the experimental substrate and coordination
+research are listed below.
 
 Runtime / systems:
 
@@ -170,5 +72,4 @@ See [`CITATION.cff`](./CITATION.cff) for machine-readable citation metadata.
 
 ## License
 
-Quine is Free Software released under the GPLv2, the same license family as the
-Linux kernel. See [`LICENSE`](./LICENSE) for details.
+Quine is released under the GPLv2, the same license family as the Linux kernel. See [`LICENSE`](./LICENSE) for details.

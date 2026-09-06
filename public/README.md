@@ -1,5 +1,8 @@
 # Published works
 
+Released work from Quine. The [project introduction](../README.md) opens onto
+its several descriptions.
+
 The public portfolio — one self-contained entry per published or accepted work.
 Each entry carries everything needed to read, reproduce, and cite it: manuscript
 source, figures, the released PDF, and (for experimental papers) the experiment
