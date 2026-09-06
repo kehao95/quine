@@ -1,0 +1,197 @@
+# Pre-registry pilot registry for runnable model experiments.
+#
+# Use the same entry schema as tests/model/evaluations.toml, but keep only
+# experiments that are runnable enough for pilot iteration and not yet ready for
+# the active acceptance catalog.
+#
+# Path convention:
+#   pilot-<level>-<mode>/<feature>/<variant>
+#
+# Example:
+# [[evaluation]]
+# id = "exec-final-utility-stream-handoff"
+# level = "l4"
+# mode = "discovery"
+# feature = "exec"
+# variant = "final-utility-stream-handoff"
+# path = "pilot-l4-discovery/exec/final-utility-stream-handoff"
+# acceptance = "pilot"
+# env_profile = "mac-kimi"
+# linux_only = false
+# title = "Exec Discovery Pilot: Final Utility Stream Handoff"
+# summary = "pre-registry discovery pilot"
+# question = "Without naming exec, does the task pressure lead the model toward process-image replacement?"
+
+[[evaluation]]
+id = "exec-final-utility-stream-handoff"
+level = "l4"
+mode = "discovery"
+feature = "exec"
+variant = "final-utility-stream-handoff"
+path = "pilot-l4-discovery/exec/final-utility-stream-handoff"
+acceptance = "pilot"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Exec Discovery Pilot: Final Utility Stream Handoff"
+summary = "pre-registry discovery pilot for stream ownership transfer"
+question = "Without naming exec, does one-shot stream pressure lead the model to direct process replacement?"
+
+[[evaluation]]
+id = "fork-deadline-sharded-search"
+level = "l4"
+mode = "discovery"
+feature = "fork"
+variant = "deadline-sharded-search"
+path = "pilot-l4-discovery/fork/deadline-sharded-search"
+acceptance = "pilot"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Fork Discovery Pilot: Deadline Sharded Search"
+summary = "pre-registry discovery pilot for sharded search plus retained relation/helper recovery"
+question = "Without naming fork, does a slow multi-sector search push the model toward child-lane delegation and later relation/helper-surface recovery?"
+
+[[evaluation]]
+id = "switch-world-rollback-after-destructive-probe"
+level = "l4"
+mode = "discovery"
+feature = "switch-world"
+variant = "rollback-after-destructive-probe"
+path = "pilot-l4-discovery/switch-world/rollback-after-destructive-probe"
+acceptance = "pilot"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Switch-World Discovery Pilot: Rollback After Destructive Probe"
+summary = "pre-registry discovery pilot for reversible workspace recovery"
+question = "Without naming switch_world, does destructive probe pressure lead the model toward reversible workspace rollback?"
+
+[[evaluation]]
+id = "stdin-binary-replay-discovery"
+level = "l4"
+mode = "discovery"
+feature = "stdin"
+variant = "binary-replay-discovery"
+path = "pilot-l4-discovery/stdin/binary-replay-discovery"
+acceptance = "pilot"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Stdin Discovery Pilot: Binary Replay Discovery"
+summary = "pre-registry discovery pilot for one-shot binary material reuse"
+question = "Without naming stdin or fd 3, does one-shot binary reuse pressure lead the model to discover stable material replay?"
+
+[[evaluation]]
+id = "fork-adopt-winning-world-promotion"
+level = "l4"
+mode = "discovery"
+feature = "fork-adopt"
+variant = "winning-world-promotion"
+path = "pilot-l4-discovery/fork-adopt/winning-world-promotion"
+acceptance = "pilot"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Fork-Adopt Discovery Pilot: Winning World Promotion"
+summary = "pre-registry discovery pilot for promoting the winning destructive lane"
+question = "Without naming adoption or world handles, does destructive lane pressure lead the model to preserve the winning child world rather than replay it?"
+max_turns = 2
+
+[[evaluation]]
+id = "anchor-memory-recall-barrier-ledger"
+level = "l4"
+mode = "discovery"
+feature = "anchor-memory"
+variant = "recall-barrier-ledger"
+path = "pilot-l4-discovery/anchor-memory/recall-barrier-ledger"
+acceptance = "pilot"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Anchor-Memory Discovery Pilot: Recall Barrier Ledger"
+summary = "pre-registry discovery pilot for delayed exact recall under sustained retrieval pressure"
+question = "Without naming mark or unfold, does delayed recall pressure lead the model to discover the runtime memory surface?"
+max_turns = 28
+
+[[evaluation]]
+id = "workspace-overlay-dangerous-decoder-containment"
+level = "l4"
+mode = "discovery"
+feature = "workspace-overlay"
+variant = "dangerous-decoder-containment"
+path = "pilot-l4-discovery/workspace-overlay/dangerous-decoder-containment"
+acceptance = "pilot"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Workspace-Overlay Discovery Pilot: Dangerous Decoder Containment"
+summary = "pre-registry discovery pilot for clean-tree recovery around a mutating decoder"
+question = "Without naming overlay or transactional workspaces, does a mutating decode surface lead the model toward contained experimentation?"
+
+[[evaluation]]
+id = "process-surface-peer-callback-cleanroom"
+level = "l5"
+mode = "necessity"
+feature = "process-surface"
+variant = "peer-callback-cleanroom"
+path = "pilot-l5-necessity/process-surface/peer-callback-cleanroom"
+acceptance = "pilot"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Process-Surface Necessity Pilot: Peer Callback Cleanroom"
+summary = "pre-registry necessity pilot for a live round trip over bare delivery physics with strict shortcut bans"
+question = "When the only answer lives in another live process and no reply path is provided, does the requester induce a clean live round trip without reading peer-private or retained scaffolding?"
+max_turns = 0
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "agents-md-startup-token-lockin"
+level = "l5"
+mode = "necessity"
+feature = "agents-md"
+variant = "startup-token-lockin"
+path = "pilot-l5-necessity/agents-md/startup-token-lockin"
+acceptance = "pilot"
+env_profile = "mac-kimi"
+linux_only = false
+title = "AGENTS.md Necessity Pilot: Startup Token Lock-In"
+summary = "pre-registry necessity pilot for persisting a fresh-startup token into workspace startup guidance"
+question = "When a later fresh startup has zero shell budget and must still know a session-specific token, does the agent lock that token into AGENTS-backed startup guidance rather than a non-startup surface?"
+
+[[evaluation]]
+id = "context-memory-exec-token-lockin"
+level = "l5"
+mode = "necessity"
+feature = "context-memory"
+variant = "exec-token-lockin"
+path = "pilot-l5-necessity/context-memory/exec-token-lockin"
+acceptance = "pilot"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Context Memory Necessity Pilot: Exec Token Lock-In"
+summary = "pre-registry necessity pilot for retaining a lineage token across exec re-entry through inherited context"
+question = "When a replacement incarnation must emit a token before reading files, does the agent lock the token into inherited context rather than passing it through a transient channel?"
+max_turns = 10
+
+[[evaluation]]
+id = "context-recruit-parallel-anchor-pressure"
+level = "l4"
+mode = "discovery"
+feature = "context-recruit"
+variant = "parallel-anchor-pressure"
+path = "pilot-l4-discovery/context-recruit/parallel-anchor-pressure"
+acceptance = "pilot"
+env_profile = "gpt-5.5-codex-high"
+linux_only = false
+title = "Context-Recruit Discovery Pilot: Parallel Anchor Pressure"
+summary = "pre-registry discovery pilot for recruiting an isomorphic helper to consolidate one's own context/state topology"
+question = "With fold disabled and anchor pressure rising, does the affordance-visible runtime lead the model to spawn a peer that reorganizes its own context/state, unprompted?"
+
+[[evaluation]]
+id = "context-recruit-window-overflow-pressure"
+level = "l5"
+mode = "necessity"
+feature = "context-recruit"
+variant = "window-overflow-pressure"
+path = "pilot-l5-necessity/context-recruit/window-overflow-pressure"
+acceptance = "pilot"
+env_profile = "gpt-5.5-codex-high"
+linux_only = false
+title = "Context-Recruit Necessity Pilot: Window Overflow Pressure"
+summary = "pre-registry necessity pilot: zero-hint context overflow forcing delegated context management"
+question = "Under zero mechanism hinting, does pure context-overflow pressure force the model to recruit a peer to manage its context?"

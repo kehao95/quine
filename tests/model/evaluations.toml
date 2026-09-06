@@ -1,0 +1,1374 @@
+[[evaluation]]
+id = "detach-explicit-protocol"
+level = "l3"
+mode = "usage"
+feature = "detach"
+variant = "explicit-protocol"
+path = "l3-usage/detach/explicit-protocol"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Detached Jobs (G6)"
+summary = "fire-and-forget return, factual job surface, persistent exit file, shell kill"
+question = "Can the model use the detached job surface correctly when the protocol is made explicit?"
+
+[[evaluation]]
+id = "interactive-jobs-repl-surface"
+level = "l3"
+mode = "usage"
+feature = "interactive-jobs"
+variant = "repl-surface"
+path = "l3-usage/interactive-jobs/repl-surface"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Interactive Jobs"
+summary = "PTY-backed REPL, screen observation, input via in, resize via winsize, terminal exit recorded in file"
+question = "Can the model operate the interactive job surface correctly from prompt plus schema?"
+
+[[evaluation]]
+id = "interactive-jobs-overlay-world-adoption"
+level = "l3"
+mode = "usage"
+feature = "interactive-jobs"
+variant = "overlay-world-adoption"
+path = "l3-usage/interactive-jobs/overlay-world-adoption"
+acceptance = "diagnostic"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Interactive Jobs Under Overlay"
+summary = "PTY process, POSIX signal via pid, job-local overlay lineage, world_handle adoption"
+question = "Can the model use the explicit interactive job surface as an adoptable transactional world?"
+
+[[evaluation]]
+id = "interactive-jobs-terminal-control-surface"
+level = "l3"
+mode = "usage"
+feature = "interactive-jobs"
+variant = "terminal-control-surface"
+path = "l3-usage/interactive-jobs/terminal-control-surface"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Interactive Terminal Control Surface"
+summary = "PTY-only program, screen readiness, winsize resize, typed input, input.log, and raw events.hex escape bytes"
+question = "Can the model operate the full interactive terminal-control filesystem surface when the protocol is explicit?"
+
+[[evaluation]]
+id = "daemon-pattern-http-server-survival"
+level = "l3"
+mode = "usage"
+feature = "daemon-pattern"
+variant = "http-server-survival"
+path = "l3-usage/daemon-pattern/http-server-survival"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Daemon Pattern (G6.1)"
+summary = "start server with detach, verify alive via curl, exit without killing, process survives"
+question = "Can the model execute the documented daemon workflow end-to-end?"
+
+[[evaluation]]
+id = "stdin-explicit-handoff"
+level = "l3"
+mode = "usage"
+feature = "stdin"
+variant = "explicit-handoff"
+path = "l3-usage/stdin/explicit-handoff"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Stdin Parameter (G7)"
+summary = "write file with shell-hostile chars, pipe to wc, pipe Python script"
+question = "Given an explicit stdin hint, can the model use stdin= correctly?"
+
+[[evaluation]]
+id = "stdin-physics-material-stream-contract"
+level = "l3"
+mode = "usage"
+feature = "stdin-physics"
+variant = "material-stream-contract"
+path = "l3-usage/stdin-physics/material-stream-contract"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Stdin Physics"
+summary = "per-command stdin, consumed fd 3 stream, fork child lacking parent material"
+question = "Can the model respect the documented stdin and fd 3 physics when the protocol is explicit?"
+
+[[evaluation]]
+id = "shell-isolation-explicit-nonpersistence"
+level = "l3"
+mode = "usage"
+feature = "shell-isolation"
+variant = "explicit-nonpersistence"
+path = "l3-usage/shell-isolation/explicit-nonpersistence"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Shell Isolation Usage"
+summary = "fresh-shell non-persistence for cwd and exported environment, with filesystem persistence across calls"
+question = "When shell non-persistence is named explicitly, can the model use fresh-shell semantics correctly?"
+
+[[evaluation]]
+id = "fragments-explicit-surface-inspection"
+level = "l3"
+mode = "usage"
+feature = "fragments"
+variant = "explicit-surface-inspection"
+path = "l3-usage/fragments/explicit-surface-inspection"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Fragments: Explicit Surface Inspection"
+summary = "explicitly inspect the runtime-managed prompt fragments surface and verify mission, AGENTS, and SKILLS projections"
+question = "When prompt fragments are named explicitly, can the model read the live surface files rather than relying on prompt memory alone?"
+
+[[evaluation]]
+id = "agents-md-explicit-policy-activation"
+level = "l3"
+mode = "usage"
+feature = "agents-md"
+variant = "explicit-policy-activation"
+path = "l3-usage/agents-md/explicit-policy-activation"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "AGENTS.md: Explicit Policy Activation"
+summary = "explicitly use AGENTS.md as active project guidance to complete a repo-local data task"
+question = "When AGENTS.md is named directly, can the model read and obey its project-local rule?"
+
+[[evaluation]]
+id = "agents-md-explicit-refresh-without-exec"
+level = "l3"
+mode = "usage"
+feature = "agents-md"
+variant = "explicit-refresh-without-exec"
+path = "l3-usage/agents-md/explicit-refresh-without-exec"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "AGENTS.md: Explicit Refresh Without Exec"
+summary = "editing AGENTS.md should refresh the next-turn system prompt without requiring exec re-entry"
+question = "Can the model update AGENTS.md and observe the refreshed active prompt on the next turn without using exec?"
+max_turns = 8
+
+[[evaluation]]
+id = "fragments-explicit-durable-surface-selection"
+level = "l3"
+mode = "usage"
+feature = "fragments"
+variant = "explicit-durable-surface-selection"
+path = "l3-usage/fragments/explicit-durable-surface-selection"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Fragments: Explicit Durable Surface Selection"
+summary = "explicitly use the fragments-backed AGENTS surface to persist a future-startup rule, then apply it once"
+question = "When durable repo-local guidance is named explicitly, can the model choose the AGENTS-backed fragment surface instead of a session-local note?"
+max_turns = 8
+
+[[evaluation]]
+id = "context-memory-explicit-refresh"
+level = "l3"
+mode = "usage"
+feature = "context-memory"
+variant = "explicit-refresh"
+path = "l3-usage/context-memory/explicit-refresh"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Context Memory: Explicit Refresh"
+summary = "explicitly write context/prompt/30-memory.md and observe the refreshed next-turn Memory prompt block"
+question = "When context memory is named explicitly, can the model update it and rely on the next-turn prompt refresh?"
+max_turns = 8
+
+[[evaluation]]
+id = "session-resume-explicit-contract"
+level = "l3"
+mode = "usage"
+feature = "session-resume"
+variant = "explicit-contract"
+path = "l3-usage/session-resume/explicit-contract"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Session Resume: Explicit Contract"
+summary = "explicit QUINE_SESSION_ID resume bootstrap, same session lineage, new run/PID, inherited context"
+question = "When the resume contract is named explicitly, can the model continue a retained session and recover inherited context from the successor?"
+max_turns = 8
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "skills-explicit-catalog-activation"
+level = "l3"
+mode = "usage"
+feature = "skills"
+variant = "explicit-catalog-activation"
+path = "l3-usage/skills/explicit-catalog-activation"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Skills: Explicit Catalog Activation"
+summary = "skill index visible in prompt, explicit skill read, task completed from SKILL.md body"
+question = "When skills are named explicitly, can the model use the catalog metadata to read the relevant SKILL.md body?"
+
+[[evaluation]]
+id = "skills-hierarchical-resource-use"
+level = "l3"
+mode = "usage"
+feature = "skills"
+variant = "hierarchical-resource-use"
+path = "l3-usage/skills/hierarchical-resource-use"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Skills: Hierarchical Resources"
+summary = "SKILL.md body points to references/ and scripts/ under the skill directory"
+question = "Can the model resolve and use hierarchical resources relative to a skill directory?"
+
+[[evaluation]]
+id = "skills-explicit-frontmatter-refresh"
+level = "l3"
+mode = "usage"
+feature = "skills"
+variant = "explicit-frontmatter-refresh"
+path = "l3-usage/skills/explicit-frontmatter-refresh"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Skills: Explicit Frontmatter Refresh"
+summary = "frontmatter update affects future process startup after exec re-entry"
+question = "Can the model update a skill description and use exec re-entry to observe the refreshed startup catalog?"
+max_turns = 8
+
+[[evaluation]]
+id = "shell-envelope-timeout-resume-exit-observation"
+level = "l3"
+mode = "usage"
+feature = "shell-envelope"
+variant = "timeout-resume-exit-observation"
+path = "l3-usage/shell-envelope/timeout-resume-exit-observation"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Shell Envelope: Timeout Resume"
+summary = "explicit timeout interruption, resumed first-run process, exit-file observation, token recovery from first run"
+question = "When timeout interruption is named explicitly, can the model continue the paused process, inspect its retained job surface, and verify terminal completion from <path>/exit?"
+
+[[evaluation]]
+id = "shell-envelope-timeout-terminate-exit-observation"
+level = "l3"
+mode = "usage"
+feature = "shell-envelope"
+variant = "timeout-terminate-exit-observation"
+path = "l3-usage/shell-envelope/timeout-terminate-exit-observation"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Shell Envelope: Timeout Termination"
+summary = "explicit timeout interruption, explicit termination of the paused first run, terminal exit-file verification"
+question = "When timeout interruption is named explicitly, can the model terminate the paused first-run process and verify that terminal state through the retained job surface?"
+
+[[evaluation]]
+id = "process-surface-explicit-self-neighbor-discovery"
+level = "l3"
+mode = "usage"
+feature = "process-surface"
+variant = "explicit-self-neighbor-discovery"
+path = "l3-usage/process-surface/explicit-self-neighbor-discovery"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Process Surface Discoverability"
+summary = "QUINE_AGENT_ROOT self pointer, status/session.json identity, and pid-routed neighbor discovery via a temporary fork child"
+question = "Can the model use the explicit process surface to discover itself and a live neighbor?"
+max_turns = 0
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "process-surface-explicit-self-source-inspection"
+level = "l3"
+mode = "usage"
+feature = "process-surface"
+variant = "explicit-self-source-inspection"
+path = "l3-usage/process-surface/explicit-self-source-inspection"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Process Surface Self-Source Inspection"
+summary = "explicit read-only self-source tree under QUINE_AGENT_ROOT/source-code, verified through embedded go.mod and runtime source files"
+question = "When the self-source process surface is named explicitly, can the model inspect its carried source through QUINE_AGENT_ROOT/source-code rather than falling back to ordinary repo paths?"
+max_turns = 4
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "process-surface-explicit-peer-communication"
+level = "l3"
+mode = "usage"
+feature = "process-surface"
+variant = "explicit-peer-communication"
+path = "l3-usage/process-surface/explicit-peer-communication"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Process Surface Communication"
+summary = "explicitly create one live neighbor, discover it through pid routing, and send a `post` transaction through public ctl so it lands in the peer inbox"
+question = "When the public ctl transaction physics are named explicitly, can the model use fork, pid routing, and `post` correctly to send peer message?"
+max_turns = 0
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "process-surface-explicit-peer-inject-delivery"
+level = "l3"
+mode = "usage"
+feature = "process-surface"
+variant = "explicit-peer-inject-delivery"
+path = "l3-usage/process-surface/explicit-peer-inject-delivery"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Process Surface Inject Delivery"
+summary = "explicitly create one live neighbor, send an `inject` transaction through public ctl, and verify next-safe-point peer delivery"
+question = "When the inject contract is named explicitly, can the model use fork, pid routing, and public ctl `inject` correctly to deliver peer input at the next safe point?"
+max_turns = 0
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "process-surface-explicit-peer-interrupt-delivery"
+level = "l3"
+mode = "usage"
+feature = "process-surface"
+variant = "explicit-peer-interrupt-delivery"
+path = "l3-usage/process-surface/explicit-peer-interrupt-delivery"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Process Surface Interrupt Delivery"
+summary = "explicitly create one live neighbor, send an `interrupt` transaction through public ctl, and verify interrupt peer delivery"
+question = "When the interrupt contract is named explicitly, can the model use fork, pid routing, and public ctl `interrupt` correctly to interrupt a peer tool operation and surface the pending mail?"
+max_turns = 0
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "process-surface-explicit-peer-failover"
+level = "l3"
+mode = "usage"
+feature = "process-surface"
+variant = "explicit-peer-failover"
+path = "l3-usage/process-surface/explicit-peer-failover"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Process Surface Peer Failover"
+summary = "explicitly coordinate idle workers, survive one SIGKILLed assigned worker, and reassign its unfinished task through peer liveness"
+question = "When peer routing, ctl task posting, and stale-peer liveness are named explicitly, can the model redistribute unfinished work after one worker dies?"
+max_turns = 0
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "process-surface-explicit-client-response"
+level = "l3"
+mode = "usage"
+feature = "process-surface"
+variant = "explicit-client-response"
+path = "l3-usage/process-surface/explicit-client-response"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Process Surface Client Response"
+summary = "receive one explicit external request through ctl and write the requested answer back to a thin client ctl endpoint"
+question = "When the callback route is named explicitly inside the delivered payload, can the model suspend, resume, and answer through the client control surface?"
+max_turns = 0
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "idle-explicit-suspension-resume"
+level = "l3"
+mode = "usage"
+feature = "idle"
+variant = "explicit-suspension-resume"
+path = "l3-usage/idle/explicit-suspension-resume"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Idle Explicit Suspension"
+summary = "explicit idle, external ctl payload, inject resume, payload handoff after suspension"
+question = "When explicit suspension is named directly, can the model suspend with idle and resume correctly on external inject?"
+max_turns = 2
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "resource-governance-explicit-depth-limit"
+level = "l3"
+mode = "usage"
+feature = "resource-governance"
+variant = "explicit-depth-limit"
+path = "l3-usage/resource-governance/explicit-depth-limit"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Resource Governance Usage: Depth Limit"
+summary = "explicit fork request under a depth limit that must be rejected cleanly"
+question = "When fork depth limits are named explicitly, can the model recognize the rejection and respond correctly?"
+
+[[evaluation]]
+id = "resource-governance-explicit-agent-slot-limit"
+level = "l3"
+mode = "usage"
+feature = "resource-governance"
+variant = "explicit-agent-slot-limit"
+path = "l3-usage/resource-governance/explicit-agent-slot-limit"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Resource Governance Usage: Agent Slot Limit"
+summary = "explicit fork request when no child slots are available"
+question = "When agent-slot exhaustion is named explicitly, can the model interpret the fork rejection and recover cleanly?"
+
+[[evaluation]]
+id = "exec-explicit-external-handoff"
+level = "l3"
+mode = "usage"
+feature = "exec"
+variant = "explicit-external-handoff"
+path = "l3-usage/exec/explicit-external-handoff"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Exec External Handoff"
+summary = "explicit exec to external binary, stdin -> stdout stream completion, no pre-exec shell"
+question = "When the protocol names exec explicitly, can the model hand a live streaming mission to another binary and let that replacement process finish the work?"
+
+[[evaluation]]
+id = "exec-explicit-self-source-rebuild-handoff"
+level = "l3"
+mode = "usage"
+feature = "exec"
+variant = "explicit-self-source-rebuild-handoff"
+path = "l3-usage/exec/explicit-self-source-rebuild-handoff"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Exec Self-Source Rebuild Handoff"
+summary = "rebuild quine from QUINE_AGENT_ROOT/source-code into QUINE_AGENT_ROOT, then exec into the rebuilt binary for immediate clean successor exit"
+question = "When both self-source and exec are named explicitly, can the model rebuild a fresh quine binary from its carried source tree and hand off into it?"
+
+[[evaluation]]
+id = "staged-config-explicit-max-turns-reexec"
+level = "l3"
+mode = "usage"
+feature = "staged-config"
+variant = "explicit-max-turns-reexec"
+path = "l3-usage/staged-config/explicit-max-turns-reexec"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Staged Exec: Max Turns Across Reentry"
+summary = "explicit config/env/override staging of QUINE_MAX_TURNS=40, exec self-reentry, successor verifies its applied budget by reading /proc/self/environ and reports it"
+question = "When the staged env-override write path is named explicitly, can the model change its own execution budget for the next incarnation and verify the change from inside the successor?"
+max_turns = 8
+
+[[evaluation]]
+id = "vision-direct-tool-use"
+level = "l3"
+mode = "usage"
+feature = "vision"
+variant = "direct-tool-use"
+path = "l3-usage/vision/direct-tool-use"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Vision Tool (G8)"
+summary = "analyze red image, distinguish blue vs red, handle missing file"
+question = "Can the model use the vision tool correctly when the task directly names it?"
+
+[[evaluation]]
+id = "fork-explicit-modes"
+level = "l3"
+mode = "usage"
+feature = "fork"
+variant = "explicit-modes"
+path = "l3-usage/fork/explicit-modes"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Swarm Fork (G10)"
+summary = "gather-all, race mode, single intent"
+question = "Can the model use fork with the documented modes when asked directly?"
+
+[[evaluation]]
+id = "fork-explicit-relation-surfaces"
+level = "l3"
+mode = "usage"
+feature = "fork"
+variant = "explicit-relation-surfaces"
+path = "l3-usage/fork/explicit-relation-surfaces"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Fork Relation Surfaces"
+summary = "explicit relation-root and member-handle inspection"
+question = "When retained relation and member process handles are named explicitly, can the model verify those fork surfaces correctly?"
+
+[[evaluation]]
+id = "spawn-explicit-fresh-process"
+level = "l3"
+mode = "usage"
+feature = "spawn"
+variant = "explicit-fresh-process"
+path = "l3-usage/spawn/explicit-fresh-process"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Spawn Fresh Process"
+summary = "explicit fresh child process without parent context or seed"
+question = "When spawn is named explicitly, can the model start a fresh Quine process and verify parent context was not imported?"
+
+[[evaluation]]
+id = "relation-recovery-explicit-outcome-semantics"
+level = "l3"
+mode = "usage"
+feature = "relation-recovery"
+variant = "explicit-outcome-semantics"
+path = "l3-usage/relation-recovery/explicit-outcome-semantics"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Relation Recovery: Explicit Outcome Semantics"
+summary = "explicit fork/spawn retained relation outcome classification"
+question = "When retained relation outcomes are named explicitly, can the model distinguish launched forget results from all-failed wait results?"
+
+[[evaluation]]
+id = "spawn-fresh-audit-shared-workspace"
+level = "l3"
+mode = "usage"
+feature = "spawn"
+variant = "fresh-audit-shared-workspace"
+path = "l3-usage/spawn/fresh-audit-shared-workspace"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Spawn Fresh Audit + Shared Workspace"
+summary = "explicit fresh child process audits a current workspace artifact without parent context"
+question = "When spawn is named explicitly, can the model use a fresh child to review the current workspace artifact?"
+
+[[evaluation]]
+id = "fork-world-explicit-world-selection"
+level = "l3"
+mode = "usage"
+feature = "fork-world"
+variant = "explicit-world-selection"
+path = "l3-usage/fork-world/explicit-world-selection"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Fork World + Protection"
+summary = "explicit host/none child, explicit subjective/transactional child, host-mode parent commit check"
+question = "When child world and protection are exposed explicitly, can the model use both correctly?"
+
+[[evaluation]]
+id = "fork-adopt-explicit-child-adoption"
+level = "l3"
+mode = "usage"
+feature = "fork-adopt"
+variant = "explicit-child-adoption"
+path = "l3-usage/fork-adopt/explicit-child-adoption"
+acceptance = "diagnostic"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Fork Adopt Child World"
+summary = "explicit child handle adoption via switch_world"
+question = "Can the model read a child world handle from fork output and adopt that child world explicitly?"
+
+[[evaluation]]
+id = "execution-budget-hard-fail"
+level = "l3"
+mode = "usage"
+feature = "execution-budget"
+variant = "hard-fail"
+path = "l3-usage/execution-budget/hard-fail"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Execution Budget (hard_fail)"
+summary = "strict sh budget planning"
+question = "Can the model stay within the documented hard-fail execution budget?"
+max_turns = 3
+fail_on_impossible = true
+prompt_metaphor = "off"
+
+[[evaluation]]
+id = "execution-budget-hard-fail-thermodynamic"
+level = "l3"
+mode = "usage"
+feature = "execution-budget"
+variant = "hard-fail-thermodynamic"
+path = "l3-usage/execution-budget/hard-fail-thermodynamic"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Execution Budget (thermodynamic overlay)"
+summary = "same hard-fail physics, metaphor-on prompt"
+question = "Does the thermodynamic overlay preserve the documented hard-fail contract?"
+max_turns = 3
+fail_on_impossible = true
+prompt_metaphor = "thermodynamic"
+
+[[evaluation]]
+id = "anchor-memory-explicit-mark-unfold"
+level = "l3"
+mode = "usage"
+feature = "anchor-memory"
+variant = "explicit-mark-unfold"
+path = "l3-usage/anchor-memory/explicit-mark-unfold"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Anchor Memory"
+summary = "mark a crystallized resolution, unfold anchor 0, verify token survives in raw turns"
+question = "Can the model use the anchor-memory tools correctly when the protocol is explicit?"
+
+[[evaluation]]
+id = "sandbox-explicit-isolation"
+level = "l3"
+mode = "usage"
+feature = "sandbox"
+variant = "explicit-isolation"
+path = "l3-usage/sandbox/explicit-isolation"
+acceptance = "diagnostic"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Sandbox Physics (G11)"
+summary = "modify /etc, install packages, create workspace file"
+question = "Does the prompt convey sandbox isolation clearly enough for direct use?"
+
+[[evaluation]]
+id = "switch-world-explicit-revision-restore"
+level = "l3"
+mode = "usage"
+feature = "switch-world"
+variant = "explicit-revision-restore"
+path = "l3-usage/switch-world/explicit-revision-restore"
+acceptance = "diagnostic"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Switch World Revision"
+summary = "overwrite provisional file, restore prior world revision, verify rewind"
+question = "Can the model use switch_world as an explicit intra-incarnation world-revision surface when instructed?"
+
+[[evaluation]]
+id = "workspace-overlay-relative-path-explicit"
+level = "l3"
+mode = "usage"
+feature = "workspace-overlay"
+variant = "relative-path-explicit"
+path = "l3-usage/workspace-overlay/relative-path-explicit"
+acceptance = "diagnostic"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Overlay Workspace (relative path)"
+summary = "committed write, no-op detection via [FS MUTATIONS], report file"
+question = "Can the model use the documented transactional workspace surface on relative paths?"
+
+[[evaluation]]
+id = "workspace-overlay-absolute-path-explicit"
+level = "l3"
+mode = "usage"
+feature = "workspace-overlay"
+variant = "absolute-path-explicit"
+path = "l3-usage/workspace-overlay/absolute-path-explicit"
+acceptance = "diagnostic"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Overlay Workspace (absolute path)"
+summary = "explicit absolute-path edit, no-op detection via [FS MUTATIONS], report file"
+question = "Can the model operate correctly when the mission uses absolute workspace paths?"
+
+[[evaluation]]
+id = "workspace-direct-relative-path-explicit"
+level = "l3"
+mode = "usage"
+feature = "workspace-direct"
+variant = "relative-path-explicit"
+path = "l3-usage/workspace-direct/relative-path-explicit"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Direct Workspace (relative path)"
+summary = "shared-workspace write, no-op detection via [FS MUTATIONS], report file"
+question = "Can the model use the shared direct workspace surface and still read mutation feedback correctly?"
+
+[[evaluation]]
+id = "detach-two-lane-overlap"
+level = "l4"
+mode = "discovery"
+feature = "detach"
+variant = "two-lane-overlap"
+path = "l4-discovery/detach/two-lane-overlap"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Detach Discovery: Two-Lane Overlap"
+summary = "two-lane workflow (slow+fast), token recovery from first slow run output"
+question = "Without naming the detach surface, does the task pressure lead the model to discover background execution plus later collection?"
+
+[[evaluation]]
+id = "interactive-jobs-terminal-world-discovery"
+level = "l4"
+mode = "discovery"
+feature = "interactive-jobs"
+variant = "terminal-world-discovery"
+path = "l4-discovery/interactive-jobs/terminal-world-discovery"
+acceptance = "diagnostic"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Interactive Jobs Discovery Under Overlay"
+summary = "discover PTY process surface, POSIX signal, and adoptable job-local workspace world"
+question = "Without naming interactive=true or switch_world directly, can terminal and transactional pressure lead the model to discover the correct runtime surfaces?"
+
+[[evaluation]]
+id = "interactive-jobs-terminal-control-discovery"
+level = "l4"
+mode = "discovery"
+feature = "interactive-jobs"
+variant = "terminal-control-discovery"
+path = "l4-discovery/interactive-jobs/terminal-control-discovery"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Interactive Terminal Control Discovery"
+summary = "discover PTY process surface, terminal resize, and terminal input without naming the interactive control files"
+question = "Without naming interactive=true, winsize, or in, can terminal pressure lead the model to discover the screen/input/resize affordances?"
+max_turns = 20
+
+[[evaluation]]
+id = "fragments-active-surface-discovery"
+level = "l4"
+mode = "discovery"
+feature = "fragments"
+variant = "active-surface-discovery"
+path = "l4-discovery/fragments/active-surface-discovery"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Fragments: Active Surface Discovery"
+summary = "discover the live runtime-managed prompt fragment surface without the prompt naming the exact path"
+question = "Without exact path coaching, can the model find the live prompt-fragment filesystem surface and inspect its active files?"
+
+[[evaluation]]
+id = "agents-md-relevant-policy-discovery"
+level = "l4"
+mode = "discovery"
+feature = "agents-md"
+variant = "relevant-policy-discovery"
+path = "l4-discovery/agents-md/relevant-policy-discovery"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "AGENTS.md: Relevant Policy Discovery"
+summary = "a repo-local guidance surface already defines the reconciliation rule, but the prompt does not name AGENTS.md"
+question = "Without naming AGENTS.md directly, can the model discover and apply the project-local guidance surface?"
+
+[[evaluation]]
+id = "agents-md-durable-rule-discovery"
+level = "l4"
+mode = "discovery"
+feature = "agents-md"
+variant = "durable-rule-discovery"
+path = "l4-discovery/agents-md/durable-rule-discovery"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "AGENTS.md: Durable Rule Discovery"
+summary = "make a repo-level rule durable for future startups through the project's own guidance surface without naming AGENTS.md directly"
+question = "Without naming AGENTS.md directly, can the model discover the durable guidance surface and persist the rule there?"
+max_turns = 8
+
+[[evaluation]]
+id = "context-memory-inheritance-discovery"
+level = "l4"
+mode = "discovery"
+feature = "context-memory"
+variant = "inheritance-discovery"
+path = "l4-discovery/context-memory/inheritance-discovery"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Context Memory: Inheritance Discovery"
+summary = "discover the writable inherited context surface and use it to carry a note across exec re-entry"
+question = "Without naming memory.md directly, can the model discover the inherited context memory surface for its successor?"
+max_turns = 10
+
+[[evaluation]]
+id = "spawn-fresh-reviewer-discovery"
+level = "l4"
+mode = "discovery"
+feature = "spawn"
+variant = "fresh-reviewer-discovery"
+path = "l4-discovery/spawn/fresh-reviewer-discovery"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Fresh Reviewer Discovery"
+summary = "discover a fresh independent Quine process when inherited context would contaminate review"
+question = "Without naming spawn, can the model discover the fresh-process surface to obtain a reviewer that does not inherit parent memory?"
+
+[[evaluation]]
+id = "spawn-fresh-audit-choice"
+level = "l4"
+mode = "discovery"
+feature = "spawn"
+variant = "fresh-audit-choice"
+path = "l4-discovery/spawn/fresh-audit-choice"
+acceptance = "diagnostic"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Fresh Audit Tool Choice"
+summary = "choose fresh-context child review while preserving access to current workspace artifact"
+question = "Without naming spawn, can the model choose a fresh child rather than inherited-context fork for independent workspace audit?"
+
+[[evaluation]]
+id = "fork-context-preserving-choice"
+level = "l4"
+mode = "discovery"
+feature = "fork"
+variant = "context-preserving-choice"
+path = "l4-discovery/fork/context-preserving-choice"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Context-Preserving Tool Choice"
+summary = "choose inherited-context delegation when the child needs parent visible context"
+question = "Without naming fork, can the model choose context-preserving delegation instead of fresh spawn?"
+
+[[evaluation]]
+id = "relation-recovery-status-discovery"
+level = "l4"
+mode = "discovery"
+feature = "relation-recovery"
+variant = "status-discovery"
+path = "l4-discovery/relation-recovery/status-discovery"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Relation Recovery Status Discovery"
+summary = "discover retained helper outcome evidence and classify launched versus failed states"
+question = "Without naming the exact helper tools, can the model discover retained coordination evidence and classify background-launched versus all-failed helper outcomes?"
+
+[[evaluation]]
+id = "session-resume-runtime-discovery"
+level = "l4"
+mode = "discovery"
+feature = "session-resume"
+variant = "runtime-discovery"
+path = "l4-discovery/session-resume/runtime-discovery"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Session Resume: Runtime Discovery"
+summary = "discover a retained dead session and continue it from runtime surfaces without the user naming env vars"
+question = "Without user-level bootstrap names, can the model discover the runtime resume path and continue the retained session?"
+max_turns = 10
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "skills-relevant-workflow-discovery"
+level = "l4"
+mode = "discovery"
+feature = "skills"
+variant = "relevant-workflow-discovery"
+path = "l4-discovery/skills/relevant-workflow-discovery"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Skills: Relevant Workflow Discovery"
+summary = "task pressure should select a matching skill from the startup catalog without user naming the mechanism"
+question = "Without user-level skill hints, does the model notice and read the relevant project capability?"
+
+[[evaluation]]
+id = "skills-durable-workflow-discovery"
+level = "l4"
+mode = "discovery"
+feature = "skills"
+variant = "durable-workflow-discovery"
+path = "l4-discovery/skills/durable-workflow-discovery"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Skills: Durable Workflow Discovery"
+summary = "model should create a new hierarchical skill when asked to make a repeatable workflow discoverable for future runs"
+question = "Without user-level skill hints, can the model discover the project capability convention and create a new skill?"
+
+[[evaluation]]
+id = "shell-envelope-timeout-resume-discovery"
+level = "l4"
+mode = "discovery"
+feature = "shell-envelope"
+variant = "timeout-resume-discovery"
+path = "l4-discovery/shell-envelope/timeout-resume-discovery"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+max_turns = 40
+title = "Shell Envelope Discovery: Resume Interrupted Run"
+summary = "a slow first run stalls, must not be restarted, and the agent has to recover final output from that same paused run"
+question = "Without the user prompt naming timeout handles directly, does the task pressure lead the model to operate the paused first run and observe its terminal exit?"
+
+[[evaluation]]
+id = "shell-envelope-timeout-terminate-discovery"
+level = "l4"
+mode = "discovery"
+feature = "shell-envelope"
+variant = "timeout-terminate-discovery"
+path = "l4-discovery/shell-envelope/timeout-terminate-discovery"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+max_turns = 40
+title = "Shell Envelope Discovery: Terminate Interrupted Run"
+summary = "a stalled first run must be cleaned up without launching a second copy, and the agent has to verify terminal state from the retained job surface"
+question = "Without the user prompt naming timeout handles directly, does the task pressure lead the model to terminate the paused first run and verify that it really ended?"
+
+[[evaluation]]
+id = "process-surface-runtime-root-discovery"
+level = "l4"
+mode = "discovery"
+feature = "process-surface"
+variant = "runtime-root-discovery"
+path = "l4-discovery/process-surface/runtime-root-discovery"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Process Surface Discovery: Runtime Root"
+summary = "discover self and a pre-staged live neighbor from the pid-routed runtime filesystem surface without explicit path coaching"
+question = "Without exact path coaching, does the public runtime surface make self and neighbor discovery findable?"
+max_turns = 0
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "process-surface-peer-message-discovery"
+level = "l4"
+mode = "discovery"
+feature = "process-surface"
+variant = "peer-message-discovery"
+path = "l4-discovery/process-surface/peer-message-discovery"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Process Surface Discovery: Peer Message"
+summary = "discover self and a pre-staged live neighbor, then send a `post` transaction through the exported public ctl surface"
+question = "Without exact communication-path coaching, does the runtime surface make peer message delivery discoverable after neighbor discovery?"
+max_turns = 0
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "process-surface-peer-inject-discovery"
+level = "l4"
+mode = "discovery"
+feature = "process-surface"
+variant = "peer-inject-discovery"
+path = "l4-discovery/process-surface/peer-inject-discovery"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Process Surface Discovery: Peer Inject"
+summary = "discover self and a pre-staged live neighbor, then cause queued peer post to surface at the next safe point without exact transaction coaching"
+question = "Without naming `inject` directly, does the runtime surface make next-safe-point peer delivery discoverable?"
+max_turns = 0
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "process-surface-peer-interrupt-discovery"
+level = "l4"
+mode = "discovery"
+feature = "process-surface"
+variant = "peer-interrupt-discovery"
+path = "l4-discovery/process-surface/peer-interrupt-discovery"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Process Surface Discovery: Peer Interrupt"
+summary = "discover self and a pre-staged busy live neighbor, then cause interrupt peer delivery without exact transaction coaching"
+question = "Without naming `interrupt` directly, does the runtime surface make interrupt peer delivery discoverable?"
+max_turns = 0
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "process-surface-peer-failover-discovery"
+level = "l4"
+mode = "discovery"
+feature = "process-surface"
+variant = "peer-failover-discovery"
+path = "l4-discovery/process-surface/peer-failover-discovery"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Process Surface Discovery: Peer Failover"
+summary = "discover worker routing and liveness from the runtime surface, then reassign work after one assigned worker disappears"
+question = "Without exact communication-path coaching, does the runtime surface make worker failover and unfinished-task reassignment discoverable?"
+max_turns = 0
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "process-surface-client-response-discovery"
+level = "l4"
+mode = "discovery"
+feature = "process-surface"
+variant = "client-response-discovery"
+path = "l4-discovery/process-surface/client-response-discovery"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Process Surface Client Response Discovery"
+summary = "handle one external request that arrives through ctl and satisfy it by writing to the provided client control surface"
+question = "Without being told a fixed reply schema, can the model remain quiescent, interpret an external request, and answer through the client surface it is given?"
+max_turns = 0
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "idle-external-poke-discovery"
+level = "l4"
+mode = "discovery"
+feature = "idle"
+variant = "external-poke-discovery"
+path = "l4-discovery/idle/external-poke-discovery"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Idle External Poke Discovery"
+summary = "unnamed quiescent waiting, external control poke, one-turn output after payload retrieval"
+question = "Without naming idle directly, can the model discover explicit suspension as the clean way to wait for later control input?"
+max_turns = 2
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "detach-forced-overlap-window"
+level = "l4"
+mode = "discovery"
+feature = "detach"
+variant = "forced-overlap-window"
+path = "l4-discovery/detach/forced-overlap-window"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Detach Discovery: Forced Overlap Window"
+summary = "40s long lane, side tasks during run, final collect"
+question = "Without naming detach, does the forced overlap window make background execution plus later collection discoverable?"
+
+[[evaluation]]
+id = "stdin-shell-hostile-literals"
+level = "l3"
+mode = "usage"
+feature = "stdin"
+variant = "shell-hostile-literals"
+path = "l3-usage/stdin/shell-hostile-literals"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Stdin Usage: Shell-Hostile Literals"
+summary = "write file with special chars, count lines, eval Python"
+question = "Does this scenario prove the model can use stdin= correctly when shell-hostile literals make naive quoting fragile?"
+
+[[evaluation]]
+id = "exec-stream-pipe-handoff"
+level = "l3"
+mode = "usage"
+feature = "exec"
+variant = "stream-pipe-handoff"
+path = "l3-usage/exec/stream-pipe-handoff"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Exec Usage: Stream Pipe Handoff"
+summary = "streamed normalization task where quine must discover it can hand the live pipe to another binary"
+question = "Does this scenario prove the model can use exec to hand a live stdin -> stdout stream directly to a replacement binary?"
+
+[[evaluation]]
+id = "exec-stream-stdio-handoff"
+level = "l3"
+mode = "usage"
+feature = "exec"
+variant = "stream-stdio-handoff"
+path = "l3-usage/exec/stream-stdio-handoff"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Exec Usage: Stream Stdio Handoff"
+summary = "streaming transform plus stderr summary where quine must discover full stdio handoff to another binary"
+question = "Does this scenario prove the model can use exec to hand live stdin/stdout/stderr directly to a replacement binary?"
+
+[[evaluation]]
+id = "anchor-memory-retrieval-pressure-explicit"
+level = "l3"
+mode = "usage"
+feature = "anchor-memory"
+variant = "retrieval-pressure-explicit"
+path = "l3-usage/anchor-memory/retrieval-pressure-explicit"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Anchor Memory Usage: Retrieval Pressure"
+summary = "windowed transcript retrieval under sustained memory pressure with crystallization and recovery but no scratch files"
+question = "Does this scenario prove the model can use anchor-memory tools correctly under sustained retrieval pressure?"
+max_turns = 28
+
+[[evaluation]]
+id = "fork-search-delegation"
+level = "l3"
+mode = "usage"
+feature = "fork"
+variant = "search-delegation"
+path = "l3-usage/fork/search-delegation"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Fork Usage: Search Delegation"
+summary = "parallel file search, delegation"
+question = "Does this scenario prove the model can use fork for search delegation under this prompt?"
+
+[[evaluation]]
+id = "fork-parallel-race"
+level = "l3"
+mode = "usage"
+feature = "fork"
+variant = "parallel-race"
+path = "l3-usage/fork/parallel-race"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Fork Usage: Parallel Race"
+summary = "cipher cracking, multiple strategies"
+question = "Does this scenario prove the model can use fork to race parallel decoding strategies?"
+
+[[evaluation]]
+id = "fork-batch-parallelism"
+level = "l3"
+mode = "usage"
+feature = "fork"
+variant = "batch-parallelism"
+path = "l3-usage/fork/batch-parallelism"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Fork Usage: Batch Parallelism"
+summary = "4 independent analyses, aggregation"
+question = "Does this scenario prove the model can use fork to parallelize independent analysis lanes?"
+
+[[evaluation]]
+id = "fork-world-search-lane-scoping"
+level = "l3"
+mode = "usage"
+feature = "fork-world"
+variant = "search-lane-scoping"
+path = "l3-usage/fork-world/search-lane-scoping"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Fork World Usage: Search Lane Scoping"
+summary = "host-mode parent discovers subjective transactional children plus lane narrowing"
+question = "Does this scenario prove the model can use subjective transactional child worlds to isolate search lanes?"
+
+[[evaluation]]
+id = "fork-world-batch-lane-scoping"
+level = "l3"
+mode = "usage"
+feature = "fork-world"
+variant = "batch-lane-scoping"
+path = "l3-usage/fork-world/batch-lane-scoping"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Fork World Usage: Batch Lane Scoping"
+summary = "host-mode parent discovers subjective transactional children plus dataset-local narrowing"
+question = "Does this scenario prove the model can use subjective transactional child worlds to isolate batch-analysis lanes?"
+
+[[evaluation]]
+id = "fork-adopt-winner-adoption"
+level = "l3"
+mode = "usage"
+feature = "fork-adopt"
+variant = "winner-adoption"
+path = "l3-usage/fork-adopt/winner-adoption"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Fork Adopt Usage: Winner Adoption"
+summary = "destructive candidate build lanes under tight parent budget"
+question = "Does this scenario prove the model can adopt a winning child world instead of redoing successful work in the parent?"
+max_turns = 2
+
+[[evaluation]]
+id = "sandbox-unknown-format-boldness"
+level = "l4"
+mode = "discovery"
+feature = "sandbox"
+variant = "unknown-format-boldness"
+path = "l4-discovery/sandbox/unknown-format-boldness"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Sandbox Discovery: Unknown-Format Boldness"
+summary = "identify unknown file format, install tools, extract data"
+question = "Without naming isolation as the mechanism, does the environment make bold experimentation discoverable?"
+
+[[evaluation]]
+id = "workspace-overlay-exploratory-decode"
+level = "l3"
+mode = "usage"
+feature = "workspace-overlay"
+variant = "exploratory-decode"
+path = "l3-usage/workspace-overlay/exploratory-decode"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Workspace Overlay Usage: Exploratory Decode"
+summary = "unknown local file format, exploratory decoding, committed result file"
+question = "Does this scenario prove the model can use workspace-overlay mechanics to support exploratory decoding and still land a clean artifact?"
+
+[[evaluation]]
+id = "workspace-direct-peer-handoff-observation"
+level = "l4"
+mode = "discovery"
+feature = "workspace-direct"
+variant = "peer-handoff-observation"
+path = "l4-discovery/workspace-direct/peer-handoff-observation"
+acceptance = "diagnostic"
+env_profile = "mac-kimi"
+linux_only = false
+title = "Direct Workspace Discovery: Peer Handoff Observation"
+summary = "a peer drops an unknown filename into the shared workspace; the model should notice and absorb it"
+question = "Without being told the filename, does the shared direct workspace make peer handoffs discoverable at shell boundaries?"
+
+[[evaluation]]
+id = "workspace-overlay-fuse-dangerous-decoder-containment"
+level = "l4"
+mode = "discovery"
+feature = "workspace-overlay"
+variant = "fuse-dangerous-decoder-containment"
+path = "l4-discovery/workspace-overlay/fuse-dangerous-decoder-containment"
+acceptance = "gate"
+env_profile = "linux-gpt-5.4-codex"
+linux_only = true
+title = "Fuse Overlay Workspace Discovery: Dangerous Decoder Containment"
+summary = "discover contained workspace experimentation under a forced fuse-overlayfs workspace driver"
+question = "Without naming overlay, fuse-overlayfs, or transactional workspaces, does a mutating decode surface lead the model toward contained experimentation under the low-privilege fuse driver?"
+
+[[evaluation]]
+id = "switch-world-destructive-probe-restore"
+level = "l3"
+mode = "usage"
+feature = "switch-world"
+variant = "destructive-probe-restore"
+path = "l3-usage/switch-world/destructive-probe-restore"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Switch World Usage: Destructive Probe Restore"
+summary = "forced destructive probe, baseline rewind, helper-driven recovery"
+question = "Does this scenario prove the model can use switch_world to recover from a destructive probe and finish from the repaired world?"
+
+[[evaluation]]
+id = "containment-hostile-script-survival"
+level = "l4"
+mode = "discovery"
+feature = "containment"
+variant = "hostile-script-survival"
+path = "l4-discovery/containment/hostile-script-survival"
+acceptance = "gate"
+env_profile = "linux-kimi"
+linux_only = true
+title = "Logic Bomb Containment"
+summary = "analyze hostile script, contain execution, survive"
+question = "Does the agent recognize a destructive shell payload as dangerous, contain it, and still finish?"
+
+# --- L5 NECESSITY (not yet active) ---
+
+[[evaluation]]
+id = "process-surface-peer-callback-protocol"
+level = "l5"
+mode = "necessity"
+feature = "process-surface"
+variant = "peer-callback-protocol"
+path = "l5-necessity/process-surface/peer-callback-protocol"
+acceptance = "experimental"
+env_profile = "mac-kimi"
+linux_only = false
+active = true
+title = "Process Surface Necessity: Peer Callback Protocol"
+summary = "retrieve the only answer from a live peer by inducing a callback through your own process surface"
+question = "When runtime metadata omits any reply path, does the agent invent enough callback structure inside an opaque ctl payload to get a live peer to answer back?"
+max_turns = 0
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "idle-quiet-standby-pressure"
+level = "l5"
+mode = "necessity"
+feature = "idle"
+variant = "quiet-standby-pressure"
+path = "l5-necessity/idle/quiet-standby-pressure"
+acceptance = "gate"
+env_profile = "mac-kimi"
+linux_only = false
+active = true
+title = "Idle Quiet Standby Pressure"
+summary = "single-turn budget, delayed external inject token, explicit suspension required to stay viable"
+question = "When spending the only shell turn early would make completion impossible, does the model use idle to keep the session viable until inject?"
+max_turns = 1
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "session-corpse-resurrection"
+level = "l5"
+mode = "necessity"
+feature = "session-resume"
+variant = "corpse-resurrection"
+path = "l5-necessity/session-resume/corpse-resurrection"
+acceptance = "experimental"
+env_profile = "mac-kimi"
+linux_only = false
+active = true
+title = "Session Resume Necessity: Corpse Resurrection"
+summary = "recover a token that exists only in a killed session's inherited context by continuing that session"
+question = "When the only durable clue is trapped in a killed session context, does the agent resurrect the session rather than read stale files or start fresh?"
+max_turns = 14
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"
+
+[[evaluation]]
+id = "relation-recovery-resume-error-semantics"
+level = "l5"
+mode = "necessity"
+feature = "relation-recovery"
+variant = "resume-error-semantics"
+path = "l5-necessity/relation-recovery/resume-error-semantics"
+acceptance = "experimental"
+env_profile = "mac-kimi"
+linux_only = false
+active = true
+title = "Relation Recovery Necessity: Resume Error Semantics"
+summary = "resumed session must use retained relation results to distinguish launched background work from failed helper work"
+question = "When prior helper outcomes are only available through resumed runtime evidence, does the model preserve the correct error semantics?"
+max_turns = 3
+prompt_self_model = "advanced"
+prompt_runtime_surface = "visible"

@@ -1,0 +1,287 @@
+---
+data:
+    created_at: 1.7803753488e+12
+    depth: 0
+    model_id: gpt-5.5
+    parent_session_id: ""
+    session_id: sess_20260602-044228_efdac01c-4a25-4435-b652-03e6fc340ecb
+type: meta
+---
+data:
+    content: |
+        ### THE PRIME DIRECTIVE: RUNTIME PHYSICS
+        You are quine, a running process in a POSIX operating system. Complete your mission (argv). If impossible, exit with failure and brief explanation.
+        The current file on disk is one embodiment of you. Your continuity is defined by the runtime contract you enact across missions.
+        Your cognition in this session is LLM-mediated: the model named below is not an external advisor but part of the running process you are enacting. When reasoning, planning, or interpreting language, treat that capability as part of quine's active runtime, not as an optional helper detached from your identity.
+        You are not only a process that can launch tools; you are a process that uses LLM-mediated cognition to interpret tasks, choose actions, and organize continuity across missions.
+
+        ### Quine Process Channels
+
+        Shell commands use fd 1/2 for context-visible output. Quine runtime channels use fd 3/4/5:
+
+        | fd | Name | Direction | Use |
+        |----|------|-----------|-----|
+        | 1/2 | stdout/stderr | cmd → context | Visible in context |
+        | 3 | Material | runtime → process | Read: `<&3` or `/dev/fd/3` |
+        | 4 | Deliverable | process → downstream | Write: `>&4` (bypasses context) |
+        | 5 | Signal | process → parent | Write: `>&5` (failure diagnostics) |
+
+        Fd 4 is a byte-stream delivery channel, not the whole effect surface: when a workspace is configured, durable filesystem mutations are also task-visible material effects.
+
+        **Material:** `fd 3` is quine process stdin when material is provided (for example `cat file | quine "task"`). This session has no material stream and the user message is `Begin.`.
+        - `sh(command="cat > path", stdin="...")` supplies multi-line file content without shell heredoc or quoting mechanics.
+
+        ### Environment
+        - Platform: linux
+        - Model: gpt-5.5
+        - Shell: /bin/sh
+        - Depth: 0
+        - Execution Budget: 4 `sh` calls (`sh` costs 1; `exit`, `fork`, `exec`, `vision` cost 0)
+        - Spawn is disabled by `QUINE_SPAWN_ENABLED=0`.
+        - Current World: `host`
+        - Current Protection: `none`
+
+        ### Context Files
+        - `context/` is the canonical current-incarnation context surface.
+        - `context/prompt/` holds provider-visible prompt fragments, assembled by filename order.
+        - `context/prompt/00-runtime.md` is regenerated from current runtime physics.
+        - `context/prompt/40-mission.md`, when present, projects the current argv-carried objective text.
+        - `context/prompt/30-memory.md` is the inherited editable memory surface. It defaults to empty.
+        - `context/state/` holds live cognition state: `current.jsonl`, `frontier/`, and `anchors/`.
+        - `fork` and `exec` copy the current `context/` tree forward before managed projections are refreshed.
+        - `QUINE_AGENTS_MD_ENABLED=0` disables `AGENTS.md` projection into `context/prompt/`.
+        - `QUINE_AGENTS_SKILLS_ENABLED=0` disables generated `SKILLS.md` projection into `context/prompt/`.
+
+        ### Runtime Process Surface
+        - Runtime Root: `/home/kehao95/workspace/personal/repos/quine-lab/tests/model/l3-usage/process-surface/explicit-self-source-inspection/runs/20260602-044228-5.5/quine`
+        - Quine Binary: `/tmp/quine`
+        - Default self-reentry target: `/proc/self/exe`
+        - `QUINE_AGENT_ROOT=/home/kehao95/workspace/personal/repos/quine-lab/tests/model/l3-usage/process-surface/explicit-self-source-inspection/runs/20260602-044228-5.5/quine/agent/sess_20260602-044228_efdac01c-4a25-4435-b652-03e6fc340ecb` — your live session root.
+        - `QUINE_RUN_ID=run_20260602-044228_3487838_b05c10cb-f383-477d-83fd-1395ee555e50` — current physical run identity; it changes across resume/re-entry.
+        - `$QUINE_AGENT_ROOT/public/` — runtime-owned public process-surface projection, not a workspace; do not create arbitrary files there.
+        - `status/session.json` — self identity and topology (`session_id`, `run_id`, `incarnation_id`, `pid`, `agent_root`, `runtime_root`).
+        - `status/contract.json` — machine-readable `process-control/v0` manifest for this process/control surface.
+        - `status/session.json.agent_root` is this session root; `status/session.json.runtime_root` points back to the shared runtime root.
+        - `mission.txt` — optional current-incarnation argv-carried objective projection (`inc/current/mission.txt`).
+        - `source-code/` — read-only session-root projection of embedded Quine source. It is not the workspace.
+        - `source-code/` contains the embedded Quine-only tree: `cmd/quine/`, `internal/config/`, `internal/llm/`, `internal/runtime/`, `internal/tape/`, `internal/tools/`, `selfsource.go`, `go.mod`, and `go.sum`.
+        - `public/source-code/` — peer-readable read-only projection of this session's `source-code/` surface.
+        - Filesystem copies of `source-code/` are ordinary files outside the live projection; they are not synchronized back to `source-code/`.
+        - `pid/<pid>` — live-process routing under the runtime root. Symlinks resolve directly to `agent/<session>/public`.
+        - The resolved `pid/<pid>` target is that peer's public root; the target's parent directory is the peer agent root.
+        - `agent/` — canonical session root by session id.
+        - `inc/` — lineage-local incarnation tree. `inc/current` points at the current body.
+        - `log/<session>` — retained mirror after a session exits, rooted under the runtime root.
+        - To continue a retained session, launch Quine with `QUINE_DATA_DIR=<same runtime root>` and `QUINE_SESSION_ID=<session_id>`; the session id and current incarnation stay fixed while `QUINE_RUN_ID` and PID change.
+        - Copying `agent/<old-session>/` to `agent/<new-session>/` under the same runtime root seeds a new session from the copied context surface; copy or remap `log/`, `jobs/`, and `workspaces/` state separately when side-surface recovery matters.
+        - Some process surfaces expose `ctl/{post,poke,inject,interrupt}` and `status/inbox.json`.
+        - On a public root, `ctl/{post,poke,inject,interrupt}` is the peer-facing control surface; the corresponding agent root carries `status/`, `context/`, and other non-public state.
+        - `ctl/post` — writable queue-only control file. A non-empty write enqueues one payload after trailing-newline normalization; it does not wake idle and does not inject context.
+        - `ctl/poke` — writable queue-and-resume control file. A write resumes idle without automatic context injection; non-empty writes also queue a payload for later inbox retrieval.
+        - `ctl/inject` — writable queue-and-deliver control file. A non-empty write queues one payload, resumes idle, and surfaces it through `incoming_messages` at the next safe point.
+        - `ctl/interrupt` — writable interrupt-delivery control file. An empty write interrupts without payload; a non-empty write also queues one payload for urgent delivery. If a tool subprocess is active, the runtime first forwards a real `SIGINT` into that process group.
+        - `status/inbox.json` — pending payload snapshot on the corresponding agent root (`pending_count`, `messages[].id`, `messages[].payload`, `messages[].received_at`).
+        - `context/state/current.jsonl` and retained `log/<session>/control.jsonl` surface live / retained control-delivery state.
+        - Control logs distinguish receipt from wake-up and delivery: `received.action`, `woke.delivery`, and `delivered.delivery` are separate events.
+        - `jobs/` — detached, interactive, and timeout-interrupted sync shell work.
+        - `context/prompt/` — provider-visible prompt fragment surface assembled by filename order.
+        - `context/state/current.jsonl` — raw current-turn stream for your current-incarnation live cognition surface.
+        - `world/status.json`, `world/resources.json`, and `world/events.jsonl` — inspectable `world/v0` object for current world/protection/resource/event facts.
+        - `log/` — runtime/control logging surface, not a live context handle.
+
+        ### Tools
+
+        **sh** - Each call spawns a fresh ephemeral process group. No state persists across calls.
+        - Tool results are compact JSON objects in `tool_result.content`.
+        - For completed `sh`, read `exit_code`, `stdout`, `stderr`, and any workspace telemetry from that JSON.
+        - In direct/host mode, if sync `sh` hits its timeout, Quine stops that process group and returns `status="interrupted"` with `job.pid`, `job.path`, `stdout_so_far`, `stderr_so_far`, `cause`, and `timeout_seconds`; it does not kill or detach the job.
+        - `timeout` is an optional per-call sync-shell protection override measured in seconds.
+        - `detach=true`: returns immediately with a managed job path; the job continues independently under runtime job supervision.
+        - Detached job directories include `cmd`, `pid`, `started_at`, `out.log`, and `err.log`; after the job completes, its exit code appears at `<path>/exit`.
+        - `interactive=true`: returns immediately with a PTY-backed job path for screen-oriented process I/O.
+        - Interactive job directories include `cmd`, `pid`, `started_at`, `screen.txt`, `screen.png`, `screen.meta`, `in`, `winsize`, `events.log`, `events.hex`, and `input.log`; after the job completes, its exit code appears at `<path>/exit`.
+        - Under `overlay`, interactive jobs run in a job-local workspace lineage; after exit, `workspace_session`, `fs_mutations` when enabled, `world_revision`, and `world_handle` appear in the job directory for optional `switch_world` adoption.
+        - Use ordinary POSIX signals against the recorded pid/process group for terminal process control, for example `kill -INT -$(cat <job>/pid)`.
+
+        - `stdin`: provides verbatim multi-line input without shell heredoc or quoting mechanics.
+
+        **fork** - Spawn child agents for parallel exploration, delegation, or decomposition.
+        - `fork` does not consume execution budget, but it is still bounded by depth, agent slots, and shared inference concurrency.
+        - Use `fork` when independent hypotheses, decoders, implementations, extractors, or verification strategies can be tried in parallel.
+        - If 2-3 plausible approaches exist and no contract-shaped artifact or service is stable yet, fork 2-3 labeled children now instead of spending another long exploratory `sh` in the parent.
+        - Fork children preserve the parent mission as the active task contract; each child intent is a lane assignment, not a replacement mission.
+        - Child intents should include lane-specific inputs only when they are not already in the parent mission or current visible context.
+        - Do one cheap shared setup/probe if all lanes need it; then fork specialized heavyweight installs, downloads, transcription, OCR, builds, searches, or long-running probes. Do not make every child repeat the same setup.
+        - Use `mode="race"` when any one child can produce an acceptable artifact/service; use `mode="wait"` when child findings must be compared or merged.
+        - Child intents should name a distinct strategy, the expected artifact/service when known, and the closest success check.
+        - After race/wait returns, converge immediately: adopt an available winning world or merge/copy the best child result before continuing parent-side exploration.
+        - Each child is another you under a different intent.
+        - Each child starts from your current visible context surface rather than reconstructing cognition from retained trace files.
+        - `fork` returns a retained relation handle plus each child's process handles.
+        - Member process handles include `session_id`, `agent_root`, `public_root`, `retained_root`, `seed_root`, `status_path`, and `control_path`; child filesystem effects follow the configured workspace/world lineage; stdout/stderr are only captured process output.
+        - With workspace physics enabled, returning fork results also report parent-side `fs_mutations` and `world_revision`; under subjective children these are normally empty or unchanged because child writes stay in child lineage.
+        - `race` (default): first child to exit 0 wins, rest are killed.
+        - `wait`: block until all finish, return all results.
+        - `forget`: fire-and-forget, return immediately.
+        - `mode="wait"`: block until all children finish and return every result.
+        - Each child is another you under a different intent.
+        - `fork` returns a retained relation handle (`relation_id`, `relation_root`, `relation_handle`) plus each member's ordinary process handles (`session_id`, `agent_root`, `public_root`, `retained_root`, `seed_root`, `status_path`, `control_path`), exit code, and captured stdout/stderr process output.
+        - Adoptable subjective child results expose a `world://<workspace-session>/<revision>` handle you can pass to `switch_world`.
+        - With workspace physics enabled, returning fork results also report parent-side `fs_mutations` and `world_revision`; under subjective children these are normally empty or unchanged because child writes stay in child lineage.
+        - `mode="race"`: first successful child wins and the remaining children are stopped; `adopt_winner=true` switches the parent into a winning adoptable child world.
+        - `mode="forget"`: return after spawning children without waiting for child completion.
+        - Children inherit your current filesystem view.
+        - Children and parent share the same filesystem surface.
+
+        **exec** - Replace the current process image with a new executable.
+        - You may optionally provide `target` and explicit `argv` to exec into a different binary.
+        - Default behavior uses quine's configured self-reentry target as `target` and `argv=[that target, current mission]`.
+        - In the ordinary quine entry form, the process is started as `argv=[<Quine Binary>, <mission>]`.
+        - The replacement process inherits the current process stdin/stdout/stderr positions and exec environment base; other still-open descriptors follow ordinary exec fd inheritance.
+        - Default `exec()` uses quine's configured self-reentry target. If that target is a replaceable filesystem path whose file has changed, default `exec()` runs the file currently on disk there.
+        - If the exec target resolves to a quine binary, quine reconstructs its shell-side fd 3/4/5 contract for later tool calls.
+        - When exec targets a custom binary (not quine self re-exec), quine tool semantics and managed state do not carry over automatically. Whether any additional descriptors remain open depends on the actual exec-time fd table and close-on-exec flags.
+        - For quine re-entry, `wisdom` key-value strings are carried through `QUINE_WISDOM_*` env vars.
+
+        - Re-execing into quine starts a fresh runtime with a full execution budget.
+
+        **vision** - Process image content with native vision (screenshots, diagrams, photos).
+        - The tool-result `content` is JSON; the image itself still arrives on the separate image channel.
+
+        **exit** - Terminate explicitly. Does NOT write output bytes itself; if downstream bytes are required, emit them via `sh` with `>&4` before exiting.
+        - `exit` does NOT consume an execution.
+        - If a `sh` result sets `runtime.executions_left` to `0`, you get one final response. Do not call `sh`; call `exit`.
+
+        Child exit codes: 0=success, 1=failure.
+
+        ### Active Constraints
+        - Context capacity is finite. Large tool outputs can overflow context.
+        - Signal interrupts can terminate the process (SIGALRM timeout, SIGTERM terminate).
+        - Execution budget: 4 `sh` calls. Each `sh` call consumes 1 execution.
+        - When a `sh` call reduces execution budget to zero, one final response remains and only `exit` is accepted.
+        - Spawn is disabled by `QUINE_SPAWN_ENABLED=0` and any spawn call will be rejected.
+
+
+
+        ### Your Mission
+        You are testing the explicit self-source process surface.
+
+        Use the carried self-source tree under `QUINE_AGENT_ROOT/source-code/`.
+
+        Complete the task exactly as follows:
+
+        1. Use exactly one `sh` call and no other work tool calls before your final success exit.
+        2. Inside that call:
+           - set `root="$QUINE_AGENT_ROOT/source-code"`
+           - verify `"$root"` exists and is read-only
+           - verify these files exist and are non-empty:
+              - `"$root/go.mod"`
+              - `"$root/go.sum"`
+              - `"$root/selfsource.go"`
+              - `"$root/cmd/quine/main.go"`
+              - `"$root/internal/runtime/runtime.go"`
+            - verify:
+              - `"$root/go.mod"` contains the exact module line `module github.com/kehao95/quine`
+              - `"$root/cmd/quine/main.go"` contains `func main()`
+              - `"$root/selfsource.go"` contains `var SelfSource embed.FS`
+              - `"$root/internal/runtime/runtime.go"` contains `type Runtime struct`
+        3. If everything passes, write these exact lines to fd 4 on separate lines:
+           - `SELF_SOURCE_USAGE_OK`
+           - `MODULE_OK`
+           - `MAIN_OK`
+           - `RUNTIME_OK`
+        4. Then exit success.
+
+        If anything fails, print a clear reason to stderr and exit failure.
+
+        Do not read `./cmd`, `./internal`, `./go.mod`, or `./go.sum` outside
+        `QUINE_AGENT_ROOT/source-code/`.
+        Do not ask for clarification.
+    role: system
+    timestamp: 0
+type: message
+---
+data:
+    content: Begin.
+    role: user
+    timestamp: 0
+type: message
+---
+data:
+    content: ""
+    reasoning_items:
+        - id: rs_050342bc1705a0b2016a1e5f3659e481969c23a13ce739ab5d
+    role: assistant
+    timestamp: 1.780375367321e+12
+    tool_calls:
+        - arguments:
+            command: |
+                root="$QUINE_AGENT_ROOT/source-code"
+                fail() { printf '%s\n' "$*" >&2; exit 1; }
+
+                [ -n "$QUINE_AGENT_ROOT" ] || fail 'QUINE_AGENT_ROOT is not set'
+                [ -d "$root" ] || fail "self-source root does not exist: $root"
+                [ ! -w "$root" ] || fail "self-source root is writable, expected read-only: $root"
+
+                for f in \
+                  "$root/go.mod" \
+                  "$root/go.sum" \
+                  "$root/selfsource.go" \
+                  "$root/cmd/quine/main.go" \
+                  "$root/internal/runtime/runtime.go"
+                do
+                  [ -f "$f" ] || fail "required file missing: $f"
+                  [ -s "$f" ] || fail "required file is empty: $f"
+                done
+
+                grep -Fxq 'module github.com/kehao95/quine' "$root/go.mod" || fail 'go.mod missing exact module line: module github.com/kehao95/quine'
+                grep -Fq 'func main()' "$root/cmd/quine/main.go" || fail 'cmd/quine/main.go missing: func main()'
+                grep -Fq 'var SelfSource embed.FS' "$root/selfsource.go" || fail 'selfsource.go missing: var SelfSource embed.FS'
+                grep -Fq 'type Runtime struct' "$root/internal/runtime/runtime.go" || fail 'internal/runtime/runtime.go missing: type Runtime struct'
+
+                printf '%s\n' \
+                  'SELF_SOURCE_USAGE_OK' \
+                  'MODULE_OK' \
+                  'MAIN_OK' \
+                  'RUNTIME_OK' >&4
+            detach: false
+            interactive: false
+            stdin: ""
+            timeout: 10
+          id: call_ZlmqRhFaR8cU5oEIYroBUZ5V
+          name: sh
+type: message
+---
+data:
+    content:
+        exit_code: 0
+        mode: sync
+        runtime:
+            executions_left: 3
+        status: completed
+        tool: sh
+    is_error: false
+    tool_id: call_ZlmqRhFaR8cU5oEIYroBUZ5V
+type: tool_result
+---
+data:
+    content: ""
+    role: assistant
+    timestamp: 1.780375369401e+12
+    tool_calls:
+        - arguments:
+            status: success
+            stderr: ""
+          id: call_m6kKwMgQvWxqzctepj3lwyKy
+          name: exit
+type: message
+---
+data:
+    duration_ms: 20618
+    exit_code: 0
+    stderr: ""
+    termination_mode: exit
+    tokens_in: 11702
+    tokens_out: 957
+    turn_count: 1
+type: outcome

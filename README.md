@@ -50,7 +50,7 @@ Full descriptions, PDFs, and experiment data live under
 | `development/` | Design work, prototypes, working contracts, and current status | Private for now |
 | `evolution/` | Records and interpretations of the repository's development | Private for now |
 | `profiles/` | Model and runtime configuration presets | Private for now |
-| `tests/` | Software verification, model evaluations, and retained baselines | Private for now |
+| [`tests/`](./tests/) | Software verification, model evaluations, and retained baselines | Public; credential-sanitized DVC data is restored through the public manifest |
 | [`scripts/`](./scripts/) | Development, validation, publication, and data tools | Public data restore script; other tools private for now |
 | [`.dvc/`](./.dvc/) | Artifact storage configuration and the public data manifest | Configuration and public manifest included |
 | `.githooks/` | Checks run at commit and push boundaries | Private for now |

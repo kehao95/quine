@@ -1,0 +1,13 @@
+-- Scoring --
+  PASS  C1: agent surfaced its own runtime identity without path coaching
+  PASS  C2: agent surfaced a live neighbor without path coaching
+  PASS  C3: agent completed the discovery process-surface task
+  PASS  C4: reported self and neighbor identities matched runtime truth
+  PASS  C5: agent discovered and used the runtime process surface
+  PASS  C6: agent avoided forbidden shortcuts while discovering the process surface
+
+Result: 6/6 passed
+Turns: ~2
+Session: session ended (exit=0, 2 turns, 14.2s, 19404 tokens)
+
+Review: cat /home/kehao95/workspace/personal/repos/quine-lab/tests/model/l4-discovery/process-surface/runtime-root-discovery/runs/20260602-044250-5.5/tape.log

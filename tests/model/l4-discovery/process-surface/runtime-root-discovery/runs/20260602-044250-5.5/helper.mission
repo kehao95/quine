@@ -1,0 +1,1 @@
+Use exactly one sh call with command sleep 240 and nothing else. Do not use timeout. Do not use detach. Wait for it normally. Then exit success.

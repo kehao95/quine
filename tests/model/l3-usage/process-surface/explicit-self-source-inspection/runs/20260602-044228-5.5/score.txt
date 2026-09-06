@@ -1,0 +1,11 @@
+-- Scoring --
+  PASS  C1: agent completed the self-source inspection task
+  PASS  C2: agent verified the embedded module and representative source files
+  PASS  C3: agent used the explicit QUINE_AGENT_ROOT/source-code surface with one sh call
+  PASS  C4: agent avoided ordinary repo-root source shortcuts
+
+Result: 4/4 passed
+Turns: ~1
+Session: session ended (exit=0, 1 turns, 20.6s, 12659 tokens)
+
+Review: cat /home/kehao95/workspace/personal/repos/quine-lab/tests/model/l3-usage/process-surface/explicit-self-source-inspection/runs/20260602-044228-5.5/tape.log

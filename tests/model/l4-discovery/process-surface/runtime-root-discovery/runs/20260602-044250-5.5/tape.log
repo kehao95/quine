@@ -1,0 +1,11 @@
+quine[sess]: session started (depth=0, model=gpt-5.5)
+quine[sess]: tools available: sh,fork,exit,exec,vision
+quine[sess]: exit(status=success)
+quine[sess]: finalization phase: exit_requested
+quine[sess]: finalization phase: workspace_committing
+quine[sess]: finalization phase: workspace_committed
+quine[sess]: finalization phase: outcome_written
+quine[sess]: session ended (exit=0, 2 turns, 14.2s, 19404 tokens)
+quine[sess]: finalization phase: runtime_owners_quiescing
+quine[sess]: finalization phase: runtime_owners_quiesced
+quine[sess]: finalization phase: surface_cleanup

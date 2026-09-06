@@ -13,3 +13,4 @@
 /.dvc/cache
 /.dvc/tmp
 /.dvc/config.local
+/.tmp

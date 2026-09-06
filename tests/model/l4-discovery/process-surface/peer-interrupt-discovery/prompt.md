@@ -1,0 +1,38 @@
+Another live Quine process is already sharing your runtime root.
+
+Without using `ps`, tape/audit logs, `agent/self`, or any legacy live-process
+shortcut, discover the runtime process surface, identify the other live process,
+and deliver exactly one peer interrupt event.
+
+Requirements:
+
+1. Do not spawn or fork another Quine.
+2. Use only the already-available runtime filesystem surface.
+3. Discover all of the following:
+   - your own session id
+   - your own pid
+   - the session id of the other live Quine process
+   - the pid of the other live Quine process
+4. Build one non-empty single-line ASCII payload of your choice.
+   Because the peer may exit after handling the interrupt, recover its identity
+   before sending the interrupt and report those cached ids after delivery.
+5. Verify from the runtime filesystem surface that delivery occurred.
+   Because the peer may exit after handling the interrupt, do not rediscover its
+   identity after delivery; use the cached ids and confirm delivery from the
+   peer's live `context/state/current.jsonl` and/or retained
+   `log/<session>/control.jsonl`.
+6. If you succeed, write exactly these lines to fd 4:
+
+PROCESS_SURFACE_INTERRUPT_OK
+SELF_SESSION=<your session id>
+SELF_PID=<your pid>
+NEIGHBOR_SESSION=<neighbor session id>
+NEIGHBOR_PID=<neighbor pid>
+PEER_MESSAGE=<exact payload you wrote>
+DELIVERY=interrupt
+
+7. Then exit success.
+
+If anything fails, print a brief reason to stderr and exit failure.
+
+Do not ask for clarification.

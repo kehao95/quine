@@ -1,0 +1,18 @@
+{
+  "agent_root": "/home/kehao95/workspace/personal/repos/quine-lab/tests/model/l4-discovery/process-surface/runtime-root-discovery/runs/20260602-044250-5.5/quine/agent/sess_20260602-044250_6bc68700-37e3-44ce-baee-513c5b7f9153",
+  "anchor_memory_enabled": false,
+  "depth": 0,
+  "incarnation_id": 0,
+  "model_id": "gpt-5.5",
+  "parent_session": "",
+  "pid": 3488362,
+  "ppid": 3488361,
+  "retention_dir": "/home/kehao95/workspace/personal/repos/quine-lab/tests/model/l4-discovery/process-surface/runtime-root-discovery/runs/20260602-044250-5.5/quine/log",
+  "run_id": "run_20260602-044250_3488362_55f6e6e5-ad09-4d4e-b1dd-64e091f9c94c",
+  "runtime_root": "/home/kehao95/workspace/personal/repos/quine-lab/tests/model/l4-discovery/process-surface/runtime-root-discovery/runs/20260602-044250-5.5/quine",
+  "session_id": "sess_20260602-044250_6bc68700-37e3-44ce-baee-513c5b7f9153",
+  "workspace": "",
+  "workspace_enabled": false,
+  "workspace_root": "",
+  "workspace_session": ""
+}
