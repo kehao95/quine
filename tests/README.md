@@ -5,10 +5,10 @@ prompts, expected results, DVC pointers, and documentation; retained run data is
 restored only through the credential-scanned public DVC manifest. Checked-out
 run directories, local links, and ignored residue never enter the projection.
 
-The deterministic substrate and public Go packages run in a fresh public clone.
-Live runtime and model evaluations may additionally require Linux or Lima, a
-provider credential, private profiles, or research-control files that are not
-in the current snapshot.
+The public runtime builds in a fresh public clone, and the test harnesses remain
+inspectable there. Suites that exercise the trimmed self-source surface, live
+runtime, or model providers may additionally require the full research tree,
+Linux or Lima, provider credentials, or private profiles.
 
 Quine now uses a five-layer evaluation ladder:
 
