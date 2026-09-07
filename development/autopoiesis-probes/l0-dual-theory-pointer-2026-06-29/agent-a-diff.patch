@@ -1,0 +1,28 @@
+diff --git a/Paper/theory/objects/README.md b/Paper/theory/objects/README.md
+index e9d8171c2..ea5916f04 100644
+--- a/Paper/theory/objects/README.md
++++ b/Paper/theory/objects/README.md
+@@ -77,7 +77,7 @@ load-bearing.
+ | [`exec-barrier`](./exec-barrier.md) | paradigm | Y | [`exec-barrier-P1`](../../predictions/open/exec-barrier-P1.md), [`exec-barrier-P2`](../../predictions/open/exec-barrier-P2.md), [`exec-barrier-P3`](../../predictions/open/exec-barrier-P3.md) | N |
+ | [`identity-criterion`](./identity-criterion.md) | paradigm | N | — | N |
+ | [`addressability-debt`](./addressability-debt.md) | theoretical | N | — | Y |
+-| [`affordance-null-ecology`](./affordance-null-ecology.md) | theoretical | N | — | Y |
++| [`affordance-null-ecology`](./affordance-null-ecology.md) | theoretical | N | [`affordance-null-ecology-P1`](../../predictions/open/affordance-null-ecology-P1.md) | Y |
+ | [`audit-attractor`](./audit-attractor.md) | theoretical | N | — | Y |
+ | [`channel-substitution`](./channel-substitution.md) | theoretical | N | [`channel-substitution-P1`](../../predictions/open/channel-substitution-P1.md), [`channel-substitution-P2`](../../predictions/open/channel-substitution-P2.md), [`channel-substitution-P3`](../../predictions/open/channel-substitution-P3.md) | Y |
+ | [`coordination-closure`](./coordination-closure.md) | theoretical | N | — | Y |
+diff --git a/Paper/theory/objects/affordance-null-ecology.md b/Paper/theory/objects/affordance-null-ecology.md
+index 936b74b9e..0f2f6daf9 100644
+--- a/Paper/theory/objects/affordance-null-ecology.md
++++ b/Paper/theory/objects/affordance-null-ecology.md
+@@ -107,6 +107,10 @@ state can be summarized."
+   higher-order individual over the null ecology, a handle on the unowned bridge to
+   collective successor self-production.
+ 
++## Predictions
++
++- [`affordance-null-ecology-P1`](../../predictions/open/affordance-null-ecology-P1.md) - absence-surface disclosure should change missionless L1-L8 behavior beyond ancestral/default scripts.
++
+ ## Papers using this object
+ 
+ _(no papers declare this object yet)_

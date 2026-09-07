@@ -1,0 +1,30 @@
+{
+  "phase": "p7g-generation-ecology",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p7g-generation-ecology/7G.01-successor-trace-uptake",
+      "slug": "successor-trace-uptake",
+      "legacy_id": "p7g:7G.01",
+      "family": "trace-inheritance",
+      "experiment_type": "behavioral-probe",
+      "status": "active",
+      "question": "Do successor peers entering a retained workspace/runtime reuse, extend, repair, or inherit predecessor artifacts under missionless launch conditions?",
+      "theory_objects": [
+        "trace-inheritance",
+        "stigmergy-as-carrier",
+        "successor-morphology",
+        "structural-pull",
+        "reproduced-object"
+      ],
+      "paper_feeds": [
+        "alife/agentic-alife-workshop"
+      ],
+      "disposition": "active",
+      "disposition_reason": "Phase README inventory marks 7G.01 as active; experiment dir has two retained clean container runs (C16, C17) under runs/."
+    }
+  ],
+  "phase_root_docs": [
+    "README.md"
+  ],
+  "notes": "Phase p7g-generation-ecology contains exactly one experiment directory (7G.01-successor-trace-uptake) plus the phase-level README.md (frontmatter only linear_ticket: Q-85). The experiment README.md has NO YAML frontmatter (opens with '# 7G.01: Successor Trace Uptake' heading), so surface_kind/phase/experiment_id/experiment_type were not declared on disk. experiment_type 'behavioral-probe' is INFERRED from content (missionless launch behavior probe of successor-cohort uptake across retained workspace/runtime). status 'active' taken from the phase README inventory table. family assigned per this phase's rule (all -> trace-inheritance). theory_objects inferred from the single Paper Feeds line (alife/agentic-alife-workshop: trace-mediated niche repair / inherited topology changing successor-cohort behavior) plus content describing stigmergic predecessor->successor artifact chains. Experiment dir also contains run-container.sh, run-host-pilot.sh, and a runs/ directory (helper/support, not experiments). No nested experiment subdirectories. No other experiment dirs in the phase."
+}

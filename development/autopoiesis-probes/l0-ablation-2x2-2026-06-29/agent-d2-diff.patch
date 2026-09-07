@@ -1,0 +1,96 @@
+diff --git a/experiments/active/autopoiesis-succession/lib/morphology-ladder-harness.sh b/experiments/active/autopoiesis-succession/lib/morphology-ladder-harness.sh
+index 46398c521..27bae32b8 100755
+--- a/experiments/active/autopoiesis-succession/lib/morphology-ladder-harness.sh
++++ b/experiments/active/autopoiesis-succession/lib/morphology-ladder-harness.sh
+@@ -117,6 +117,20 @@ copy_tree_contents() {
+   fi
+ }
+ 
++copy_tree_contents_best_effort() {
++  local src="$1"
++  local dst="$2"
++  if [[ -d "${src}" ]]; then
++    mkdir -p "${dst}"
++    if ! cp -R "${src}/." "${dst}/"; then
++      printf 'retention warning: partial copy: %s -> %s\n' "${src}" "${dst}" >&2
++      if [[ -n "${META_DIR:-}" && -d "${META_DIR}" ]]; then
++        printf 'partial copy: %s -> %s\n' "${src}" "${dst}" >> "${META_DIR}/retention-copy-warnings.txt"
++      fi
++    fi
++  fi
++}
++
+ count_tape_matches() {
+   local pattern="$1"
+   local root="$2"
+@@ -725,7 +739,7 @@ snapshot_agent_artifacts() {
+   local dst="${STAGE_RUNTIME_DIR}/agent-snapshot"
+   if [[ -d "${STAGE_RUNTIME_DIR}/agent" ]]; then
+     rm -rf "${dst}"
+-    copy_tree_contents "${STAGE_RUNTIME_DIR}/agent" "${dst}"
++    copy_tree_contents_best_effort "${STAGE_RUNTIME_DIR}/agent" "${dst}"
+     printf 'observer: agent_artifact_snapshot_created\n' >> "${OBSERVER_LOG}"
+   fi
+ }
+@@ -1488,7 +1502,7 @@ finish() {
+ 
+   copy_tree_contents "${STAGE_WORK_DIR}" "${RUN_DIR}/workspace"
+   copy_tree_contents "${STAGE_TMP}" "${RUN_DIR}/tmp"
+-  copy_tree_contents "${STAGE_RUNTIME_DIR}" "${RUN_DIR}/runtime"
++  copy_tree_contents_best_effort "${STAGE_RUNTIME_DIR}" "${RUN_DIR}/runtime"
+   # Retained run trees are evidence snapshots, not live read-only runtime
+   # surfaces; keep them writable so stale/invalid runs can be cleaned without
+   # permission friction.
+diff --git a/internal/runtime/public_surface_fuse_linux.go b/internal/runtime/public_surface_fuse_linux.go
+index bfdc74d20..6a5963a1f 100644
+--- a/internal/runtime/public_surface_fuse_linux.go
++++ b/internal/runtime/public_surface_fuse_linux.go
+@@ -40,6 +40,19 @@ func preflightRuntimeSurfaceFUSE() error {
+ 	return nil
+ }
+ 
++func preparePublicSurfaceMountpoint(publicDir string) error {
++	if publicDir == "" {
++		return nil
++	}
++	if err := syscall.Unmount(publicDir, syscall.MNT_DETACH); err != nil {
++		if errors.Is(err, syscall.EINVAL) || errors.Is(err, syscall.ENOENT) || errors.Is(err, syscall.EPERM) {
++			return nil
++		}
++		return err
++	}
++	return nil
++}
++
+ func (b *fusePublicSurfaceBackend) sync(paths publicSurfacePaths) error {
+ 	b.mu.Lock()
+ 	defer b.mu.Unlock()
+diff --git a/internal/runtime/public_surface_fuse_unsupported.go b/internal/runtime/public_surface_fuse_unsupported.go
+index a36419499..f46a1fc94 100644
+--- a/internal/runtime/public_surface_fuse_unsupported.go
++++ b/internal/runtime/public_surface_fuse_unsupported.go
+@@ -22,6 +22,8 @@ func preflightRuntimeSurfaceFUSE() error {
+ 	return errors.New(runtimeSurfaceUnsupportedMsg)
+ }
+ 
++func preparePublicSurfaceMountpoint(string) error { return nil }
++
+ func newFUSEPublicSurfaceBackend(*Runtime) (*fusePublicSurfaceBackend, error) {
+ 	return nil, errors.New(runtimeSurfaceUnsupportedMsg)
+ }
+diff --git a/internal/runtime/runtime.go b/internal/runtime/runtime.go
+index ff7c9a65e..fb025827d 100644
+--- a/internal/runtime/runtime.go
++++ b/internal/runtime/runtime.go
+@@ -1473,6 +1473,11 @@ func (r *Runtime) bootstrapAgentRoot() error {
+ 	} else if err != nil {
+ 		return fmt.Errorf("stat context root %s: %w", currentContextDir, err)
+ 	}
++	if r.publicSurface == nil && r.publicSurfaceSyncFn == nil {
++		if err := preparePublicSurfaceMountpoint(publicDir); err != nil {
++			return fmt.Errorf("prepare public surface mountpoint %s: %w", publicDir, err)
++		}
++	}
+ 
+ 	for _, dir := range []string{
+ 		agentRoot,

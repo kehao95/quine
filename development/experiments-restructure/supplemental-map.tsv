@@ -1,0 +1,15 @@
+# family-level moves (lib/analysis/notes/records + absorbed phase docs) not in id-map.tsv
+experiments/p6-autopoiesis/EXPERIMENT-LOG.md	experiments/active/autopoiesis-succession/analysis/EXPERIMENT-LOG.md
+experiments/p6-autopoiesis/lib	experiments/active/autopoiesis-succession/lib
+experiments/p6m-successor-morphospace/analysis	experiments/active/autopoiesis-succession/analysis
+experiments/p6m-successor-morphospace/lib	experiments/active/autopoiesis-succession/lib
+experiments/p8-population/BEHAVIOR-ANALYSIS.md	experiments/active/cooperation-dynamics/analysis/BEHAVIOR-ANALYSIS.md
+experiments/p8-population/RUN-CATALOG.md	experiments/active/cooperation-dynamics/analysis/RUN-CATALOG.md
+experiments/p8-population/confirmatory-hidden-runtime	experiments/active/cooperation-dynamics/confirmatory-hidden-runtime
+experiments/p12-dormancy-ecology/analysis	experiments/active/dormancy-ecology/analysis
+experiments/p10-benchmarks/analysis	experiments/active/benchmarks/analysis
+experiments/p11-digital-redqueen/records	experiments/active/digital-red-queen/records
+experiments/p13-structural-elicitation/_lib	experiments/active/structural-elicitation/_lib
+experiments/p13-structural-elicitation/notes	experiments/active/structural-elicitation/notes
+experiments/p13-structural-elicitation/profiles	experiments/active/structural-elicitation/profiles
+experiments/p1-borges/notes	experiments/active/early-existence/notes

@@ -1,0 +1,26 @@
+{
+  "phase": "p7t-trace-ecology",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p7t-trace-ecology/7T.01-retained-trace-uptake",
+      "slug": "retained-trace-uptake",
+      "legacy_id": "p7t:7T.01",
+      "family": "trace-inheritance",
+      "experiment_type": "container-peer-ecology-probe",
+      "status": "active",
+      "question": "Do missionless peers treat a visible retained trace as a reusable, extendable, or inheritable causal ecological object?",
+      "theory_objects": [
+        "trace-inheritance",
+        "stigmergy-as-carrier",
+        "carrier"
+      ],
+      "paper_feeds": [],
+      "disposition": "active",
+      "disposition_reason": "Status active in phase inventory; 7 DVC-tracked container run waves recorded (C01-C07) with documented positive trace-causality and one workspace-repair result."
+    }
+  ],
+  "phase_root_docs": [
+    "README.md"
+  ],
+  "notes": "Phase p7t-trace-ecology contains exactly one experiment directory (7T.01-retained-trace-uptake) plus a loose phase README.md. The experiment README has NO YAML frontmatter (no surface_kind/phase/experiment_id/experiment_type/status fields); status 'active' taken from the phase inventory table; experiment_type inferred as a multi-peer container ecology probe (run-container.sh, 2-4 peer container runs). Paper Feeds section lists only 'none-yet / none / not-for-paper-yet' so paper_feeds is []. Family assigned by this phase's blanket rule: all -> trace-inheritance (trce). legacy_id uses exact on-disk token p7t:7T.01. The experiment has runs/ with 7 .dvc run records (no slug collisions, so no slug suffix on legacy_id). Theory objects inferred from content emphasizing retained traces becoming inheritable niche structure, stigmergic reuse of a shared workspace note, and trace material acting as a causal carrier."
+}

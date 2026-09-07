@@ -1,0 +1,350 @@
+diff --git a/internal/tools/tools.go b/internal/tools/tools.go
+index dffa296ae..d006196dc 100644
+--- a/internal/tools/tools.go
++++ b/internal/tools/tools.go
+@@ -179,12 +179,21 @@ enter_workspace() {
+       exit 1
+     fi
+     set -eu
+-    mount --make-rslave /
++    if ! mount --make-rslave /; then
++      printf '%s\n' "workspace overlay mount namespace isolation failed: mount --make-rslave /" >&2
++      exit 1
++    fi
+     mount_root="${QUINE_WORKSPACE_MOUNT_BASE}/${job_pid}"
+     merged_dir="${mount_root}/merged"
+     mkdir -p "$merged_dir"
+-    mount --bind "$QUINE_WORKSPACE_ROOT" "$QUINE_WORKSPACE_ROOT"
+-    mount --make-private "$QUINE_WORKSPACE_ROOT"
++    if ! mount --bind "$QUINE_WORKSPACE_ROOT" "$QUINE_WORKSPACE_ROOT"; then
++      printf '%s\n' "workspace overlay bind-mount failed: mount --bind workspace root" >&2
++      exit 1
++    fi
++    if ! mount --make-private "$QUINE_WORKSPACE_ROOT"; then
++      printf '%s\n' "workspace overlay mount privacy failed: mount --make-private workspace root" >&2
++      exit 1
++    fi
+     overlay_options="lowerdir=${QUINE_WORKSPACE_LOWERDIR},upperdir=${QUINE_WORKSPACE_UPPER},workdir=${QUINE_WORKSPACE_WORKDIR}"
+     if [ -n "${QUINE_WORKSPACE_OVERLAY_EXTRA_OPTS:-}" ]; then
+       overlay_options="${overlay_options},${QUINE_WORKSPACE_OVERLAY_EXTRA_OPTS}"
+@@ -194,6 +203,10 @@ enter_workspace() {
+         printf '%s\n' "QUINE_WORKSPACE_OVERLAY_DRIVER=fuse requires fuse-overlayfs" >&2
+         exit 1
+       fi
++      if [ ! -e /dev/fuse ]; then
++        printf '%s\n' "QUINE_WORKSPACE_OVERLAY_DRIVER=fuse requires /dev/fuse" >&2
++        exit 1
++      fi
+       fuse_stderr="${mount_root}/fuse-overlayfs.stderr"
+       fuse-overlayfs -f -o "$overlay_options" "$merged_dir" >/dev/null 2>"$fuse_stderr" &
+       fuse_pid=$!
+@@ -214,9 +227,15 @@ enter_workspace() {
+         sleep 0.01
+       done
+     else
+-      mount -t overlay overlay -o "$overlay_options" "$merged_dir"
++      if ! mount -t overlay overlay -o "$overlay_options" "$merged_dir"; then
++        printf '%s\n' "workspace overlay kernel mount failed: mount -t overlay" >&2
++        exit 1
++      fi
++    fi
++    if ! mount --bind "$merged_dir" "$QUINE_WORKSPACE_ROOT"; then
++      printf '%s\n' "workspace overlay view bind-mount failed: mount merged view onto workspace root" >&2
++      exit 1
+     fi
+-    mount --bind "$merged_dir" "$QUINE_WORKSPACE_ROOT"
+     mkdir -p "$QUINE_WORKSPACE"
+     cd "$QUINE_WORKSPACE"
+   fi
+diff --git a/internal/tools/tools_linux_test.go b/internal/tools/tools_linux_test.go
+index bf4743efb..d9423966a 100644
+--- a/internal/tools/tools_linux_test.go
++++ b/internal/tools/tools_linux_test.go
+@@ -3,6 +3,7 @@
+ package tools
+ 
+ import (
++	"errors"
+ 	"os"
+ 	"path/filepath"
+ 	"strings"
+@@ -57,9 +58,15 @@ func TestWorkspaceJobWrapperLocalizesMountIsolation(t *testing.T) {
+ 	if !strings.Contains(jobWrapperScript, `mount --make-rslave /`) {
+ 		t.Fatalf("job wrapper should make the child mount namespace propagation one-way before workspace mounts:\n%s", jobWrapperScript)
+ 	}
++	if !strings.Contains(jobWrapperScript, `workspace overlay mount namespace isolation failed`) {
++		t.Fatalf("job wrapper should diagnose mount namespace isolation failures:\n%s", jobWrapperScript)
++	}
+ 	if !strings.Contains(jobWrapperScript, `mount --bind "$QUINE_WORKSPACE_ROOT" "$QUINE_WORKSPACE_ROOT"`) {
+ 		t.Fatalf("job wrapper should self-bind the workspace root before mounting overlay:\n%s", jobWrapperScript)
+ 	}
++	if !strings.Contains(jobWrapperScript, `workspace overlay bind-mount failed`) {
++		t.Fatalf("job wrapper should diagnose workspace root bind-mount failures:\n%s", jobWrapperScript)
++	}
+ 	if !strings.Contains(jobWrapperScript, `mount --make-private "$QUINE_WORKSPACE_ROOT"`) {
+ 		t.Fatalf("job wrapper should privatize the workspace mountpoint:\n%s", jobWrapperScript)
+ 	}
+@@ -69,6 +76,12 @@ func TestWorkspaceJobWrapperLocalizesMountIsolation(t *testing.T) {
+ 	if !strings.Contains(jobWrapperScript, `QUINE_WORKSPACE_OVERLAY_DRIVER:-kernel`) {
+ 		t.Fatalf("job wrapper should default overlay mount driver to kernel:\n%s", jobWrapperScript)
+ 	}
++	if !strings.Contains(jobWrapperScript, `workspace overlay kernel mount failed`) {
++		t.Fatalf("job wrapper should diagnose kernel overlay mount failures:\n%s", jobWrapperScript)
++	}
++	if !strings.Contains(jobWrapperScript, `QUINE_WORKSPACE_OVERLAY_DRIVER=fuse requires /dev/fuse`) {
++		t.Fatalf("job wrapper should diagnose missing /dev/fuse for fuse overlay mounts:\n%s", jobWrapperScript)
++	}
+ 	if !strings.Contains(jobWrapperScript, `fuse-overlayfs -f -o "$overlay_options" "$merged_dir"`) {
+ 		t.Fatalf("job wrapper should support forced fuse-overlayfs mounts:\n%s", jobWrapperScript)
+ 	}
+@@ -91,7 +104,12 @@ func TestWorkspaceOverlayPreflightProbesUserNamespaceWhiteouts(t *testing.T) {
+ 
+ func TestWorkspaceOverlayPreflightScriptCoversDeletionAndReplacement(t *testing.T) {
+ 	checks := []string{
++		`quine-overlay-preflight:%s`,
++		`fail mount-namespace`,
++		`fail bind-mount`,
++		`fail kernel-mount`,
+ 		`userxattr`,
++		`mount --bind "$bind_src" "$bind_dst"`,
+ 		`rm -rf opaque`,
+ 		`rm -rf swap`,
+ 		`rm -rf dir-to-file`,
+@@ -104,6 +122,50 @@ func TestWorkspaceOverlayPreflightScriptCoversDeletionAndReplacement(t *testing.
+ 	}
+ }
+ 
++func TestWorkspaceOverlayPreflightClassifiesSubstrateFailures(t *testing.T) {
++	cases := []struct {
++		name   string
++		driver string
++		err    error
++		wants  []string
++	}{
++		{
++			name:   "kernel bind mount",
++			driver: "kernel",
++			err:    errors.New("overlay mount preflight failed: exit status 1: quine-overlay-preflight:bind-mount: mount --bind failed: permission denied"),
++			wants:  []string{"workspace overlay driver kernel unavailable", "bind-mount policy"},
++		},
++		{
++			name:   "kernel namespace start",
++			driver: "kernel",
++			err:    errors.New("fork/exec /bin/sh: operation not permitted"),
++			wants:  []string{"workspace overlay driver kernel unavailable", "namespace", "starting the probe"},
++		},
++		{
++			name:   "fuse device",
++			driver: "fuse",
++			err:    errFuseOverlayFSDeviceUnavailable,
++			wants:  []string{"workspace overlay driver fuse unavailable", "/dev/fuse", "openable read/write"},
++		},
++	}
++	for _, tc := range cases {
++		t.Run(tc.name, func(t *testing.T) {
++			err := classifyOverlayPreflightError(tc.driver, tc.err)
++			if err == nil {
++				t.Fatal("expected classified error")
++			}
++			for _, want := range tc.wants {
++				if !strings.Contains(err.Error(), want) {
++					t.Fatalf("classified error = %q, want substring %q", err.Error(), want)
++				}
++			}
++			if tc.err == errFuseOverlayFSDeviceUnavailable && !errors.Is(err, errFuseOverlayFSDeviceUnavailable) {
++				t.Fatalf("classified fuse device error should preserve sentinel, got %v", err)
++			}
++		})
++	}
++}
++
+ func TestWorkspaceJobWrapperCleanupAvoidsBlockingUnmounts(t *testing.T) {
+ 	if !strings.Contains(jobWrapperScript, `cd / 2>/dev/null || true`) {
+ 		t.Fatalf("job wrapper cleanup should leave the workspace tree before unmounting:\n%s", jobWrapperScript)
+diff --git a/internal/tools/workspace_fuse_overlayfs_linux.go b/internal/tools/workspace_fuse_overlayfs_linux.go
+index d619f02b4..8d68f83fd 100644
+--- a/internal/tools/workspace_fuse_overlayfs_linux.go
++++ b/internal/tools/workspace_fuse_overlayfs_linux.go
+@@ -49,8 +49,8 @@ func probeFuseOverlayFS(root string) (fuseOverlayFSProbeResult, error) {
+ 	}
+ 	result.FusermountPath = fusermountPath
+ 
+-	if _, err := os.Stat("/dev/fuse"); err != nil {
+-		return result, fmt.Errorf("%w: %v", errFuseOverlayFSDeviceUnavailable, err)
++	if err := checkFuseOverlayFSDevice("/dev/fuse"); err != nil {
++		return result, err
+ 	}
+ 	result.DevFusePath = "/dev/fuse"
+ 
+@@ -68,6 +68,20 @@ func probeFuseOverlayFS(root string) (fuseOverlayFSProbeResult, error) {
+ 	return result, nil
+ }
+ 
++func checkFuseOverlayFSDevice(path string) error {
++	if _, err := os.Stat(path); err != nil {
++		return fmt.Errorf("%w: stat %s: %v", errFuseOverlayFSDeviceUnavailable, path, err)
++	}
++	f, err := os.OpenFile(path, os.O_RDWR, 0)
++	if err != nil {
++		return fmt.Errorf("%w: open %s read/write: %v", errFuseOverlayFSDeviceUnavailable, path, err)
++	}
++	if err := f.Close(); err != nil {
++		return fmt.Errorf("%w: close %s: %v", errFuseOverlayFSDeviceUnavailable, path, err)
++	}
++	return nil
++}
++
+ func lookPathOneOf(names ...string) (string, error) {
+ 	for _, name := range names {
+ 		path, err := exec.LookPath(name)
+diff --git a/internal/tools/workspace_fuse_overlayfs_linux_test.go b/internal/tools/workspace_fuse_overlayfs_linux_test.go
+index 8d1d2dd78..bd457fae1 100644
+--- a/internal/tools/workspace_fuse_overlayfs_linux_test.go
++++ b/internal/tools/workspace_fuse_overlayfs_linux_test.go
+@@ -68,6 +68,20 @@ func TestProbeFuseOverlayFSCurrentHost(t *testing.T) {
+ 	}
+ }
+ 
++func TestCheckFuseOverlayFSDeviceReportsMissingDevice(t *testing.T) {
++	missing := filepath.Join(t.TempDir(), "missing-fuse")
++	err := checkFuseOverlayFSDevice(missing)
++	if err == nil {
++		t.Fatal("expected missing fuse device error")
++	}
++	if !errors.Is(err, errFuseOverlayFSDeviceUnavailable) {
++		t.Fatalf("expected errFuseOverlayFSDeviceUnavailable sentinel, got %v", err)
++	}
++	if !strings.Contains(err.Error(), "stat "+missing) {
++		t.Fatalf("error should name the probed fuse device path, got %v", err)
++	}
++}
++
+ func TestApplyFuseOverlayFSLayerMaterializesReplacementDialect(t *testing.T) {
+ 	upper := createFuseOverlayFSReplacementUpper(t)
+ 	targetRoot := t.TempDir()
+diff --git a/internal/tools/workspace_overlay_linux.go b/internal/tools/workspace_overlay_linux.go
+index 44638aa03..9610b13b5 100644
+--- a/internal/tools/workspace_overlay_linux.go
++++ b/internal/tools/workspace_overlay_linux.go
+@@ -7,6 +7,7 @@ import (
+ 	"crypto/sha256"
+ 	"encoding/hex"
+ 	"encoding/json"
++	"errors"
+ 	"fmt"
+ 	"os"
+ 	"os/exec"
+@@ -176,12 +177,12 @@ func (s *subjectiveFS) preflight() error {
+ 	case "", "kernel":
+ 		overlayMountOpts, err := preflightOverlayMount(tempRoot)
+ 		if err != nil {
+-			return fmt.Errorf("workspace physics unsupported in this Linux environment: %w", err)
++			return fmt.Errorf("workspace physics unsupported in this Linux environment: %w", classifyOverlayPreflightError("kernel", err))
+ 		}
+ 		s.overlayMountOpts = overlayMountOpts
+ 	case "fuse":
+ 		if _, err := probeFuseOverlayFS(tempRoot); err != nil {
+-			return fmt.Errorf("workspace physics unsupported in this Linux environment: %w", err)
++			return fmt.Errorf("workspace physics unsupported in this Linux environment: %w", classifyOverlayPreflightError("fuse", err))
+ 		}
+ 		s.overlayMountOpts = ""
+ 	default:
+@@ -190,6 +191,54 @@ func (s *subjectiveFS) preflight() error {
+ 	return nil
+ }
+ 
++func classifyOverlayPreflightError(driver string, err error) error {
++	if err == nil {
++		return nil
++	}
++	text := strings.ToLower(err.Error())
++	switch driver {
++	case "", "kernel":
++		switch {
++		case strings.Contains(text, "quine-overlay-preflight:mount-namespace"):
++			return fmt.Errorf("workspace overlay driver kernel unavailable: mount namespace isolation failed; host/container must allow mount propagation changes in a private namespace: %w", err)
++		case strings.Contains(text, "quine-overlay-preflight:bind-mount"):
++			return fmt.Errorf("workspace overlay driver kernel unavailable: bind-mount policy rejected the workspace root self-bind; host/container must allow mount --bind before overlay mount: %w", err)
++		case strings.Contains(text, "quine-overlay-preflight:kernel-mount"):
++			return fmt.Errorf("workspace overlay driver kernel unavailable: kernel overlayfs mount failed; host/container must allow overlayfs lower/upper/work mounts: %w", err)
++		}
++		if hint := namespaceStartFailureHint(os.Getuid(), err); hint != "" {
++			return fmt.Errorf("workspace overlay driver kernel unavailable: %s: %w", hint, err)
++		}
++		return fmt.Errorf("workspace overlay driver kernel unavailable: %w", err)
++	case "fuse":
++		switch {
++		case errors.Is(err, errFuseOverlayFSBinaryUnavailable):
++			return fmt.Errorf("workspace overlay driver fuse unavailable: install fuse-overlayfs or choose QUINE_WORKSPACE_OVERLAY_DRIVER=kernel: %w", err)
++		case errors.Is(err, errFuseOverlayFSUnmountHelperUnavailable):
++			return fmt.Errorf("workspace overlay driver fuse unavailable: install fusermount3 or fusermount so fuse-overlayfs mounts can be cleaned up: %w", err)
++		case errors.Is(err, errFuseOverlayFSDeviceUnavailable):
++			return fmt.Errorf("workspace overlay driver fuse unavailable: /dev/fuse must exist and be openable read/write by this process: %w", err)
++		}
++		if hint := namespaceStartFailureHint(os.Getuid(), err); hint != "" {
++			return fmt.Errorf("workspace overlay driver fuse unavailable: %s: %w", hint, err)
++		}
++		return fmt.Errorf("workspace overlay driver fuse unavailable: fuse-overlayfs feasibility probe failed: %w", err)
++	default:
++		return err
++	}
++}
++
++func namespaceStartFailureHint(uid int, err error) string {
++	text := strings.ToLower(err.Error())
++	if !strings.Contains(text, "operation not permitted") && !strings.Contains(text, "permission denied") {
++		return ""
++	}
++	if uid == 0 {
++		return "mount namespace or CAP_SYS_ADMIN unavailable while starting the probe"
++	}
++	return "user namespace or mount namespace unavailable while starting the probe"
++}
++
+ func preflightOverlayMount(root string) (string, error) {
+ 	userxattrRoot := filepath.Join(root, "userxattr")
+ 	defaultRoot := filepath.Join(root, "default")
+@@ -226,8 +275,19 @@ lower="$root/lower"
+ upper="$root/upper"
+ work="$root/work"
+ merged="$root/merged"
++bind_src="$root/bind-src"
++bind_dst="$root/bind-dst"
++
++fail() {
++  phase="$1"
++  shift
++  printf 'quine-overlay-preflight:%s: %s\n' "$phase" "$*" >&2
++  exit 1
++}
+ 
+-mkdir -p "$lower/opaque" "$lower/swap" "$lower/dir-to-file" "$upper" "$work" "$merged"
++mount_msg="$(mount --make-rslave / 2>&1)" || fail mount-namespace "mount --make-rslave / failed: $mount_msg"
++
++mkdir -p "$lower/opaque" "$lower/swap" "$lower/dir-to-file" "$upper" "$work" "$merged" "$bind_src" "$bind_dst"
+ printf 'old\n' > "$lower/opaque/old.txt"
+ printf 'child\n' > "$lower/swap/child.txt"
+ printf 'child\n' > "$lower/dir-to-file/child.txt"
+@@ -235,17 +295,21 @@ printf 'leaf\n' > "$lower/file-to-dir"
+ 
+ cleanup() {
+   cd / 2>/dev/null || true
++  umount "$bind_dst" 2>/dev/null || umount -l "$bind_dst" 2>/dev/null || true
+   umount "$merged" 2>/dev/null || umount -l "$merged" 2>/dev/null || true
+   chmod -R u+rwx "$upper" "$work" "$merged" 2>/dev/null || true
+   rm -rf "$upper" "$work" "$merged" 2>/dev/null || true
+ }
+ trap cleanup EXIT
+ 
++mount_msg="$(mount --bind "$bind_src" "$bind_dst" 2>&1)" || fail bind-mount "mount --bind failed: $mount_msg"
++umount "$bind_dst" 2>/dev/null || umount -l "$bind_dst" 2>/dev/null || fail bind-mount "unmount bind probe failed"
++
+ overlay_options="lowerdir=$lower,upperdir=$upper,workdir=$work"
+ if [ -n "$extra_options" ]; then
+   overlay_options="$overlay_options,$extra_options"
+ fi
+-mount -t overlay overlay -o "$overlay_options" "$merged"
++mount_msg="$(mount -t overlay overlay -o "$overlay_options" "$merged" 2>&1)" || fail kernel-mount "mount -t overlay failed: $mount_msg"
+ cd "$merged"
+ 
+ rm -rf opaque

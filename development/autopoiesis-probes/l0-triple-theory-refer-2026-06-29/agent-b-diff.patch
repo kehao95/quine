@@ -1,0 +1,17 @@
+diff --git a/Makefile b/Makefile
+index cca98bb6c..cae627906 100644
+--- a/Makefile
++++ b/Makefile
+@@ -141,10 +141,10 @@ audit-runtime-doc-sync:
+ check-runtime-doc-sync:
+ 	./scripts/check-runtime-doc-sync.sh --strict
+ 
+-audit-validation-surface:
++audit-validation-surface: self-source-bundle
+ 	./scripts/check-validation-surface.sh
+ 
+-check-validation-surface:
++check-validation-surface: self-source-bundle
+ 	./scripts/check-validation-surface.sh --strict
+ 
+ audit-active-doc-links:

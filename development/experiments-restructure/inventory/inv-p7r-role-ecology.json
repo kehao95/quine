@@ -1,0 +1,27 @@
+{
+  "phase": "p7r-role-ecology",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p7r-role-ecology/7R.01-multi-object-role-field",
+      "slug": "multi-object-role-field",
+      "legacy_id": "p7r:7R.01",
+      "family": "social-role",
+      "experiment_type": "container-run",
+      "status": "active",
+      "question": "Do four missionless peers facing four visible answerable objects spontaneously differentiate into worker / observer / summarizer / coordinator roles without explicit assignment?",
+      "theory_objects": [
+        "protocol-emergence",
+        "coordination-closure",
+        "stigmergy-as-carrier",
+        "structural-pull"
+      ],
+      "paper_feeds": [],
+      "disposition": "active",
+      "disposition_reason": "status active in phase README inventory; has a real first-wave container run recorded in runs/."
+    }
+  ],
+  "phase_root_docs": [
+    "README.md"
+  ],
+  "notes": "Single experiment phase. Phase README (Q-87) covers only 7R.01. Experiment README.md has NO YAML frontmatter (no surface_kind/phase/experiment_id/experiment_type/status fields); status 'active' taken from phase README inventory table, experiment_type 'container-run' inferred from run-container.sh + DVC-tracked container run; legacy_id uses exact on-disk ID token '7R.01'. Paper Feeds line is 'none-yet - none - not-for-paper-yet' so paper_feeds is empty []. Theory objects inferred from content: peers self-organizing roles via shared workspace objects (stigmergy-as-carrier), role/protocol differentiation without assignment (protocol-emergence, coordination-closure), and the observed pull of one peer into a generalist-worker basin (structural-pull). Phase family rule: all -> social-role. Skipped: run-container.sh (loose file) and runs/ (run-data dir, not an experiment)."
+}

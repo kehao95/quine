@@ -1,0 +1,51 @@
+# Canonical drop set for the first public-history rewrite pass.
+#
+# Intended usage:
+#   git filter-repo --invert-paths \
+#     --paths-from-file development/open-source/history-rewrite-drop-paths.txt
+#
+# This pass is intentionally high-confidence and risk-oriented:
+# - remove secret-bearing or account-bearing local profile/config surfaces
+# - remove generated run/workspace/log payloads that dominate current path and
+#   scanner risk
+# - remove raw or deny/sanitize DVC history that should not survive into the
+#   first public branch
+#
+# Safe public replacements are restored from the sanitized current tree after
+# the rewrite. In particular, dropping `.env*` here does not mean the public
+# branch will permanently lose `.env.example`; it means the old profile history
+# should not survive into the rewritten branch lineage.
+
+# Root and nested env/profile surfaces.
+glob:.env*
+glob:**/.env*
+glob:**/profiles/*.env
+
+# Local tool state and machine-local settings.
+glob:.claude/**
+glob:.opencode/**
+literal:.claude/settings.local.json
+
+# Generated run payloads and workspaces.
+glob:experiments/**/runs/**
+glob:tests/**/runs/**
+glob:test/**/runs/**
+glob:**/runtime/jobs/**
+glob:**/runtime/tapes/**
+glob:**/workspace/**
+
+# Generated analysis logs that currently carry owner-path exposure.
+glob:**/analysis/sweep-logs/**
+
+# Run metadata env snapshots and capability summaries outside broad run globs.
+glob:**/meta/summary.env
+glob:**/meta/timeout-summary.env
+glob:**/meta/capability-surface.env
+glob:**/meta/env-after.txt
+
+# Historical raw archives outside run-directory coverage.
+glob:**/*.tar
+glob:**/*.tar.zst
+
+# Raw/sanitize-needed DVC families not covered cleanly by the broad run globs.
+glob:experiments/p10-benchmarks/10.01-programbench/campaigns/**/*.dvc

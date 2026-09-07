@@ -1,0 +1,33 @@
+{
+  "phase": "p7i-irregularity-ecology",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p7i-irregularity-ecology/7I.01-missing-element-field",
+      "slug": "missing-element-field",
+      "legacy_id": "p7i:7I.01",
+      "family": "trace-inheritance",
+      "experiment_type": "exploratory",
+      "status": "active",
+      "question": "Do missionless peers notice, report, repair, ignore, or coordinate around a simple missing element in an otherwise ordered workspace field?",
+      "theory_objects": ["affordance-null-ecology", "trace-inheritance", "stigmergy-as-carrier"],
+      "paper_feeds": ["none-yet"],
+      "disposition": "active",
+      "disposition_reason": "status active with retained runs (native pilot plus container reruns) showing anomaly-repair signal."
+    },
+    {
+      "legacy_path": "experiments/p7i-irregularity-ecology/7I.02-symbol-lattice-field",
+      "slug": "symbol-lattice-field",
+      "legacy_id": "p7i:7I.02",
+      "family": "trace-inheritance",
+      "experiment_type": "exploratory",
+      "status": "active",
+      "question": "When the missionless workspace contains an incomplete opaque spatial-symbolic lattice, does it become a salient ecological object (ignored, described, completed, mapped, coordinated around, or transformed into a new trace)?",
+      "theory_objects": ["affordance-null-ecology", "stigmergy-as-carrier", "trace-inheritance", "protocol-emergence"],
+      "paper_feeds": ["none-yet"],
+      "disposition": "active",
+      "disposition_reason": "status active with multi-condition exploratory waves (C01-C08) and retained signal across stigmergic/peer-presence conditions."
+    }
+  ],
+  "phase_root_docs": ["README.md"],
+  "notes": "Phase contains exactly two experiment directories (7I.01, 7I.02) plus the phase README.md; no helper/support dirs or loose files present. Both experiments are exploratory, status:active, missionless irregularity-ecology probes feeding none-yet (not-for-paper-yet). Per this phase's family rule, all map to trace-inheritance (trce, merged from former niche-construction). experiment_type and status taken verbatim from frontmatter. theory_objects inferred from content (closed vocabulary): both use affordance-null-ecology (missionless null conditions) and trace-inheritance (seeded structure as inherited trace + phase family rule); 7I.02 emphasizes stigmergy-as-carrier (shared-notes/lattice 'single-writer stigmergy' and 'stigmergic hypothesis stabilization') and protocol-emergence (peer-presence-hint induces greeting/status exchange); 7I.01 also touches stigmergy-as-carrier via status-artifact repair. paper_feeds token is 'none-yet' (the leading track token in the '## Paper Feeds' line)."
+}

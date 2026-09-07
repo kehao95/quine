@@ -1,0 +1,23 @@
+# phase-dir / phase-README references -> family README (Phase 4 deletion repoint)
+experiments/p1-borges	experiments/active/early-existence
+experiments/p3-mrcr	experiments/active/early-existence
+experiments/p4-harbor	experiments/active/benchmarks
+experiments/p5-joots	experiments/active/early-existence
+experiments/p6-autopoiesis	experiments/active/autopoiesis-succession
+experiments/p6f-future-addressability	experiments/active/autopoiesis-succession
+experiments/p6m-successor-morphospace	experiments/active/autopoiesis-succession
+experiments/p6r-agentic-runtime-replacement	experiments/active/autopoiesis-succession
+experiments/p7-oee	experiments/active/null-ecology
+experiments/p7e-open-ecology	experiments/active/null-ecology
+experiments/p7g-generation-ecology	experiments/active/trace-inheritance
+experiments/p7i-irregularity-ecology	experiments/active/trace-inheritance
+experiments/p7r-role-ecology	experiments/active/social-role
+experiments/p7s-seeded-workspace-ecology	experiments/active/trace-inheritance
+experiments/p7t-trace-ecology	experiments/active/trace-inheritance
+experiments/p7w-wiki-frontier-ecology	experiments/active/cumulative-novelty
+experiments/p8-population	experiments/active/cooperation-dynamics
+experiments/p9c-compiler-ecology	experiments/active/benchmarks
+experiments/p10-benchmarks	experiments/active/benchmarks
+experiments/p11-digital-redqueen	experiments/active/digital-red-queen
+experiments/p12-dormancy-ecology	experiments/active/dormancy-ecology
+experiments/p13-structural-elicitation	experiments/active/structural-elicitation

@@ -1,0 +1,129 @@
+{
+  "register_exists": true,
+  "summary": "The 'Unclaimed Evidence Register' exists in Paper/evidence-map.md (heading at line 53, intro lines 55-60, table lines 62-68). It is titled 'Unclaimed Evidence Register' with the gloss 'Retained runs that exist but no theme THEORY.md currently builds theory on. Inventory is not ownership... each row names a candidate owning theme.' The table header is '| Run family | What it holds | Candidate owning theme |'. Current rows verbatim: (1) `p9c-*` (compiler-ecology, I13-I17) | prose vs mechanized coordination organs in a persistent multi-agent workspace | `social-behavior` <-> `open-ended-ecology` boundary (Mechanization Ceiling). (2) `p11-digital-redqueen` (`matches.jsonl`) | adversarial co-evolution on OS routing surfaces; symmetry trap | **ownership decision needed** - neither `viability-habitat` nor `autopoiesis-renewal` will take it; candidate new adversarial-selection owner. (3) `p12-dormancy-ecology/12.05-*` (body-chain) | inheritance-bottleneck carrier selection across generations | `open-ended-ecology` (Compression-Carrier Selection). (4) `p7e/g/i/r/s/w`, 50+ raw ecology tapes | proto-ecology, trace causality, niche repair | `open-ended-ecology`. (5) `p6r-*` (deterministic systems controls) | ARR false-positive controls, audit/admission | `autopoiesis-renewal`. NOTE: the register's 'candidate owning theme' column names retired THEME labels (social-behavior, open-ended-ecology, viability-habitat, autopoiesis-renewal), not the new flat theory objects; the restructure-design Phase 0/Phase 5 task (lines 370-372, 508-509) requires these 5 families to be routed into theory-object ## Evidence sections before evidence-map.md is demoted. Several routings are already partially in place: trace-inheritance.md, affordance-null-ecology.md, stigmergy-as-carrier.md cite the p7 families; narrative-claim.md and viability-pressure.md already reference P11; the carrier-selection gap already lists 'P12.05; P9c' as candidate evidence (gaps/carrier-selection.md lines 47, 51); and 6R controls are cited in carrier.md, exec-barrier.md, delayed-addressability.md, future-task-surface.md, narrative-claim.md.",
+  "entries": [
+    {
+      "source": "p9c-compiler-ecology (experiments/p9c-compiler-ecology/, e.g. 9C.01-persistent-cleanroom-c-compiler; register row 'p9c-* (compiler-ecology, I13-I17)' — prose vs mechanized coordination organs in a persistent multi-agent workspace; Mechanization Ceiling)",
+      "currently_cited_in": [
+        "Paper/evidence-map.md",
+        "Paper/theory/objects/protocol-emergence.md",
+        "Paper/theory/objects/trace-inheritance.md",
+        "Paper/theory/gaps/carrier-selection.md",
+        "Paper/theory/references/agent-swarm-oee-experimental-program-dr-report-2026-05-02.md",
+        "experiments/p9c-compiler-ecology/README.md",
+        "experiments/p9c-compiler-ecology/9C.01-persistent-cleanroom-c-compiler/README.md",
+        "experiments/README.md",
+        "experiments/restructure-design.md",
+        "scripts/check-linear-ticket-frontmatter.sh"
+      ],
+      "target_theory_objects": [
+        "protocol-emergence",
+        "coordination-closure"
+      ],
+      "note": "The register's old theme label is the 'social-behavior <-> open-ended-ecology' boundary (Mechanization Ceiling). In the flat theory layer the social-behavior side is owned by protocol-emergence (invented routing/callback over thin surfaces) and coordination-closure (joint completion via visible state intersection). protocol-emergence.md ALREADY names p9c twice (lines 50, 67) as candidate evidence for callback-necessity ('the L5 peer-callback fixture ... and experiments/p9c-compiler-ecology'), so the cleanest close is to lift those candidate-evidence mentions into protocol-emergence's ## Evidence section, and add a coordination-closure ## Evidence row for the prose-vs-mechanized coordination-organ finding. The 'Mechanization Ceiling' (prose organ vs mechanized organ) is the protocol-emergence/coordination-closure tension, not an ecology claim. The restructure-design maps the p9c artifact to the 'benchmarks' navigation family (infrastructure-shaped, no theory objects), but the SCIENTIFIC ownership of the coordination finding routes to protocol-emergence/coordination-closure — family != theory object (P2). Secondary: trace-inheritance.md and carrier-selection.md already touch p9c as candidate evidence for callback-necessity / carrier selection; those are weaker and need not be promoted on close."
+    },
+    {
+      "source": "p11-digital-redqueen (experiments/p11-digital-redqueen/, records/matches.jsonl; 11.01-11.04; register row 'adversarial co-evolution on OS routing surfaces; symmetry trap'; marked **ownership decision needed**)",
+      "currently_cited_in": [
+        "Paper/evidence-map.md",
+        "Paper/theory/views/viability.md",
+        "Paper/theory/objects/viability-pressure.md",
+        "Paper/theory/objects/narrative-claim.md",
+        "Paper/venues/objects/alife-2026-lba.md",
+        "Paper/venues/objects/alife-2026-lba/lba-register.md",
+        "experiments/p11-digital-redqueen/README.md",
+        "experiments/p11-digital-redqueen/records/matches.jsonl",
+        "experiments/p12-dormancy-ecology/12.11-context-metabolism-oee/README.md",
+        "experiments/p7w-wiki-frontier-ecology/README.md",
+        "experiments/incubator/context-metabolism-oee.md",
+        "experiments/README.md",
+        "experiments/restructure-design.md",
+        "scripts/check-linear-ticket-frontmatter.sh"
+      ],
+      "target_theory_objects": [
+        "viability-pressure",
+        "narrative-claim"
+      ],
+      "note": "The register flags p11 as the one row with an unresolved owner ('neither viability-habitat nor autopoiesis-renewal will take it; candidate new adversarial-selection owner'). In the flat theory layer the adversarial-selection regime is now anchored by viability-pressure (its canonical source pairs theory/views/viability.md with the P11 experiment in evidence-map.md line 51: 'phase-local lineage predation via FUSE/runtime-surface routing manipulation in P11') and by narrative-claim (which already uses P11 as the named regime 'where selection must distinguish state an organism did from state it merely narrated' — narrative-claim.md lines 54, 80). So the two real routing targets are viability-pressure (adversarial selection over OS runtime routing surfaces / symmetry trap) and narrative-claim (narrated-vs-functional distinction under adversarial selection). Both objects already reference P11 in prose; closing the row means adding a ## Evidence entry citing the specific p11 runs (matches.jsonl) to viability-pressure and confirming the existing narrative-claim ## Evidence P11 line resolves to a concrete run. evidence-map.md line 51 already treats P11 as a Prospective/Future-home row ('future Digital Red Queen / OEE paper home TBD; not a default Q94 backbone'), consistent with viability-pressure being the owning object while the paper home stays open."
+    },
+    {
+      "source": "p12.05 self-source-mutation (experiments/p12-dormancy-ecology/12.05-self-source-mutation-pilot/, body-chain; register row 'inheritance-bottleneck carrier selection across generations'; Compression-Carrier Selection)",
+      "currently_cited_in": [
+        "Paper/evidence-map.md",
+        "Paper/theory/gaps/carrier-selection.md",
+        "Paper/theory/objects/trace-inheritance.md",
+        "Paper/theory-restructure-design.md",
+        "experiments/p12-dormancy-ecology/12.05-self-source-mutation-pilot/README.md",
+        "experiments/p12-dormancy-ecology/README.md",
+        "experiments/p12-dormancy-ecology/analysis/12.06-results-and-meta-analysis.md",
+        "experiments/restructure-design.md",
+        "Paper/papers/runtime-substrate/structural-elicitation/matrix-novelty-dr-report.md"
+      ],
+      "target_theory_objects": [
+        "carrier",
+        "trace-inheritance"
+      ],
+      "note": "The register theme is 'open-ended-ecology (Compression-Carrier Selection)' — inheritance-bottleneck carrier selection across generations. This is exactly the open carrier-selection gap (which class wins under which bottleneck), which binds the ecology side (trace-inheritance) to the continuity side (carrier). The carrier-selection gap ALREADY lists 'P12.05; P9c' as candidate evidence (gaps/carrier-selection.md line 47, and the 'p12.05 body-chain blind-vs-manifest retention A/B' line 51). Routing target: the two objects the carrier-selection gap binds — carrier (the unit of transmission whose class is selected) and trace-inheritance (the inheritance-bottleneck / niche side). Closing the row means promoting the p12.05 body-chain A/B from gap candidate-evidence into a ## Evidence entry on carrier (carrier-class selection under compression vs exec bottleneck) and/or trace-inheritance. Note p12.05 is also flagged in restructure-design Appendix F (Decision 7) as path-embedded retained-evidence (absolute /home/kehao95 paths in tape metadata) — the migration accepts the mismatch with a note; that does not affect the theory-object routing."
+    },
+    {
+      "source": "p7e/p7g/p7i/p7r/p7s/p7w raw ecology tapes (experiments/p7e-open-ecology, p7g-generation-ecology, p7i-irregularity-ecology, p7r-role-ecology, p7s-seeded-workspace-ecology, p7w-wiki-frontier-ecology; register row '50+ raw ecology tapes — proto-ecology, trace causality, niche repair')",
+      "currently_cited_in": [
+        "Paper/evidence-map.md",
+        "Paper/theory/objects/affordance-null-ecology.md",
+        "Paper/theory/objects/stigmergy-as-carrier.md",
+        "Paper/theory/objects/trace-inheritance.md",
+        "Paper/theory/views/ecology/deep/frontier.md",
+        "Paper/theory/views/ecology/deep/mechanisms.md",
+        "Paper/theory/views/ecology/plans/open-ended-evolution-mechanism-plan-2026-05-18.md",
+        "Paper/papers/runtime-substrate/agentic-alife-workshop/README.md",
+        "Paper/papers/runtime-substrate/agentic-alife-workshop/references/p7g-trace-uptake-evidence.md",
+        "Paper/papers/runtime-substrate/agentic-alife-workshop/WORKSPACE.md",
+        "Paper/projection-principles.md",
+        "Paper/venues/objects/alife-2026-lba/lba-register.md",
+        "experiments/p7e-open-ecology/README.md",
+        "experiments/p7g-generation-ecology/README.md",
+        "experiments/p7i-irregularity-ecology/README.md",
+        "experiments/p7r-role-ecology/README.md",
+        "experiments/p7s-seeded-workspace-ecology/README.md",
+        "experiments/p7w-wiki-frontier-ecology/README.md"
+      ],
+      "target_theory_objects": [
+        "affordance-null-ecology",
+        "trace-inheritance",
+        "stigmergy-as-carrier",
+        "structural-pull",
+        "coordination-closure",
+        "protocol-emergence"
+      ],
+      "note": "This is the one mixed-family row: 6 distinct p7 variants whose register theme is 'open-ended-ecology' but which split across several theory objects per restructure-design Appendix A. Per-variant routing: p7e (open/null ecology, 7.9-7.13 neighbors) -> affordance-null-ecology + structural-pull (null-ecology family); p7g (generation ecology, cross-generation niche repair) -> trace-inheritance + stigmergy-as-carrier (trace-inheritance family) — p7g is already cited as the P7G/P7T trace-causality backbone in trace-inheritance.md and stigmergy-as-carrier.md, and as a paper reference (agentic-alife-workshop/references/p7g-trace-uptake-evidence.md); p7i (irregularity ecology) -> trace-inheritance (merged into trace-inheritance family per restructure-design Decision 1); p7s (seeded-workspace ecology) -> trace-inheritance / stigmergy-as-carrier; p7w (wiki-frontier / cumulative-novelty) -> affordance-null-ecology (primary per restructure family table) and structural-pull (frontier expansion); p7r (role ecology — spontaneous labor division, missionless role differentiation) -> coordination-closure + protocol-emergence (social-role family per restructure-design Appendix A line 256). affordance-null-ecology.md ## Evidence currently cites only generic 'P7 missionless runs (experiments/p7-oee/)' and trace-inheritance.md cites the 'P7G/P7T backbone' — neither cites the specific p7e/p7i/p7r/p7s/p7w variant tapes by ID, so closing this row is the heaviest of the five (route each variant's representative tapes to its object's ## Evidence). The p7r -> social-behavior objects (coordination-closure/protocol-emergence) is the routing most likely to be missed because the register lumps it under 'open-ended-ecology'."
+    },
+    {
+      "source": "p6r controls (experiments/p6r-agentic-runtime-replacement/, 6R.01-6R.04: subprocess-vs-exec boundary, scripted-reexec baseline, audit-trace-package, admission-and-carrier-transfer; register row 'deterministic systems controls — ARR false-positive controls, audit/admission')",
+      "currently_cited_in": [
+        "Paper/evidence-map.md",
+        "Paper/theory/objects/carrier.md",
+        "Paper/theory/objects/exec-barrier.md",
+        "Paper/theory/objects/delayed-addressability.md",
+        "Paper/theory/objects/future-task-surface.md",
+        "Paper/theory/objects/narrative-claim.md",
+        "Paper/theory-code-expansion-design.md",
+        "Paper/theory/views/continuity/deep/frontier.md",
+        "Paper/theory/views/continuity/deep/supporting-axes.md",
+        "Paper/papers/successor-continuity/generative-self-replacement/README.md",
+        "experiments/p6r-agentic-runtime-replacement/README.md",
+        "experiments/p6r-agentic-runtime-replacement/6R.01-subprocess-vs-exec-boundary/README.md",
+        "experiments/p6r-agentic-runtime-replacement/6R.02-scripted-reexec-baseline/README.md",
+        "experiments/p6r-agentic-runtime-replacement/6R.03-audit-trace-package/README.md",
+        "experiments/p6r-agentic-runtime-replacement/6R.04-admission-and-carrier-transfer-prototype/README.md",
+        "experiments/restructure-design.md"
+      ],
+      "target_theory_objects": [
+        "exec-barrier",
+        "carrier",
+        "delayed-addressability",
+        "narrative-claim"
+      ],
+      "note": "Register theme is 'autopoiesis-renewal' — ARR (agentic-runtime-replacement) false-positive controls, audit/admission. In the flat theory layer the controls are the discriminating discipline on the carrier/successor spine and are ALREADY cited in prose across the load-bearing continuity objects. Specifically: narrative-claim.md (line 54) names '6R.01-6R.04, the ARR false-positive controls that reject subprocess, parent-forwarding, external re-exec, and launch-only' as the carrier-side discriminating discipline; carrier.md's Appendix-G ## Code sample cites '6R.01-6R.04 rule out false-positive transfer paths'; exec-barrier owns the subprocess-vs-exec boundary (6R.01) and the hard-barrier primitive these controls protect; delayed-addressability owns the individuality criterion these controls keep honest (rejecting narrated/launch-only succession as a positive). Primary routing target is exec-barrier (the 6R.01 subprocess-vs-exec-boundary and 6R.02 scripted-reexec baseline are exec-barrier controls) and carrier (6R.04 admission-and-carrier-transfer); secondary delayed-addressability and narrative-claim (false-positive rejection). Closing the row means adding ## Evidence entries citing 6R.01-6R.04 by ID on exec-barrier/carrier (they currently live only in prose / the ## Code sample / paper dossiers, not in those objects' ## Evidence lists). This is the family with the highest existing cross-object prose coverage, so it is the lightest of the five to close."
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+ M scripts/check-validation-surface.sh
+ M tests/active-go-packages.sh
+ M tests/validate.sh

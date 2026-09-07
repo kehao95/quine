@@ -1,0 +1,138 @@
+diff --git a/Makefile b/Makefile
+index e273df9ee..df3949907 100644
+--- a/Makefile
++++ b/Makefile
+@@ -11,6 +11,7 @@ WORLD_PKG    := ./cmd/world
+ # Build flags
+ GOFLAGS ?=
+ LDFLAGS ?=
++BUNDLE_GOFLAGS = $(GOFLAGS) -tags selfsourcebundle
+ SUBSTRATE_PKGS = $(shell ./tests/active-go-packages.sh)
+ 
+ # Coverage output
+@@ -29,14 +30,14 @@ self-source-bundle:
+ 	./scripts/generate-self-source-bundle.sh
+ 
+ build: self-source-bundle
+-	go build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BINARY) $(PKG)
++	go build $(BUNDLE_GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BINARY) $(PKG)
+ 
+ build-world: self-source-bundle
+-	go build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(WORLD_BINARY) $(WORLD_PKG)
++	go build $(BUNDLE_GOFLAGS) -ldflags '$(LDFLAGS)' -o $(WORLD_BINARY) $(WORLD_PKG)
+ 
+ dist: self-source-bundle
+ 	mkdir -p $(DIST_DIR)
+-	go build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(DIST_DIR)/$(BINARY) $(PKG)
++	go build $(BUNDLE_GOFLAGS) -ldflags '$(LDFLAGS)' -o $(DIST_DIR)/$(BINARY) $(PKG)
+ 
+ test:
+ 	@echo "make test is no longer a synonym for raw go test ./..." >&2
+@@ -53,24 +54,24 @@ validate: self-source-bundle
+ 	./tests/validate.sh $(ARGS)
+ 
+ test-v: self-source-bundle
+-	go test $(GOFLAGS) -count=1 -v $(SUBSTRATE_PKGS)
++	go test $(BUNDLE_GOFLAGS) -count=1 -v $(SUBSTRATE_PKGS)
+ 
+ cover: self-source-bundle
+-	go test $(GOFLAGS) -count=1 -coverprofile=$(COVERPROFILE) $(SUBSTRATE_PKGS)
++	go test $(BUNDLE_GOFLAGS) -count=1 -coverprofile=$(COVERPROFILE) $(SUBSTRATE_PKGS)
+ 	go tool cover -func=$(COVERPROFILE)
+ 
+ cover-html: cover
+ 	go tool cover -html=$(COVERPROFILE)
+ 
+ vet: self-source-bundle
+-	go vet $(SUBSTRATE_PKGS)
++	go vet $(BUNDLE_GOFLAGS) $(SUBSTRATE_PKGS)
+ 
+ clean:
+ 	rm -f $(BINARY) $(WORLD_BINARY) $(COVERPROFILE) $(SELF_SOURCE_BUNDLE)
+ 	rm -rf $(DIST_DIR)
+ 
+ install: self-source-bundle
+-	go install $(GOFLAGS) -ldflags '$(LDFLAGS)' $(PKG)
++	go install $(BUNDLE_GOFLAGS) -ldflags '$(LDFLAGS)' $(PKG)
+ 
+ paper-public:
+ 	./scripts/paper-public.sh start
+diff --git a/internal/runtime/self_source.go b/internal/runtime/self_source.go
+index fc66d38bc..b1aba9a53 100644
+--- a/internal/runtime/self_source.go
++++ b/internal/runtime/self_source.go
+@@ -150,7 +150,9 @@ func overlayEmbeddedSelfSource(root string) error {
+ }
+ 
+ func writeSelfSourceBundleBuildData(root string, bundle []byte) error {
+-	data := fmt.Sprintf(`package quine
++	data := fmt.Sprintf(`//go:build selfsourcebundle
++
++package quine
+ 
+ import "encoding/base64"
+ 
+diff --git a/scripts/generate-self-source-bundle.sh b/scripts/generate-self-source-bundle.sh
+index eae8f6909..01f5253da 100755
+--- a/scripts/generate-self-source-bundle.sh
++++ b/scripts/generate-self-source-bundle.sh
+@@ -24,7 +24,9 @@ out_path = pathlib.Path(sys.argv[2])
+ data = base64.b64encode(bundle_path.read_bytes()).decode("ascii")
+ 
+ out_path.write_text(
+-    """package quine
++    """//go:build selfsourcebundle
++
++package quine
+ 
+ import "encoding/base64"
+ 
+diff --git a/selfsource.go b/selfsource.go
+index 768965971..ffc52f897 100644
+--- a/selfsource.go
++++ b/selfsource.go
+@@ -8,11 +8,12 @@ import (
+ 
+ // SelfSource carries Quine's embedded self-source tree for runtime projection.
+ //
+-//go:embed cmd/quine internal/config internal/llm internal/runtime internal/tape internal/tools selfsource.go selfsource_bundle_data.go go.mod go.sum
++//go:embed cmd/quine internal/config internal/llm internal/runtime internal/tape internal/tools selfsource.go selfsource_bundle_stub.go go.mod go.sum
+ var SelfSource embed.FS
+ 
+-// selfsource_bundle_data.go defines SelfSourceBundle as a generated build
+-// artifact. Makefile-backed builds generate it before compiling.
++// selfsource_bundle_stub.go defines an empty SelfSourceBundle for ordinary
++// package loading. Makefile-backed builds generate selfsource_bundle_data.go and
++// compile with the selfsourcebundle tag to embed the repository bundle.
+ 
+ // WalkSelfSource walks the embedded self-source tree, skipping the synthetic root.
+ func WalkSelfSource(fn fs.WalkDirFunc) error {
+diff --git a/tests/validate.sh b/tests/validate.sh
+index 95f977911..a7b7b6e05 100755
+--- a/tests/validate.sh
++++ b/tests/validate.sh
+@@ -180,6 +180,7 @@ print_layer() {
+ run_substrate_suite() {
+   local packages=()
+   local pkg
++  local goflags=()
+   while IFS= read -r pkg; do
+     [[ -n "$pkg" ]] || continue
+     packages+=("$pkg")
+@@ -190,7 +191,15 @@ run_substrate_suite() {
+     exit 1
+   fi
+ 
+-  go test ${GOFLAGS:-} -count=1 "${packages[@]}"
++  if [[ -n "${GOFLAGS:-}" ]]; then
++    # shellcheck disable=SC2206
++    goflags=(${GOFLAGS})
++  fi
++  if [[ -f selfsource_bundle_data.go ]]; then
++    goflags+=("-tags" "selfsourcebundle")
++  fi
++
++  go test "${goflags[@]}" -count=1 "${packages[@]}"
+ }
+ 
+ echo "Validation ladder for change layer: $CHANGE"

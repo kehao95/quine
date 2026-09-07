@@ -1,0 +1,6 @@
+outs:
+- md5: c440ac74da77f211df7d6d22271533d8.dir
+  size: 41271
+  nfiles: 12
+  hash: md5
+  path: agent-a-data

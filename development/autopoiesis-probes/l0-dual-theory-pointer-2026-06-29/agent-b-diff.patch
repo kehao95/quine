@@ -1,0 +1,110 @@
+diff --git a/Paper/theory/objects/affordance-null-ecology.md b/Paper/theory/objects/affordance-null-ecology.md
+index 936b74b9e..6c7d9e6ea 100644
+--- a/Paper/theory/objects/affordance-null-ecology.md
++++ b/Paper/theory/objects/affordance-null-ecology.md
+@@ -109,7 +109,7 @@ state can be summarized."
+ 
+ ## Papers using this object
+ 
+-_(no papers declare this object yet)_
++- stigmergic-trace-causality
+ 
+ ## Live Seeds
+ Speculative, ahead of evidence, marked `SEED` — plant freely, prove later. From
+diff --git a/Paper/theory/objects/carrier.md b/Paper/theory/objects/carrier.md
+index 19ca7f15d..aec4290a3 100644
+--- a/Paper/theory/objects/carrier.md
++++ b/Paper/theory/objects/carrier.md
+@@ -173,6 +173,7 @@ Canonical prediction lifecycle lives under [`../../predictions/`](../../predicti
+ - quine-hotos
+ - quine-lifelike
+ - quine-process-habitat
++- stigmergic-trace-causality
+ 
+ ## Live Seeds
+ - `SEED` (lens: **holobiont / hologenome theory**, Zilber-Rosenberg & Rosenberg
+diff --git a/Paper/theory/objects/coordination-closure.md b/Paper/theory/objects/coordination-closure.md
+index 0d93a86cf..2f71b9839 100644
+--- a/Paper/theory/objects/coordination-closure.md
++++ b/Paper/theory/objects/coordination-closure.md
+@@ -75,6 +75,7 @@ Runtime affordances this object reasons over (canonical layer: [`core/mechanisms
+ - minimal-runtime-protocols
+ - process-as-fs
+ - quine-hotos
++- quine-process-habitat
+ - systems-track-b
+ 
+ ## Live Seeds
+diff --git a/Paper/theory/objects/exec-barrier.md b/Paper/theory/objects/exec-barrier.md
+index 252a08f52..4e7fabb5b 100644
+--- a/Paper/theory/objects/exec-barrier.md
++++ b/Paper/theory/objects/exec-barrier.md
+@@ -124,6 +124,7 @@ Canonical prediction lifecycle lives under [`../../predictions/`](../../predicti
+ - quine-arxiv
+ - quine-hotos
+ - quine-lifelike
++- quine-process-habitat
+ - revisable-time
+ - subjective-reality
+ - systems-track-b
+diff --git a/Paper/theory/objects/narrative-claim.md b/Paper/theory/objects/narrative-claim.md
+index 98786edcc..ef6b94a18 100644
+--- a/Paper/theory/objects/narrative-claim.md
++++ b/Paper/theory/objects/narrative-claim.md
+@@ -293,6 +293,7 @@ the living-system cut into a structural feature of the ontology itself.
+ - agentic-alife-workshop
+ - contentsquare-cli-one-day
+ - harness-engineering-is-architectural-amnesia
++- narration-invariance-eval
+ - open-sourcing-a-research-workbench
+ - quine-notes-series
+ - revisable-time
+diff --git a/Paper/theory/objects/protocol-emergence.md b/Paper/theory/objects/protocol-emergence.md
+index 7db39cbb7..e1e34f0ae 100644
+--- a/Paper/theory/objects/protocol-emergence.md
++++ b/Paper/theory/objects/protocol-emergence.md
+@@ -97,6 +97,7 @@ Canonical prediction lifecycle lives under [`../../predictions/`](../../predicti
+ - minimal-perceptual-prerequisites
+ - minimal-runtime-protocols
+ - open-sourcing-a-research-workbench
++- quine-process-habitat
+ 
+ ## Live Seeds
+ - `SEED` (lens: **unreliable failure detectors**, Chandra & Toueg 1996; review: 2026-07-25)
+diff --git a/Paper/theory/objects/stigmergy-as-carrier.md b/Paper/theory/objects/stigmergy-as-carrier.md
+index 5fb7004f8..ed3c35bf0 100644
+--- a/Paper/theory/objects/stigmergy-as-carrier.md
++++ b/Paper/theory/objects/stigmergy-as-carrier.md
+@@ -100,6 +100,7 @@ Runtime affordances this object reasons over (canonical layer: [`core/mechanisms
+ 
+ ## Papers using this object
+ 
++- [`routing-surface-coevolution`](../../papers/viability/routing-surface-coevolution/README.md) - ALIFE LBA dossier where OS-routing surfaces and trace-mediated attacks are the viability-facing use of stigmergic carriers
+ - [`stigmergic-trace-causality`](../../papers/open-ended-ecology/stigmergic-trace-causality/README.md) - seed dossier / planning skeleton for manuscript prose about the weak-to-causal trace threshold and the P7T/P7G/P12 stigmergic trace-causality evidence
+ 
+ ## Live Seeds
+diff --git a/Paper/theory/objects/trace-inheritance.md b/Paper/theory/objects/trace-inheritance.md
+index 2f142fa6d..3c694a418 100644
+--- a/Paper/theory/objects/trace-inheritance.md
++++ b/Paper/theory/objects/trace-inheritance.md
+@@ -158,6 +158,8 @@ Canonical prediction lifecycle lives under [`../../predictions/`](../../predicti
+ - quine-lifelike
+ - quine-process-habitat
+ - revisable-time
++- routing-surface-coevolution
++- stigmergic-trace-causality
+ 
+ ## Live Seeds
+ - `SEED` (lens: **Developmental Systems Theory**, Oyama 1985, *The Ontogeny of
+diff --git a/Paper/theory/objects/viability-pressure.md b/Paper/theory/objects/viability-pressure.md
+index 0f05b481f..2303648ca 100644
+--- a/Paper/theory/objects/viability-pressure.md
++++ b/Paper/theory/objects/viability-pressure.md
+@@ -115,6 +115,7 @@ Runtime affordances this object reasons over (canonical layer: [`core/mechanisms
+ - lifecycle-bottleneck-reproduction
+ - quine-lifelike
+ - quine-process-habitat
++- routing-surface-coevolution
+ - structure-grows
+ 
+ ## Predictions

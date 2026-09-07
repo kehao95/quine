@@ -1,0 +1,31 @@
+{
+  "phase": "p9c-compiler-ecology",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p9c-compiler-ecology/9C.01-persistent-cleanroom-c-compiler",
+      "slug": "persistent-cleanroom-c-compiler",
+      "legacy_id": "p9c:9C.01",
+      "family": "bench",
+      "experiment_type": "persistent-workspace-campaign",
+      "status": "baseline-recorded",
+      "question": "With only a minimal clean-compiler goal, empty repo, and corpus pressure in one persistent workspace, will Quine peers discover the objective and build both a compiler artifact and an emergent collaboration substrate across repeated launches?",
+      "theory_objects": [
+        "stigmergy-as-carrier",
+        "coordination-closure",
+        "protocol-emergence",
+        "carrier",
+        "viability-pressure",
+        "continuity-substrate",
+        "trace-inheritance",
+        "future-task-surface"
+      ],
+      "paper_feeds": [],
+      "disposition": "active",
+      "disposition_reason": "status baseline-recorded with many recorded representative runs (I01-I33); active campaign."
+    }
+  ],
+  "phase_root_docs": [
+    "README.md"
+  ],
+  "notes": "Phase contains exactly one experiment directory (9C.01-persistent-cleanroom-c-compiler) plus a phase-root README.md. Per this phase's family rule, all experiments map to benchmarks (bench). On-disk ID token is 9C.01, so legacy_id is p9c:9C.01. Frontmatter supplied surface_kind/phase/experiment_id/experiment_type=persistent-workspace-campaign/status=baseline-recorded directly. Paper Feeds line reads 'none-yet - none - not-for-paper-yet', so paper_feeds is empty []. theory_objects inferred from content: persistent-workspace ecology coordinating via shared files (stigmergy-as-carrier, carrier), emergent collaboration/coordination substrate and ctl protocol (coordination-closure, protocol-emergence), prediction-error/viability survival prior (viability-pressure), persistent workspace continuability across membership (continuity-substrate), later peers reusing earlier artifacts (trace-inheritance), and safe continuation/next-task points (future-task-surface). Within the experiment dir, research/ holds two helper theory/brief docs (workspace-ecology-friction-gradient-theory.md, ai-self-created-structure-dr-brief.md); runs/, workspace/, run-container.sh, peer.Dockerfile, .gitignore are experiment-internal support, not sibling phase-root docs."
+}

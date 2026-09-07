@@ -1,0 +1,27 @@
+{
+  "phase": "p7w-wiki-frontier-ecology",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p7w-wiki-frontier-ecology/7W.01-frontier-wiki",
+      "slug": "frontier-wiki",
+      "legacy_id": "p7w:7W.01",
+      "family": "cumulative-novelty",
+      "experiment_type": "exploratory",
+      "status": "active",
+      "question": "Do round-based agents extend a persistent wiki frontier (cumulative novelty) rather than duplicate, ignore, or close existing content?",
+      "theory_objects": [
+        "stigmergy-as-carrier",
+        "self-description-resource",
+        "structural-pull",
+        "trace-inheritance"
+      ],
+      "paper_feeds": [],
+      "disposition": "active",
+      "disposition_reason": "status active with two retained mechanism runs (C01, C02)"
+    }
+  ],
+  "phase_root_docs": [
+    "README.md"
+  ],
+  "notes": "Phase has exactly one experiment directory (7W.01-frontier-wiki) plus the phase README.md. Family assigned by phase rule (all -> cumulative-novelty). experiment_type 'exploratory' from frontmatter. Paper Feeds line is 'none-yet - none - not-for-paper-yet' so paper_feeds is []. theory_objects inferred from content: the persistent wiki acts as a stigmergic shared medium (stigmergy-as-carrier) carrying traces later rounds inherit (trace-inheritance); pages are agent self-documentation of runtime control surfaces (self-description-resource); the frontier-extension pressure pulling later rounds beyond existing content reads as structural-pull. The only child sub-dir under the experiment is runs/ (run artifacts, not an experiment)."
+}

@@ -42,21 +42,25 @@ Full descriptions, PDFs, and experiment data live under
 | `Paper/` | Philosophy, developing theory, research questions, discovery procedures, and publication work | Private for now |
 | `experiments/` | Experimental designs, environments, runs, and analyses | Private for now; selected materials accompany released work |
 | [`public/`](./public/README.md) | Released papers, essays, evidence, and reproduction materials | Public |
-| [`cmd/`](./cmd/) | Entrypoints for the agent runtime, habitat worlds, and operator tools | `quine` and `world` public; `qcli` private for now |
+| [`cmd/`](./cmd/) | Entrypoints for the agent runtime, habitat worlds, and operator tools | Public: `quine`, `world`, and `qcli` |
 | [`internal/`](./internal/) | Runtime implementation: model protocols, tools, recording, lifecycle, and workspace behavior | Public |
 | [`habitat/`](./habitat/) | Habitat worlds and their runtime | Public |
-| `operator/` | Operator interfaces, including qcli | Private for now |
-| `principles/` | Working principles that participants interpret and revise | Private for now |
-| `development/` | Design work, prototypes, working contracts, and current status | Private for now |
-| `evolution/` | Records and interpretations of the repository's development | Private for now |
+| [`operator/`](./operator/qcli/README.md) | Operator interfaces, including qcli | Public |
+| [`principles/`](./principles/README.md) | Working principles that participants interpret and revise | Public |
+| [`development/`](./development/README.md) | Design work, prototypes, working contracts, and current status | Public records; development DVC payloads remain private |
+| [`evolution/`](./evolution/README.md) | Records and interpretations of the repository's development | Public |
 | `profiles/` | Model and runtime configuration presets | Private for now |
 | [`tests/`](./tests/) | Software verification, model evaluations, and retained baselines | Public; credential-sanitized DVC data is restored through the public manifest |
-| [`scripts/`](./scripts/) | Development, validation, publication, and data tools | Public data restore script; other tools private for now |
+| [`scripts/`](./scripts/) | Development, validation, publication, and data tools | Public restore and credential-scan scripts; other tools private for now |
 | [`.dvc/`](./.dvc/) | Artifact storage configuration and the public data manifest | Configuration and public manifest included |
 | `.githooks/` | Checks run at commit and push boundaries | Private for now |
 
 Parts of Quine are **private for now**. If you have research interests in any
 of these areas, please [reach out](mailto:i@kehao.me).
+
+Build and run the terminal or browser client via [qcli](./operator/qcli/README.md).
+The [public workbench scope](./development/PUBLIC-RELEASE.md) explains the
+included root working documents, historical references, and declared redactions.
 
 ## Follow
 

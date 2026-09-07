@@ -1,0 +1,6 @@
+outs:
+- md5: dfda7af666941366f512b62b347b7529.dir
+  size: 2547
+  nfiles: 1
+  hash: md5
+  path: run6-workspace

@@ -1,0 +1,46 @@
+{
+  "phase": "p4-harbor",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p4-harbor/4.1-terminal-bench",
+      "slug": "terminal-bench",
+      "legacy_id": "p4:4.1",
+      "family": "benchmarks",
+      "experiment_type": "dataset-eval",
+      "status": "paused",
+      "question": "Can Quine's low-level POSIX process architecture solve hard real-world terminal tasks (Terminal-Bench 2.0) without application-layer abstractions, and which wins come from architecture vs prompt/model variance?",
+      "theory_objects": [],
+      "paper_feeds": ["system/systems-track-b", "system/quine-hotos"],
+      "disposition": "active",
+      "disposition_reason": "Has completed Kimi K2.5 sweep runs (51/89); status paused but retained as benchmark evidence, not superseded."
+    },
+    {
+      "legacy_path": "experiments/p4-harbor/4.2-tb2-sweep",
+      "slug": "tb2-sweep",
+      "legacy_id": "p4:4.2",
+      "family": "benchmarks",
+      "experiment_type": "dataset-eval",
+      "status": "paused",
+      "question": "What is Quine's full-sweep performance and regression behavior across all Terminal-Bench 2.0 tasks under prompt and binary ablations?",
+      "theory_objects": [],
+      "paper_feeds": ["system/systems-track-b", "system/quine-hotos"],
+      "disposition": "active",
+      "disposition_reason": "Multiple completed sweep runs retained as DVC-backed evidence; status paused but historical runs intact, not superseded."
+    },
+    {
+      "legacy_path": "experiments/p4-harbor/4.3-local-wal-recovery",
+      "slug": "local-wal-recovery",
+      "legacy_id": "p4:4.3",
+      "family": "benchmarks",
+      "experiment_type": "single-run",
+      "status": "active",
+      "question": "On the real Linux overlay substrate, does workspace mutation visibility (raw vs workspace) improve honest failure semantics on a destructive WAL trap, and can exec(reset_world) recover the world via revisable time?",
+      "theory_objects": ["continuity-substrate", "exec-barrier"],
+      "paper_feeds": ["system/quine-arxiv", "system/process-as-fs"],
+      "disposition": "active",
+      "disposition_reason": "Status active; live local-reproduction lane preferred over paused Harbor TB lanes for workspace-physics claims."
+    }
+  ],
+  "phase_root_docs": ["README.md"],
+  "notes": "All three children matched the phase rule (4.1, 4.2, 4.3 -> benchmarks/bench). experiment_type values taken directly from frontmatter: 4.1/4.2 dataset-eval, 4.3 single-run. 4.1 and 4.2 are benchmark/dataset-eval lanes with no theory-object mapping clearly supported by their Paper Feeds (systems-track-b/quine-hotos), so theory_objects left empty. For 4.3, continuity-substrate inferred from the overlay workspace substrate + exec(reset_world) rollback / 'revisable time' framing, and exec-barrier from the forced destructive sqlite3 exec probe and exec(reset_world) gating. Phase root contains only README.md as a non-experiment doc; no helper/support sibling dirs at the phase root. No within-phase slug collisions."
+}

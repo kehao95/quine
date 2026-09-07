@@ -1,0 +1,6 @@
+outs:
+- md5: b7350d3d6cbb6286b6986700771c3527.dir
+  size: 294742
+  nfiles: 12
+  hash: md5
+  path: run3-full-exit-disabled-data

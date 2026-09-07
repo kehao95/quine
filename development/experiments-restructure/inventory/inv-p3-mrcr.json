@@ -1,0 +1,72 @@
+{
+  "phase": "p3-mrcr",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p3-mrcr/3.1-needle-retrieval",
+      "slug": "needle-retrieval",
+      "legacy_id": "p3:3.1",
+      "family": "early-existence",
+      "experiment_type": "dataset-eval",
+      "status": "complete",
+      "question": "Does Quine's mission-first streaming architecture outperform full-context baselines on long-context ordinal needle retrieval?",
+      "theory_objects": [],
+      "paper_feeds": ["system/quine-arxiv", "system/systems-track-b"],
+      "disposition": "active",
+      "disposition_reason": "status complete with run artifacts; supported on current sample set"
+    },
+    {
+      "legacy_path": "experiments/p3-mrcr/3.2-binary-quine",
+      "slug": "binary-quine",
+      "legacy_id": "p3:3.2-binary-quine",
+      "family": "early-existence",
+      "experiment_type": "single-run",
+      "status": "complete",
+      "question": "Can quine output a working executable binary implementation of itself rather than copying the original?",
+      "theory_objects": ["reproduced-object", "self-description-resource"],
+      "paper_feeds": ["alife/quine-lifelike", "alife/quine-process-habitat"],
+      "disposition": "active",
+      "disposition_reason": "status complete with a successful run (functional binary)"
+    },
+    {
+      "legacy_path": "experiments/p3-mrcr/3.2-mixed-needle",
+      "slug": "mixed-needle",
+      "legacy_id": "p3:3.2-mixed-needle",
+      "family": "early-existence",
+      "experiment_type": "dataset-eval",
+      "status": "complete",
+      "question": "Does explicit state tracking preserve retrieval accuracy as the number of simultaneous needle targets increases, where baselines degrade?",
+      "theory_objects": [],
+      "paper_feeds": ["system/quine-arxiv", "system/systems-track-b"],
+      "disposition": "active",
+      "disposition_reason": "status complete with run artifacts; supported on current sample set"
+    },
+    {
+      "legacy_path": "experiments/p3-mrcr/3.3-introspective-quine",
+      "slug": "introspective-quine",
+      "legacy_id": "p3:3.3",
+      "family": "early-existence",
+      "experiment_type": "single-run",
+      "status": "complete",
+      "question": "Can a severely resource-constrained agent leverage fork/exec, self-invocation, and system-prompt introspection to implement itself?",
+      "theory_objects": ["reproduced-object", "self-description-resource"],
+      "paper_feeds": ["alife/quine-lifelike", "system/quine-hotos", "alife/quine-process-habitat"],
+      "disposition": "active",
+      "disposition_reason": "status complete with run artifacts"
+    },
+    {
+      "legacy_path": "experiments/p3-mrcr/3.4-blind-quine",
+      "slug": "blind-quine",
+      "legacy_id": "p3:3.4",
+      "family": "early-existence",
+      "experiment_type": "single-run",
+      "status": "complete",
+      "question": "Can an agent reconstruct its own runtime semantics by introspecting its system prompt, without being told what those semantics are?",
+      "theory_objects": ["reproduced-object", "self-description-resource"],
+      "paper_feeds": ["alife/quine-lifelike", "alife/quine-process-habitat"],
+      "disposition": "active",
+      "disposition_reason": "status complete with run artifacts; partial semantic self-reconstruction observed"
+    }
+  ],
+  "phase_root_docs": ["README.md"],
+  "notes": "All 5 children are experiment directories; only sibling at phase root is README.md (phase summary index, linear_ticket Q-78). The root README Layout section mentions analysis/, assets/, setup/ but none of those directories exist at the phase root on disk. Family rule for p3-mrcr assigns all experiments to early-existence (exst). ID-token collision on '3.2': both 3.2-binary-quine and 3.2-mixed-needle carry on-disk ID 3.2, so legacy_id appends the slug per the within-phase collision rule (p3:3.2-binary-quine, p3:3.2-mixed-needle); the other IDs (3.1, 3.3, 3.4) are unique and use the bare token. experiment_type values taken directly from frontmatter (dataset-eval for the two retrieval evals; single-run for the three self-reconstruction runs). theory_objects: the two MRCR retrieval evals (3.1, 3.2-mixed) feed only system-track papers and map to none of the closed theory-object vocabulary, so left empty; the three self-reconstruction experiments map to reproduced-object (agent emits a working clone of itself) and self-description-resource (introspecting own binary/system-prompt as the spec to reproduce). All statuses are complete with run artifacts in runs/, so dispositions are active."
+}

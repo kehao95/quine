@@ -1,0 +1,3 @@
+ M Paper/theory/objects/README.md
+ M Paper/theory/objects/affordance-null-ecology.md
+?? Paper/predictions/open/affordance-null-ecology-P1.md

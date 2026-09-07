@@ -1,0 +1,22 @@
+diff --git a/Makefile b/Makefile
+index cca98bb6c..8ca1d4ae3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -568,3 +568,17 @@ audit-dossier-dimensions:
+ 
+ audit-self-description:
+ 	./scripts/check-self-description-completeness.sh
++
++.PHONY: audit-seed-backlog check-seed-backlog audit-generation-event-closure check-generation-event-closure audit-dossier-dimensions audit-self-description
++
++audit-seed-backlog:
++	./scripts/check-seed-backlog.sh
++
++check-seed-backlog:
++	./scripts/check-seed-backlog.sh
++
++audit-generation-event-closure:
++	./scripts/check-generation-event-closure.sh
++
++check-generation-event-closure:
++	./scripts/check-generation-event-closure.sh

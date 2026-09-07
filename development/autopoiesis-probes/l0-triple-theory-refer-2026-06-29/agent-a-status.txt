@@ -1,0 +1,11 @@
+ M Paper/theory/objects/affordance-null-ecology.md
+ M Paper/theory/objects/carrier.md
+ M Paper/theory/objects/coordination-closure.md
+ M Paper/theory/objects/exec-barrier.md
+ M Paper/theory/objects/narrative-claim.md
+ M Paper/theory/objects/protocol-emergence.md
+ M Paper/theory/objects/stigmergy-as-carrier.md
+ M Paper/theory/objects/trace-inheritance.md
+ M Paper/theory/objects/viability-pressure.md
+ M tests/active-go-packages.sh
+ M tests/validate.sh

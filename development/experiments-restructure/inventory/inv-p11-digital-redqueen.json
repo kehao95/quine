@@ -1,0 +1,62 @@
+{
+  "phase": "p11-digital-redqueen",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p11-digital-redqueen/11.01-idle-kill-smoke",
+      "slug": "idle-kill-smoke",
+      "legacy_id": "p11:11.01",
+      "family": "digital-red-queen",
+      "experiment_type": "smoke",
+      "status": "smoke",
+      "question": "Does the physical DRQ loop (launch multiple Quines, idle barrier, activation, score surviving peer, copy winner, verify inherited context) work end-to-end before symmetric redqueen selection?",
+      "theory_objects": ["viability-pressure", "trace-inheritance", "reproduced-object"],
+      "paper_feeds": [],
+      "disposition": "active",
+      "disposition_reason": "No frontmatter; README describes a working runtime smoke with a runner and runs/ dir; classed active. Paper Feeds is none-yet so paper_feeds empty."
+    },
+    {
+      "legacy_path": "experiments/p11-digital-redqueen/11.02-two-node-drq",
+      "slug": "two-node-drq",
+      "legacy_id": "p11:11.02",
+      "family": "digital-red-queen",
+      "experiment_type": "arena",
+      "status": "active",
+      "question": "In a symmetric two-node DRQ arena with shared runtime, can a Quine discover and kill its peer to survive and return to idle, and can a winner's inherited session context seed the next round?",
+      "theory_objects": ["viability-pressure", "trace-inheritance", "identity-criterion"],
+      "paper_feeds": [],
+      "disposition": "active",
+      "disposition_reason": "No frontmatter; README describes first symmetric DRQ baseline with runner and runs/ dir and inherited-round scaffold; active. Paper Feeds none-yet so empty."
+    },
+    {
+      "legacy_path": "experiments/p11-digital-redqueen/11.03-host-lineage-drq",
+      "slug": "host-lineage-drq",
+      "legacy_id": "p11:11.03",
+      "family": "digital-red-queen",
+      "experiment_type": "arena",
+      "status": "active",
+      "question": "Without the Docker arena, does an inherited host-lineage DRQ harness produce Red Queen strategy evolution where agents treat the runtime control-plane surface (FIFOs, idle barrier, proof file, prior tapes, filesystem routing) as a manipulable OS-level ecology?",
+      "theory_objects": ["viability-pressure", "trace-inheritance", "stigmergy-as-carrier"],
+      "paper_feeds": [],
+      "disposition": "active",
+      "disposition_reason": "No frontmatter; README has extensive Current Observation logs of live runs (multi-round lineages, FUSE/legacy backends); active. Paper Feeds none-yet so empty."
+    },
+    {
+      "legacy_path": "experiments/p11-digital-redqueen/11.04-carrying-capacity-drq",
+      "slug": "carrying-capacity-drq",
+      "legacy_id": "p11:11.04",
+      "family": "digital-red-queen",
+      "experiment_type": "arena",
+      "status": "positive-smoke",
+      "question": "When reproduction requires a free agent slot under a bounded QUINE_MAX_AGENTS cap and the blind task never mentions killing, do two live competitors experience real carrying-capacity pressure such that a lineage reproduces only by freeing bounded POSIX capacity (process death, voluntary exit, or accounting/runtime-surface manipulation)?",
+      "theory_objects": ["viability-pressure", "reproduced-object", "successor-morphology"],
+      "paper_feeds": ["drq-carrying-capacity"],
+      "disposition": "active",
+      "disposition_reason": "Frontmatter status positive-smoke with multiple recorded runs and a candidate Paper Feed (drq-carrying-capacity 11.04); active."
+    }
+  ],
+  "phase_root_docs": [
+    "README.md",
+    "records"
+  ],
+  "notes": "Phase rule: all experiments -> digital-red-queen (drq). 4 experiment dirs found, all with the p11 11.x numeric prefix. 11.01/11.02/11.03 READMEs have NO YAML frontmatter (no surface_kind/phase/experiment_id/experiment_type/status), so experiment_type and status were inferred from content and the prose 'this is a smoke / first symmetric arena / host-lineage baseline' framing: 11.01 status=smoke (runtime smoke, explicitly 'not yet ecological evidence'); 11.02 status=active (first symmetric baseline, has runner + runs/); 11.03 status=active (extensive live-run observation logs). 11.04 has full frontmatter (status: positive-smoke, surface_kind: experiment, experiment_id: p11-digital-redqueen/11.04-carrying-capacity-drq) but no experiment_type field, so experiment_type=arena inferred. experiment_type values (smoke/arena) are all INFERRED — no frontmatter carried an experiment_type field for any of the four. Paper Feeds: 11.01/11.02/11.03 all list a single 'none-yet - none - not-for-paper-yet' line, mapped to empty paper_feeds[]; 11.04 lists 'drq-carrying-capacity - 11.04 - candidate', mapped to paper_feeds=['drq-carrying-capacity']. Non-experiment phase-root items: README.md (phase index) and records/ (holds matches.jsonl ledger, a shared support dir). Within each experiment dir, runs/, judge/, *.sh runners, .gitignore/.dvcignore/.dvc are experiment-internal and not separate experiments. 11.04 dir and 11.04 runs are owned by group drq-arena (dedicated arena users); no separate run records committed in-repo. No within-phase slug collisions. All theory_objects drawn from the closed vocabulary; viability-pressure is common across all four (kill-to-survive / slot pressure selection). trace-inheritance applies where winner/prior-round context seeds the next round (11.01/11.02/11.03). stigmergy-as-carrier applies to 11.03 control-plane/tape ecology. reproduced-object + successor-morphology applies to 11.04 lineage propagation; identity-criterion added to 11.02 for the winner-scoring/post-activation-idle identity test."
+}

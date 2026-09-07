@@ -1,0 +1,405 @@
+[0m
+> codex-5.5-high · gpt-5.5
+[0m
+I’ll inspect the repo state and the self-model under `Paper/theory/`, then choose a small high-value change and verify it.
+[0m→ [0mRead .[90m [offset=1, limit=200][0m
+[0m✱ [0mGlob "*.md"[90m in . · 100 matches[0m
+[0m✱ [0mGlob "Paper/theory/**/*.md"[90m in . · 100 matches[0m
+[0m✱ [0mGrep "TODO|FIXME|XXX|drift|Freshness|Projection|Absorption|Next|open question|must|should"[90m in . · 100 matches[0m
+[0m
+[0m$ [0mgit status --short
+(no output)
+[0m
+The worktree is clean. I’m reading the project status and theory index now to locate an actionable consistency or coverage gap rather than guessing at a feature.
+[0m# [0mTodos
+[•] Inspect repository status, theory index, and active maintenance signals
+[ ] Select a minimal high-value change aligned with the repo self-model
+[ ] Implement the selected change without disturbing unrelated surfaces
+[ ] Run targeted verification and report outcome
+[0m
+[0m→ [0mRead README.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead STATUS.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead ROADMAP.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead Paper/theory/README.md[90m [offset=1, limit=260][0m
+[0m→ [0mRead tests/runtime/COVERAGE_MAP.md[90m [offset=90, limit=80][0m
+The root status/roadmap surfaces are retired; live next-move state is routed to Linear and owner surfaces. I’m checking the local Linear routing and validation contracts before editing.
+[0m→ [0mRead Makefile[90m [offset=1, limit=220][0m
+[0m→ [0mRead CLOSURE.md[90m [offset=1, limit=220][0m
+[0m✱ [0mGlob "Paper/theory/views/*.md"[90m in . · 7 matches[0m
+[0m→ [0mRead development/linear/README.md[90m [offset=1, limit=240][0m
+[0m→ [0mRead DEVELOPMENT.md[90m [offset=1, limit=260][0m
+The local control plane says live execution posture belongs in Linear, not root docs. I’ll query Linear if the CLI is available, then fall back to local owner surfaces if it is not.
+[0m
+[0m$ [0mlinear issue list --limit 20
+✗ Failed to list issues: Sort must be provided via command line flag, configuration file, or LINEAR_ISSUE_SORT environment variable
+[0m
+[0m$ [0mlinear project list
+SLUG         NAME                                             STATUS      PRIORITY HEALTH  LEAD TEAMS DATE                
+09f04ada3246 Canada ALIFE 2026 Travel                         In Progress None     onTrack HK   PER   Started 23 days ago 
+59d3ae3412c8 CS: GitHub Access Governance                     In Progress None     atRisk  HK   CS    Started 38 days ago 
+ba8640d8dfb7 CS: GitHub Runners                               In Progress None     atRisk  HK   CS    Started 38 days ago 
+768cd43b7d0e CS: Loris Platform Integration                   In Progress None     onTrack HK   CS    Started 37 days ago 
+70d229b0f5da CS: Support Shark                                In Progress None     onTrack HK   CS    Started 37 days ago 
+16070a0b1e5a dysonSphere: Publication Path                    In Progress None     onTrack HK   PER   Started 38 days ago 
+1eeb1be06a08 Homelab                                          In Progress None     atRisk  HK   PER   Started 39 days ago 
+943e4fc2e219 Quine: Agent Mechanisms as OS Primitives         In Progress None     onTrack HK   Q     Started 35 days ago 
+7ec5b668053d Quine: ALIFE 2026 Agentic Workshop               In Progress None     onTrack HK   Q     Started 38 days ago 
+988d84a0bd78 Quine: ALIFE 2026 Main Conference Follow-Up      In Progress None     onTrack HK   Q     Started 23 days ago 
+2768e1a2112f Quine: Digital Red Queen                         In Progress None     onTrack HK   Q     Started 33 days ago 
+abd58fc97af9 Quine: Open-Sourcing a Research Workbench        In Progress None     onTrack HK   Q     Started 32 days ago 
+fe49ae8c9ad6 Quine: Self-Replication / Control-Surface Clo... In Progress None     onTrack HK   Q     Started 38 days ago 
+1125985a1c19 Quine: Structural Elicitation                    In Progress None     onTrack HK   Q     Started 14 days ago 
+0899162e4b84 Quine: Structure Grows                           In Progress None     onTrack HK   Q     Started 22 days ago 
+ec5c4705678a Workspace Intelligence                           In Progress None     onTrack HK   PER   Started 38 days ago 
+4039b2c4b9ef CS: Developer Workflow                           Backlog     None     atRisk  HK   CS    Updated 38 days ago 
+fc66afc43828 CS: Support Surface                              Backlog     None     onTrack HK   CS    Updated 37 days ago 
+d7d51106f57c FLF Epistemic Case Study Submission              Backlog     None     onTrack HK   PER   Updated 20 days ago 
+3c2b815eb511 Quine: ALIFE 2026 Venue / Workshops              Backlog     None     onTrack HK   Q     Updated 38 days ago 
+e5cf067561d6 Quine: Benchmark Scaffolds                       Backlog     None     onTrack HK   Q     Updated 38 days ago 
+741af4176333 Quine: Compiler Ecology                          Backlog     None     Unknown HK   Q     Updated 38 days ago 
+c0de0d92daa7 Quine: Full Open Source Release                  Backlog     None     onTrack HK   Q     Updated 10 days ago 
+d5ba0dc78e34 Quine: Repository Essays                         Backlog     None     Unknown HK   Q     Updated 38 days ago 
+a89f8e9cdbea Quine: Runtime Surface Hardening                 Backlog     None     onTrack HK   Q     Updated 35 days ago 
+989d1cbb790c Quine: Social Behavior Papers                    Backlog     None     Unknown HK   Q     Updated 38 days ago 
+fece7a9b9e38 Quine: Viability Follow-ons                      Backlog     None     Unknown HK   Q     Updated 38 days ago 
+847836b9e04e CS: Mobile Infra                                 Completed   None     atRisk  HK   CS    Done 38 days ago    
+c22feb5072e6 CS: Workspace / Collaboration                    Completed   None     onTrack HK   CS    Done 37 days ago    
+55dd609ad9b1 Quine: Runtime Maintainability                   Accepted    None     onTrack HK   Q     Done 16 days ago    
+03d4e44ad93d Workspace                                        Completed   None     onTrack HK   PER   Done 38 days ago    
+aa4065d603f8 CS: AI / Agent Platform                          Archived    None     onTrack HK   CS    Canceled 38 days ago
+c86777563c38 CS: AI Framework                                 Archived    None     atRisk  HK   CS    Canceled 38 days ago
+05d2b719bce3 CS: Deploy Tooling                               Archived    None     Unknown HK   CS    Canceled 38 days ago
+b94f4dacda79 CS: Ops Studies                                  Archived    None     Unknown HK   CS    Canceled 38 days ago
+7cae9d5104ba CS: Security / Supply Chain                      Archived    None     Unknown HK   CS    Canceled 38 days ago
+[0m
+Linear is reachable. The project list shows several active Quine lines; the issue-list command needs an explicit sort flag, so I’m checking its usage and then narrowing to active Quine work.
+[0m$ [0mlinear issue list --help
+[1mUsage:[22m   [95mlinear issue mine[39m
+[1mVersion:[22m [33m2.0.0[39m            
+
+[1mDescription:[22m
+
+  List your issues
+
+[1mOptions:[22m
+
+  [94m-h[39m, [94m--help[39m                       [31m[1m-[22m[39m Show this help.                                                                                                                       
+  [94m--workspace[39m      [33m<[39m[95mslug[39m[33m>[39m          [31m[1m-[22m[39m Target workspace (uses credentials)                                                                                                   
+  [94m-s[39m, [94m--state[39m      [33m<[39m[95mstate[39m[33m>[39m         [31m[1m-[22m[39m Filter by issue state (can be repeated for multiple states)                    ([1mDefault: [22m[ [32m"unstarted"[39m ], [1mValues: [22m[32m"triage"[39m, [32m"backlog"[39m,
+                                                                                                                    [32m"unstarted"[39m, [32m"started"[39m, [32m"completed"[39m, [32m"canceled"[39m)       
+  [94m--all-states[39m                     [31m[1m-[22m[39m Show issues from all states                                                                                                           
+  [94m--sort[39m           [33m<[39m[95msort[39m[33m>[39m          [31m[1m-[22m[39m Sort order (can also be set via LINEAR_ISSUE_SORT)                             ([1mValues: [22m[32m"manual"[39m, [32m"priority"[39m)                         
+  [94m--team[39m           [33m<[39m[95mteam[39m[33m>[39m          [31m[1m-[22m[39m Team to list issues for (if not your default team)                                                                                    
+  [94m--project[39m        [33m<[39m[95mproject[39m[33m>[39m       [31m[1m-[22m[39m Filter by project name                                                                                                                
+  [94m--project-label[39m  [33m<[39m[95mprojectLabel[39m[33m>[39m  [31m[1m-[22m[39m Filter by project label name (shows issues from all projects with this label)                                                         
+  [94m--cycle[39m          [33m<[39m[95mcycle[39m[33m>[39m         [31m[1m-[22m[39m Filter by cycle name, number, or 'active'                                                                                             
+  [94m--milestone[39m      [33m<[39m[95mmilestone[39m[33m>[39m     [31m[1m-[22m[39m Filter by project milestone name (requires --project)                                                                                 
+  [94m-l[39m, [94m--label[39m      [33m<[39m[95mlabel[39m[33m>[39m         [31m[1m-[22m[39m Filter by label name (can be repeated for multiple labels)                                                                            
+  [94m--limit[39m          [33m<[39m[95mlimit[39m[33m>[39m         [31m[1m-[22m[39m Maximum number of issues to fetch (default: 50, use 0 for unlimited)           ([1mDefault: [22m[33m50[39m)                                          
+  [94m--created-after[39m  [33m<[39m[95mdate[39m[33m>[39m          [31m[1m-[22m[39m Filter issues created after this date (ISO 8601 or YYYY-MM-DD)                                                                        
+  [94m--updated-after[39m  [33m<[39m[95mdate[39m[33m>[39m          [31m[1m-[22m[39m Filter issues updated after this date (ISO 8601 or YYYY-MM-DD)                                                                        
+  [94m-w[39m, [94m--web[39m                        [31m[1m-[22m[39m Open in web browser                                                                                                                   
+  [94m-a[39m, [94m--app[39m                        [31m[1m-[22m[39m Open in Linear.app                                                                                                                    
+  [94m--no-pager[39m                       [31m[1m-[22m[39m Disable automatic paging for long output
+[0m
+[0m$ [0mlinear project view 0899162e4b84
+# Quine: Structure Grows
+
+**Slug:** 0899162e4b84
+**URL:** https://linear.app/kehao/project/quine-structure-grows-0899162e4b84
+**Status:** In Progress
+**Priority:** None
+**Health:** onTrack
+**Creator:** i
+**Lead:** i
+**Start Date:** 2026-06-06
+**Started At:** 6/6/2026
+**Teams:** Quine (Q)
+
+**Created:** 6/6/2026
+**Updated:** 6/6/2026
+
+## Description
+
+Execution-line project for the repository-self-model sequel essay `Structure Grows`, centered on organ differentiation, boundary formation, and the Human-agent-repo developmental loop. Source: `Paper/themes/repository-self-model/papers/structure-grows/`.
+
+## Latest Update
+
+**By:** i
+**When:** 6/6/2026
+**Health:** onTrack
+
+## Current read
+
+`Structure Grows` now has a dedicated execution-line project rather than living inside the broader repository-essays bucket. The canonical source remains `Paper/themes/repository-self-model/papers/structure-grows/`, where the current posture is still `planning-skeleton` with a sharper living-system anatomy frame: organ differentiation, boundary formation, rollback, and the Human-agent-repo developmental loop.
+
+## Next
+
+Select the minimum arc set that can carry the sequel, decide whether the public title stays `Structure Grows`, and then open the first manuscript draft.
+
+## Issues Summary
+
+**Total Issues:** 1
+**In Progress:** 1
+[0m
+[0m$ [0mlinear project view 1125985a1c19
+# Quine: Structural Elicitation
+
+**Slug:** 1125985a1c19
+**URL:** https://linear.app/kehao/project/quine-structural-elicitation-1125985a1c19
+**Status:** In Progress
+**Priority:** None
+**Health:** onTrack
+**Creator:** i
+**Lead:** i
+**Start Date:** 2026-06-14
+**Target Date:** 2026-07-20
+**Started At:** 6/14/2026
+**Teams:** Quine (Q)
+
+**Created:** 6/14/2026
+**Updated:** 6/21/2026
+
+## Description
+
+Structural-valence theory project. Repo source: Paper/papers/runtime-substrate/structural-elicitation/. LBA config: Paper/papers/runtime-substrate/structural-elicitation/lba/.
+
+## Latest Update
+
+**By:** i
+**When:** 6/21/2026
+**Health:** onTrack
+
+## Source topology synchronized
+
+Publication topology migration is closed in the repo. The Structural Elicitation project now uses configuration-native source paths:
+
+- theory/claim root: `Paper/papers/runtime-substrate/structural-elicitation/`
+- ALIFE LBA configuration: `Paper/papers/runtime-substrate/structural-elicitation/lba/`
+- venue object: `Paper/venues/objects/alife-2026-lba.md`
+- format envelope: `Paper/venues/envelopes/2page-lba.md`
+
+Project status remains In Progress / on track. This update is a source-routing sync, not a change to the theory or LBA execution posture.
+
+
+## Issues Summary
+
+**Total Issues:** 3
+**In Progress:** 1
+**Backlog:** 2
+[0m
+[0m$ [0mlinear issue list --team Q --state started --sort priority --limit 50
+[1m[4m◌   ID    TITLE                                                   LABELS                    E STATE       UPDATED    [24m[22m
+▄▆█ Q-94  [Paper] ALIFE 2026 Agentic AI Workshop Submission       [38;2;45;156;219mtype:paper[39m, [38;2;38;181;206mphase:draft[39m   - [38;2;38;181;206mIn Progress[39m [90m12 days ago[39m
+▄▆█ Q-91  [Workshop] ALIFE 2026 Agentic and Generative AI as A... [38;2;108;117;125mtype:control-plane[39m        - [38;2;38;181;206mIn Progress[39m [90m7 days ago [39m
+▄▆  Q-93  [Workshop] ALIFE 2026 LifeDef 2026                      [38;2;108;117;125mtype:control-plane[39m        - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+▄▆  Q-92  [Workshop] ALIFE 2026 Autopoiesis, Self & Other         [38;2;108;117;125mtype:control-plane[39m        - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+▄▆  Q-16  [Paper] Quine Cognitive Autopoiesis                     [38;2;38;181;206mphase:draft[39m               - [38;2;38;181;206mIn Progress[39m [90m34 days ago[39m
+▄▆  Q-15  [Paper] Minimal Runtime Protocols                       [38;2;38;181;206mphase:draft[39m               - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+▄▆  Q-14  [Operator] Qctl 单会话 Attach/Spawn 收敛                [38;2;86;204;242mtype:operator[39m             - [38;2;38;181;206mIn Progress[39m [90m13 days ago[39m
+--- Q-10  [Control Plane] Linear Usage Convention                 [38;2;108;117;125mtype:control-plane[39m        - [38;2;38;181;206mIn Progress[39m [90m34 days ago[39m
+--- Q-140 [Submission Target] ALIFE 2026 LBA                                                - [38;2;38;181;206mIn Progress[39m [90m7 days ago [39m
+--- Q-139 [Theory] Structural Elicitation                         [38;2;45;156;219mtype:paper[39m, [38;2;189;189;189mphase:idea[39m    - [38;2;38;181;206mIn Progress[39m [90m7 days ago [39m
+--- Q-129 [Experiment] P12 Dormancy Ecology                       [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m7 days ago [39m
+--- Q-58  [Experiment] P9C Compiler Ecology                       [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-128 [Essay] Open-Sourcing a Research Workbench              [38;2;39;174;96mtype:essay[39m, [38;2;154;165;177mphase:outl...[39m - [38;2;38;181;206mIn Progress[39m [90m32 days ago[39m
+--- Q-57  [Experiment] P8 Population                              [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m20 days ago[39m
+--- Q-121 [Essay] Agent Mechanisms as OS Primitives               [38;2;39;174;96mtype:essay[39m, [38;2;154;165;177mphase:outl...[39m - [38;2;38;181;206mIn Progress[39m [90m35 days ago[39m
+--- Q-99  [Experiment] P7W Wiki Frontier Ecology                                            - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-47  [Experiment] P7 OEE                                     [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-97  [Experiment] P11 Digital Red Queen                      [38;2;242;153;74mtype:experiment[39m, [38;2;155;81;224mtarge...[39m - [38;2;38;181;206mIn Progress[39m [90m14 days ago[39m
+--- Q-43  [Experiment] P6 Autopoiesis                             [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-42  [Root] Experiments                                      [38;2;94;106;210mtype:root[39m                 - [38;2;38;181;206mIn Progress[39m [90m29 days ago[39m
+--- Q-41  [Root] Quine                                            [38;2;94;106;210mtype:root[39m                 - [38;2;38;181;206mIn Progress[39m [90m7 days ago [39m
+--- Q-90  [Control Plane] ALIFE 2026 Venue                        [38;2;108;117;125mtype:control-plane[39m        - [38;2;38;181;206mIn Progress[39m [90m7 days ago [39m
+--- Q-40  [Essay] Structure Grows                                 [38;2;38;181;206mphase:draft[39m               - [38;2;38;181;206mIn Progress[39m [90m17 days ago[39m
+--- Q-89  [Experiment] P7T Trace Ecology                          [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-39  [Essay] ContentSquare CLI One-Day                       [38;2;38;181;206mphase:draft[39m               - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-88  [Experiment] P7S Seeded Workspace Ecology               [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-87  [Experiment] P7R Role Ecology                           [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-86  [Experiment] P7I Irregularity Ecology                   [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-36  [Paper] Minimal Perceptual Prerequisites                [38;2;47;128;237mphase:accepted[39m            - [38;2;38;181;206mIn Progress[39m [90m8 days ago [39m
+--- Q-85  [Experiment] P7G Generation Ecology                     [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-84  [Experiment] P7E Open Ecology                           [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-34  [Paper] ALife Priority ArXiv                            [38;2;38;181;206mphase:draft[39m               - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-83  [Experiment] P6R Agentic Runtime Replacement            [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-32  [Paper] Quine-Lifelike                                  [38;2;138;143;152mphase:rejected[39m            - [38;2;38;181;206mIn Progress[39m [90m21 days ago[39m
+--- Q-82  [Experiment] P6M Successor Morphospace                  [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m16 days ago[39m
+--- Q-81  [Experiment] P6F Future Addressability                  [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-80  [Experiment] P5 JOOTS                                   [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-29  [Paper] Process as FileSystem                           [38;2;38;181;206mphase:draft[39m               - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-79  [Experiment] P4 Harbor                                  [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-78  [Experiment] P3 MRCR                                    [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-77  [Experiment] P1 Borges                                  [38;2;242;153;74mtype:experiment[39m           - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-71  [Paper] Generative Self-Replacement                     [38;2;38;181;206mphase:draft[39m               - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-27  [Theme] Repository Self-model                           [38;2;142;91;217mtype:theme[39m                - [38;2;38;181;206mIn Progress[39m [90m11 days ago[39m
+--- Q-26  [Root] Essays                                           [38;2;94;106;210mtype:root[39m                 - [38;2;38;181;206mIn Progress[39m [90m38 days ago[39m
+--- Q-25  [Theme] Viability Habitat                               [38;2;142;91;217mtype:theme[39m                - [38;2;38;181;206mIn Progress[39m [90m22 days ago[39m
+--- Q-24  [Theme] Runtime Ontology                                [38;2;142;91;217mtype:theme[39m                - [38;2;38;181;206mIn Progress[39m [90m1 day ago  [39m
+--- Q-22  [Theme] Social Behavior                                 [38;2;142;91;217mtype:theme[39m                - [38;2;38;181;206mIn Progress[39m [90m22 days ago[39m
+--- Q-21  [Root] System Track                                     [38;2;94;106;210mtype:root[39m                 - [38;2;38;181;206mIn Progress[39m [90m35 days ago[39m
+--- Q-20  [Theme] Open-ended Ecology                              [38;2;142;91;217mtype:theme[39m                - [38;2;38;181;206mIn Progress[39m [90m13 days ago[39m
+--- Q-19  [Theme] Autopoiesis Renewal                             [38;2;142;91;217mtype:theme[39m                - [38;2;38;181;206mIn Progress[39m [90m13 days ago[39m
+[0m
+[0m$ [0mlinear issue list --team Q --state backlog --sort priority --limit 50
+[1m[4m◌   ID    TITLE                                                       LABELS                    E STATE   UPDATED    [24m[22m
+▄▆█ Q-96  [Experiment] 10.02 Terminal-Bench 2.0 GPT-5.5 Medium Rel... [38;2;242;153;74mtype:experiment[39m           - [38;2;190;194;200mBacklog[39m [90m35 days ago[39m
+▄▆█ Q-13  [Evaluation] Process-Surface Peer Callback Protocol: L5 ... [38;2;242;201;76mtype:evaluation[39m           - [38;2;190;194;200mBacklog[39m [90m38 days ago[39m
+▄▆█ Q-12  [Runtime] 为 Overlay Driver 失败补充精确的底层诊断信息      [38;2;235;87;87mtype:runtime[39m              - [38;2;190;194;200mBacklog[39m [90m35 days ago[39m
+▄▆█ Q-11  [Runtime] 运行低权限 Fuse-Overlay 容器兼容性矩阵            [38;2;235;87;87mtype:runtime[39m              - [38;2;190;194;200mBacklog[39m [90m35 days ago[39m
+▄▆  Q-17  [Paper] P7 Open-ended Ecology                               [38;2;154;165;177mphase:outlined[39m            - [38;2;190;194;200mBacklog[39m [90m38 days ago[39m
+--- Q-141 [Paper] Structural Elicitation LBA                          [38;2;45;156;219mtype:paper[39m, [38;2;189;189;189mphase:idea[39m    - [38;2;190;194;200mBacklog[39m [90m7 days ago [39m
+--- Q-142 [Paper] Structural Elicitation Full Paper                   [38;2;45;156;219mtype:paper[39m, [38;2;189;189;189mphase:idea[39m    - [38;2;190;194;200mBacklog[39m [90m12 days ago[39m
+--- Q-119 [Evaluation] Acceptance Closure Consistency                 [38;2;242;201;76mtype:evaluation[39m           - [38;2;190;194;200mBacklog[39m [90m13 days ago[39m
+--- Q-120 [Runtime] Retained Owner Compatibility Audit                [38;2;235;87;87mtype:runtime[39m              - [38;2;190;194;200mBacklog[39m [90m35 days ago[39m
+--- Q-50  [Experiment] P10 Benchmarks                                 [38;2;242;153;74mtype:experiment[39m           - [38;2;190;194;200mBacklog[39m [90m35 days ago[39m
+--- Q-98  [Control Plane] Clarify FUSE / Overlay / Subjective Worl... [38;2;108;117;125mtype:control-plane[39m        - [38;2;190;194;200mBacklog[39m [90m35 days ago[39m
+--- Q-95  [Experiment] 10.01 ProgramBench                             [38;2;242;153;74mtype:experiment[39m           - [38;2;190;194;200mBacklog[39m [90m35 days ago[39m
+--- Q-37  [Paper] Material Channels                                   [38;2;189;189;189mphase:idea[39m                - [38;2;190;194;200mBacklog[39m [90m38 days ago[39m
+--- Q-35  [Paper] ALife Journal                                       [38;2;154;165;177mphase:outlined[39m            - [38;2;190;194;200mBacklog[39m [90m38 days ago[39m
+--- Q-33  [Paper] Quine Process Habitat                               [38;2;154;165;177mphase:outlined[39m            - [38;2;190;194;200mBacklog[39m [90m38 days ago[39m
+--- Q-31  [Paper] Revisable Time                                      [38;2;189;189;189mphase:idea[39m                - [38;2;190;194;200mBacklog[39m [90m38 days ago[39m
+--- Q-30  [Paper] Subjective Reality                                  [38;2;154;165;177mphase:outlined[39m            - [38;2;190;194;200mBacklog[39m [90m38 days ago[39m
+--- Q-66  [Paper] Future Addressability                               [38;2;154;165;177mphase:outlined[39m            - [38;2;190;194;200mBacklog[39m [90m16 days ago[39m
+--- Q-75  [Paper] Quine Notes Series                                  [38;2;189;189;189mphase:idea[39m                - [38;2;190;194;200mBacklog[39m [90m38 days ago[39m
+--- Q-69  [Paper] Computational Morphogenesis                         [38;2;189;189;189mphase:idea[39m                - [38;2;190;194;200mBacklog[39m [90m35 days ago[39m
+--- Q-76  [Paper] Systems Track B                                     [38;2;189;189;189mphase:idea[39m                - [38;2;190;194;200mBacklog[39m [90m38 days ago[39m
+--- Q-68  [Paper] Autoconstructive Successor Morphology               [38;2;189;189;189mphase:idea[39m                - [38;2;190;194;200mBacklog[39m [90m16 days ago[39m
+--- Q-70  [Paper] AI Self-Reproduction Evaluation                     [38;2;154;165;177mphase:outlined[39m            - [38;2;190;194;200mBacklog[39m [90m38 days ago[39m
+--- Q-74  [Paper] Quine HotOS                                         [38;2;154;165;177mphase:outlined[39m            - [38;2;190;194;200mBacklog[39m [90m38 days ago[39m
+--- Q-67  [Paper] Lifecycle Bottleneck Reproduction                   [38;2;189;189;189mphase:idea[39m                - [38;2;190;194;200mBacklog[39m [90m16 days ago[39m
+[0m
+I’m selecting a small implementation-backed item rather than a broad paper task. The highest-priority runtime backlog includes overlay-driver diagnostics, which is likely bounded and testable, so I’m reading that issue and the owning code.
+[0m✱ [0mGrep "overlay|fuse|diagnostic|workspace backend|workspace_backend|switch_world"[90m in Paper/core · 100 matches[0m
+[0m✱ [0mGrep "overlay|mount|fuse|workspace backend|workspace_backend|WorkspaceBackend|switch_world|diagnostic|unsupported"[90m in internal · 100 matches[0m
+[0m✱ [0mGlob "internal/tools/*overlay*"[90m in . · 4 matches[0m
+[0m
+[0m$ [0mlinear issue view Q-12
+# Q-12: [Runtime] 为 Overlay Driver 失败补充精确的底层诊断信息
+
+**State:** Backlog | **Priority:** ▄▆█ | **Assignee:** @i | **Project:** Quine: Runtime Surface Hardening
+
+## Snapshot
+
+Overlay driver 失败诊断 backlog。`ROADMAP.md` 已不再保存 live next-move 列表；这个 ticket 现在是 substrate diagnostics 的 issue 级执行观察面。
+
+## Ownership
+
+* **Owns:** 把 `/dev/fuse`、`fuse-overlayfs` binary、`fusermount` helper、user namespace、mount namespace、bind-mount policy、driver-specific failure 等缺失条件暴露成精确、可行动的诊断。
+* **Does not own:** 改变 workspace overlay 的用户语义、扩展论文范围、或替代 Q-11 的兼容性矩阵。
+
+## State
+
+* **Current state:** `Backlog`，表示工作有明确价值但尚未进入 active execution。
+* **Current read:** 最近 runtime consistency repair 已修掉具体 overlay driver 行为问题，但 broader diagnostic goal 仍是 backlog：常见 substrate failure 还需要稳定分类和可读错误面。
+* **Next transition:** 补齐错误分类和测试分支，使 namespace、helper、`/dev/fuse`、bind mount、driver-specific failure 不再退化成笼统 unsupported/runtime errors。
+
+## Links
+
+* **Project:** `Quine: Runtime Surface Hardening`
+* **Related:** Q-11 compatibility matrix; Q-98 boundary clarification
+* **Repo source:** `ROADMAP.md` for router/guardrails; `tests/runtime/README.md`, `internal/runtime`, and `internal/tools` for implementation/evidence truth.
+
+## Parent
+
+- **Q-21**: [Root] System Track _[In Progress]_
+
+
+## Comments
+
+- **@i** - *5/24/2026* [thread: bb4f1e7b-b684-4d95-92e1-f7a34d13386e]
+
+  ## Runtime consistency repair note
+  
+  2026-05-24: while closing the Quine runtime consistency pass, the local full Go suite exposed concrete overlay driver failures rather than only documentation drift.
+  
+  Landed in the repo working tree:
+  
+  - kernel overlay command env now uses a short `/tmp/quine-overlay/<hash>` state alias for long workspace state paths, while keeping public `workspace_session` names stable
+  - `fuse-overlayfs` startup detection now checks `mountpoint` plus both the symlink path and real path, avoiding false timeout when `/proc/self/mounts` records the resolved target
+  - validation: `go test ./internal/tools` and `go test ./...` pass locally
+  
+  Q-12 should stay Backlog for the broader diagnostic goal: classify and expose common namespace, helper, `/dev/fuse`, bind-mount, and driver-specific failures as precise actionable causes instead of generic unsupported/runtime errors.
+[0m
+[0m$ [0mlinear issue view Q-119
+# Q-119: [Evaluation] Acceptance Closure Consistency
+
+**State:** Backlog | **Priority:** --- | **Assignee:** @i
+
+## Snapshot
+
+Backlog owner for the acceptance-closure gap that used to live in `STATUS.md` Known Gaps. The repo has an explicit L1-L5 ladder and a harder acceptance contract, but closure is still uneven across feature-to-claim mapping, discovery promotion, and failure attribution.
+
+## Ownership
+
+* **Owns:** cross-surface consistency for feature-to-claim / layer / canonical-evaluation mapping; L4 discovery promotion into real L5 pressure tasks; and failure attribution between feature defect, model legibility gap, and harness defect.
+* **Does not own:** every individual model eval, every runtime test, or paper-specific claim wording.
+
+## State
+
+* **Current state:** `Backlog`; the gap is real and resume-ready but not the active execution line.
+* **Current read:** Acceptance closure is structurally clearer than before, but future work still needs a consistent way to pick targeted L3/L4/L5 coverage and name why a failure belongs to implementation, model legibility, or harness design.
+* **Next transition:** Select one runtime or model-facing feature and produce a clean feature-to-claim/layer/evaluation mapping with explicit failure-attribution language.
+
+## Links
+
+* **Parent:** Q-21 System Track
+* **Repo source:** `EVALUATION.md`, `tests/README.md`, `tests/model/README.md`, and `tests/runtime/README.md`.
+
+## Parent
+
+- **Q-21**: [Root] System Track _[In Progress]_
+
+
+## Comments
+
+- **@i** - *6/16/2026* [thread: f2e33fe4-339f-4ac7-95fe-5d4c4e105d66]
+
+  ## Closure sync: context-recruit pilot prompt paths
+  
+  Added the prompt directories and `runs/.gitkeep` files for the two context-recruit pilots already registered in `tests/model/pilots.toml`:
+  
+  - `pilot:context-recruit-parallel-anchor-pressure`
+  - `pilot:context-recruit-window-overflow-pressure`
+  
+  This closes registry-to-source reachability for those runnable pilots. No workflow-state change; Q-119 remains the broader backlog owner for acceptance closure consistency.
+[0m
+I’ll make the overlay failure surface more specific without changing workspace semantics: classify preflight/substrate failures before they collapse into generic unsupported/runtime errors, then cover that with unit tests.
+[0m# [0mTodos
+[✓] Inspect repository status, theory index, and active maintenance signals
+[✓] Select a minimal high-value change aligned with the repo self-model
+[•] Implement the selected change without disturbing unrelated surfaces
+[ ] Run targeted verification and report outcome
+[0m
+[0m→ [0mRead internal/tools/workspace_fuse_overlayfs_linux.go[90m [offset=1, limit=260][0m
+[0m→ [0mRead internal/tools/workspace_fuse_overlayfs_linux_test.go[90m [offset=1, limit=260][0m
+[0m→ [0mRead internal/tools/workspace_overlay_linux.go[90m [offset=1, limit=260][0m
+[0m→ [0mRead internal/tools/workspace_overlay_linux.go[90m [offset=260, limit=360][0m
+[0m→ [0mRead internal/tools/tools_test.go[90m [offset=1, limit=260][0m
+[0m✱ [0mGrep "Workspace|workspace|overlay|support|Prepare|unsupported"[90m in internal/tools · 100 matches[0m
+[0m✱ [0mGrep "type subjectiveFS|type ShExecutor|func NewShExecutor|func \(b \*ShExecutor\) Prepare|subjectiveFS\{"[90m in internal/tools · 11 matches[0m
+[0m→ [0mRead internal/tools/workspace_physics.go[90m [offset=1, limit=260][0m
+[0m→ [0mRead internal/tools/tools.go[90m [offset=250, limit=220][0m
+[0m→ [0mRead internal/tools/tools.go[90m [offset=470, limit=520][0m
+[0m✱ [0mGrep "func jobSysProcAttr|Cloneflags|Unshareflags|mount namespace|user namespace|Pdeathsig"[90m in internal/tools · 22 matches[0m
+[0m→ [0mRead internal/tools/job_attrs_linux.go[90m [offset=1, limit=120][0m
+[0m→ [0mRead internal/tools/job_attrs_linux_test.go[90m [offset=1, limit=120][0m
+[0m→ [0mRead internal/tools/tools_linux_test.go[90m [offset=1, limit=220][0m
+[0m✱ [0mGrep "Preflight|preflightOverlayMount|probeFuseOverlayFS|workspace physics unsupported|overlay mount preflight|fuse-overlayfs feasibility"[90m in internal/tools · 12 matches[0m
+[0m→ [0mRead internal/tools/tools.go[90m [offset=1, limit=270][0m
+I’m editing the overlay preflight path to emit stable failure phases (`mount-namespace`, `bind-mount`, `kernel-mount`) and to classify kernel/fuse probe errors with actionable driver-specific guidance.
+[0m% [0mPatch 1 file
+I’m also tightening runtime job-entry errors so failures after preflight still identify the failed substrate operation instead of relying on raw shell output.
+[0m% [0mPatch 1 file
+[0m% [0mPatch 1 file
+I’m adding low-level unit coverage for the new diagnostic classifications and the `/dev/fuse` usability check; these tests avoid depending on the host supporting real overlay mounts.
+[0m% [0mPatch 1 file
+I spotted that two new script-literal assertions were too escaped for raw string matching; I’m correcting the tests before running them.
+[0m→ [0mRead internal/tools/tools_linux_test.go[90m [offset=45, limit=130][0m
+[0m% [0mPatch 1 file
+[0m% [0mPatch 1 file
+The implementation and tests are patched. I’m formatting the touched Go files, then I’ll run the targeted tool-package tests.
+[0m
+[0m$ [0mgofmt -w "internal/tools/workspace_overlay_linux.go" "internal/tools/workspace_fuse_overlayfs_linux.go" "internal/tools/tools.go" "internal/tools/tools_linux_test.go" "internal/tools/workspace_fuse_overlayfs_linux_test.go"
+(no output)
+[0m

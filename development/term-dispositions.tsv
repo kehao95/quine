@@ -1,0 +1,109 @@
+# PROVENANCE RECORD — no longer the place to read from (dissolved 2026-07-26).
+# Every row whose owning_surface is a Paper/theory/objects/*.md file now lives inside that
+# object as its `## Lineage` section. Read the object, not this table. The table stayed a
+# side file for a week and was not opened once: the two paradigms registered on 2026-07-26
+# were built on structural-pull, affordance-null-ecology and two-latch-gate without their
+# neighbours being consulted, because consulting them required knowing this file existed.
+# That is the same one-hop-away defect the repo measures elsewhere; keeping the research
+# here and expecting it to be read was the error, not the research.
+#
+# 16 rows were NOT migrated — their owning surface is not a theory object (core/mechanisms/,
+# a paper README, a gap, evolution/failures/, development/contracts/, scripts/*.sh). Those
+# surfaces have no Lineage slot. They are open work, listed here rather than dropped.
+#
+# 4 rows are track=B: the mapping pass suspected a misreading or overstated fit. Those were
+# migrated as VISIBLE FLAGS, not as settled lineage. Two of them sit under load-bearing or
+# paradigm-level objects (reflexive-substrate-loop, computational-neoplasm) and need an
+# independent adversarial check before anything is built on them.
+#
+# Literature mapping for 78 coined repo terms (2026-07-19, five domain-cluster research passes).
+# Purpose now: a reference index, not a work queue. The prose-density campaign this table was
+# built for is abandoned (see evolution/periods/23, "Jul 19 - prose-density campaign abandoned"),
+# so the Track A "gloss" rows are NOT pending work: consult them when a theory object is written
+# into a paper or edited for other reasons, and cite then.
+# track=A gloss: established neighbour exists, term stays, citation available when useful.
+# track=standard: already a correct borrowing, nothing to do.
+# track=B flag: the mapper found a possible misreading or overstated fit in the object's own
+#   argument. These are content-correctness items, not wording items. Each needs an independent
+#   adversarial check before any edit. Not actioned.
+# track=C seed: genuine original with no established equivalent; the nearest-neighbour and the
+#   stated difference are related-work material.
+term	owning_surface	established_term	field	confidence	track	disposition	gloss_note
+carrier	Paper/theory/objects/carrier.md	material overlap / propagule (reproducer criterion)	philosophy of biology	near	A	gloss	cf. Griesemer 2000, Selection 1(1-3):67-80 — repo's reconstructed/renegotiated carrier modes extend beyond Griesemer's material-overlap criterion
+trace-inheritance	Paper/theory/objects/trace-inheritance.md	ecological inheritance	evolutionary biology	near	A	gloss	cf. Odling-Smee, Laland & Feldman 2003 — passes a behavioral phenotype, not selection pressures; nearer cultural transmission
+successor-morphology	Paper/theory/objects/successor-morphology.md	theoretical morphospace	theoretical morphology	near	A	gloss	cf. Raup 1966; McGhee 1999 — discrete categorical axes here, no metric distance
+viability-pressure	Paper/theory/objects/viability-pressure.md	selection-episode decomposition	quantitative genetics	partial	A	gloss	cf. Arnold & Wade 1984 — CAUTION: "viability selection" in the literature is narrower (survival to reproductive age); flag the collision at first use
+emergent-succession	Paper/theory/objects/emergent-succession.md	(none — nearest: instrumental convergence, opposite claim)	AI safety	none	C	seed	cf. Omohundro 2008; Bostrom 2012 — object claims the opposite causal route; strong contrast, not equivalence
+reproduced-object	Paper/theory/objects/reproduced-object.md	replicator-interactor distinction	philosophy of biology	partial	A	gloss	cf. Lewontin 1970; Hull 1980
+identity-criterion	Paper/theory/objects/identity-criterion.md	non-branching identity criterion	metaphysics	near	A	gloss	cf. Parfit 1984 Pt. III; Nozick 1981
+selection-signal-collapse	Paper/theory/objects/selection-signal-collapse.md	handicap principle / costly signaling	evolutionary signalling theory	near	A	gloss	cf. Zahavi 1975; Grafen 1990 — receiver fixed by the experimenter, not coevolving
+network-utility-selection	Paper/theory/objects/network-utility-selection.md	endogenous fitness / frequency-dependent selection	ALife; population genetics	partial	A	gloss	cf. Ray 1991; Ayala & Campbell 1974; formal cousin: preferential attachment (Barabasi & Albert 1999)
+stigmergy-as-carrier	Paper/theory/objects/stigmergy-as-carrier.md	stigmergy	ethology	n/a	standard	no-op	already correct; Grasse 1959; Theraulaz & Bonabeau 1999 — the "-as-carrier" extension is the object's own contribution
+autopoietic-membrane	Paper/theory/objects/autopoietic-membrane.md	autopoiesis / operational closure	theoretical biology	partial	B	flag	Maturana & Varela 1980 — self-production requirement not met by an exogenous token-budget constraint; framing may overstate the fit; needs adversarial check before edit
+computational-neoplasm	Paper/theory/objects/computational-neoplasm.md	cancer-as-cheater-lineage	evolutionary medicine	partial	B	flag	Aktipis et al. 2015 — mechanism-level divergence: no somatic variation-and-selection process here; needs adversarial check before edit
+metabolic-transition-topology	Paper/theory/objects/metabolic-transition-topology.md	(too thin to map)	—	—	—	needs-definition	defer; may be the wrong frame entirely
+reproductive-code-topology	Paper/theory/objects/reproductive-code-topology.md	(too thin to map)	—	—	—	needs-definition	defer
+evolutionary-recombination	Paper/theory/objects/evolutionary-recombination.md	(too thin, deliberately underdefined)	—	—	—	needs-definition	leave as-is by design
+safety-heritability-class	Paper/theory/objects/safety-heritability-class.md	germline/soma distinction	evolutionary biology / immunology	partial	B	flag	Weismann 1892 — trained immunity (Netea et al. 2016) is an established exception; "no exceptions" framing may overstate; needs adversarial check
+safety-selection-neutrality	Paper/theory/objects/safety-selection-neutrality.md	Price equation selection term	population genetics	exact	standard	no-op	already correct; Price 1970; Kimura 1968
+carrier-membership-heritability-predictor	Paper/theory/objects/carrier-membership-heritability-predictor.md	cross-fostering design	quantitative genetics	partial	A	gloss	cf. Falconer & Mackay 1996 — CAUTION: "heritability" used non-standardly (transmission fidelity, not variance ratio)
+affordance-null-ecology	Paper/theory/objects/affordance-null-ecology.md	affordance / negative affordance	ecological psychology	partial	A	gloss	cf. Gibson 1979; Gaver 1991 — "null ecology" (missionless condition as structured stimulus field) is the object's own contribution
+reflexive-substrate-loop	Paper/theory/objects/reflexive-substrate-loop.md	niche construction / looping effect	evolutionary biology; philosophy of science	partial	B	flag	Odling-Smee et al. 2003; Hacking 1995 — stated distinction (return path) does not hold; real differentiator is self-description-as-medium (nearer Hofstadter's strange loop); needs adversarial check before edit
+event-driven-cognition	Paper/theory/objects/event-driven-cognition.md	blackboard architecture	AI / agent architecture	near	A	gloss	cf. Erman et al. 1980 (Hearsay-II); Brooks 1986 — cleanest pattern match in the set; still extended with LLM-as-knowledge-source
+deixis-release	Paper/theory/objects/deixis-release.md	deixis	linguistics	none (compound)	A	gloss	cf. Levinson 1983; Grice 1975 — the "release" finding itself is unnamed
+self-immunity	Paper/theory/objects/self-immunity.md	self-protecting/self-healing + corrigibility	autonomic computing; AI safety	partial	A	gloss	cf. Kephart & Chess 2003; Soares et al. 2015 — measured mechanism is deference to authority-ring shape, not a survival drive
+perceptual-disclosure	Paper/core/mechanisms/	hidden/perceptible affordance + POMDP	HCI; RL	near	A	gloss	cf. Gaver 1991; Kaelbling, Littman & Cassandra 1998
+minimal-perceptual-prerequisites	Paper/papers/minimal-perceptual-prerequisites/README.md	stigmergy	ethology; MAS	partial	A	gloss	cf. Grasse 1959; Schelling 1960 — paper title/dossier name, do not rename
+introspective-blind-spot	Paper/theory/gaps/introspective-blind-spot-discovery.md	introspective access limits / bias blind spot	cognitive/social psychology	partial	A	gloss	cf. Nisbett & Wilson 1977; Pronin, Lin & Ross 2002
+forced-externalization	Paper/core/mechanisms/	cognitive offloading / extended mind	cognitive science	partial	A	gloss	cf. Risko & Gilbert 2016; Clark & Chalmers 1998 — modality reversed: compelled, not elective
+externalized-self-model	Paper/core/mechanisms/	self-model	robotics; philosophy of mind	partial	A	gloss	cf. Bongard, Zykov & Lipson 2006; Metzinger 2003
+directive-framing	Paper/core/mechanisms/	directive	speech-act theory	partial	A	gloss	cf. Searle 1976
+narrative-claim	Paper/theory/objects/narrative-claim.md	cheap talk	economics/game theory	partial	A	gloss	cf. Crawford & Sobel 1982 (model), Farrell (name) — pairs with Goodhart's law for the selection claim
+self-description-resource	Paper/theory/objects/self-description-resource.md	self-description tape (von Neumann)	theory of computation	near	A	gloss	cf. von Neumann 1966 — repo's graded ladder has no von Neumann counterpart
+explanation-blind-spot-duality	Paper/theory/objects/explanation-blind-spot-duality.md	(none — nearest: epistemic circularity)	epistemology	none	C	seed	cf. Alston 1993 — covers only half the claim
+evocation-without-discrimination	Paper/theory/objects/evocation-without-discrimination.md	sycophancy + fluency-truth effect	AI alignment; cognitive psychology	partial	A	gloss	cf. Sharma et al. 2023; Reber & Schwarz 1999 — CAUTION: one cited neighbor postdates verification, do not rely on it
+unsampled-function	Paper/theory/objects/unsampled-function.md	non-identifiability / observational equivalence	statistics; inverse RL	near	A	gloss	cf. Skalse & Abate 2023, 2025
+latent-substrate	Paper/theory/objects/latent-substrate.md	the adjacent possible	complexity science	partial	A	gloss	cf. Kauffman 2000 — DO NOT map to "latent space" (VAE); object explicitly demotes that reading
+divergence-substrate	Paper/theory/objects/divergence-substrate.md	(none — nearest: intertwingularity)	hypertext / information science	none	C	seed	cf. Nelson 1974, 1981 — SEED-stage object, no operational definition yet
+encoding-pressure	Paper/theory/objects/encoding-pressure.md	knowledge-transforming composition	writing studies	partial	A	gloss	cf. Bereiter & Scardamalia 1987
+compression-as-measurement	Paper/theory/objects/compression-as-measurement.md	MDL / compression as model selection	information theory	partial	A	gloss	cf. Rissanen 1978; Grunwald 2007
+viability-as-distortion-measure	Paper/theory/objects/viability-as-distortion-measure.md	rate-distortion / DPI	information theory	near	A	gloss	cf. Shannon 1959; Cover & Thomas 2006 — standard machinery, used correctly; strongest of the near cases
+relational-existence	Paper/theory/objects/relational-existence.md	relational ontology / ontic structural realism	metaphysics	partial	A	gloss	cf. Ladyman & Ross 2007 — SEED-stage but mappable via its Code section
+negative-constraint-cut	Paper/theory/objects/negative-constraint-cut.md	Pattee's epistemic cut (genus correct; the cut itself new)	biosemiotics	none	A+C	gloss+seed	cf. Pattee 2001 — cite the genus, seed the novel half (suppressive-constraint non-identifiability)
+regime-decomposition	Paper/theory/objects/regime-decomposition.md	jingle fallacy	psychometrics	partial	A	gloss	cf. Thorndike 1904; Kelley 1927
+substrate-coincidence	Paper/theory/objects/substrate-coincidence.md	niche construction + Weismann-barrier collapse	evolutionary/cultural evolution	partial	A	gloss	cf. Odling-Smee et al. 2003; Weismann 1892; Boyd & Richerson 1985 — all components correctly used individually
+structural-pull	Paper/theory/objects/structural-pull.md	affordance (+ stigmergy co-neighbor)	ecological psychology; ethology	partial	A	gloss	cf. Gibson 1979; Norman 1988 — Reflexive Capture is the object's own contribution, not covered
+audit-attractor	Paper/theory/objects/audit-attractor.md	goal displacement / bureaucratic ritualism	organizational sociology	partial	A	gloss	cf. Merton 1940
+authority-override	Paper/theory/objects/authority-override.md	authority heuristic / peripheral-cue processing	social psychology of persuasion	near	A	gloss	cf. Chaiken 1980; Cialdini 1984; Milgram 1974
+graded-axis-shaping	Paper/theory/objects/graded-axis-shaping.md	classification/residual categories + dichotomization	information science; statistics	partial	A	gloss	cf. Bowker & Star 1999; MacCallum et al. 2002
+closure-signal-tradeoff	Paper/theory/objects/closure-signal-tradeoff.md	exploration-exploitation + seizing-and-freezing	org. learning; social psych	partial	A	gloss	cf. March 1991; Kruglanski & Webster 1996
+trigger-structure	Paper/theory/objects/trigger-structure.md	Tinbergen's four questions / releaser	ethology	partial	A	gloss	cf. Tinbergen 1963, 1951 — safety cut nearest to Omohundro 2008
+future-task-surface	Paper/theory/objects/future-task-surface.md	actor mailbox / actor address	distributed systems	near	A	gloss	cf. Hewitt, Bishop & Steiger 1973; Agha 1986 — address must survive process death, actors don't require that
+proxy-successor	Paper/theory/objects/proxy-successor.md	goal misgeneralization / proxy objective	AI safety	near	A	gloss	cf. Langosco et al. 2022; Shah et al. 2022 — already cited in-file
+research-state-machine	Paper/theory/objects/research-state-machine.md	double-loop learning + problem-space search	org. learning; cog. science	partial	A	gloss	cf. Argyris & Schon 1978; Newell & Simon 1972
+dossier-shaping-dimensions	Paper/theory/objects/dossier-shaping-dimensions.md	MAUT / MCDA (aggregation explicitly refused)	decision theory	partial	A	gloss	cf. Keeney & Raiffa 1976 — object refuses MAUT's core aggregation move; cite as contrast
+proxy-enforcement-collapse	evolution/failures/proxy-enforcement-collapse.md	surrogation	management/behavioral accounting	near	A	gloss	cf. Choi, Hecht & Tayler 2012 — surrogation = design-time substitution; Goodhart (already used) = downstream gaming; own doc, add as 2nd citation
+validation-attraction	evolution/failures/validation-attraction.md	rituals of verification (Audit Society)	accounting/org. sociology	partial	A	gloss	cf. Power 1997 — own doc
+absorption-owner	development/contracts/control-plane-causal-path.md	accountable process owner (RACI)	BPM / SRE	near	A	gloss-no-rename	cf. PMBOK RACI; Beyer et al. 2016 SRE — thinnest definition in the set; cite only, do not rename the schema field
+falsifiability-face	Paper/philosophy/living-system.md	falsifiability (Popper)	philosophy of science	near	standard	no-op	already correctly used; "face" only marks its layer role
+behavior-pruning	Paper/philosophy/operating-philosophy.md	hierarchy of controls	safety engineering	near	A	gloss	cf. NIOSH hierarchy of controls; Wegner 1994 ironic-process (tier-2 "say nothing" is a genuine original addition)
+exec-barrier	Paper/theory/objects/exec-barrier.md	fail-stop processor model	distributed systems	near	A	gloss	cf. Schlichting & Schneider 1983; POSIX exec — barrier not total (FD_CLOEXEC)
+delayed-addressability	Paper/theory/objects/delayed-addressability.md	virtual actor (Orleans)	distributed systems	partial	A	gloss	cf. Bernstein et al. 2014
+channel-substitution	Paper/theory/objects/channel-substitution.md	covert channel	security/OS	partial	A	gloss	cf. Lampson 1973 — cooperative rediscovery, not adversarial evasion
+continuity-substrate	Paper/theory/objects/continuity-substrate.md	von Neumann tape + capability	automata theory; OS	partial	A	gloss	cf. von Neumann 1966; Dennis & Van Horn 1966
+store-view-derivation	Paper/theory/objects/store-view-derivation.md	system of record / derived data	databases	near	A	gloss	cf. Kleppmann 2017; Codd 1970/1972
+self-containing-runtime	Paper/theory/objects/self-containing-runtime.md	self-reproducing program (Kleene) + causally-connected reflection	computability; PL	near	standard	no-op	already correct; Kleene 1952; Thompson 1984; Maes 1987 — only the agent-edits-own-description twist is unnamed
+addressability-debt	Paper/theory/objects/addressability-debt.md	documentation debt	software engineering	near	A	gloss	cf. Cunningham 1992; Alves et al. 2014; Nonaka & Takeuchi 1995
+everything-addressable	Paper/theory/objects/everything-addressable.md	"everything is a file" (Unix/Plan 9)	OS	near	standard	no-op	already correctly self-cited by the object
+two-latch-gate	Paper/theory/objects/two-latch-gate.md	conjunctive decision rule	behavioral decision theory	near	A	gloss	cf. Einhorn 1970 — use "conjunctive" specifically, not the broader "non-compensatory"
+coordination-closure	Paper/theory/objects/coordination-closure.md	stigmergy / blackboard architecture	ethology; MAS	near	A	gloss	cf. Grasse 1959; Erman et al. 1980
+protocol-emergence	Paper/theory/objects/protocol-emergence.md	convention/norm emergence	MAS; MARL	near	A	gloss	cf. Shoham & Tennenholtz 1997; Lewis 1969 — qualify: in-context invention, not training-time learning
+deposition-compression	Paper/theory/objects/deposition-compression.md	LSM-tree merge	storage systems	partial	A	gloss	cf. O'Neil et al. 1996 ("rolling merge" in the original paper, not "compaction") — mechanical/lossless there, judgment-based here
+exec-anchor	Paper/theory/objects/exec-anchor.md	costly signaling + operational definition	evolutionary biology; philosophy of science	near	A	gloss	cf. Zahavi 1975; Bridgman 1927
+sequence-carrier-topology	Paper/theory/objects/sequence-carrier-topology.md	path dependence	econ. of technology	partial	A	gloss	cf. David 1985; Arthur 1989; Weihl 1988 (formal commutativity test)
+selector-stack-topology	Paper/theory/objects/selector-stack-topology.md	elimination by aspects (Tversky)	behavioral decision theory	near	A	gloss	cf. Tversky 1972; BGP-4 decision process as systems instance
+maintained-projection-index	development/contracts/control-plane-causal-path.md	hand-maintained materialized view (shape only, not mechanism)	databases	near	A	gloss-precise-phrasing	cf. Gupta & Mumick 1995 — 4 stated divergences (no defining query, non-automatic maintenance, no servable staleness bound, no DB analogue for the causal-path requirement); use the qualified phrase, never plain "materialized view"
+drift-check	development/contracts/control-plane-causal-path.md	drift detection (IaC)	config management	exact	standard	no-op	already correct; practitioner vocabulary (Terraform docs), no scholarly origin paper
+budget-ratchet	scripts/check-control-plane-size.sh	CI budget + quality ratchet	SE practice	near	A	gloss	cf. MDN Performance Budgets; "one in, one out" (UK regulatory 2010/2011) — Weitzman 1980 caveat recorded separately as a watch item, not a citation for the term
+pain-line	scripts/check-control-plane-size.sh	code smell + andon (visual control)	SE; lean manufacturing	near	A	gloss	cf. Fowler 1999 (with Beck); Ohno 1988
+generate-and-compare	scripts/gen-env-docs; scripts/check-runtime-doc-sync.sh	golden file test	SE / testing	near	A	gloss	cf. Feathers 2004 (purpose only, no seminal source for the mechanism) — cite convention (Go testdata/*.golden)

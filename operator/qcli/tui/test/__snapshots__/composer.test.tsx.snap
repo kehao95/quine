@@ -1,0 +1,137 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`? on an empty composer opens the help overlay 1`] = `
+"                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+            ╭──────────────────────────────────────────────────────────────────────────╮            
+            │                                                                          │            
+            │  qcli help                                                               │            
+            │                                                                          │            
+            │    Enter          send composer text                                     │            
+            │    Alt+Enter      newline (Shift+Enter on kitty-protocol terminals)      │            
+            │    Tab            cycle delivery action                                  │            
+            │    Esc Esc        interrupt (first Esc arms, any other key cancels)      │            
+            │    Ctrl+Up/Down   focus transcript cells                                 │            
+            │    Up/Down        history at composer edge; cell focus nav when focused  │            
+            │    Right/Left     expand / collapse the focused cell                     │            
+            │    PgUp/PgDn      scroll transcript                                      │            
+            │    g/G            top / bottom (empty composer)                          │            
+            │    Ctrl+P         peer roster (/switch)                                  │            
+            │    Ctrl+E         edit composer in $EDITOR                               │            
+            │    ?              help (empty composer)                                  │            
+            │    Ctrl+C Ctrl+C  quit                                                   │            
+            │                                                                          │            
+            │  receipt ladder: ▷ queued  ✓ received  ⚡ woke  ▣ delivered (unlit = ·)  │            
+            │  press any key to close                                                  │            
+            │                                                                          │            
+            ╰──────────────────────────────────────────────────────────────────────────╯            
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`esc arms the interrupt chip; second esc sends an empty interrupt 1`] = `
+" qcli · o_aaaa1111 · pid=42 · gpt-5.5 · depth=2 · inc=2 ●                                 connected 
+                                                                                                    
+ waiting for context…                                                                               
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ working · pending=0 · tokens: n/a                          Esc again = interrupt · any key cancels 
+                                                                                                    
+ inject > type a message — enter sends                                                              
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`ctrl+p opens the roster overlay with lineage and liveness 1`] = `
+"                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+            ╭──────────────────────────────────────────────────────────────────────────╮            
+            │                                                                          │            
+            │ peers                                                     type to filter │            
+            │                                                                          │            
+            │  ● o_aaaa1111 ← you gpt-5.5 · depth=2 · pending=0 · pid=42               │            
+            │  ◍   o_bbbb2222 gpt-5.5 · depth=3 · pending=1 · pid=43                   │            
+            │                                                                          │            
+            │ ↑/↓ select · enter attach · esc close · /spawn from composer             │            
+            │                                                                          │            
+            ╰──────────────────────────────────────────────────────────────────────────╯            
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`dead peer disables the composer and sends nothing 1`] = `
+" qcli · o_aaaa1111 · pid=42 · gpt-5.5 · depth=2 · inc=2 ◍                                 connected 
+                                                                                                    
+ waiting for context…                                                                               
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ ◍ peer is dead — transcript  [enter] send · [alt+enter] newline · [tab] action=inject · [ctrl+p]   
+ read-only                    peers · [?] help                                                      
+                                                                                                    
+ composer disabled — attach a live peer with ctrl+p                                                 
+                                                                                                    
+"
+`;

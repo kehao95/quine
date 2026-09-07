@@ -1,0 +1,154 @@
+{
+  "summary": "Audited the ## Evidence sections of all 18 theory objects in Paper/theory/objects/*.md for citation granularity. 6 objects cite by specific experiment ID, 4 cite only at family/cycle level, and 8 are mixed. 12 of 18 objects contain at least one cycle-level citation that must be resolved to specific experiment IDs before Paper/evidence-map.md can be demoted (Phase 5 prerequisite). The recurring cycle-level patterns are: P-series/family umbrella names (P7, P12 dormancy, P11, P4 Harbor, P13), explicit cycle ranges expressed as bounded id-spans (6R.01-6R.04, 6M.01-6M.10, 6M.02-6M.06), P12 cycle labels (C22/C33/C34/C35/C36/C37), the P7G/P7T trace-causality family, and named-experiment-without-id citations (Blind drop-in experiment, Reflexive Capture / Case 01).",
+  "objects": [
+    {
+      "object": "affordance-null-ecology",
+      "citation_style": "by-cycle",
+      "cycle_level_citations": [
+        "P7 missionless runs",
+        "P7T/P7G family",
+        "`dr` situated-agency pass"
+      ],
+      "needs_resolution": true
+    },
+    {
+      "object": "carrier",
+      "citation_style": "mixed",
+      "cycle_level_citations": [
+        "P6 / 6M wave",
+        "6M.01-6M.10",
+        "6R.01-6R.04",
+        "P12 (trace inheritance as environmental carrier)",
+        "Carrier / capability overlap theory absorption"
+      ],
+      "needs_resolution": true
+    },
+    {
+      "object": "continuity-substrate",
+      "citation_style": "mixed",
+      "cycle_level_citations": [
+        "6M.02-6M.06"
+      ],
+      "needs_resolution": true
+    },
+    {
+      "object": "coordination-closure",
+      "citation_style": "by-id",
+      "cycle_level_citations": [],
+      "needs_resolution": false
+    },
+    {
+      "object": "delayed-addressability",
+      "citation_style": "by-id",
+      "cycle_level_citations": [],
+      "needs_resolution": false
+    },
+    {
+      "object": "exec-barrier",
+      "citation_style": "mixed",
+      "cycle_level_citations": [
+        "6R.01-6R.04"
+      ],
+      "needs_resolution": true
+    },
+    {
+      "object": "future-task-surface",
+      "citation_style": "mixed",
+      "cycle_level_citations": [
+        "6R.01-6R.04",
+        "P4 Harbor"
+      ],
+      "needs_resolution": true
+    },
+    {
+      "object": "identity-criterion",
+      "citation_style": "by-id",
+      "cycle_level_citations": [],
+      "needs_resolution": false
+    },
+    {
+      "object": "narrative-claim",
+      "citation_style": "by-cycle",
+      "cycle_level_citations": [
+        "P12 dormancy ecology",
+        "6R.01-6R.04",
+        "P11 adversarial selection"
+      ],
+      "needs_resolution": true
+    },
+    {
+      "object": "protocol-emergence",
+      "citation_style": "by-id",
+      "cycle_level_citations": [],
+      "needs_resolution": false
+    },
+    {
+      "object": "reproduced-object",
+      "citation_style": "mixed",
+      "cycle_level_citations": [
+        "6M.02-6M.06"
+      ],
+      "needs_resolution": true
+    },
+    {
+      "object": "self-description-resource",
+      "citation_style": "by-id",
+      "cycle_level_citations": [],
+      "needs_resolution": false
+    },
+    {
+      "object": "stigmergy-as-carrier",
+      "citation_style": "by-cycle",
+      "cycle_level_citations": [
+        "P7G/P7T trace-causality backbone",
+        "P12 wake-selection family (C36/C37)"
+      ],
+      "needs_resolution": true
+    },
+    {
+      "object": "structural-pull",
+      "citation_style": "by-cycle",
+      "cycle_level_citations": [
+        "Blind drop-in experiment (2026-06-13)",
+        "Maintenance as the strongest default pull",
+        "Reflexive Capture observed twice (Case 01)",
+        "P13 / structural-elicitation"
+      ],
+      "needs_resolution": true
+    },
+    {
+      "object": "successor-morphology",
+      "citation_style": "mixed",
+      "cycle_level_citations": [
+        "6M.01-6M.10"
+      ],
+      "needs_resolution": true
+    },
+    {
+      "object": "trace-inheritance",
+      "citation_style": "by-cycle",
+      "cycle_level_citations": [
+        "P12 C35",
+        "P12 C36/C37",
+        "P12 C33/C34",
+        "P12 C22 vs blank-wake control",
+        "P7G/P7T"
+      ],
+      "needs_resolution": true
+    },
+    {
+      "object": "trigger-structure",
+      "citation_style": "mixed",
+      "cycle_level_citations": [
+        "p6 trigger families"
+      ],
+      "needs_resolution": true
+    },
+    {
+      "object": "viability-pressure",
+      "citation_style": "by-id",
+      "cycle_level_citations": [],
+      "needs_resolution": false
+    }
+  ]
+}

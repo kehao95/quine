@@ -3,6 +3,8 @@
 /world
 /qcli
 *.test
+node_modules/
+dist/
 
 # Local environment — only .env.example is tracked.
 .env

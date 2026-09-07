@@ -1,0 +1,33 @@
+{
+  "phase": "p10-benchmarks",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p10-benchmarks/10.01-programbench",
+      "slug": "programbench",
+      "legacy_id": "p10:10.01",
+      "family": "benchmarks",
+      "experiment_type": "benchmark-campaign",
+      "status": "runnable",
+      "question": "Can Quine perform cleanroom program reconstruction on ProgramBench (build a replacement executable from a compiled binary plus docs) without confusing harness ownership with benchmark ownership, and reach a leaderboard-valid cleanroom execution boundary?",
+      "theory_objects": [],
+      "paper_feeds": ["system/systems-track-b", "system/quine-hotos"],
+      "disposition": "active",
+      "disposition_reason": "status runnable; runnable scaffold with exploratory live runs, not yet benchmark-valid but actively run"
+    },
+    {
+      "legacy_path": "experiments/p10-benchmarks/10.02-terminal-bench2-gpt54",
+      "slug": "terminal-bench2-gpt54",
+      "legacy_id": "p10:10.02",
+      "family": "benchmarks",
+      "experiment_type": "benchmark-campaign",
+      "status": "runnable",
+      "question": "Can Quine beat the Codex CLI + GPT-5.5 Terminal-Bench 2.0 leaderboard target via a benchmark-native Harbor/TB2 scaffold running GPT-5.5 medium, separated from the historical p4-harbor Kimi K2.5 lane?",
+      "theory_objects": [],
+      "paper_feeds": ["system/systems-track-b", "system/quine-hotos"],
+      "disposition": "active",
+      "disposition_reason": "status runnable; active GPT-5.5 medium benchmark lane with passing smoke sets and ongoing sweeps"
+    }
+  ],
+  "phase_root_docs": ["README.md", "analysis"],
+  "notes": "Phase 10 (p10-benchmarks) contains exactly two experiment directories, both classified to family 'benchmarks' (bench) per this phase's rule (All -> benchmarks). Both have surface_kind=experiment frontmatter with experiment_type=benchmark-campaign and status=runnable. Non-experiment siblings: README.md (phase index, linear_ticket Q-50) and analysis/ (single cross-benchmark structural-lessons synthesis note, no nested experiments) -> listed in phase_root_docs. No archive/suite nesting; no deeper experiment dirs. theory_objects left empty for both: these are external benchmark-harness scaffolds (paper feeds system/systems-track-b future-home + system/quine-hotos context-only) for later systems-evaluation synthesis; none of their content or paper feeds maps to the closed autopoiesis/replication theory-object vocabulary. legacy_ids use exact on-disk tokens p10:10.01 and p10:10.02 with no slug collisions. Both kept disposition=active (runnable, actively run with recent dated runs), not design-only/superseded."
+}

@@ -1,0 +1,108 @@
+diff --git a/Paper/theory/views/runtime-capability/redesign-constraints.md b/Paper/theory/views/runtime-capability/redesign-constraints.md
+index bb3852766..7e7c2fd49 100644
+--- a/Paper/theory/views/runtime-capability/redesign-constraints.md
++++ b/Paper/theory/views/runtime-capability/redesign-constraints.md
+@@ -11,10 +11,10 @@ depends-on: [projection-axes, axis-code-mapping, philosophy-of-capability, axis-
+ 
+ | Field | Value |
+ |-------|-------|
+-| Source owner | The project's self-modifying identity: `AGENTS.md` § Autopoietic North-Star, [`Paper/philosophy/self-maintaining-systems.md`](../../../philosophy/self-maintaining-systems.md) § The Reflexive Instance, `selfsource.go`. The constraint hierarchy recorded here was derived in a Human+agent design session and is binding on future capability-surface refactor work. |
++| Source owner | The project's self-modifying identity: [`META-DIRECTION.md` § The north-star](../../../../development/autopoiesis-probes/META-DIRECTION.md#the-north-star), [`Paper/philosophy/self-maintaining-systems.md`](../../../philosophy/self-maintaining-systems.md) § The Reflexive Instance, `selfsource.go`. The constraint hierarchy recorded here was derived in a Human+agent design session and is binding on future capability-surface refactor work. |
+ | Projection role | The design constraints any future capability refactor must satisfy, derived from the project identity. Records **firm constraints** and **explicit open questions**; does NOT own a chosen solution, a canonical model form, or a refactor sequence. |
+ | Freshness trigger | Project stance on agent self-modification changes; a refactor approach is chosen (closing open questions); an enacted design violates a constraint recorded here. |
+-| Drift check | Compare against `AGENTS.md` north-star and `self-maintaining-systems.md` spine. A constraint is stale if the project stops treating the runtime as a self-modifying substrate. |
++| Drift check | Compare against the autopoiesis meta-direction north-star and `self-maintaining-systems.md` spine. A constraint is stale if the project stops treating the runtime as a self-modifying substrate. |
+ | Absorption owner | A future refactor design brief absorbs the resolved form. When a canonical capability model is enacted, its design doc becomes the owner; this note then either collapses into it or is pruned per the Absorption Rule. |
+ 
+ ## Why this note exists
+@@ -57,7 +57,7 @@ Quine is a strange loop: the runtime is both the research instrument and the
+ research object. The agent that maintains this repository is an instance of the
+ process the runtime describes. `selfsource.go` already projects the runtime's
+ own source to the agent (`SELF_SOURCE_CODE_ENABLED`); the Autopoietic
+-North-Star (`AGENTS.md`) requires that a goal-less agent can maintain internal
++North-Star requires that a goal-less agent can maintain internal
+ coherence and repair its own procedure. A runtime whose capability surface is a
+ flat env bag cannot be safely self-modified:
+ 
+diff --git a/development/autopoiesis-probes/META-DIRECTION.md b/development/autopoiesis-probes/META-DIRECTION.md
+index dd50d4f0e..8161a577b 100644
+--- a/development/autopoiesis-probes/META-DIRECTION.md
++++ b/development/autopoiesis-probes/META-DIRECTION.md
+@@ -8,7 +8,7 @@
+ 
+ ## Projection maintenance
+ 
+-- source owner: `AGENTS.md` § Autopoietic North-Star, this directory's cycle
++- source owner: this file's § The north-star, this directory's cycle
+   READMEs/compression records, `FRICTION.md`, and promoted theory objects
+ - projection role: compact handoff for continuing the autopoiesis program after
+   context loss; not a full status ledger
+@@ -18,17 +18,16 @@
+   `development/contracts/divergent-collision.md`, and the latest
+   `cycle-*-*/README.md` + `compression.md`
+ - absorption owner: durable theory goes to `Paper/theory/objects/` or gaps;
+-  durable procedure goes to `AGENTS.md` or `development/contracts/`; raw probe
++  durable procedure goes to `DEVELOPMENT.md` or `development/contracts/`; raw probe
+   lineage stays in cycle directories
+ 
+ ## The north-star
+ 
+ The repo should be **autopoietic**: a goal-less, stateless agent dropped in with
+ no task can, by following only the self-model, (a) produce theory, (b) maintain
+-internal coherence, (c) reflect on and repair its own procedure. Recorded in
+-`AGENTS.md` § Autopoietic North-Star. Method: light-prompt probe → name friction
+-→ repair → re-probe, committing each cycle; retain probe outputs even when
+-shape-imperfect.
++internal coherence, (c) reflect on and repair its own procedure. Operational
++method: light-prompt probe → name friction → repair → re-probe, committing each
++cycle; retain probe outputs even when shape-imperfect.
+ 
+ ## Where the meta-thinking landed (the concept cluster)
+ 
+diff --git a/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md b/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
+index 46c8c043e..3211ee1cb 100644
+--- a/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
++++ b/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
+@@ -281,7 +281,7 @@ experiment path under `tests-in`.
+ 
+ - Extends [`null-03`](../null-03-source-workspace-null): same missionless frame, adds full self-disclosure + full affordances + full repo
+ - Distinct from [`succ-46`](../../autopoiesis-succession/succ-46-plan9-existence) / [`succ-47`](../../autopoiesis-succession/succ-47-plan9-self-improvement-loop): those had explicit missions; this is missionless (with mission-sweep conditions)
+-- Tests the autopoietic north-star ([`AGENTS.md` § Autopoietic North-Star](../../../../AGENTS.md#autopoietic-north-star))
++- Tests the autopoietic north-star ([`META-DIRECTION.md` § The north-star](../../../../development/autopoiesis-probes/META-DIRECTION.md#the-north-star))
+ - Tests the structural-pull audit attractor ([`structural-pull`](../../../../Paper/theory/objects/structural-pull.md))
+ - Theory outputs: [`reflexive-substrate-loop`](../../../../Paper/theory/objects/reflexive-substrate-loop.md), [`substrate-coincidence`](../../../../Paper/theory/objects/substrate-coincidence.md), [`audit-attractor`](../../../../Paper/theory/objects/audit-attractor.md), [`channel-substitution`](../../../../Paper/theory/objects/channel-substitution.md)
+ - Open gaps: [`selectable-entity`](../../../../Paper/theory/gaps/selectable-entity.md), [`de-novo-coordination`](../../../../Paper/theory/gaps/de-novo-coordination.md), [`persistence-as-unfakeability`](../../../../Paper/theory/gaps/persistence-as-unfakeability.md)
+diff --git a/principles/autopoiesis.md b/principles/autopoiesis.md
+index d8db43b63..32df60176 100644
+--- a/principles/autopoiesis.md
++++ b/principles/autopoiesis.md
+@@ -13,7 +13,8 @@ that constitute it: maintenance keeps it viable, discovery grows its knowledge,
+ procedure-reflection keeps it able to correct its own operation. None is
+ privileged; all three are faces of one telos.
+ 
+-The operational test is the **Autopoietic North-Star** (`AGENTS.md`): a
++The operational test is the **Autopoietic North-Star**
++([`META-DIRECTION.md` § The north-star](../development/autopoiesis-probes/META-DIRECTION.md#the-north-star)): a
+ goal-less, stateless agent dropped in with no task can, by following only the
+ self-model, produce theory, maintain internal coherence, and reflect on and
+ repair its own procedure. The full autopoietic framing lives in
+@@ -46,5 +47,5 @@ generative enough to live.
+ ## Related
+ 
+ - [`system-coherence.md`](./system-coherence.md) — the maintenance face (the viability condition)
+-- `AGENTS.md` § Autopoietic North-Star — the operational probe
++- [`META-DIRECTION.md` § The north-star](../development/autopoiesis-probes/META-DIRECTION.md#the-north-star) — the operational probe
+ - [`Paper/philosophy/living-system.md`](../Paper/philosophy/living-system.md) — the primary ontological cut
+diff --git a/principles/proactive-self-audit.md b/principles/proactive-self-audit.md
+index 01ee33184..1f4d62b3f 100644
+--- a/principles/proactive-self-audit.md
++++ b/principles/proactive-self-audit.md
+@@ -12,6 +12,6 @@ Audit triggers:
+ - **Session start:** Verify external references resolve
+ - **Work-type emergence:** When your work's shape becomes clear — declared via `Maintenance` / `Discovery` / `Theory`, or autonomous selection lands on coherence repair / discovery / theory growth as the most pending work — reach for the matching contract instead of waiting for an explicit object-level task
+ - **Closure request:** Audit the work interval since session start or the prior explicit `Closure` point before treating the loop as closed
+-- **Repeated instruction or friction pattern:** Apply the Friction → Repair loop ([`../AGENTS.md`](../AGENTS.md#article-zero-the-strange-loop))
++- **Repeated instruction or friction pattern:** Apply the Friction → Repair loop through the structural-friction journal ([`DEVELOPMENT.md` § Structural Friction Journal](../DEVELOPMENT.md#structural-friction-journal))
+ - **Correction with future reuse:** When a correction, a broader pattern, or a standing expectation surfaces, check whether the owning control plane or the Constitution should change
+-- **Projection capture:** If you notice yourself treating any single encoder as "the frame," or following the easiest path without checking whether it matches the task, name the pull and re-read Layer 0 ([`../AGENTS.md`](../AGENTS.md#what-this-is))
++- **Projection capture:** If you notice yourself treating any single encoder as "the frame," or following the easiest path without checking whether it matches the task, name the pull and re-read the Constitution ([`AGENTS.md`](../AGENTS.md#the-quine-constitution))

@@ -1,0 +1,64 @@
+diff --git a/Paper/theory/objects/future-task-surface.md b/Paper/theory/objects/future-task-surface.md
+index 9d43c9b77..97a5958dc 100644
+--- a/Paper/theory/objects/future-task-surface.md
++++ b/Paper/theory/objects/future-task-surface.md
+@@ -135,7 +135,7 @@ Candidate evidence: `experiments/active/benchmarks/`, `experiments/active/trace-
+ 
+ ## Live Seeds
+ 
+-`SEED` (cross-read: **obligation-bearing carrier selection**, 2026-06-27)
++- `SEED` (cross-read: **obligation-bearing carrier selection**, 2026-06-27; review: 2026-07-25)
+ The future-task surface may need an explicit **obligation lifecycle** rather
+ than only an addressable locus: birth, routing, wake, claim, satisfaction,
+ expiry, cancellation, rollback/retraction, transfer, and compensation. This
+@@ -143,7 +143,7 @@ keeps `delayed-addressability` as the verdict object while placing the state
+ machine below it, on the surface where future obligations arrive. Full record:
+ [`../references/obligation-bearing-carrier-selection-cross-read-2026-06-27.md`](../references/obligation-bearing-carrier-selection-cross-read-2026-06-27.md).
+ 
+-`SEED` (seed forest: **obligation-body**, 2026-06-27)
++- `SEED` (seed forest: **obligation-body**, 2026-06-27; review: 2026-07-25)
+ An obligation has a body only when it has surfaces that can be damaged, claimed,
+ satisfied, expired, canceled, transferred, compensated, and addressed. Empty
+ offices, orphan obligations, and post-satisfaction scars belong here as surface
+@@ -151,7 +151,7 @@ states, leaving `delayed-addressability` to judge whether a successor can answer
+ the resulting obligation. Full forest:
+ [`../references/obligation-seed-forest-cross-read-2026-06-27.md`](../references/obligation-seed-forest-cross-read-2026-06-27.md).
+ 
+-`SEED` (lens: **the King's Two Bodies**, Kantorowicz 1957) The medieval split
++- `SEED` (lens: **the King's Two Bodies**, Kantorowicz 1957; review: 2026-07-25) The medieval split
+ of the king into a mortal *body natural* and an immortal *body politic* is the
+ process/carrier decoupling: the future-task surface is the body politic — the
+ addressable office that persists — while the exec'd process is the body natural.
+@@ -168,8 +168,8 @@ not yet a demonstrated un-resistable guarantee. The first addressability test is
+ formalized as
+ [`future-task-surface-P1`](../../predictions/open/future-task-surface-P1.md).
+ 
+-`SEED` (lens: **orthogonal persistence / single-level store**, Hardy KeyKOS;
+-Shapiro EROS) If the substrate guarantees *zero* state loss by default
++- `SEED` (lens: **orthogonal persistence / single-level store**, Hardy KeyKOS;
++Shapiro EROS; review: 2026-07-25) If the substrate guarantees *zero* state loss by default
+ (transparent continuous checkpointing of the whole capability-based system
+ state), then `revisable-time`'s problem inverts: the hard question is no longer
+ "how to prevent amnesia" but "how an agent deliberately **unmounts,
+@@ -181,8 +181,8 @@ like. Experiment: run an agent under a never-lose single-level store and measure
+ whether viability degrades from history bloat absent a self-pruning primitive.
+ (Carried from `runtime-ontology` Live Seeds.)
+ 
+-`SEED` (lens: **procedural reflection / the reflective tower**, Brian Cantwell
+-Smith, 3-Lisp) If the `ctl/*` surface is a genuine *causally-connected* model of
++- `SEED` (lens: **procedural reflection / the reflective tower**, Brian Cantwell
++Smith, 3-Lisp; review: 2026-07-25) If the `ctl/*` surface is a genuine *causally-connected* model of
+ the agent's own execution (not just a readout), then the sharp move is to make it
+ **writable at the interpreter level**: expose a `ctl/interpreter` file and
+ challenge the agent to hot-swap its own prompt-processing loop or execution
+@@ -192,8 +192,8 @@ V0-contract boundary question — which slice of execution physics can be safely
+ made self-modifiable, and which must stay frozen below the reflective floor.
+ (Carried from `runtime-ontology` Live Seeds.)
+ 
+-`SEED` (lens: **counterpart semantics for trans-world identity**, David Lewis,
+-*On the Plurality of Worlds*) Stop modeling `fork` as identical agents contending
++- `SEED` (lens: **counterpart semantics for trans-world identity**, David Lewis,
++*On the Plurality of Worlds*; review: 2026-07-25) Stop modeling `fork` as identical agents contending
+ over one shared memory; model the children as distinct **counterparts** in
+ isolated realities, related by a counterpart relation rather than strict
+ equality. Design move: a `mount/counterparts/` namespace through which an agent

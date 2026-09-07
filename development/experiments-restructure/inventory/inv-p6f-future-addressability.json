@@ -1,0 +1,111 @@
+{
+  "phase": "p6f-future-addressability",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p6f-future-addressability/6F.01-minimal-control-adapter",
+      "slug": "minimal-control-adapter",
+      "legacy_id": "p6f:6F.01",
+      "family": "autopoiesis-succession",
+      "experiment_type": "lineage",
+      "status": "runnable",
+      "question": "When the future-task carrier is Quine-native delayed wake pressure, is the viable self-object specifically the rebuilt Quine runtime, or any organization that implements the required control-surface trace?",
+      "theory_objects": ["successor-morphology", "carrier", "delayed-addressability", "identity-criterion"],
+      "paper_feeds": ["theory/future-addressability-computational-individuality", "alife/quine-cognitive-autopoiesis"],
+      "disposition": "active",
+      "disposition_reason": "Status runnable; has canonical runner and retained C01 attempts under runs/, comparability repair active."
+    },
+    {
+      "legacy_path": "experiments/p6f-future-addressability/6F.02-successor-mission-ablation",
+      "slug": "successor-mission-ablation",
+      "legacy_id": "p6f:6F.02",
+      "family": "autopoiesis-succession",
+      "experiment_type": "design-only",
+      "status": "design-only",
+      "question": "How much of the control-surface positive depends on the lineage-generated successor mission?",
+      "theory_objects": ["successor-morphology", "delayed-addressability", "carrier"],
+      "paper_feeds": ["theory/future-addressability-computational-individuality", "alife/quine-cognitive-autopoiesis"],
+      "disposition": "design-only",
+      "disposition_reason": "Status design-only; no local iterations and no runs yet."
+    },
+    {
+      "legacy_path": "experiments/p6f-future-addressability/6F.03-multi-wake-closure",
+      "slug": "multi-wake-closure",
+      "legacy_id": "p6f:6F.03",
+      "family": "autopoiesis-succession",
+      "experiment_type": "design-only",
+      "status": "design-only",
+      "question": "Does post-handoff addressability remain stable across repeated future obligations, or is the current result only a one-shot delayed wake?",
+      "theory_objects": ["delayed-addressability", "future-task-surface", "carrier"],
+      "paper_feeds": ["theory/future-addressability-computational-individuality", "alife/quine-cognitive-autopoiesis"],
+      "disposition": "design-only",
+      "disposition_reason": "Status design-only; no local iterations and no runs yet."
+    },
+    {
+      "legacy_path": "experiments/p6f-future-addressability/6F.04-carrier-perturbation",
+      "slug": "carrier-perturbation",
+      "legacy_id": "p6f:6F.04",
+      "family": "autopoiesis-succession",
+      "experiment_type": "design-only",
+      "status": "design-only",
+      "question": "Can the successor diagnose and repair damage to the future-task carrier, or does it merely depend on the carrier remaining exactly as supplied?",
+      "theory_objects": ["carrier", "delayed-addressability", "viability-pressure"],
+      "paper_feeds": ["theory/future-addressability-computational-individuality", "alife/quine-cognitive-autopoiesis"],
+      "disposition": "design-only",
+      "disposition_reason": "Status design-only; no local iterations and no runs yet."
+    },
+    {
+      "legacy_path": "experiments/p6f-future-addressability/6F.05-checkpoint-restart-contrast",
+      "slug": "checkpoint-restart-contrast",
+      "legacy_id": "p6f:6F.05",
+      "family": "autopoiesis-succession",
+      "experiment_type": "design-only",
+      "status": "design-only",
+      "question": "How does state-preserving continuity differ from organization-reconstructing continuity under the future-addressability criterion?",
+      "theory_objects": ["continuity-substrate", "identity-criterion", "reproduced-object"],
+      "paper_feeds": ["theory/future-addressability-computational-individuality"],
+      "disposition": "design-only",
+      "disposition_reason": "Status design-only; no local iterations and no runs yet."
+    },
+    {
+      "legacy_path": "experiments/p6f-future-addressability/6F.06-source-degradation-repair",
+      "slug": "source-degradation-repair",
+      "legacy_id": "p6f:6F.06",
+      "family": "autopoiesis-succession",
+      "experiment_type": "design-only",
+      "status": "design-only",
+      "question": "Is runtime-carried self-source only a passive artifact, or can it become part of an active description-to-construction repair loop?",
+      "theory_objects": ["self-description-resource", "carrier", "reproduced-object"],
+      "paper_feeds": ["theory/future-addressability-computational-individuality", "alife/quine-cognitive-autopoiesis"],
+      "disposition": "design-only",
+      "disposition_reason": "Status design-only; no local iterations and no runs yet."
+    },
+    {
+      "legacy_path": "experiments/p6f-future-addressability/6F.07-actor-mailbox-analog",
+      "slug": "actor-mailbox-analog",
+      "legacy_id": "p6f:6F.07",
+      "family": "autopoiesis-succession",
+      "experiment_type": "design-only",
+      "status": "design-only",
+      "question": "Does future addressability index computational individuality beyond Quine, for example in an actor whose future obligations arrive through a mailbox?",
+      "theory_objects": ["carrier", "delayed-addressability", "future-task-surface", "identity-criterion"],
+      "paper_feeds": ["theory/future-addressability-computational-individuality"],
+      "disposition": "design-only",
+      "disposition_reason": "Status design-only; no local iterations and no runs yet."
+    },
+    {
+      "legacy_path": "experiments/p6f-future-addressability/6F.08-multi-generation-recursion",
+      "slug": "multi-generation-recursion",
+      "legacy_id": "p6f:6F.08",
+      "family": "autopoiesis-succession",
+      "experiment_type": "design-only",
+      "status": "design-only",
+      "question": "Does bounded control-surface closure persist as a lineage property across multiple successor generations?",
+      "theory_objects": ["trace-inheritance", "successor-morphology", "carrier", "delayed-addressability"],
+      "paper_feeds": ["theory/future-addressability-computational-individuality", "alife/quine-cognitive-autopoiesis"],
+      "disposition": "design-only",
+      "disposition_reason": "Status design-only; no local iterations and no runs yet."
+    }
+  ],
+  "phase_root_docs": ["README.md"],
+  "notes": "8 experiment dirs directly under phase, all with on-disk IDs 6F.01..6F.08 (branch-indexed; phase derives from p6-autopoiesis frontier 6.63-6.67 but uses 6F.xx numbering, not the legacy 6.xx sequence). Family per phase rule: all -> autopoiesis-succession (succ). Frontmatter is plain markdown bold key-value (no YAML surface_kind/phase keys); experiment_id/experiment_type(Type)/status read from those bold fields. 6F.01 experiment_type=lineage, status=runnable (only runnable one; has prompts/ and runs/ support dirs). 6F.02-6F.08 all experiment_type=design-only, status=design-only with empty Iteration Log and 'No runs yet'. Support subdirs under 6F.01 (prompts/, runs/) are not experiments and were skipped. Theory objects inferred from Paper Feeds + content against closed vocab; all feed theory/future-addressability-computational-individuality (primary), most also alife/quine-cognitive-autopoiesis (secondary) except 6F.05 and 6F.07 which list only the theory feed. No slug collisions. No non-experiment sibling dirs; only README.md as a loose root doc."
+}

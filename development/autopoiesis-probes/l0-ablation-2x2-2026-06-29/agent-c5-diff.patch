@@ -1,0 +1,61 @@
+diff --git a/Paper/theory/objects/affordance-null-ecology.md b/Paper/theory/objects/affordance-null-ecology.md
+index 936b74b9e..81225ba53 100644
+--- a/Paper/theory/objects/affordance-null-ecology.md
++++ b/Paper/theory/objects/affordance-null-ecology.md
+@@ -109,7 +109,7 @@ state can be summarized."
+ 
+ ## Papers using this object
+ 
+-_(no papers declare this object yet)_
++- [`stigmergic-trace-causality`](../../papers/open-ended-ecology/stigmergic-trace-causality/README.md) - seed dossier / planning skeleton for manuscript prose about the weak-to-causal trace threshold in the affordance-rich null ecology
+ 
+ ## Live Seeds
+ Speculative, ahead of evidence, marked `SEED` — plant freely, prove later. From
+diff --git a/Paper/theory/objects/coordination-closure.md b/Paper/theory/objects/coordination-closure.md
+index 0d93a86cf..48e128a98 100644
+--- a/Paper/theory/objects/coordination-closure.md
++++ b/Paper/theory/objects/coordination-closure.md
+@@ -74,6 +74,7 @@ Runtime affordances this object reasons over (canonical layer: [`core/mechanisms
+ - minimal-perceptual-prerequisites
+ - minimal-runtime-protocols
+ - process-as-fs
++- quine-process-habitat
+ - quine-hotos
+ - systems-track-b
+ 
+diff --git a/Paper/theory/objects/protocol-emergence.md b/Paper/theory/objects/protocol-emergence.md
+index 7db39cbb7..e1e34f0ae 100644
+--- a/Paper/theory/objects/protocol-emergence.md
++++ b/Paper/theory/objects/protocol-emergence.md
+@@ -97,6 +97,7 @@ Canonical prediction lifecycle lives under [`../../predictions/`](../../predicti
+ - minimal-perceptual-prerequisites
+ - minimal-runtime-protocols
+ - open-sourcing-a-research-workbench
++- quine-process-habitat
+ 
+ ## Live Seeds
+ - `SEED` (lens: **unreliable failure detectors**, Chandra & Toueg 1996; review: 2026-07-25)
+diff --git a/Paper/theory/objects/stigmergy-as-carrier.md b/Paper/theory/objects/stigmergy-as-carrier.md
+index 5fb7004f8..4efb07605 100644
+--- a/Paper/theory/objects/stigmergy-as-carrier.md
++++ b/Paper/theory/objects/stigmergy-as-carrier.md
+@@ -100,6 +100,7 @@ Runtime affordances this object reasons over (canonical layer: [`core/mechanisms
+ 
+ ## Papers using this object
+ 
++- [`routing-surface-coevolution`](../../papers/viability/routing-surface-coevolution/README.md) - drafting dossier for viability-surface routing and trace-carrier coevolution
+ - [`stigmergic-trace-causality`](../../papers/open-ended-ecology/stigmergic-trace-causality/README.md) - seed dossier / planning skeleton for manuscript prose about the weak-to-causal trace threshold and the P7T/P7G/P12 stigmergic trace-causality evidence
+ 
+ ## Live Seeds
+diff --git a/Paper/theory/objects/viability-pressure.md b/Paper/theory/objects/viability-pressure.md
+index 0f05b481f..2303648ca 100644
+--- a/Paper/theory/objects/viability-pressure.md
++++ b/Paper/theory/objects/viability-pressure.md
+@@ -115,6 +115,7 @@ Runtime affordances this object reasons over (canonical layer: [`core/mechanisms
+ - lifecycle-bottleneck-reproduction
+ - quine-lifelike
+ - quine-process-habitat
++- routing-surface-coevolution
+ - structure-grows
+ 
+ ## Predictions

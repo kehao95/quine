@@ -1,0 +1,43 @@
+diff --git a/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md b/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
+index 166efed13..97fa21211 100644
+--- a/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
++++ b/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
+@@ -254,13 +254,7 @@ the hinted one is absent. → [`channel-substitution`](../../../../Paper/theory/
+ 
+ ## Paper Feeds
+ 
+-| Paper | Status | Evidence |
+-|-------|--------|----------|
+-| [`open-ended-ecology/substrate-coincidence`](../../../../Paper/papers/open-ended-ecology/substrate-coincidence/alife-theory/README.md) | seed | Dimension 1, 3, 6 — audit attractor, population, mortality |
+-| [`open-ended-ecology/reflexive-oee`](../../../../Paper/papers/open-ended-ecology/reflexive-oee/README.md) | seed | Dimensions 2, 3 — generative mission breaks attractor |
+-| [`open-ended-ecology/cultural-evolution-past-brain-world-barrier`](../../../../Paper/papers/open-ended-ecology/cultural-evolution-past-brain-world-barrier/README.md) | seed | Dimension 3 — population dynamics |
+-| [`social-protocol/communication-emergence`](../../../../Paper/papers/social-protocol/communication-emergence/README.md) | seed | Dimensions 4, 5, 7 — coordination channels |
+-| [`reflexive-repository/audit-attractor`](../../../../Paper/papers/reflexive-repository/audit-attractor/README.md) | seed | Dimension 1 — audit attractor characterization |
++- `none-yet` - none - not-for-paper-yet - no intended paper home is a registered `track/paper_id` dossier yet, so there is no valid feed target. Aspirational dimension map (to upgrade once a home registers a `paper_id`): audit-attractor (Dim 1, audit-attractor characterization; seed), substrate-coincidence (Dim 1/3/6, attractor/population/mortality; under regeneration), reflexive-oee (Dim 2/3, generative mission breaks attractor; held-residue-absorbed), cultural-evolution-past-brain-world-barrier (Dim 3, population dynamics; no-separate-manuscript), communication-emergence (Dim 4/5/7, coordination channels; seed).
+ 
+ ## Connections
+ 
+diff --git a/tests/active-go-packages.sh b/tests/active-go-packages.sh
+index 69c096586..0816804a5 100755
+--- a/tests/active-go-packages.sh
++++ b/tests/active-go-packages.sh
+@@ -3,10 +3,18 @@
+ # Emit the active Go package set used by substrate validation.
+ # Historical evidence trees under */runs/* are repo-retained artifacts, not
+ # active substrate packages.
++#
++# NOTE: this is a package ENUMERATOR, not a compile check. It uses `go list -e`
++# so it still emits the package set when a generated build artifact is absent —
++# notably selfsource_bundle_data.go (a Makefile-generated, gitignored embed
++# target that build/test targets create via `make self-source-bundle`). Bare
++# `go list ./...` fails on the missing embed pattern, which would break
++# `make check-control-plane` on a clean checkout. Compilation validity is owned
++# by the build/test targets that generate the bundle, not by this enumerator.
+ 
+ set -euo pipefail
+ 
+ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ cd "$ROOT_DIR"
+ 
+-go list ./... | awk '$0 !~ /\/runs\//'
++go list -e ./... | awk '$0 !~ /\/runs\//'

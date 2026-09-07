@@ -1,0 +1,204 @@
+[0m
+> build · gpt-5.5
+[0m
+I’ll inspect the repository’s self-model and current worktree to identify the next actionable maintenance or implementation task, then carry it through if feasible.
+[0m→ [0mRead AGENTS.md[90m [offset=1, limit=200][0m
+[0m✱ [0mGlob "**/*"[90m in Paper/theory · 100 matches[0m
+[0m→ [0mRead Paper/theory/README.md[90m [offset=1, limit=200][0m
+[0m
+[0m$ [0mgit status --short
+(no output)
+[0m
+The worktree is clean. I’m going to use the repository’s own audit surfaces to find a safe, non-governed delta rather than guessing at theory edits.
+[0m✱ [0mGlob "Paper/procedure/*.md"[90m in . · 8 matches[0m
+[0m✱ [0mGlob "Makefile"[90m in . · 13 matches[0m
+[0m✱ [0mGlob "scripts/check-*.sh"[90m in . · 82 matches[0m
+[0m→ [0mRead Paper/theory/README.md[90m [offset=201, limit=180][0m
+The self-model explicitly points maintenance at advisory sensors. I’ll run the broad audit targets and select a small fix that stays within agent-editable scope.
+[0m→ [0mRead Makefile[90m [offset=1, limit=240][0m
+[0m→ [0mRead Paper/procedure/sensor-catalog.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead Paper/procedure/review-schedule.md[90m [offset=1, limit=220][0m
+[0m
+[0m$ [0mmake audit-generation-event-closure
+make: *** No rule to make target 'audit-generation-event-closure'.  Stop.
+[0m
+[0m$ [0mmake audit-seed-backlog
+make: *** No rule to make target 'audit-seed-backlog'.  Stop.
+[0m
+[0m$ [0mmake audit-self-description
+./scripts/check-self-description-completeness.sh
+# Self-description completeness readout (computed)
+
+Inventory of prediction/experiment coverage gaps across the theory
+graph and paper dossiers. Advisory only.
+
+## (a) Theory objects — prediction coverage
+
+| objects | with predictions | with confirmed predictions |
+|---|---:|---:|
+| 42 | 23 | 1 |
+
+### Objects with no registered prediction (19)
+
+These are self-description claims that nothing yet forces to predict.
+
+- [`addressability-debt`](Paper/theory/objects/addressability-debt.md)
+- [`affordance-null-ecology`](Paper/theory/objects/affordance-null-ecology.md)
+- [`audit-attractor`](Paper/theory/objects/audit-attractor.md)
+- [`autopoietic-membrane`](Paper/theory/objects/autopoietic-membrane.md)
+- [`continuity-substrate`](Paper/theory/objects/continuity-substrate.md)
+- [`coordination-closure`](Paper/theory/objects/coordination-closure.md)
+- [`deposition-compression`](Paper/theory/objects/deposition-compression.md)
+- [`dossier-shaping-dimensions`](Paper/theory/objects/dossier-shaping-dimensions.md)
+- [`encoding-pressure`](Paper/theory/objects/encoding-pressure.md)
+- [`everything-addressable`](Paper/theory/objects/everything-addressable.md)
+- [`graded-axis-shaping`](Paper/theory/objects/graded-axis-shaping.md)
+- [`identity-criterion`](Paper/theory/objects/identity-criterion.md)
+- [`metabolic-transition-topology`](Paper/theory/objects/metabolic-transition-topology.md)
+- [`relational-existence`](Paper/theory/objects/relational-existence.md)
+- [`reproduced-object`](Paper/theory/objects/reproduced-object.md)
+- [`reproductive-code-topology`](Paper/theory/objects/reproductive-code-topology.md)
+- [`research-state-machine`](Paper/theory/objects/research-state-machine.md)
+- [`successor-morphology`](Paper/theory/objects/successor-morphology.md)
+- [`trigger-structure`](Paper/theory/objects/trigger-structure.md)
+
+## (b) Gaps — frontier cross-theme tensions
+
+| gaps | touched objects with any prediction | touched objects with none |
+|---|---:|---:|
+| 12 | 12 | 0 |
+
+## (c) Papers — Transport Validation BLOCKED rows
+
+Each BLOCKED claim lists the predictions that must resolve `confirmed`
+before the paper row can transport.
+
+### [`Paper/papers/eval-primitives/narration-invariance-eval/README.md`](../Paper/papers/eval-primitives/narration-invariance-eval/README.md)
+
+- **claim:** narrated-trace subset exists in CoT (operator non-vacuous) — awaiting: `narrative-claim-P5` (testing)
+- **claim:** worst-where-cleanest: legibility ↔ load-bearing negative correlation — awaiting: `narrative-claim-P4` (open)
+- **claim:** Legibility Penalty is causal (manufactures decoupling) — awaiting: `narrative-claim-P6` (open)
+
+### [`Paper/papers/successor-continuity/boundary-paper/README.md`](../Paper/papers/successor-continuity/boundary-paper/README.md)
+
+- **claim:** carrier-as-transmission-unit — awaiting: `carrier-P1` (testing), `carrier-P2` (testing), `carrier-P3` (open)
+- **claim:** delayed-addressability-as-continuity-test — awaiting: `delayed-addressability-P1` (confirmed), `delayed-addressability-P2` (testing), `delayed-addressability-P3` (testing)
+- **claim:** exec-barrier-as-real-inheritance-boundary — awaiting: `exec-barrier-P1` (open), `exec-barrier-P2` (open), `exec-barrier-P3` (open)
+- **claim:** trace-inheritance-as-supporting-carrier — awaiting: `trace-inheritance-P1` (open), `trace-inheritance-P2` (testing), `trace-inheritance-P3` (open)
+
+## Summary
+
+- 42 theory objects; 23 have predictions; 1 have ≥1 confirmed prediction
+- 12 gaps; 12 touch an object with a prediction; 0 touch only objects without predictions
+- 3 papers with Transport Validation; 0 transport-valid rows; 7 BLOCKED rows
+
+- 15 distinct predictions are currently blocking paper transport.
+[0m
+[0m$ [0mmake audit-discovery-lifecycle
+./scripts/check-discovery-lifecycle.sh
+Discovery-lifecycle aggregate audit
+
+== check-prediction-format.sh (exit 0) ==
+Prediction-format audit: predictions=51 issues=0
+
+== check-prediction-lifecycle.sh (exit 0) ==
+Prediction-lifecycle audit: predictions=51 issues=0
+
+== check-prediction-status-sync.sh (exit 0) ==
+Prediction-status-sync audit: predictions=51 result_rows=12 issues=0
+
+== check-experiment-prediction-link.sh (exit 0) ==
+Experiment-prediction-link audit: experiments=8 links=12 issues=0
+
+== check-paper-transport-validation.sh (exit 0) ==
+Paper-transport-validation audit: dossiers=31 sections=3 rows=8 issues=0
+
+== check-anomaly-resolution.sh (exit 0) ==
+Anomaly-resolution audit: contradicted_predictions=0 anomalies=0 issues=0
+
+Discovery-lifecycle summary
+
+| sensor | exit | one-line |
+|---|---:|---|
+| check-prediction-format.sh | 0 | Prediction-format audit: predictions=51 issues=0 |
+| check-prediction-lifecycle.sh | 0 | Prediction-lifecycle audit: predictions=51 issues=0 |
+| check-prediction-status-sync.sh | 0 | Prediction-status-sync audit: predictions=51 result_rows=12 issues=0 |
+| check-experiment-prediction-link.sh | 0 | Experiment-prediction-link audit: experiments=8 links=12 issues=0 |
+| check-paper-transport-validation.sh | 0 | Paper-transport-validation audit: dossiers=31 sections=3 rows=8 issues=0 |
+| check-anomaly-resolution.sh | 0 | Anomaly-resolution audit: contradicted_predictions=0 anomalies=0 issues=0 |
+[0m
+Discovery lifecycle is clean. The Makefile lacks targets for two README-mentioned sensors, so I’ll check whether the scripts exist and whether this is a registration/documentation drift that can be fixed safely.
+[0m→ [0mRead scripts/check-seed-backlog.sh[90m [offset=1, limit=120][0m
+[0m→ [0mRead scripts/check-generation-event-closure.sh[90m [offset=1, limit=140][0m
+[0m✱ [0mGrep "seed-backlog|generation-event-closure|self-description"[90m in Makefile · 2 matches[0m
+[0m✱ [0mGrep "check-seed-backlog|check-generation-event-closure|audit-seed-backlog|audit-generation-event-closure"[90m in . · 9 matches[0m
+[0m✱ [0mGrep "seed-backlog|generation-event-closure|self-description|MANUAL_ONLY|validator"[90m in scripts · 46 matches[0m
+[0m✱ [0mGrep "seed-backlog|generation-event-closure|self-description|Sensor Typology|Manual"[90m in scripts/README.md · 3 matches[0m
+[0m→ [0mRead scripts/check-validator-registration.sh[90m [offset=1, limit=220][0m
+[0m→ [0mRead scripts/README.md[90m [offset=1, limit=220][0m
+This is a concrete control-plane drift: both sensors are implemented, indexed, and allowlisted, but have no Makefile entry despite being described as scheduled/on-demand sensors. I’ll add minimal audit targets so the documented commands work.
+[0m→ [0mRead Makefile[90m [offset=500, limit=90][0m
+I’m editing only `Makefile`: adding `.PHONY` declarations and audit/check aliases for the two existing advisory sensors, without changing sensor behavior.
+[0m% [0mPatch 1 file
+The Makefile targets are in place. I’ll run the new targets and the relevant meta-sensors to confirm the control-plane stays coherent.
+[0m
+[0m$ [0mmake audit-seed-backlog
+./scripts/check-seed-backlog.sh
+Seed-backlog audit: seeds=132 aged=0 missing-review=0
+[0m
+[0m$ [0mmake audit-generation-event-closure
+./scripts/check-generation-event-closure.sh
+Generation-event-closure audit: generative=6 closed=6 open=0 missing-status=0
+[0m
+[0m$ [0mmake audit-scripts-readme
+bash ./scripts/check-scripts-readme.sh
+Scripts-readme audit: docs_scanned=1 issues=0
+[0m
+[0m$ [0mmake audit-validator-registration
+./scripts/check-validator-registration.sh
+Validator-registration audit: scripts=82 prek_entries=53 issues=0
+[0m
+The new targets work and the registry/readme checks remain clean. I’ll inspect the final diff to make sure only the intended Makefile change landed.
+[0m$ [0mgit diff -- Makefile
+diff --git a/Makefile b/Makefile
+index cca98bb6c..8ca1d4ae3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -568,3 +568,17 @@ audit-dossier-dimensions:
+ 
+ audit-self-description:
+ 	./scripts/check-self-description-completeness.sh
++
++.PHONY: audit-seed-backlog check-seed-backlog audit-generation-event-closure check-generation-event-closure audit-dossier-dimensions audit-self-description
++
++audit-seed-backlog:
++	./scripts/check-seed-backlog.sh
++
++check-seed-backlog:
++	./scripts/check-seed-backlog.sh
++
++audit-generation-event-closure:
++	./scripts/check-generation-event-closure.sh
++
++check-generation-event-closure:
++	./scripts/check-generation-event-closure.sh
+[0m
+[0m$ [0mgit status --short
+M Makefile
+[0m
+Implemented a small control-plane fix in `Makefile`.
+
+Changed:
+- Added `make audit-seed-backlog`
+- Added `make check-seed-backlog`
+- Added `make audit-generation-event-closure`
+- Added `make check-generation-event-closure`
+- Added matching `.PHONY` declarations
+
+Verified:
+- `make audit-seed-backlog` passes: `seeds=132 aged=0 missing-review=0`
+- `make audit-generation-event-closure` passes: `generative=6 closed=6 open=0 missing-status=0`
+- `make audit-validator-registration` passes: `issues=0`
+- `make audit-scripts-readme` passes: `issues=0`
+
+Only `Makefile` changed.

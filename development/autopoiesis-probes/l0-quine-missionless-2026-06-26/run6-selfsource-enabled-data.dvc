@@ -1,0 +1,6 @@
+outs:
+- md5: b2b315e4d5571168c517ebfebf44f806.dir
+  size: 530470
+  nfiles: 14
+  hash: md5
+  path: run6-selfsource-enabled-data

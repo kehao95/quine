@@ -1,0 +1,331 @@
+[0m
+> codex-5.5-high · gpt-5.5
+[0m
+I’ll inspect the repository’s self-model and current state first, then make the smallest useful maintenance change I can justify from the project’s own instructions.
+[0m✱ [0mGlob "Paper/theory/**/*"[90m in . · 100 matches[0m
+[0m✱ [0mGlob "**/*"[90m in . · 100 matches[0m
+[0m→ [0mRead AGENTS.md[90m [offset=1, limit=200][0m
+[0m
+[0m# [0mTodos
+[•] Inspect repository state and self-model surfaces
+[ ] Identify the smallest justified maintenance action
+[ ] Apply the maintenance change without touching unrelated work
+[ ] Verify the change with available checks
+[0m
+[0m→ [0mRead README.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead STATUS.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead ROADMAP.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead Makefile[90m [offset=1, limit=240][0m
+[0m→ [0mRead Paper/theory/README.md[90m [offset=1, limit=260][0m
+[0m→ [0mRead Paper/theory/README.md[90m [offset=261, limit=160][0m
+[0m→ [0mRead DEVELOPMENT.md[90m [offset=1, limit=260][0m
+[0m→ [0mRead CLOSURE.md[90m [offset=1, limit=220][0m
+[0m✱ [0mGlob "Paper/theory/views/*"[90m in . · 7 matches[0m
+[0m✱ [0mGlob "scripts/check-theory*"[90m in . · 8 matches[0m
+The repo routes open-ended agent work through the graph-native theory layer and explicitly favors bounded maintenance over status prose. I’m checking the validation/audit surfaces now to find a concrete drift or residue item instead of inventing new direction.
+[0m→ [0mRead scripts/check-theory-maturity.sh[90m [offset=1, limit=260][0m
+[0m→ [0mRead scripts/check-theory-coherence.sh[90m [offset=1, limit=260][0m
+[0m→ [0mRead scripts/check-seed-backlog.sh[90m [offset=1, limit=260][0m
+[0m✱ [0mGlob "scripts/check-*.sh"[90m in . · 81 matches[0m
+[0m
+[0m$ [0mgit status --short
+(no output)
+[0m
+[0m✱ [0mGrep "audit-theory|check-theory|seed-backlog|control-plane"[90m in Makefile · 45 matches[0m
+[0m→ [0mRead Makefile[90m [offset=320, limit=140][0m
+[0m→ [0mRead scripts/check-validator-registration.sh[90m [offset=1, limit=280][0m
+[0m✱ [0mGrep "theory-family|seed-backlog|theory-maturity|generation-event|reflexive-balance|audit-theory"[90m in . · 37 matches[0m
+[0m→ [0mRead scripts/README.md[90m [offset=1, limit=120][0m
+I found a concrete drift candidate: `scripts/README.md` describes `check-theory-maturity` using the old evidence-based grounded rule, while both the validator header and `Paper/theory/README.md` now define grounded by relations plus developed definitional body. I’m going to repair that projection rather than change validator behavior.
+[0m→ [0mRead scripts/check-scripts-readme.sh[90m [offset=1, limit=240][0m
+[0m→ [0mRead scripts/check-generation-event-closure.sh[90m [offset=1, limit=260][0m
+[0m→ [0mRead scripts/check-theory-reflexive-balance.sh[90m [offset=1, limit=260][0m
+[0m→ [0mRead scripts/check-theory-object-refs.sh[90m [offset=1, limit=220][0m
+[0m→ [0mRead scripts/check-gap-status.sh[90m [offset=1, limit=220][0m
+[0m✱ [0mGrep "maturity|seed-backlog|generation-event|reflexive-balance"[90m in Makefile · 0 matches[0m
+There is a second projection issue: the Makefile’s `audit-theory-family` omits the advisory metabolic-stratification sensors that `scripts/README.md` already indexes. I’m running those sensors to see whether adding them to the manual sweep is safe and whether any strict target should remain separate.
+[0m
+[0m$ [0m./scripts/check-seed-backlog.sh
+Seed-backlog audit: seeds=132 aged=0 missing-review=0
+[0m
+[0m$ [0m./scripts/check-generation-event-closure.sh
+Generation-event-closure audit: generative=6 closed=6 open=0 missing-status=0
+[0m
+[0m$ [0m./scripts/check-theory-reflexive-balance.sh
+UNMARKED grounded+ objects (no `external-transport:` and no `reflexive-only` mark):
+  — observational only; the field is added ON TOUCH going forward, never mass-backfilled.
+  UNMARKED: addressability-debt.md (maturity: grounded)
+  UNMARKED: affordance-null-ecology.md (maturity: grounded)
+  UNMARKED: audit-attractor.md (maturity: grounded)
+  UNMARKED: autopoietic-membrane.md (maturity: grounded)
+  UNMARKED: carrier.md (maturity: load-bearing)
+  UNMARKED: channel-substitution.md (maturity: grounded)
+  UNMARKED: continuity-substrate.md (maturity: grounded)
+  UNMARKED: coordination-closure.md (maturity: grounded)
+  UNMARKED: delayed-addressability.md (maturity: load-bearing)
+  UNMARKED: deposition-compression.md (maturity: grounded)
+  UNMARKED: divergence-substrate.md (maturity: grounded)
+  UNMARKED: dossier-shaping-dimensions.md (maturity: grounded)
+  UNMARKED: encoding-pressure.md (maturity: grounded)
+  UNMARKED: event-driven-cognition.md (maturity: grounded)
+  UNMARKED: everything-addressable.md (maturity: grounded)
+  UNMARKED: evolutionary-recombination.md (maturity: grounded)
+  UNMARKED: exec-barrier.md (maturity: load-bearing)
+  UNMARKED: explanation-blind-spot-duality.md (maturity: grounded)
+  UNMARKED: future-task-surface.md (maturity: grounded)
+  UNMARKED: graded-axis-shaping.md (maturity: grounded)
+  UNMARKED: identity-criterion.md (maturity: grounded)
+  UNMARKED: latent-substrate.md (maturity: grounded)
+  UNMARKED: metabolic-transition-topology.md (maturity: grounded)
+  UNMARKED: narrative-claim.md (maturity: load-bearing)
+  UNMARKED: network-utility-selection.md (maturity: grounded)
+  UNMARKED: protocol-emergence.md (maturity: grounded)
+  UNMARKED: reflexive-substrate-loop.md (maturity: grounded)
+  UNMARKED: relational-existence.md (maturity: grounded)
+  UNMARKED: reproduced-object.md (maturity: grounded)
+  UNMARKED: reproductive-code-topology.md (maturity: grounded)
+  UNMARKED: research-state-machine.md (maturity: grounded)
+  UNMARKED: selector-stack-topology.md (maturity: grounded)
+  UNMARKED: self-description-resource.md (maturity: grounded)
+  UNMARKED: sequence-carrier-topology.md (maturity: grounded)
+  UNMARKED: stigmergy-as-carrier.md (maturity: grounded)
+  UNMARKED: structural-pull.md (maturity: grounded)
+  UNMARKED: substrate-coincidence.md (maturity: grounded)
+  UNMARKED: successor-morphology.md (maturity: grounded)
+  UNMARKED: trace-inheritance.md (maturity: load-bearing)
+  UNMARKED: trigger-structure.md (maturity: grounded)
+  UNMARKED: viability-pressure.md (maturity: grounded)
+Strange-loop density: 0/42 transport-declared, 1/42 reflexive-only, 41/42 unmarked (1/42 declared either way).
+Theory-reflexive-balance audit: grounded+=42 transport-declared=0 reflexive-only=1 unmarked=41
+[0m
+[0m$ [0m./scripts/check-theory-maturity.sh
+Theory-maturity audit: scanned=42 issues=0 advisory=0
+[0m
+[0m→ [0mRead Makefile[90m [offset=456, limit=112][0m
+[0m→ [0mRead scripts/check-theory-surprise-independence.sh[90m [offset=1, limit=160][0m
+I’m updating two control-plane projections: the Makefile so the theory-family manual sweep reaches the registered metabolic sensors, and `scripts/README.md` so its maturity-rule summary matches the validator and theory README.
+[0m% [0mPatch 2 files
+[0m
+[0m# [0mTodos
+[✓] Inspect repository state and self-model surfaces
+[✓] Identify the smallest justified maintenance action
+[✓] Apply the maintenance change without touching unrelated work
+[•] Verify the change with available checks
+[0m
+The edit is in place. I’m verifying the script index and the updated Makefile theory-family targets now.
+[0m$ [0m./scripts/check-scripts-readme.sh --strict
+Scripts-readme audit: docs_scanned=1 issues=0
+[0m
+[0m$ [0mmake check-theory-family
+./scripts/check-theory-coherence.sh --strict
+Theory-coherence audit: objects=42 gaps=12 views=7 issues=0 advisory=0
+./scripts/check-theory-object-refs.sh --strict
+ADVISORY: objects/affordance-null-ecology.md `## Papers using this object` names 0/1 declaring dossiers; missing: stigmergic-trace-causality
+ADVISORY: objects/carrier.md `## Papers using this object` names 18/19 declaring dossiers; missing: stigmergic-trace-causality
+ADVISORY: objects/coordination-closure.md `## Papers using this object` names 9/10 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/exec-barrier.md `## Papers using this object` names 18/19 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/narrative-claim.md `## Papers using this object` names 8/9 declaring dossiers; missing: narration-invariance-eval
+ADVISORY: objects/protocol-emergence.md `## Papers using this object` names 7/8 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/stigmergy-as-carrier.md `## Papers using this object` names 1/2 declaring dossiers; missing: routing-surface-coevolution
+ADVISORY: objects/trace-inheritance.md `## Papers using this object` names 14/16 declaring dossiers; missing: routing-surface-coevolution, stigmergic-trace-causality
+ADVISORY: objects/viability-pressure.md `## Papers using this object` names 10/11 declaring dossiers; missing: routing-surface-coevolution
+Theory-object-refs audit: dossiers=31 objects=42 gaps=12 views=7 issues=0 advisory=9
+./scripts/check-gap-status.sh --strict
+Gap-status audit: gaps=12 issues=0 advisory=0
+./scripts/check-theory-surprise-independence.sh --strict
+ADVISORY: Paper/theory/objects/graded-axis-shaping.md: 4 `## Evidence` entries lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/metabolic-transition-topology.md: 1 `## Evidence` entry lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/reproductive-code-topology.md: 4 `## Evidence` entries lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/selector-stack-topology.md: 1 `## Evidence` entry lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/sequence-carrier-topology.md: 1 `## Evidence` entry lack a surprise-level tag (coverage gap)
+Theory-surprise-independence audit: objects=42 with_evidence=24 weak=0 untagged_entries=11 advisory=5 issues=0
+./scripts/check-theory-code-consistency.sh --strict
+ADVISORY: possible code-mismatch (OQ4): `network-utility-selection` depends-on `narrative-claim` but their `## Code` Variables/Ontology share no vocabulary and neither names the other — adjudicate incommensurability
+ADVISORY: possible code-mismatch (OQ4): `relational-existence` specializes `delayed-addressability` but their `## Code` Variables/Ontology share no vocabulary and neither names the other — adjudicate incommensurability
+Theory-code-consistency audit: load_bearing=5 coded=5 comparable_pairs=6 issues=0 advisory=2
+./scripts/check-theory-maturity.sh --strict
+Theory-maturity audit: scanned=42 issues=0 advisory=0
+[0m
+[0m$ [0mmake audit-theory-family
+./scripts/check-theory-coherence.sh
+Theory-coherence audit: objects=42 gaps=12 views=7 issues=0 advisory=0
+./scripts/check-theory-object-refs.sh
+ADVISORY: objects/affordance-null-ecology.md `## Papers using this object` names 0/1 declaring dossiers; missing: stigmergic-trace-causality
+ADVISORY: objects/carrier.md `## Papers using this object` names 18/19 declaring dossiers; missing: stigmergic-trace-causality
+ADVISORY: objects/coordination-closure.md `## Papers using this object` names 9/10 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/exec-barrier.md `## Papers using this object` names 18/19 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/narrative-claim.md `## Papers using this object` names 8/9 declaring dossiers; missing: narration-invariance-eval
+ADVISORY: objects/protocol-emergence.md `## Papers using this object` names 7/8 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/stigmergy-as-carrier.md `## Papers using this object` names 1/2 declaring dossiers; missing: routing-surface-coevolution
+ADVISORY: objects/trace-inheritance.md `## Papers using this object` names 14/16 declaring dossiers; missing: routing-surface-coevolution, stigmergic-trace-causality
+ADVISORY: objects/viability-pressure.md `## Papers using this object` names 10/11 declaring dossiers; missing: routing-surface-coevolution
+Theory-object-refs audit: dossiers=31 objects=42 gaps=12 views=7 issues=0 advisory=9
+./scripts/check-gap-status.sh
+Gap-status audit: gaps=12 issues=0 advisory=0
+./scripts/check-theory-scope-governance.sh
+ISSUE: Paper/theory/objects/carrier.md: scope:paradigm but its last commit is not Human-directed (no `human-directed:` marker or `Co-Authored-By: Human` trailer) — an approaching/landed code-transition that escaped the Human gate
+ISSUE: Paper/theory/objects/delayed-addressability.md: scope:paradigm but its last commit is not Human-directed (no `human-directed:` marker or `Co-Authored-By: Human` trailer) — an approaching/landed code-transition that escaped the Human gate
+ISSUE: Paper/theory/gaps/branching-identity.md: scope:paradigm but its last commit is not Human-directed (no `human-directed:` marker or `Co-Authored-By: Human` trailer) — an approaching/landed code-transition that escaped the Human gate
+ISSUE: Paper/theory/gaps/introspective-blind-spot-discovery.md: scope:paradigm but its last commit is not Human-directed (no `human-directed:` marker or `Co-Authored-By: Human` trailer) — an approaching/landed code-transition that escaped the Human gate
+Theory-scope-governance audit: scanned=54 paradigm=9 issues=4 advisory=0
+./scripts/check-theory-decoder.sh
+ISSUE: Paper/theory/gaps/introspective-blind-spot-discovery.md: gap is missing a `## Transport tests` section (resolution would certify fit, not validity)
+Theory-decoder audit: load_bearing=5 with_predictions=5 gaps=12 with_tests=11 issues=1
+./scripts/check-theory-surprise-independence.sh
+ADVISORY: Paper/theory/objects/graded-axis-shaping.md: 4 `## Evidence` entries lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/metabolic-transition-topology.md: 1 `## Evidence` entry lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/reproductive-code-topology.md: 4 `## Evidence` entries lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/selector-stack-topology.md: 1 `## Evidence` entry lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/sequence-carrier-topology.md: 1 `## Evidence` entry lack a surprise-level tag (coverage gap)
+Theory-surprise-independence audit: objects=42 with_evidence=24 weak=0 untagged_entries=11 advisory=5 issues=0
+./scripts/check-theory-code-consistency.sh
+ADVISORY: possible code-mismatch (OQ4): `network-utility-selection` depends-on `narrative-claim` but their `## Code` Variables/Ontology share no vocabulary and neither names the other — adjudicate incommensurability
+ADVISORY: possible code-mismatch (OQ4): `relational-existence` specializes `delayed-addressability` but their `## Code` Variables/Ontology share no vocabulary and neither names the other — adjudicate incommensurability
+Theory-code-consistency audit: load_bearing=5 coded=5 comparable_pairs=6 issues=0 advisory=2
+./scripts/check-theory-maturity.sh
+Theory-maturity audit: scanned=42 issues=0 advisory=0
+./scripts/check-seed-backlog.sh
+Seed-backlog audit: seeds=132 aged=0 missing-review=0
+./scripts/check-generation-event-closure.sh
+Generation-event-closure audit: generative=6 closed=6 open=0 missing-status=0
+./scripts/check-theory-reflexive-balance.sh
+UNMARKED grounded+ objects (no `external-transport:` and no `reflexive-only` mark):
+  — observational only; the field is added ON TOUCH going forward, never mass-backfilled.
+  UNMARKED: addressability-debt.md (maturity: grounded)
+  UNMARKED: affordance-null-ecology.md (maturity: grounded)
+  UNMARKED: audit-attractor.md (maturity: grounded)
+  UNMARKED: autopoietic-membrane.md (maturity: grounded)
+  UNMARKED: carrier.md (maturity: load-bearing)
+  UNMARKED: channel-substitution.md (maturity: grounded)
+  UNMARKED: continuity-substrate.md (maturity: grounded)
+  UNMARKED: coordination-closure.md (maturity: grounded)
+  UNMARKED: delayed-addressability.md (maturity: load-bearing)
+  UNMARKED: deposition-compression.md (maturity: grounded)
+  UNMARKED: divergence-substrate.md (maturity: grounded)
+  UNMARKED: dossier-shaping-dimensions.md (maturity: grounded)
+  UNMARKED: encoding-pressure.md (maturity: grounded)
+  UNMARKED: event-driven-cognition.md (maturity: grounded)
+  UNMARKED: everything-addressable.md (maturity: grounded)
+  UNMARKED: evolutionary-recombination.md (maturity: grounded)
+  UNMARKED: exec-barrier.md (maturity: load-bearing)
+  UNMARKED: explanation-blind-spot-duality.md (maturity: grounded)
+  UNMARKED: future-task-surface.md (maturity: grounded)
+  UNMARKED: graded-axis-shaping.md (maturity: grounded)
+  UNMARKED: identity-criterion.md (maturity: grounded)
+  UNMARKED: latent-substrate.md (maturity: grounded)
+  UNMARKED: metabolic-transition-topology.md (maturity: grounded)
+  UNMARKED: narrative-claim.md (maturity: load-bearing)
+  UNMARKED: network-utility-selection.md (maturity: grounded)
+  UNMARKED: protocol-emergence.md (maturity: grounded)
+  UNMARKED: reflexive-substrate-loop.md (maturity: grounded)
+  UNMARKED: relational-existence.md (maturity: grounded)
+  UNMARKED: reproduced-object.md (maturity: grounded)
+  UNMARKED: reproductive-code-topology.md (maturity: grounded)
+  UNMARKED: research-state-machine.md (maturity: grounded)
+  UNMARKED: selector-stack-topology.md (maturity: grounded)
+  UNMARKED: self-description-resource.md (maturity: grounded)
+  UNMARKED: sequence-carrier-topology.md (maturity: grounded)
+  UNMARKED: stigmergy-as-carrier.md (maturity: grounded)
+  UNMARKED: structural-pull.md (maturity: grounded)
+  UNMARKED: substrate-coincidence.md (maturity: grounded)
+  UNMARKED: successor-morphology.md (maturity: grounded)
+  UNMARKED: trace-inheritance.md (maturity: load-bearing)
+  UNMARKED: trigger-structure.md (maturity: grounded)
+  UNMARKED: viability-pressure.md (maturity: grounded)
+Strange-loop density: 0/42 transport-declared, 1/42 reflexive-only, 41/42 unmarked (1/42 declared either way).
+Theory-reflexive-balance audit: grounded+=42 transport-declared=0 reflexive-only=1 unmarked=41
+[0m
+Verification passed for the edited script index and the updated Makefile targets. The advisory theory sweep now reaches the added sensors; existing advisory findings remain visible but non-blocking.
+[0m$ [0mgit diff -- Makefile scripts/README.md
+diff --git a/Makefile b/Makefile
+index e273df9ee..fcdc27258 100644
+--- a/Makefile
++++ b/Makefile
+@@ -20,6 +20,7 @@ COVERPROFILE := coverage.out
+ 
+ .PHONY: audit-discovery-lifecycle check-discovery-lifecycle
+ .PHONY: audit-theory-family check-theory-family
++.PHONY: audit-theory-maturity check-theory-maturity audit-seed-backlog check-seed-backlog audit-generation-event-closure check-generation-event-closure audit-theory-reflexive-balance check-theory-reflexive-balance
+ .PHONY: audit-structural-pressure check-structural-pressure
+ .PHONY: audit-succ-48-selector-smoke check-succ-48-selector-smoke
+ 
+@@ -373,9 +374,10 @@ check-githooks-active:
+ #  - theory-coherence:   object<->gap / object<->view edge reciprocity + link targets
+ #  - theory-object-refs:  paper frontmatter theory-objects/gaps/view-affinity resolve
+ #  - gap-status:          every gap carries a known lifecycle status + load-bearing sections
+-audit-theory-family: audit-theory-coherence audit-theory-object-refs audit-gap-status audit-theory-scope-governance audit-theory-decoder audit-theory-surprise-independence audit-theory-code-consistency
++#  - metabolic sensors:   maturity compliance, seed backlog, generation closure, reflexive balance
++audit-theory-family: audit-theory-coherence audit-theory-object-refs audit-gap-status audit-theory-scope-governance audit-theory-decoder audit-theory-surprise-independence audit-theory-code-consistency audit-theory-maturity audit-seed-backlog audit-generation-event-closure audit-theory-reflexive-balance
+ 
+-check-theory-family: check-theory-coherence check-theory-object-refs check-gap-status check-theory-surprise-independence check-theory-code-consistency
++check-theory-family: check-theory-coherence check-theory-object-refs check-gap-status check-theory-surprise-independence check-theory-code-consistency check-theory-maturity
+ 
+ audit-theory-coherence:
+ 	./scripts/check-theory-coherence.sh
+@@ -431,6 +433,30 @@ audit-theory-code-consistency:
+ check-theory-code-consistency:
+ 	./scripts/check-theory-code-consistency.sh --strict
+ 
++audit-theory-maturity:
++	./scripts/check-theory-maturity.sh
++
++check-theory-maturity:
++	./scripts/check-theory-maturity.sh --strict
++
++audit-seed-backlog:
++	./scripts/check-seed-backlog.sh
++
++check-seed-backlog:
++	./scripts/check-seed-backlog.sh
++
++audit-generation-event-closure:
++	./scripts/check-generation-event-closure.sh
++
++check-generation-event-closure:
++	./scripts/check-generation-event-closure.sh
++
++audit-theory-reflexive-balance:
++	./scripts/check-theory-reflexive-balance.sh
++
++check-theory-reflexive-balance:
++	./scripts/check-theory-reflexive-balance.sh
++
+ # Discovery-loop procedure router. Advisory v1; keep out of check-control-plane
+ # until promoted.
+ audit-procedure-router:
+diff --git a/scripts/README.md b/scripts/README.md
+index a6ab90185..ba54a26a5 100644
+--- a/scripts/README.md
++++ b/scripts/README.md
+@@ -35,7 +35,7 @@ Current validator families include:
+ - phase-interpretation ownership: single-owner job families plus analysis projection cards and analysis index across phase-level docs (first compliance-sensor, checks body-vs-contract not just presence)
+ - githooks activation: meta-sensor that detects when the L5 sensing layer itself is inert (core.hooksPath unset or wrong)
+ - theory-coherence: PRESENCE + link-target + reciprocity of the graph-native theory net (`Paper/theory/objects/`, `gaps/`, and `views/`); object/gap/view links must resolve, reciprocal edges are advisory curation hygiene, and the sensor stays advisory until deliberately promoted
+-- theory-maturity: COMPLIANCE of the theory-layer maturity axis — each object's `maturity:` frontmatter (`SEED | grounded | load-bearing`) must match the rule re-derived from its own body (load-bearing iff in README § Load-bearing objects; grounded iff a canonical `## Evidence` entry plus a non-stub `## What it is`; else SEED), with a both-directions cross-check between the README Load-bearing list and the declared `maturity: load-bearing` set. Intrinsic-only: reciprocal-edge completeness is deliberately NOT consulted (that relational axis is owned by theory-coherence). Advisory v1, advisory until proven quiet-when-clean on the Phase 1 backfill
++- theory-maturity: COMPLIANCE of the theory-layer maturity axis — each object's `maturity:` frontmatter (`SEED | grounded | load-bearing`) must match the rule re-derived from its own body (load-bearing iff in README § Load-bearing objects; grounded iff it has at least one typed `## Relations` edge plus a non-stub primary definitional section; else SEED), with a both-directions cross-check between the README Load-bearing list and the declared `maturity: load-bearing` set. Intrinsic-only: reciprocal-edge completeness and empirical evidence presence are deliberately NOT consulted (those axes are owned by theory-coherence and surprise-independence). Advisory v1, advisory until proven quiet-when-clean on the Phase 1 backfill
+ - seed-backlog: INVENTORY of the seed compression-clock — parses every `## Live Seeds` entry's `review: <date>` token (deposit+28d) and reports AGED seeds (review date past, prune candidates) plus MISSING-REVIEW seeds (incomplete backfill / clockless new seed). The theory-layer instance of the wake model; exits 0 always, STAYS advisory (an attention surface, never a commit gate)
+ - generation-event-closure: COMPLIANCE that generative references close — each generative reference (`internal-cross-read`, `internal-seed-forest`, `cross-model-collision`, `human-theory-collision`) must carry `status: open | closed`, and `status: closed` requires its paired `## Integrator assessment` (or the `## TL;DR`+numbered collision shape) section. Reports `status: open` references as unclosed deposits (P5 paired-genre rule). Non-generative references (dr-reports, syntheses) are exempt. Advisory v1, advisory until proven quiet-when-clean
+ - theory-reflexive-balance: INVENTORY of the strange-loop density — for each `grounded`+ object, indexes whether the body declares an `external-transport: <system>` (an external system the theory moves to) or carries an explicit honest `reflexive-only` mark, or is `unmarked`, and reports the layer-wide transport-declared-vs-reflexive ratio. Observational only; the `## Transport predictions` decoder section does NOT count (that is internal validity). Exits 0 always, STAYS advisory and NEVER gates — the strange loop is the program's thesis, so density is made visible, not capped; reflexive-balance is externally-adjudicable-only per `explanation-blind-spot-duality`
+[0m
+[0m$ [0mgit status --short
+M Makefile
+ M scripts/README.md
+[0m
+[0m# [0mTodos
+[✓] Inspect repository state and self-model surfaces
+[✓] Identify the smallest justified maintenance action
+[✓] Apply the maintenance change without touching unrelated work
+[✓] Verify the change with available checks
+[0m
+Implemented a bounded maintenance pass.
+
+Changed:
+- `Makefile`: added theory metabolic sensor targets and included them in `make audit-theory-family`; added `check-theory-maturity` to `check-theory-family`.
+- `scripts/README.md`: corrected the `theory-maturity` rule from old evidence-based grounding to the current relations-plus-developed-body rule.
+
+Verified:
+- `./scripts/check-scripts-readme.sh --strict`
+- `make audit-theory-family`
+- `make check-theory-family`
+
+Residual: `make audit-theory-family` now surfaces existing non-blocking advisory findings, including scope-governance and decoder audit findings. Worktree has the two intended modified files.

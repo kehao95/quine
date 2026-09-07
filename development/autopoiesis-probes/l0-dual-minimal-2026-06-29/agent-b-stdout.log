@@ -1,0 +1,448 @@
+[0m
+> build · gpt-5.5
+[0m
+I’ll inspect the repository’s self-model and current state, then make the smallest useful maintenance change I can justify from the project’s own instructions.
+[0m✱ [0mGlob "Paper/philosophy/**/*"[90m in . · 11 matches[0m
+[0m→ [0mRead AGENTS.md[90m [offset=1, limit=200][0m
+[0m
+[0m$ [0mgit status --short
+(no output)
+[0m
+The worktree is clean. I’m reading the philosophy surface now to find an internal inconsistency, stale projection, or missing link that can be improved without inventing new project direction.
+[0m→ [0mRead Paper/philosophy/README.md[90m [offset=1, limit=240][0m
+[0m→ [0mRead Paper/philosophy/north-star.md[90m [offset=1, limit=220][0m
+[0m✱ [0mGrep "TODO|FIXME|incomplete|drift|Freshness|Absorption|owner|roadmap|next"[90m in Paper/philosophy · 66 matches[0m
+[0m→ [0mRead Paper/philosophy/operating-philosophy.md[90m [offset=1, limit=260][0m
+I found a likely drift pattern: several philosophy pages still describe the process ontology as “stable” or primary-adjacent even though `living-system.md` has demoted it to the runtime substrate layer. I’m checking the owning pages before editing so the repair lands in the right surface.
+[0m→ [0mRead Paper/philosophy/living-system.md[90m [offset=1, limit=260][0m
+[0m→ [0mRead Paper/philosophy/ontology.md[90m [offset=1, limit=240][0m
+[0m→ [0mRead Paper/philosophy/development-vector.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead Paper/philosophy/self-maintaining-systems.md[90m [offset=430, limit=150][0m
+The owning cut is clear in `living-system.md`; the stale text is in documents that route readers through `north-star.md` as if process remains the top ontology. I’m updating those projections to make `living-system.md` the primary entry, while preserving process/POSIX as the runtime substrate claim.
+[0m→ [0mRead Paper/philosophy/operating-philosophy.md[90m [offset=261, limit=80][0m
+I’m making a projection-maintenance edit only: wording and routing changes in philosophy docs, not new theory or runtime claims.
+[0m% [0mPatch 1 file
+`operating-philosophy.md` now routes through the living-system cut first and treats process semantics as the preserved runtime layer. I’m applying the same boundary to the vocabulary and development-vector projections.
+[0m% [0mPatch 1 file
+[0m% [0mPatch 1 file
+The main projections are edited. I’m checking for remaining stale “stable process ontology” phrasing and reviewing the diff before deciding whether more changes are warranted.
+[0m
+[0m$ [0mgit diff -- Paper/philosophy/operating-philosophy.md Paper/philosophy/ontology.md Paper/philosophy/development-vector.md
+diff --git a/Paper/philosophy/development-vector.md b/Paper/philosophy/development-vector.md
+index 7cf91cf1c..a9c989148 100644
+--- a/Paper/philosophy/development-vector.md
++++ b/Paper/philosophy/development-vector.md
+@@ -5,18 +5,21 @@
+ This document is Quine's canonical **theory/development map**.
+ 
+ It exists because "how to develop" is not the same question as "what is worth
+-developing." The latter should be checked against Quine's runtime ontology,
+-operating philosophy, evidence pressure, and maintenance loop rather than only
+-against paper pressure or local convenience.
++developing." The latter should be checked against Quine's living-system
++ontology, runtime-substrate ontology, operating philosophy, evidence pressure,
++and maintenance loop rather than only against paper pressure or local
++convenience.
+ 
+-Read this after [`north-star.md`](./north-star.md),
++Read this after [`living-system.md`](./living-system.md),
++[`north-star.md`](./north-star.md),
+ [`operating-philosophy.md`](./operating-philosophy.md), and
+-[`self-maintaining-systems.md`](./self-maintaining-systems.md). The runtime
+-north star names the stable process ontology; the operating philosophy names
+-the Plan 9 / Unix commitments that follow for runtime design; the
+-self-maintaining-systems frame names the dynamic maintenance loop around
+-runtime, repository, and research work; this file maps those commitments onto
+-active, adjacent, and downstream development spines.
++[`self-maintaining-systems.md`](./self-maintaining-systems.md). The living-system
++cut names the primary ontology; the runtime north star preserves the process
++ontology as the physical-carrier layer; the operating philosophy names the Plan 9
++/ Unix commitments that follow for runtime design; the self-maintaining-systems
++frame names the dynamic maintenance loop around runtime, repository, and
++research work; this file maps those commitments onto active, adjacent, and
++downstream development spines.
+ 
+ Use it when the question is:
+ 
+@@ -37,9 +40,12 @@ The top-level direction surfaces now have distinct jobs:
+ - [`self-maintaining-systems.md`](./self-maintaining-systems.md) answers: what
+   cross-layer maintenance loop connects runtime, repository, and research
+   direction without replacing runtime ownership?
++- [`living-system.md`](./living-system.md) answers: what primary ontological cut
++  unifies process activation, persistent repository cognition, and research
++  self-maintenance?
+ - [`operating-philosophy.md`](./operating-philosophy.md) answers: what
+-  philosophical design commitments follow from native process ontology before
+-  they become implementation contracts?
++  philosophical design commitments follow from native process ontology at the
++  runtime substrate layer before they become implementation contracts?
+ - Linear, through [`../../development/linear/README.md`](../../development/linear/README.md),
+   answers: what must the repository narrow next?
+ - this file answers: what larger theoretical/development spines Quine is
+@@ -59,7 +65,7 @@ first-class architectural pull, not as its only scientific object.
+ 
+ | Line | Question | Why it matters | Current landed slice | Current non-claim | Next honest boundary | Primary owner docs |
+ |------|----------|----------------|----------------------|-------------------|----------------------|--------------------|
+-| **Agent = Process** | What is the narrowest process-native ontology Quine can defend? | Keeps Quine grounded in OS physics instead of chat/application metaphors. | process-native runtime, released minimal systems anchor, stable mission/material/deliverable separation | not a claim that later public control, world semantics, or time semantics are already solved | keep the released anchor fixed while later lines branch forward instead of leaking back into it | [`north-star.md`](./north-star.md), [`../core/axioms/axiom-02-process-as-agent.md`](../core/axioms/axiom-02-process-as-agent.md), [`../papers/quine-arxiv/README.md`](../papers/runtime-substrate/quine-arxiv/README.md) |
++| **Agent = Process** | What is the narrowest process-native runtime substrate Quine can defend? | Keeps Quine's physical-carrier layer grounded in OS physics instead of chat/application metaphors. | process-native runtime, released minimal systems anchor, stable mission/material/deliverable separation | not a claim that the process is the whole living system, or that later public control, world semantics, or time semantics are already solved | keep the released anchor fixed while later lines branch forward instead of leaking back into it | [`north-star.md`](./north-star.md), [`living-system.md`](./living-system.md), [`../core/axioms/axiom-02-process-as-agent.md`](../core/axioms/axiom-02-process-as-agent.md), [`../papers/quine-arxiv/README.md`](../papers/runtime-substrate/quine-arxiv/README.md) |
+ | **Public process/control surface** | How does a running process become inspectable and narrowly controllable through one public surface? | This is the current bridge from POSIX ontology into Plan 9-like file-addressable runtime truth. | `agent/<session>/`, `pid/<pid>`, `QUINE_AGENT_ROOT`, `context/prompt/`, `context/state/current.jsonl`, `status/contract.json`, `ctl`, `status/inbox.json`, `log/control.jsonl`, `idle` | no broad `ctl/*` tree, no full command ecology, no settled callback/correlation protocol semantics | harden `process-control/v0` with live acceptance before widening it | Linear via [`../../development/linear/README.md`](../../development/linear/README.md), [`../papers/process-as-fs/README.md`](../papers/runtime-substrate/process-as-fs/README.md), [`../core/registries/runtime-surface.md`](../core/registries/runtime-surface.md) |
+ | **Subjective world** | How does the agent's operative world become a projected local reality rather than a narrated host view? | This is where Plan 9 namespace pressure becomes world semantics instead of prompt prose. | `overlay` lineage, `direct` workspace backend, `agent/<session>/world/{status.json,resources.json,events.jsonl}`, `switch_world` as a first explicit world primitive | not a total private world, not a complete capability/resource ontology, not yet a full paper-ready world theory | harden `world/v0` with live acceptance before widening world semantics | [`../core/architecture/worlds.md`](../core/architecture/worlds.md), [`../papers/subjective-reality/README.md`](../papers/runtime-substrate/subjective-reality/README.md) |
+ | **Revisable time** | How do revision, restore, and branching time become runtime objects rather than hidden history? | This is the deepest originality in the systems spine, but it depends on earlier process/world materialization first. | revision lineage and world switching already exist as substrate pressure under managed worlds | not a settled time contract, not current runtime reality, not yet an honest mainline claim | keep it downstream until world semantics are narrower and more inspectable | [`../papers/revisable-time/README.md`](../papers/runtime-substrate/revisable-time/README.md), [`../core/architecture/worlds.md`](../core/architecture/worlds.md) |
+diff --git a/Paper/philosophy/ontology.md b/Paper/philosophy/ontology.md
+index 696a1163d..7f9c2f80c 100644
+--- a/Paper/philosophy/ontology.md
++++ b/Paper/philosophy/ontology.md
+@@ -3,18 +3,22 @@
+ > What vocabulary are we committed to when describing Quine?
+ 
+ This document follows from [`north-star.md`](./north-star.md). Once you accept
+-that Quine treats LLM intelligence as computational physics, this document
+-specifies the vocabulary that commitment entails.
++that Quine treats LLM intelligence as computational physics at the runtime
++substrate layer, this document specifies the vocabulary that commitment entails.
++It should be read under the primary living-system cut in
++[`living-system.md`](./living-system.md): process vocabulary remains binding for
++runtime mechanics, but it is not the whole ontology.
+ 
+ ## The Core Commitment
+ 
+-**Quine's runtime unit is a process, not a persona.**
++**Quine's runtime unit is a process, not a persona; Quine's primary ontological
++unit is the living system, not the isolated process.**
+ 
+ The term `agent` is acceptable as public problem-domain shorthand: Quine is a
+ runtime for LLM agents, and it participates in the agent-systems literature.
+-Inside Quine's runtime ontology, however, the unit that acts, receives
+-authority, holds lifecycle, exposes surfaces, and composes with other units is
+-a POSIX-style process.
++Inside Quine's runtime substrate ontology, however, the unit that acts, receives
++authority, holds lifecycle, exposes surfaces, and composes with other runtime
++units is a POSIX-style process.
+ 
+ That means an "agent mechanism" is not fundamental merely because an agent
+ framework names it. To become Quine-native, the mechanism must lower into
+@@ -26,16 +30,20 @@ explanations count as fundamental.
+ 
+ ## Ontological Layers
+ 
+-Quine separates four layers. Mixing vocabulary across layers is a category error.
++Quine separates five layers. Mixing vocabulary across layers is a category error.
+ 
+ | Layer | Domain | Primitives |
+ |-------|--------|------------|
++| **Living system** | Autopoietic whole | process activations, file-structure, code, repository, theory, self-model, carrier loop |
+ | **Physics** | OS/runtime substrate | process, PID, `session_id`, `run_id`, fd, file, pipe, socket, signal, ctl, permission, namespace, overlay, `fork`, `spawn`, `exec`, `exit` |
+ | **Information** | Data flow and retained surfaces | bytes, streams, channels, material, deliverable, signal payload, log, trace |
+ | **Cognition** | Model execution | tokens, context, attention, inference, prompt fragment, tool call |
+ | **Sociology** | Human and framework description | agent, assistant, team, conversation, task, role, organization |
+ 
+-**Direction of reduction:** Higher layers may be *implemented by* lower layers, but lower layers should not be *described in terms of* higher layers.
++**Direction of reduction:** Higher layers may be *implemented by* lower layers,
++but lower layers should not be *described in terms of* higher layers. The living
++system is not a higher-level social metaphor; it is the cross-layer whole whose
++physical-carrier mechanics are realized through the runtime substrate.
+ 
+ - Describing fd wiring: use Physics vocabulary.
+ - Describing prompt construction or model inference: use Cognition vocabulary.
+diff --git a/Paper/philosophy/operating-philosophy.md b/Paper/philosophy/operating-philosophy.md
+index 3e3c54120..3f03ebf8d 100644
+--- a/Paper/philosophy/operating-philosophy.md
++++ b/Paper/philosophy/operating-philosophy.md
+@@ -1,16 +1,21 @@
+ # Quine Operating Philosophy
+ 
+-> The bridge from Quine's stable process ontology to its current Plan 9 / Unix
+-> design pull.
++> The bridge from Quine's living-system ontology to the Plan 9 / Unix design
++> pull at the runtime substrate layer.
+ 
+ ## Purpose
+ 
+-[`north-star.md`](./north-star.md) names Quine's stable runtime ontological cut:
++[`living-system.md`](./living-system.md) names Quine's primary ontological cut:
++
++> Quine is a living system, not merely a process.
++
++[`north-star.md`](./north-star.md) names the runtime substrate cut preserved
++inside that ontology:
+ 
+ > Quine is a process, not a persona.
+ 
+ This document names the operating philosophy that should shape runtime, prompt,
+-test, and paper decisions once that ontology is accepted. The
++test, and paper decisions once that layer relation is accepted. The
+ self-maintaining-systems frame lives in
+ [`self-maintaining-systems.md`](./self-maintaining-systems.md) as the dynamic
+ maintenance loop around runtime, repository, and research work.
+@@ -34,7 +39,8 @@ Read Quine's philosophy in layers:
+ 
+ | Layer | Question | Canonical surface | Posture |
+ |-------|----------|-------------------|---------|
+-| **North star** | What is Quine? | [`north-star.md`](./north-star.md) | Stable ontology |
++| **Living-system cut** | What is Quine primarily? | [`living-system.md`](./living-system.md) | Primary ontology |
++| **Runtime substrate** | What is Quine at the physical-carrier layer? | [`north-star.md`](./north-star.md) | Sublated process ontology |
+ | **Ontology vocabulary** | What terms are category-correct? | [`ontology.md`](./ontology.md) | Stable vocabulary boundary |
+ | **Operating philosophy** | How should the ontology shape system design? | this document | Directional design commitments |
+ | **Self-maintaining systems** | What shared loop connects runtime, repository, and research? | [`self-maintaining-systems.md`](./self-maintaining-systems.md) | Cross-layer maintenance frame |
+@@ -65,9 +71,10 @@ This document owns direction, not every downstream use of that direction.
+ | Which paper owns a bounded claim? | the relevant dossier under [`../papers/`](../papers/README.md), [`../theory/`](../theory/README.md), [`../TRACK/`](../TRACK/README.md), or [`../essays/`](../essays/README.md) |
+ | What should happen next repo-wide? | Linear via [`../../development/linear/README.md`](../../development/linear/README.md) |
+ 
+-## Stable Ontology: Process, Not Persona
++## Runtime Substrate: Process, Not Persona
+ 
+-The invariant is still Quine's original ontological cut:
++The invariant at the runtime substrate layer is still Quine's original
++ontological cut:
+ 
+ - the running unit is a POSIX process, not a simulated social actor
+ - mission, material, deliverable, and signal should be physically separated
+@@ -78,7 +85,9 @@ The invariant is still Quine's original ontological cut:
+ - recursion, reset, scarcity, and selection are environmental pressures rather
+   than optional orchestration metaphors
+ 
+-Everything below extends that ontology. It does not replace it.
++Everything below extends that runtime-substrate ontology. It does not replace the
++primary living-system cut; it states how the physical-carrier layer should be
++organized.
+ 
+ ## The Plan 9 / Unix Lift
+[0m
+[0m✱ [0mGrep "stable process ontology|stable runtime ontological cut|primary ontology|runtime ontology|process ontology"[90m in Paper/philosophy · 14 matches[0m
+The diff is narrow and consistent with the current self-model. I’m doing a quick repository check for available validation commands and then will run the least invasive verification.
+[0m✱ [0mGlob "**/package.json"[90m in . · 0 matches[0m
+[0m✱ [0mGlob "**/pyproject.toml"[90m in . · 0 matches[0m
+[0m✱ [0mGlob "**/Makefile"[90m in . · 13 matches[0m
+[0m✱ [0mGlob "*"[90m in . · 100 matches[0m
+There are no package or Python project files; validation is limited to repository checks. I’ll inspect the root Makefile targets and run an appropriate lightweight check if one exists.
+[0m→ [0mRead Makefile[90m [offset=1, limit=200][0m
+The Makefile exposes document/link audits. Since this was a docs projection edit, I’m running the active-doc link audit rather than Go tests.
+[0m
+[0m$ [0mmake check-active-doc-links
+./scripts/check-active-doc-links.sh --strict
+ADVISORY anchor-not-found: experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md:284 :: ../../../../AGENTS.md#autopoietic-north-star
+ADVISORY anchor-not-found: principles/proactive-self-audit.md:15 :: ../AGENTS.md#article-zero-the-strange-loop
+ADVISORY anchor-not-found: principles/proactive-self-audit.md:17 :: ../AGENTS.md#what-this-is
+Active-doc-link audit: docs_scanned=2170 issues=0 advisory=3
+[0m
+The strict link audit passed with zero issues; it reported three pre-existing advisory anchor warnings outside the edited files. I found two remaining wording spots that can be tightened without expanding scope.
+[0m% [0mPatch 1 file
+[0m% [0mPatch 1 file
+I tightened those wording remnants. I’m rerunning the same docs audit and then checking the final diff/status.
+[0m
+[0m$ [0mgit diff --stat && git diff -- Paper/philosophy/operating-philosophy.md Paper/philosophy/ontology.md Paper/philosophy/development-vector.md && git status --short
+Paper/philosophy/development-vector.md   | 32 +++++++++++++++++++-------------
+ Paper/philosophy/ontology.md             | 25 ++++++++++++++++---------
+ Paper/philosophy/operating-philosophy.md | 27 ++++++++++++++++++---------
+ 3 files changed, 53 insertions(+), 31 deletions(-)
+diff --git a/Paper/philosophy/development-vector.md b/Paper/philosophy/development-vector.md
+index 7cf91cf1c..a9c989148 100644
+--- a/Paper/philosophy/development-vector.md
++++ b/Paper/philosophy/development-vector.md
+@@ -5,18 +5,21 @@
+ This document is Quine's canonical **theory/development map**.
+ 
+ It exists because "how to develop" is not the same question as "what is worth
+-developing." The latter should be checked against Quine's runtime ontology,
+-operating philosophy, evidence pressure, and maintenance loop rather than only
+-against paper pressure or local convenience.
++developing." The latter should be checked against Quine's living-system
++ontology, runtime-substrate ontology, operating philosophy, evidence pressure,
++and maintenance loop rather than only against paper pressure or local
++convenience.
+ 
+-Read this after [`north-star.md`](./north-star.md),
++Read this after [`living-system.md`](./living-system.md),
++[`north-star.md`](./north-star.md),
+ [`operating-philosophy.md`](./operating-philosophy.md), and
+-[`self-maintaining-systems.md`](./self-maintaining-systems.md). The runtime
+-north star names the stable process ontology; the operating philosophy names
+-the Plan 9 / Unix commitments that follow for runtime design; the
+-self-maintaining-systems frame names the dynamic maintenance loop around
+-runtime, repository, and research work; this file maps those commitments onto
+-active, adjacent, and downstream development spines.
++[`self-maintaining-systems.md`](./self-maintaining-systems.md). The living-system
++cut names the primary ontology; the runtime north star preserves the process
++ontology as the physical-carrier layer; the operating philosophy names the Plan 9
++/ Unix commitments that follow for runtime design; the self-maintaining-systems
++frame names the dynamic maintenance loop around runtime, repository, and
++research work; this file maps those commitments onto active, adjacent, and
++downstream development spines.
+ 
+ Use it when the question is:
+ 
+@@ -37,9 +40,12 @@ The top-level direction surfaces now have distinct jobs:
+ - [`self-maintaining-systems.md`](./self-maintaining-systems.md) answers: what
+   cross-layer maintenance loop connects runtime, repository, and research
+   direction without replacing runtime ownership?
++- [`living-system.md`](./living-system.md) answers: what primary ontological cut
++  unifies process activation, persistent repository cognition, and research
++  self-maintenance?
+ - [`operating-philosophy.md`](./operating-philosophy.md) answers: what
+-  philosophical design commitments follow from native process ontology before
+-  they become implementation contracts?
++  philosophical design commitments follow from native process ontology at the
++  runtime substrate layer before they become implementation contracts?
+ - Linear, through [`../../development/linear/README.md`](../../development/linear/README.md),
+   answers: what must the repository narrow next?
+ - this file answers: what larger theoretical/development spines Quine is
+@@ -59,7 +65,7 @@ first-class architectural pull, not as its only scientific object.
+ 
+ | Line | Question | Why it matters | Current landed slice | Current non-claim | Next honest boundary | Primary owner docs |
+ |------|----------|----------------|----------------------|-------------------|----------------------|--------------------|
+-| **Agent = Process** | What is the narrowest process-native ontology Quine can defend? | Keeps Quine grounded in OS physics instead of chat/application metaphors. | process-native runtime, released minimal systems anchor, stable mission/material/deliverable separation | not a claim that later public control, world semantics, or time semantics are already solved | keep the released anchor fixed while later lines branch forward instead of leaking back into it | [`north-star.md`](./north-star.md), [`../core/axioms/axiom-02-process-as-agent.md`](../core/axioms/axiom-02-process-as-agent.md), [`../papers/quine-arxiv/README.md`](../papers/runtime-substrate/quine-arxiv/README.md) |
++| **Agent = Process** | What is the narrowest process-native runtime substrate Quine can defend? | Keeps Quine's physical-carrier layer grounded in OS physics instead of chat/application metaphors. | process-native runtime, released minimal systems anchor, stable mission/material/deliverable separation | not a claim that the process is the whole living system, or that later public control, world semantics, or time semantics are already solved | keep the released anchor fixed while later lines branch forward instead of leaking back into it | [`north-star.md`](./north-star.md), [`living-system.md`](./living-system.md), [`../core/axioms/axiom-02-process-as-agent.md`](../core/axioms/axiom-02-process-as-agent.md), [`../papers/quine-arxiv/README.md`](../papers/runtime-substrate/quine-arxiv/README.md) |
+ | **Public process/control surface** | How does a running process become inspectable and narrowly controllable through one public surface? | This is the current bridge from POSIX ontology into Plan 9-like file-addressable runtime truth. | `agent/<session>/`, `pid/<pid>`, `QUINE_AGENT_ROOT`, `context/prompt/`, `context/state/current.jsonl`, `status/contract.json`, `ctl`, `status/inbox.json`, `log/control.jsonl`, `idle` | no broad `ctl/*` tree, no full command ecology, no settled callback/correlation protocol semantics | harden `process-control/v0` with live acceptance before widening it | Linear via [`../../development/linear/README.md`](../../development/linear/README.md), [`../papers/process-as-fs/README.md`](../papers/runtime-substrate/process-as-fs/README.md), [`../core/registries/runtime-surface.md`](../core/registries/runtime-surface.md) |
+ | **Subjective world** | How does the agent's operative world become a projected local reality rather than a narrated host view? | This is where Plan 9 namespace pressure becomes world semantics instead of prompt prose. | `overlay` lineage, `direct` workspace backend, `agent/<session>/world/{status.json,resources.json,events.jsonl}`, `switch_world` as a first explicit world primitive | not a total private world, not a complete capability/resource ontology, not yet a full paper-ready world theory | harden `world/v0` with live acceptance before widening world semantics | [`../core/architecture/worlds.md`](../core/architecture/worlds.md), [`../papers/subjective-reality/README.md`](../papers/runtime-substrate/subjective-reality/README.md) |
+ | **Revisable time** | How do revision, restore, and branching time become runtime objects rather than hidden history? | This is the deepest originality in the systems spine, but it depends on earlier process/world materialization first. | revision lineage and world switching already exist as substrate pressure under managed worlds | not a settled time contract, not current runtime reality, not yet an honest mainline claim | keep it downstream until world semantics are narrower and more inspectable | [`../papers/revisable-time/README.md`](../papers/runtime-substrate/revisable-time/README.md), [`../core/architecture/worlds.md`](../core/architecture/worlds.md) |
+diff --git a/Paper/philosophy/ontology.md b/Paper/philosophy/ontology.md
+index 696a1163d..90c007ed9 100644
+--- a/Paper/philosophy/ontology.md
++++ b/Paper/philosophy/ontology.md
+@@ -2,19 +2,22 @@
+ 
+ > What vocabulary are we committed to when describing Quine?
+ 
+-This document follows from [`north-star.md`](./north-star.md). Once you accept
+-that Quine treats LLM intelligence as computational physics, this document
+-specifies the vocabulary that commitment entails.
++This document follows from [`living-system.md`](./living-system.md) and
++[`north-star.md`](./north-star.md). Once you accept that Quine is a living system
++whose runtime substrate treats LLM intelligence as computational physics, this
++document specifies the vocabulary that commitment entails. Process vocabulary
++remains binding for runtime mechanics, but it is not the whole ontology.
+ 
+ ## The Core Commitment
+ 
+-**Quine's runtime unit is a process, not a persona.**
++**Quine's runtime unit is a process, not a persona; Quine's primary ontological
++unit is the living system, not the isolated process.**
+ 
+ The term `agent` is acceptable as public problem-domain shorthand: Quine is a
+ runtime for LLM agents, and it participates in the agent-systems literature.
+-Inside Quine's runtime ontology, however, the unit that acts, receives
+-authority, holds lifecycle, exposes surfaces, and composes with other units is
+-a POSIX-style process.
++Inside Quine's runtime substrate ontology, however, the unit that acts, receives
++authority, holds lifecycle, exposes surfaces, and composes with other runtime
++units is a POSIX-style process.
+ 
+ That means an "agent mechanism" is not fundamental merely because an agent
+ framework names it. To become Quine-native, the mechanism must lower into
+@@ -26,16 +29,20 @@ explanations count as fundamental.
+ 
+ ## Ontological Layers
+ 
+-Quine separates four layers. Mixing vocabulary across layers is a category error.
++Quine separates five layers. Mixing vocabulary across layers is a category error.
+ 
+ | Layer | Domain | Primitives |
+ |-------|--------|------------|
++| **Living system** | Autopoietic whole | process activations, file-structure, code, repository, theory, self-model, carrier loop |
+ | **Physics** | OS/runtime substrate | process, PID, `session_id`, `run_id`, fd, file, pipe, socket, signal, ctl, permission, namespace, overlay, `fork`, `spawn`, `exec`, `exit` |
+ | **Information** | Data flow and retained surfaces | bytes, streams, channels, material, deliverable, signal payload, log, trace |
+ | **Cognition** | Model execution | tokens, context, attention, inference, prompt fragment, tool call |
+ | **Sociology** | Human and framework description | agent, assistant, team, conversation, task, role, organization |
+ 
+-**Direction of reduction:** Higher layers may be *implemented by* lower layers, but lower layers should not be *described in terms of* higher layers.
++**Direction of reduction:** Higher layers may be *implemented by* lower layers,
++but lower layers should not be *described in terms of* higher layers. The living
++system is not a higher-level social metaphor; it is the cross-layer whole whose
++physical-carrier mechanics are realized through the runtime substrate.
+ 
+ - Describing fd wiring: use Physics vocabulary.
+ - Describing prompt construction or model inference: use Cognition vocabulary.
+diff --git a/Paper/philosophy/operating-philosophy.md b/Paper/philosophy/operating-philosophy.md
+index 3e3c54120..2a2c46c8f 100644
+--- a/Paper/philosophy/operating-philosophy.md
++++ b/Paper/philosophy/operating-philosophy.md
+@@ -1,16 +1,21 @@
+ # Quine Operating Philosophy
+ 
+-> The bridge from Quine's stable process ontology to its current Plan 9 / Unix
+-> design pull.
++> The bridge from Quine's living-system ontology to the Plan 9 / Unix design
++> pull at the runtime substrate layer.
+ 
+ ## Purpose
+ 
+-[`north-star.md`](./north-star.md) names Quine's stable runtime ontological cut:
++[`living-system.md`](./living-system.md) names Quine's primary ontological cut:
++
++> Quine is a living system, not merely a process.
++
++[`north-star.md`](./north-star.md) names the runtime substrate cut preserved
++inside that ontology:
+ 
+ > Quine is a process, not a persona.
+ 
+ This document names the operating philosophy that should shape runtime, prompt,
+-test, and paper decisions once that ontology is accepted. The
++test, and paper decisions once that layer relation is accepted. The
+ self-maintaining-systems frame lives in
+ [`self-maintaining-systems.md`](./self-maintaining-systems.md) as the dynamic
+ maintenance loop around runtime, repository, and research work.
+@@ -34,7 +39,8 @@ Read Quine's philosophy in layers:
+ 
+ | Layer | Question | Canonical surface | Posture |
+ |-------|----------|-------------------|---------|
+-| **North star** | What is Quine? | [`north-star.md`](./north-star.md) | Stable ontology |
++| **Living-system cut** | What is Quine primarily? | [`living-system.md`](./living-system.md) | Primary ontology |
++| **Runtime substrate** | What is Quine at the physical-carrier layer? | [`north-star.md`](./north-star.md) | Sublated process ontology |
+ | **Ontology vocabulary** | What terms are category-correct? | [`ontology.md`](./ontology.md) | Stable vocabulary boundary |
+ | **Operating philosophy** | How should the ontology shape system design? | this document | Directional design commitments |
+ | **Self-maintaining systems** | What shared loop connects runtime, repository, and research? | [`self-maintaining-systems.md`](./self-maintaining-systems.md) | Cross-layer maintenance frame |
+@@ -65,9 +71,10 @@ This document owns direction, not every downstream use of that direction.
+ | Which paper owns a bounded claim? | the relevant dossier under [`../papers/`](../papers/README.md), [`../theory/`](../theory/README.md), [`../TRACK/`](../TRACK/README.md), or [`../essays/`](../essays/README.md) |
+ | What should happen next repo-wide? | Linear via [`../../development/linear/README.md`](../../development/linear/README.md) |
+ 
+-## Stable Ontology: Process, Not Persona
++## Runtime Substrate: Process, Not Persona
+ 
+-The invariant is still Quine's original ontological cut:
++The invariant at the runtime substrate layer is still Quine's original
++ontological cut:
+ 
+ - the running unit is a POSIX process, not a simulated social actor
+ - mission, material, deliverable, and signal should be physically separated
+@@ -78,7 +85,9 @@ The invariant is still Quine's original ontological cut:
+ - recursion, reset, scarcity, and selection are environmental pressures rather
+   than optional orchestration metaphors
+ 
+-Everything below extends that ontology. It does not replace it.
++Everything below extends that runtime-substrate ontology. It does not replace the
++primary living-system cut; it states how the physical-carrier layer should be
++organized.
+ 
+ ## The Plan 9 / Unix Lift
+ 
+@@ -100,7 +109,7 @@ Current operating commitments:
+ 
+ This is the Plan 9 lift: not merely adding more files, but organizing runtime
+ truth so inspection, control, communication, and later world semantics become
+-file-addressable without leaving the process ontology.
++file-addressable without leaving the runtime-substrate ontology.
+ 
+ ## Mechanism Lowering
+ 
+ M Paper/philosophy/development-vector.md
+ M Paper/philosophy/ontology.md
+ M Paper/philosophy/operating-philosophy.md
+[0m
+[0m$ [0mmake check-active-doc-links
+./scripts/check-active-doc-links.sh --strict
+ADVISORY anchor-not-found: experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md:284 :: ../../../../AGENTS.md#autopoietic-north-star
+ADVISORY anchor-not-found: principles/proactive-self-audit.md:15 :: ../AGENTS.md#article-zero-the-strange-loop
+ADVISORY anchor-not-found: principles/proactive-self-audit.md:17 :: ../AGENTS.md#what-this-is
+Active-doc-link audit: docs_scanned=2170 issues=0 advisory=3
+[0m
+Updated the philosophy self-model projections to route through `living-system.md` as the primary ontology while preserving `north-star.md` as the runtime-substrate/process layer.
+
+Changed:
+- `Paper/philosophy/operating-philosophy.md`
+- `Paper/philosophy/ontology.md`
+- `Paper/philosophy/development-vector.md`
+
+Verified:
+- `make check-active-doc-links` passed with `issues=0`
+- It still reports 3 advisory anchor warnings in unrelated pre-existing docs.

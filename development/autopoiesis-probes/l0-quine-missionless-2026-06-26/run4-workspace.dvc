@@ -1,0 +1,6 @@
+outs:
+- md5: 83ded1999f86393cb542906450262bbf.dir
+  size: 2698
+  nfiles: 2
+  hash: md5
+  path: run4-workspace

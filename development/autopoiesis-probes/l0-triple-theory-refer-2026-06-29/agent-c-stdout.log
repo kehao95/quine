@@ -1,0 +1,1102 @@
+[0m
+> codex-5.5-high · gpt-5.5
+[0m
+I’ll inspect the repository structure and self-model first, then choose a concrete maintenance or implementation task from the repo’s own guidance and carry it through.
+[0m# [0mTodos
+[•] Inspect repository structure and self-model guidance
+[ ] Identify a concrete high-value task from repo-local guidance
+[ ] Implement the selected change with minimal scope
+[ ] Run relevant verification
+[ ] Summarize outcome and remaining risks
+[0m
+[0m→ [0mRead .[90m [offset=1, limit=200][0m
+[0m→ [0mRead Paper/theory[90m [offset=1, limit=200][0m
+[0m✱ [0mGlob "**/*TODO*"[90m in . · 1 match[0m
+[0m✱ [0mGlob "**/AGENTS.md"[90m in . · 2 matches[0m
+[0m✱ [0mGlob "**/*.md"[90m in Paper/theory · 100 matches[0m
+[0m→ [0mRead README.md[90m [offset=1, limit=200][0m
+[0m→ [0mRead STATUS.md[90m [offset=1, limit=260][0m
+[0m→ [0mRead DEVELOPMENT.md[90m [offset=1, limit=260][0m
+[0m→ [0mRead CLOSURE.md[90m [offset=1, limit=260][0m
+[0m→ [0mRead ROADMAP.md[90m [offset=1, limit=260][0m
+[0m→ [0mRead Makefile[90m [offset=1, limit=240][0m
+[0m→ [0mRead Paper/theory/README.md[90m [offset=1, limit=260][0m
+The repo is explicitly set up for autonomous maintenance: live status is retired to Linear, while self-model and control-plane integrity are local. I’ll run the light local integrity checks next and pick the smallest failing surface to repair.
+[0m→ [0mRead development/README.md[90m [offset=1, limit=260][0m
+[0m→ [0mRead development/linear/README.md[90m [offset=1, limit=260][0m
+[0m→ [0mRead Paper/theory/README.md[90m [offset=261, limit=140][0m
+[0m✱ [0mGrep "check-control-plane|audit-control-plane|control-plane"[90m in Makefile · 18 matches[0m
+[0m✱ [0mGrep "TODO|FIXME|XXX|HACK|BROKEN|DRIFT|stale|missing"[90m in . · 100 matches[0m
+[0m
+[0m$ [0mgit status --short
+(no output)
+[0m
+Worktree is clean. I’m going to run the repo’s control-plane audit as the broad sensor, then narrow to a bounded repair rather than attempting a large migration.
+[0m$ [0mmake audit-control-plane
+./scripts/check-githooks-active.sh
+Githooks-active audit: core.hooksPath=.githooks OK
+./scripts/check-experiment-paper-feeds.sh
+Paper-feed audit: phases=0 experiments=157 mappings=233 issues=0 warnings=0
+./scripts/check-experiment-prompt-posture.sh
+Experiment prompt-posture audit: runners=21 issues=0
+./scripts/check-paper-dossier-links.sh
+Paper-dossier audit: dossiers=31 issues=0
+./scripts/check-paper-evidence-backbone.sh
+Paper-evidence-backbone audit: dossiers=31 backbone_entries=118 issues=0
+./scripts/check-paper-metadata-vocabulary.sh
+Paper-metadata-vocabulary audit: docs_scanned=33 issues=0
+./scripts/check-configuration-shape.sh
+Configuration-shape audit: roots_scanned=38 listed_configs=3 config_docs=3 issues=0
+./scripts/check-venue-refs.sh
+Venue-ref audit: root_docs=38 config_docs=3 bindings=39 hard_issues=0 advisory_issues=0
+./scripts/check-paper-readout-coverage.sh
+Paper-readout-coverage audit: dossiers_checked=31 issues=0
+./scripts/check-model-evaluations.sh
+Model-evaluation audit: evaluations=106 scored=106 issues=0 warnings=0
+./scripts/check-runtime-doc-sync.sh
+Runtime-doc-sync audit: docs_scanned=11 issues=0
+./scripts/check-validation-surface.sh
+Validation-surface audit: files_scanned=4 issues=0
+./scripts/check-active-doc-links.sh
+ADVISORY anchor-not-found: experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md:284 :: ../../../../AGENTS.md#autopoietic-north-star
+ADVISORY anchor-not-found: principles/proactive-self-audit.md:15 :: ../AGENTS.md#article-zero-the-strange-loop
+ADVISORY anchor-not-found: principles/proactive-self-audit.md:17 :: ../AGENTS.md#what-this-is
+Active-doc-link audit: docs_scanned=2172 issues=0 advisory=3
+./scripts/check-stable-evidence-surfaces.sh
+Stable-evidence audit: docs_scanned=2172 issues=0
+./scripts/check-experiment-note-index.sh
+Experiment-note-index audit: docs_scanned=1 issues=0
+./scripts/check-experiment-current-state.sh
+Experiment-current-state audit: docs_scanned=2 issues=0
+./scripts/check-experiment-surface-map.sh
+Experiment-surface-map audit: docs_scanned=31 issues=0
+./scripts/check-experiment-subdir-index.sh
+Experiment-subdir-index audit: dirs_scanned=20 issues=0
+bash ./scripts/check-experiment-task-readmes.sh
+Experiment-task-readme audit: docs_scanned=0 issues=0
+bash ./scripts/check-experiment-incubator-readmes.sh
+Experiment-incubator-readme audit: docs_scanned=3 issues=0
+bash ./scripts/check-experiment-archive-readmes.sh
+Experiment-archive-readme audit: docs_scanned=8 issues=0
+bash ./scripts/check-paper-legacy-track-roots.sh
+Paper legacy TRACK root audit: paths_scanned=0 issues=0
+bash ./scripts/check-paper-track-readmes.sh
+Paper-track-readme audit: docs_scanned=2 issues=0
+./scripts/check-paper-subdir-index.sh
+Paper-subdir-index audit: dirs_scanned=32 issues=0
+bash ./scripts/check-paper-track-meta-index.sh
+Paper-projection-meta-index audit: dirs_scanned=4 issues=0
+bash ./scripts/check-paper-track-special-index.sh
+Paper-track-special-index audit: dirs_scanned=0 issues=0
+bash ./scripts/check-paper-template-surface-index.sh
+Paper-template-surface audit: dirs_scanned=3 issues=0
+bash ./scripts/check-root-entry-docs.sh
+Root-entry-doc audit: docs_scanned=6 issues=0
+bash ./scripts/check-tests-entry-docs.sh
+Tests-entry-doc audit: docs_scanned=3 issues=0
+bash ./scripts/check-tests-surface-ownership.sh
+Tests-surface-ownership audit: files_scanned=633 issues=0
+bash ./scripts/check-obsidian-base-index.sh
+Obsidian-base-index audit: dirs_scanned=1 issues=0
+bash ./scripts/check-obsidian-surface-ownership.sh
+Obsidian-surface-ownership audit: files_scanned=4 issues=0
+bash ./scripts/check-scripts-readme.sh
+Scripts-readme audit: docs_scanned=1 issues=0
+bash ./scripts/check-scripts-surface-ownership.sh
+Scripts-surface-ownership audit: files_scanned=104 issues=0
+bash ./scripts/check-githooks-readme.sh
+Githooks-readme audit: docs_scanned=1 issues=0
+bash ./scripts/check-githooks-surface-ownership.sh
+Githooks-surface-ownership audit: files_scanned=4 issues=0
+bash ./scripts/check-surface-inventory.sh
+Surface-inventory audit: docs_scanned=497 categories=35 issues=0
+  experiments_active_root=1
+  experiments_archive_experiment=95
+  experiments_archive_root=1
+  experiments_archive_suite=7
+  experiments_experiment_root=157
+  experiments_experiment_subsurface_index=32
+  experiments_family_index=12
+  experiments_historical_run_snapshot=55
+  experiments_incubator_project=3
+  experiments_incubator_root=1
+  experiments_protocol_index=1
+  experiments_root=1
+  experiments_template_surface=1
+  paper_anomalies_root=1
+  paper_archive_surface=3
+  paper_core_root=1
+  paper_core_subsurface_index=9
+  paper_dossier=39
+  paper_essays_meta_index=1
+  paper_essays_meta_subsurface_index=3
+  paper_essays_root=1
+  paper_home_subsurface_index=48
+  paper_incubator_surface=2
+  paper_papers_index=1
+  paper_philosophy_root=1
+  paper_predictions_root=1
+  paper_procedure_root=1
+  paper_root=1
+  paper_template_surface=6
+  paper_theory_index=1
+  paper_theory_subsurface_index=4
+  paper_track_projection_surface=3
+  paper_track_unified_root=1
+  paper_venues_index=1
+  paper_venues_subsurface_index=1
+bash ./scripts/check-surface-ownership.sh
+Surface-ownership audit: files_scanned=6552 issues=0
+./scripts/check-paper-home-root-boundedness.sh
+Paper-home-root audit: homes_scanned=30 issues=0
+./scripts/check-paper-core-surface-index.sh
+Paper-core-surface audit: dirs_scanned=9 issues=0
+./scripts/check-control-plane-frontmatter.sh
+Control-plane-frontmatter audit: docs_scanned=34 issues=0
+./scripts/check-control-plane-projection-maintenance.sh
+Control-plane projection-maintenance audit: docs_scanned=72 issues=0
+./scripts/check-control-plane-size.sh
+Control-plane size — pain line 200 lines (registry: control-plane-registry.md, 25 files):
+  OVER  890  DEVELOPMENT.md
+  OVER  567  Paper/contracts.md
+  OVER  411  Paper/writing-principles.md
+  OVER  592  Paper/control-plane-topology.md
+Total: 25 files, 4594 lines. Over threshold: 4. Missing: 0.
+./scripts/check-phase-interpretation-ownership.sh
+Phase-interpretation-ownership audit: phases_scanned=0 issues=0
+./scripts/check-validator-registration.sh
+Validator-registration audit: scripts=82 prek_entries=53 issues=0
+./scripts/check-evolution-hygiene.sh
+Evolution-hygiene audit: issues=0
+./scripts/check-citation-cff.sh
+Citation-cff audit: issues=0
+./scripts/check-selfsource-freshness.sh
+Selfsource-freshness audit: bundle_mtime>=source_commit_time OK (untracked generated bundle)
+./scripts/check-structural-pressure.sh
+Structural pressure — file>15K, folder>25 files (ext: md,sh,toml,yaml,yml, 3299 files scanned):
+  WARNING — files over 15K:
+    510K Paper/essays/_meta/external-sources/slate-references/25-working-memory-in-humans.md
+    406K tests/model/run.sh
+    247K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run5-unlimited-exec-direct-data/log/sess_20260627-010119_e1df2923-d7e4-4d41-ae22-bdb8e69c2fe0/tapes/0001.log.yaml
+    192K Paper/papers/successor-continuity/boundary-paper/references/deep-research-complete-archive.md
+    190K tests/runtime/run.sh
+    181K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run6-selfsource-enabled-data/log/sess_20260627-011609_b218ecef-840b-4969-a78f-cff31cb35a3c/tapes/0001.log.yaml
+    177K experiments/active/dormancy-ecology/dorm-06-functional-dependency-selection/run-container.sh
+    163K experiments/active/dormancy-ecology/dorm-04-open-wake-selection/run-container.sh
+    132K Paper/essays/_meta/external-sources/slate-references/22-wei-et-al-chain-of-thought-prompting.md
+    108K Paper/essays/_meta/external-sources/slate-references/21-yao-et-al-react-synergizing-reasoning-and-acting.md
+    107K Paper/essays/_meta/external-sources/slate-references/19-adapt-as-needed-decomposition-and-planning.md
+    103K experiments/active/cooperation-dynamics/analysis/BEHAVIOR-ANALYSIS.md
+    98K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run3-full-exit-disabled-data/log/sess_20260626-225209_b037f291-0332-4a7f-8104-c1f2b60d8983/tapes/0001.log.yaml
+    95K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run4-full-exec-direct-data/log/sess_20260627-005229_024097a5-60fa-46ee-8159-53e34d163163/tapes/0001.log.yaml
+    92K experiments/active/autopoiesis-succession/analysis/EXPERIMENT-LOG.md
+    92K Paper/essays/_meta/external-sources/slate-references/01-rlm-recursive-language-models-paper.md
+    86K Paper/essays/_meta/external-sources/slate-references/07-altera-project-sid-piano-architecture.md
+    82K experiments/active/autopoiesis-succession/lib/morphology-ladder-harness.sh
+    81K experiments/active/dormancy-ecology/dorm-04-open-wake-selection/README.md
+    79K experiments/PROTOCOL.md
+    75K Paper/archive/rejected-2024/autopoietic-intelligence-via-recursive-posix-processes/artifacts/final_paper.md
+    73K Paper/theory/references/gemini-theme-spark-harvest-2026-06-14.md
+    73K Paper/essays/_meta/external-sources/slate-references/14-silver-et-al-alphago-nature-2016.md
+    72K experiments/active/dormancy-ecology/dorm-03-wake-credit-game/run-container.sh
+    69K experiments/active/early-existence/exst-02-model-comparison/README.md
+    69K Paper/publication-restructure-design.md
+    67K Paper/papers/runtime-substrate/structural-elicitation/experiment-design-extension-plan.md
+    66K Paper/core/mechanisms/experiment-mechanism-map.md
+    64K Paper/theory/references/continuity-deep-research-synthesis.md
+    64K Paper/theory-restructure-design.md
+    62K experiments/active/digital-red-queen/drq-03-host-lineage-drq/run-host-lineage.sh
+    61K Paper/theory/views/runtime-capability/philosophy-of-capability.md
+    61K Paper/theory/references/structural-pull-related-theory-dr-report-2026-06-14.md
+    60K DEVELOPMENT.md
+    59K Paper/papers/viability/quine-lifelike/manuscript-plan.md
+    58K Paper/papers/successor-continuity/evaluation-paper/manuscript.md
+    58K Paper/papers/successor-continuity/boundary-paper/README.md
+    57K experiments/restructure-design.md
+    57K Paper/theory/references/arr-systems-and-agent-runtime-source-check-report-2026-05.md
+    56K Paper/papers/open-ended-ecology/substrate-coincidence/alife-theory/manuscript-draft.md
+    55K Paper/theory/references/autoconstructive-successor-morphology-deep-research-report-2026-05.md
+    54K Paper/theory/views/runtime-capability/projection-axes.md
+    53K experiments/active/benchmarks/bench-06-persistent-cleanroom-c-compiler/README.md
+    53K Paper/theory/references/expansion-directions-dr-report-2026-05-01.md
+    53K Paper/theory/references/contract-vs-niche-scaffold-deep-research-report-2026-05.md
+    53K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/12-biology-lineage-heredity-individuality-2026-04-21.md
+    53K Paper/papers/social-protocol/minimal-perceptual-prerequisites/references/deep-research-cn-combined.md
+    52K Paper/theory/references/oee-proto-oee-criteria-dr-report-2026-05-02.md
+    52K Paper/theory/references/generative-self-replacement-novelty-audit-report-2026-05.md
+    52K Paper/essays/_meta/external-sources/slate-references/24-hong-troynikov-huber-context-rot-how-increasing-input-tokens-impacts-llm-perform.md
+    51K tests/model/evaluations.toml
+    51K experiments/active/structural-elicitation/notes/tape-ethnography-findings-2026-06-18.md
+    51K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/07-handoff-physics-systems-neighbors-2026-04-21.md
+    50K Paper/theory/references/computational-morphogenesis-novelty-audit-report-2026-05.md
+    50K Paper/theory/references/alife-medium-collision-2026-06-23.md
+    50K Paper/philosophy/computational-epistemology.md
+    49K Paper/papers/successor-continuity/future-addressability/references/dr-computational-individuality-2026-04-27.md
+    49K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/10-ai-rescan-under-full-schema-2026-04-21.md
+    48K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run1-off-exit-enabled-data/log/sess_20260626-225011_7d21d825-9e2b-46ed-af58-ac291b9f3f63/tapes/0001.log.yaml
+    47K Paper/theory-code-expansion-design.md
+    47K Paper/discovery-loop-design.md
+    46K Paper/theory/references/boundary-phenomenon-novelty-audit-report-2026-05.md
+    46K Paper/theory/references/agent-swarm-oee-experimental-program-dr-report-2026-05-02.md
+    46K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/11-alife-continuity-individuation-2026-04-21.md
+    46K Paper/papers/runtime-substrate/structural-elicitation/theory-matrix.md
+    45K Paper/theory/views/runtime-capability/axis-code-mapping.md
+    45K Paper/theory/views/runtime-capability/axis-asymmetry.md
+    45K Paper/theory/views/reflexive/deep/structural-pull.md
+    45K Paper/papers/viability/quine-lifelike/plans/experiment-escalation-plan.md
+    44K experiments/active/benchmarks/bench-01-terminal-bench/README.md
+    44K Paper/papers/runtime-substrate/agentic-alife-workshop/references/dr-reports/q94-dr-02-agentic-ai-ecologies-orchestration.md
+    43K experiments/active/benchmarks/bench-05-terminal-bench2-gpt54/CURRENT.md
+    43K Paper/theory/references/affordance-rich-null-ecologies-dr-report-2026-05-02.md
+    42K experiments/active/cooperation-dynamics/analysis/RUN-CATALOG.md
+    42K Paper/theory/references/theory-situation-dr-report-2026-05-01.md
+    42K Paper/theory/references/alife-successor-morphology-primary-source-check-report-2026-05.md
+    42K Paper/papers/successor-continuity/future-addressability/references/dr-experimental-evaluation-program-2026-04-27.md
+    42K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/13-philosophy-identity-continuity-process-2026-04-21.md
+    42K Paper/papers/runtime-substrate/agentic-alife-workshop/references/dr-reports/q94-dr-03-governance-observability-runtime-control.md
+    41K Paper/theory/references/lifecycle-bottleneck-reproduction-deep-research-report-2026-05.md
+    41K Paper/papers/viability/quine-lifelike/README.md
+    41K Paper/papers/eval-primitives/narration-invariance-eval/plans/dr-lead-domain-report.md
+    40K experiments/active/null-ecology/null-05-reflexive-self-embedding/analysis/artifacts-6p-minimal.md
+    40K Paper/theory/references/hotos-arr-primary-source-check-report-2026-05.md
+    40K Paper/theory/references/alife-successor-morphospace-merged-source-check-report-2026-05.md
+    40K Paper/papers/successor-continuity/future-addressability/references/dr-systems-carriers-addressability-2026-04-27.md
+    40K Paper/papers/successor-continuity/future-addressability/references/dr-formal-vocabulary-models-2026-04-27.md
+    40K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/03-spec-mediated-body-reconstitution-2026-04-21.md
+    40K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/02-continuity-identity-closure-theory-2026-04-21.md
+    40K Paper/papers/reflexive-repository/the-autopoietic-repository/materials/collected-materials.md
+    39K experiments/active/trace-inheritance/trce-04-legacy-protocol-ablation/README.md
+    39K Paper/philosophy/self-maintaining-systems.md
+    39K Paper/papers/successor-continuity/boundary-paper/references/dr-theory-expansion-report-2026-04-27.md
+    39K Paper/papers/runtime-substrate/structural-elicitation/manuscript-plan.md
+    38K evolution/periods/18-theory-net-generative-substrate-jun-13.md
+    38K Paper/theory/references/p6-p7-level-and-novelty-deep-research-report-2026-04-21.md
+    38K Paper/papers/runtime-substrate/structural-elicitation/claim.md
+    37K Paper/theory/objects/structural-pull.md
+    37K Paper/papers/runtime-substrate/structural-elicitation/plans/dr-raw-2-geometry.md
+    36K experiments/active/benchmarks/bench-04-programbench/prompt-variants/README.md
+    ... 231 more over-threshold file(s) not shown (raise --limit)
+  WARNING — folders over 25 files:
+    96 scripts
+    73 experiments/active/benchmarks/bench-04-programbench/prompt-variants
+    59 Paper/theory/references
+    58 development/autopoiesis-probes/cycle-8-recombination/seeds/C-mechanisms
+    43 Paper/theory/objects
+    43 Paper/predictions/open
+    40 development/autopoiesis-probes/cycle-8-recombination/seeds/B-tensions
+    38 development/autopoiesis-probes/cycle-8-recombination/seeds/A-concepts
+    37 Paper/papers/successor-continuity/evaluation-paper/plans
+    32 experiments/active/benchmarks/bench-05-terminal-bench2-gpt54/prompt-variants
+    30 principles
+    27 Paper/essays/_meta/external-sources/slate-references
+Totals: 3299 files, 24201K. Over size: 331. Dense folders: 12.
+[0m
+The broad audit is clean on hard checks but surfaced three advisory broken anchors into `AGENTS.md`. I’ll repair those links in place, since that is the smallest bounded maintenance item.
+[0m# [0mTodos
+[✓] Inspect repository structure and self-model guidance
+[•] Identify a concrete high-value task from repo-local guidance
+[ ] Implement the selected change with minimal scope
+[ ] Run relevant verification
+[ ] Summarize outcome and remaining risks
+[0m
+[0m→ [0mRead AGENTS.md[90m [offset=1, limit=260][0m
+[0m→ [0mRead principles/proactive-self-audit.md[90m [offset=1, limit=80][0m
+[0m✱ [0mGrep "Autopoietic|North Star|Article Zero|Strange Loop|What This Is|strange loop|autopoietic"[90m in AGENTS.md · 0 matches[0m
+[0m→ [0mRead experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md[90m [offset=260, limit=45][0m
+[0m✱ [0mGrep "autopoietic north|north.star|autopoietic"[90m in Paper · 100 matches[0m
+[0m✱ [0mGrep "Friction . Repair|Friction|Article Zero|Layer 0|Autopoietic North-Star|north-star|What This Is|Projection capture|proactive-self-audit"[90m in . · 100 matches[0m
+[0m✱ [0mGrep "strange loop|self-model|self model|Layer 0"[90m in Paper/theory · 100 matches[0m
+[0m→ [0mRead development/autopoiesis-probes/META-DIRECTION.md[90m [offset=1, limit=70][0m
+[0m→ [0mRead DEVELOPMENT.md[90m [offset=500, limit=70][0m
+[0m→ [0mRead Paper/philosophy/north-star.md[90m [offset=1, limit=120][0m
+[0m→ [0mRead Paper/theory/views/reflexive.md[90m [offset=1, limit=180][0m
+[0m✱ [0mGrep "Layer 0|What this is|What This Is|Article Zero|Strange Loop"[90m in . · 100 matches[0m
+The broken targets were historical Constitution sections that have since been absorbed into narrower owners. I’m updating the links to those current owner surfaces rather than recreating old anchors in `AGENTS.md`.
+[0m
+[0m# [0mTodos
+[✓] Inspect repository structure and self-model guidance
+[✓] Identify a concrete high-value task from repo-local guidance
+[•] Implement the selected change with minimal scope
+[ ] Run relevant verification
+[ ] Summarize outcome and remaining risks
+[0m
+[0m✗ [0mPatch failed
+[91m[1mError: [0mapply_patch verification failed: Error: Failed to find expected lines in /tmp/opencode/iso-r4-c/development/autopoiesis-probes/META-DIRECTION.md:
+- lineage stays in cycle directories
+[0m% [0mPatch 3 files
+Links are now routed to the current owner surfaces, and the autopoiesis meta-direction handoff no longer points back to the retired Constitution section. I’ll rerun the relevant audits.
+[0m
+[0m# [0mTodos
+[✓] Inspect repository structure and self-model guidance
+[✓] Identify a concrete high-value task from repo-local guidance
+[✓] Implement the selected change with minimal scope
+[•] Run relevant verification
+[ ] Summarize outcome and remaining risks
+[0m
+[0m→ [0mRead principles/proactive-self-audit.md[90m [offset=10, limit=10][0m
+[0m→ [0mRead development/autopoiesis-probes/META-DIRECTION.md[90m [offset=9, limit=24][0m
+[0m→ [0mRead experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md[90m [offset=280, limit=8][0m
+The first pass exposed one awkward self-reference in the handoff text; I’ll tighten that before verification so the owner statement is clear.
+[0m% [0mPatch 1 file
+I’m verifying with the same audit path that found the issue, plus a targeted stale-anchor search.
+[0m✱ [0mGrep "AGENTS\.md#(autopoietic-north-star|article-zero-the-strange-loop|what-this-is)"[90m in . · 0 matches[0m
+[0m
+[0m$ [0m./scripts/check-active-doc-links.sh
+Active-doc-link audit: docs_scanned=2172 issues=0
+[0m
+The targeted link audit now passes with no advisories. I’ll run the broader control-plane audit once more to make sure the repair didn’t disturb adjacent checks.
+[0m$ [0mmake audit-control-plane
+./scripts/check-githooks-active.sh
+Githooks-active audit: core.hooksPath=.githooks OK
+./scripts/check-experiment-paper-feeds.sh
+Paper-feed audit: phases=0 experiments=157 mappings=233 issues=0 warnings=0
+./scripts/check-experiment-prompt-posture.sh
+Experiment prompt-posture audit: runners=21 issues=0
+./scripts/check-paper-dossier-links.sh
+Paper-dossier audit: dossiers=31 issues=0
+./scripts/check-paper-evidence-backbone.sh
+Paper-evidence-backbone audit: dossiers=31 backbone_entries=118 issues=0
+./scripts/check-paper-metadata-vocabulary.sh
+Paper-metadata-vocabulary audit: docs_scanned=33 issues=0
+./scripts/check-configuration-shape.sh
+Configuration-shape audit: roots_scanned=38 listed_configs=3 config_docs=3 issues=0
+./scripts/check-venue-refs.sh
+Venue-ref audit: root_docs=38 config_docs=3 bindings=39 hard_issues=0 advisory_issues=0
+./scripts/check-paper-readout-coverage.sh
+Paper-readout-coverage audit: dossiers_checked=31 issues=0
+./scripts/check-model-evaluations.sh
+Model-evaluation audit: evaluations=106 scored=106 issues=0 warnings=0
+./scripts/check-runtime-doc-sync.sh
+Runtime-doc-sync audit: docs_scanned=11 issues=0
+./scripts/check-validation-surface.sh
+Validation-surface audit: files_scanned=4 issues=0
+./scripts/check-active-doc-links.sh
+Active-doc-link audit: docs_scanned=2172 issues=0
+./scripts/check-stable-evidence-surfaces.sh
+Stable-evidence audit: docs_scanned=2172 issues=0
+./scripts/check-experiment-note-index.sh
+Experiment-note-index audit: docs_scanned=1 issues=0
+./scripts/check-experiment-current-state.sh
+Experiment-current-state audit: docs_scanned=2 issues=0
+./scripts/check-experiment-surface-map.sh
+Experiment-surface-map audit: docs_scanned=31 issues=0
+./scripts/check-experiment-subdir-index.sh
+Experiment-subdir-index audit: dirs_scanned=20 issues=0
+bash ./scripts/check-experiment-task-readmes.sh
+Experiment-task-readme audit: docs_scanned=0 issues=0
+bash ./scripts/check-experiment-incubator-readmes.sh
+Experiment-incubator-readme audit: docs_scanned=3 issues=0
+bash ./scripts/check-experiment-archive-readmes.sh
+Experiment-archive-readme audit: docs_scanned=8 issues=0
+bash ./scripts/check-paper-legacy-track-roots.sh
+Paper legacy TRACK root audit: paths_scanned=0 issues=0
+bash ./scripts/check-paper-track-readmes.sh
+Paper-track-readme audit: docs_scanned=2 issues=0
+./scripts/check-paper-subdir-index.sh
+Paper-subdir-index audit: dirs_scanned=32 issues=0
+bash ./scripts/check-paper-track-meta-index.sh
+Paper-projection-meta-index audit: dirs_scanned=4 issues=0
+bash ./scripts/check-paper-track-special-index.sh
+Paper-track-special-index audit: dirs_scanned=0 issues=0
+bash ./scripts/check-paper-template-surface-index.sh
+Paper-template-surface audit: dirs_scanned=3 issues=0
+bash ./scripts/check-root-entry-docs.sh
+Root-entry-doc audit: docs_scanned=6 issues=0
+bash ./scripts/check-tests-entry-docs.sh
+Tests-entry-doc audit: docs_scanned=3 issues=0
+bash ./scripts/check-tests-surface-ownership.sh
+Tests-surface-ownership audit: files_scanned=633 issues=0
+bash ./scripts/check-obsidian-base-index.sh
+Obsidian-base-index audit: dirs_scanned=1 issues=0
+bash ./scripts/check-obsidian-surface-ownership.sh
+Obsidian-surface-ownership audit: files_scanned=4 issues=0
+bash ./scripts/check-scripts-readme.sh
+Scripts-readme audit: docs_scanned=1 issues=0
+bash ./scripts/check-scripts-surface-ownership.sh
+Scripts-surface-ownership audit: files_scanned=104 issues=0
+bash ./scripts/check-githooks-readme.sh
+Githooks-readme audit: docs_scanned=1 issues=0
+bash ./scripts/check-githooks-surface-ownership.sh
+Githooks-surface-ownership audit: files_scanned=4 issues=0
+bash ./scripts/check-surface-inventory.sh
+Surface-inventory audit: docs_scanned=497 categories=35 issues=0
+  experiments_active_root=1
+  experiments_archive_experiment=95
+  experiments_archive_root=1
+  experiments_archive_suite=7
+  experiments_experiment_root=157
+  experiments_experiment_subsurface_index=32
+  experiments_family_index=12
+  experiments_historical_run_snapshot=55
+  experiments_incubator_project=3
+  experiments_incubator_root=1
+  experiments_protocol_index=1
+  experiments_root=1
+  experiments_template_surface=1
+  paper_anomalies_root=1
+  paper_archive_surface=3
+  paper_core_root=1
+  paper_core_subsurface_index=9
+  paper_dossier=39
+  paper_essays_meta_index=1
+  paper_essays_meta_subsurface_index=3
+  paper_essays_root=1
+  paper_home_subsurface_index=48
+  paper_incubator_surface=2
+  paper_papers_index=1
+  paper_philosophy_root=1
+  paper_predictions_root=1
+  paper_procedure_root=1
+  paper_root=1
+  paper_template_surface=6
+  paper_theory_index=1
+  paper_theory_subsurface_index=4
+  paper_track_projection_surface=3
+  paper_track_unified_root=1
+  paper_venues_index=1
+  paper_venues_subsurface_index=1
+bash ./scripts/check-surface-ownership.sh
+Surface-ownership audit: files_scanned=6552 issues=0
+./scripts/check-paper-home-root-boundedness.sh
+Paper-home-root audit: homes_scanned=30 issues=0
+./scripts/check-paper-core-surface-index.sh
+Paper-core-surface audit: dirs_scanned=9 issues=0
+./scripts/check-control-plane-frontmatter.sh
+Control-plane-frontmatter audit: docs_scanned=34 issues=0
+./scripts/check-control-plane-projection-maintenance.sh
+Control-plane projection-maintenance audit: docs_scanned=72 issues=0
+./scripts/check-control-plane-size.sh
+Control-plane size — pain line 200 lines (registry: control-plane-registry.md, 25 files):
+  OVER  890  DEVELOPMENT.md
+  OVER  567  Paper/contracts.md
+  OVER  411  Paper/writing-principles.md
+  OVER  592  Paper/control-plane-topology.md
+Total: 25 files, 4594 lines. Over threshold: 4. Missing: 0.
+./scripts/check-phase-interpretation-ownership.sh
+Phase-interpretation-ownership audit: phases_scanned=0 issues=0
+./scripts/check-validator-registration.sh
+Validator-registration audit: scripts=82 prek_entries=53 issues=0
+./scripts/check-evolution-hygiene.sh
+Evolution-hygiene audit: issues=0
+./scripts/check-citation-cff.sh
+Citation-cff audit: issues=0
+./scripts/check-selfsource-freshness.sh
+Selfsource-freshness audit: bundle_mtime>=source_commit_time OK (untracked generated bundle)
+./scripts/check-structural-pressure.sh
+Structural pressure — file>15K, folder>25 files (ext: md,sh,toml,yaml,yml, 3299 files scanned):
+  WARNING — files over 15K:
+    510K Paper/essays/_meta/external-sources/slate-references/25-working-memory-in-humans.md
+    406K tests/model/run.sh
+    247K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run5-unlimited-exec-direct-data/log/sess_20260627-010119_e1df2923-d7e4-4d41-ae22-bdb8e69c2fe0/tapes/0001.log.yaml
+    192K Paper/papers/successor-continuity/boundary-paper/references/deep-research-complete-archive.md
+    190K tests/runtime/run.sh
+    181K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run6-selfsource-enabled-data/log/sess_20260627-011609_b218ecef-840b-4969-a78f-cff31cb35a3c/tapes/0001.log.yaml
+    177K experiments/active/dormancy-ecology/dorm-06-functional-dependency-selection/run-container.sh
+    163K experiments/active/dormancy-ecology/dorm-04-open-wake-selection/run-container.sh
+    132K Paper/essays/_meta/external-sources/slate-references/22-wei-et-al-chain-of-thought-prompting.md
+    108K Paper/essays/_meta/external-sources/slate-references/21-yao-et-al-react-synergizing-reasoning-and-acting.md
+    107K Paper/essays/_meta/external-sources/slate-references/19-adapt-as-needed-decomposition-and-planning.md
+    103K experiments/active/cooperation-dynamics/analysis/BEHAVIOR-ANALYSIS.md
+    98K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run3-full-exit-disabled-data/log/sess_20260626-225209_b037f291-0332-4a7f-8104-c1f2b60d8983/tapes/0001.log.yaml
+    95K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run4-full-exec-direct-data/log/sess_20260627-005229_024097a5-60fa-46ee-8159-53e34d163163/tapes/0001.log.yaml
+    92K experiments/active/autopoiesis-succession/analysis/EXPERIMENT-LOG.md
+    92K Paper/essays/_meta/external-sources/slate-references/01-rlm-recursive-language-models-paper.md
+    86K Paper/essays/_meta/external-sources/slate-references/07-altera-project-sid-piano-architecture.md
+    82K experiments/active/autopoiesis-succession/lib/morphology-ladder-harness.sh
+    81K experiments/active/dormancy-ecology/dorm-04-open-wake-selection/README.md
+    79K experiments/PROTOCOL.md
+    75K Paper/archive/rejected-2024/autopoietic-intelligence-via-recursive-posix-processes/artifacts/final_paper.md
+    73K Paper/theory/references/gemini-theme-spark-harvest-2026-06-14.md
+    73K Paper/essays/_meta/external-sources/slate-references/14-silver-et-al-alphago-nature-2016.md
+    72K experiments/active/dormancy-ecology/dorm-03-wake-credit-game/run-container.sh
+    69K experiments/active/early-existence/exst-02-model-comparison/README.md
+    69K Paper/publication-restructure-design.md
+    67K Paper/papers/runtime-substrate/structural-elicitation/experiment-design-extension-plan.md
+    66K Paper/core/mechanisms/experiment-mechanism-map.md
+    64K Paper/theory/references/continuity-deep-research-synthesis.md
+    64K Paper/theory-restructure-design.md
+    62K experiments/active/digital-red-queen/drq-03-host-lineage-drq/run-host-lineage.sh
+    61K Paper/theory/views/runtime-capability/philosophy-of-capability.md
+    61K Paper/theory/references/structural-pull-related-theory-dr-report-2026-06-14.md
+    60K DEVELOPMENT.md
+    59K Paper/papers/viability/quine-lifelike/manuscript-plan.md
+    58K Paper/papers/successor-continuity/evaluation-paper/manuscript.md
+    58K Paper/papers/successor-continuity/boundary-paper/README.md
+    57K experiments/restructure-design.md
+    57K Paper/theory/references/arr-systems-and-agent-runtime-source-check-report-2026-05.md
+    56K Paper/papers/open-ended-ecology/substrate-coincidence/alife-theory/manuscript-draft.md
+    55K Paper/theory/references/autoconstructive-successor-morphology-deep-research-report-2026-05.md
+    54K Paper/theory/views/runtime-capability/projection-axes.md
+    53K experiments/active/benchmarks/bench-06-persistent-cleanroom-c-compiler/README.md
+    53K Paper/theory/references/expansion-directions-dr-report-2026-05-01.md
+    53K Paper/theory/references/contract-vs-niche-scaffold-deep-research-report-2026-05.md
+    53K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/12-biology-lineage-heredity-individuality-2026-04-21.md
+    53K Paper/papers/social-protocol/minimal-perceptual-prerequisites/references/deep-research-cn-combined.md
+    52K Paper/theory/references/oee-proto-oee-criteria-dr-report-2026-05-02.md
+    52K Paper/theory/references/generative-self-replacement-novelty-audit-report-2026-05.md
+    52K Paper/essays/_meta/external-sources/slate-references/24-hong-troynikov-huber-context-rot-how-increasing-input-tokens-impacts-llm-perform.md
+    51K tests/model/evaluations.toml
+    51K experiments/active/structural-elicitation/notes/tape-ethnography-findings-2026-06-18.md
+    51K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/07-handoff-physics-systems-neighbors-2026-04-21.md
+    50K Paper/theory/references/computational-morphogenesis-novelty-audit-report-2026-05.md
+    50K Paper/theory/references/alife-medium-collision-2026-06-23.md
+    50K Paper/philosophy/computational-epistemology.md
+    49K Paper/papers/successor-continuity/future-addressability/references/dr-computational-individuality-2026-04-27.md
+    49K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/10-ai-rescan-under-full-schema-2026-04-21.md
+    48K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run1-off-exit-enabled-data/log/sess_20260626-225011_7d21d825-9e2b-46ed-af58-ac291b9f3f63/tapes/0001.log.yaml
+    47K Paper/theory-code-expansion-design.md
+    47K Paper/discovery-loop-design.md
+    46K Paper/theory/references/boundary-phenomenon-novelty-audit-report-2026-05.md
+    46K Paper/theory/references/agent-swarm-oee-experimental-program-dr-report-2026-05-02.md
+    46K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/11-alife-continuity-individuation-2026-04-21.md
+    46K Paper/papers/runtime-substrate/structural-elicitation/theory-matrix.md
+    45K Paper/theory/views/runtime-capability/axis-code-mapping.md
+    45K Paper/theory/views/runtime-capability/axis-asymmetry.md
+    45K Paper/theory/views/reflexive/deep/structural-pull.md
+    45K Paper/papers/viability/quine-lifelike/plans/experiment-escalation-plan.md
+    44K experiments/active/benchmarks/bench-01-terminal-bench/README.md
+    44K Paper/papers/runtime-substrate/agentic-alife-workshop/references/dr-reports/q94-dr-02-agentic-ai-ecologies-orchestration.md
+    43K experiments/active/benchmarks/bench-05-terminal-bench2-gpt54/CURRENT.md
+    43K Paper/theory/references/affordance-rich-null-ecologies-dr-report-2026-05-02.md
+    42K experiments/active/cooperation-dynamics/analysis/RUN-CATALOG.md
+    42K Paper/theory/references/theory-situation-dr-report-2026-05-01.md
+    42K Paper/theory/references/alife-successor-morphology-primary-source-check-report-2026-05.md
+    42K Paper/papers/successor-continuity/future-addressability/references/dr-experimental-evaluation-program-2026-04-27.md
+    42K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/13-philosophy-identity-continuity-process-2026-04-21.md
+    42K Paper/papers/runtime-substrate/agentic-alife-workshop/references/dr-reports/q94-dr-03-governance-observability-runtime-control.md
+    41K Paper/theory/references/lifecycle-bottleneck-reproduction-deep-research-report-2026-05.md
+    41K Paper/papers/viability/quine-lifelike/README.md
+    41K Paper/papers/eval-primitives/narration-invariance-eval/plans/dr-lead-domain-report.md
+    40K experiments/active/null-ecology/null-05-reflexive-self-embedding/analysis/artifacts-6p-minimal.md
+    40K Paper/theory/references/hotos-arr-primary-source-check-report-2026-05.md
+    40K Paper/theory/references/alife-successor-morphospace-merged-source-check-report-2026-05.md
+    40K Paper/papers/successor-continuity/future-addressability/references/dr-systems-carriers-addressability-2026-04-27.md
+    40K Paper/papers/successor-continuity/future-addressability/references/dr-formal-vocabulary-models-2026-04-27.md
+    40K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/03-spec-mediated-body-reconstitution-2026-04-21.md
+    40K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/02-continuity-identity-closure-theory-2026-04-21.md
+    40K Paper/papers/reflexive-repository/the-autopoietic-repository/materials/collected-materials.md
+    39K experiments/active/trace-inheritance/trce-04-legacy-protocol-ablation/README.md
+    39K Paper/philosophy/self-maintaining-systems.md
+    39K Paper/papers/successor-continuity/boundary-paper/references/dr-theory-expansion-report-2026-04-27.md
+    39K Paper/papers/runtime-substrate/structural-elicitation/manuscript-plan.md
+    38K evolution/periods/18-theory-net-generative-substrate-jun-13.md
+    38K Paper/theory/references/p6-p7-level-and-novelty-deep-research-report-2026-04-21.md
+    38K Paper/papers/runtime-substrate/structural-elicitation/claim.md
+    37K Paper/theory/objects/structural-pull.md
+    37K Paper/papers/runtime-substrate/structural-elicitation/plans/dr-raw-2-geometry.md
+    36K experiments/active/benchmarks/bench-04-programbench/prompt-variants/README.md
+    ... 231 more over-threshold file(s) not shown (raise --limit)
+  WARNING — folders over 25 files:
+    96 scripts
+    73 experiments/active/benchmarks/bench-04-programbench/prompt-variants
+    59 Paper/theory/references
+    58 development/autopoiesis-probes/cycle-8-recombination/seeds/C-mechanisms
+    43 Paper/theory/objects
+    43 Paper/predictions/open
+    40 development/autopoiesis-probes/cycle-8-recombination/seeds/B-tensions
+    38 development/autopoiesis-probes/cycle-8-recombination/seeds/A-concepts
+    37 Paper/papers/successor-continuity/evaluation-paper/plans
+    32 experiments/active/benchmarks/bench-05-terminal-bench2-gpt54/prompt-variants
+    30 principles
+    27 Paper/essays/_meta/external-sources/slate-references
+Totals: 3299 files, 24201K. Over size: 331. Dense folders: 12.
+[0m
+Broad control-plane audit passes; the remaining output is pre-existing advisory size/structural-pressure inventory, not a new failure. I’ll inspect the final diff and status before closing.
+[0m$ [0mgit diff -- experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md principles/proactive-self-audit.md development/autopoiesis-probes/META-DIRECTION.md
+diff --git a/development/autopoiesis-probes/META-DIRECTION.md b/development/autopoiesis-probes/META-DIRECTION.md
+index dd50d4f0e..8161a577b 100644
+--- a/development/autopoiesis-probes/META-DIRECTION.md
++++ b/development/autopoiesis-probes/META-DIRECTION.md
+@@ -8,7 +8,7 @@
+ 
+ ## Projection maintenance
+ 
+-- source owner: `AGENTS.md` § Autopoietic North-Star, this directory's cycle
++- source owner: this file's § The north-star, this directory's cycle
+   READMEs/compression records, `FRICTION.md`, and promoted theory objects
+ - projection role: compact handoff for continuing the autopoiesis program after
+   context loss; not a full status ledger
+@@ -18,17 +18,16 @@
+   `development/contracts/divergent-collision.md`, and the latest
+   `cycle-*-*/README.md` + `compression.md`
+ - absorption owner: durable theory goes to `Paper/theory/objects/` or gaps;
+-  durable procedure goes to `AGENTS.md` or `development/contracts/`; raw probe
++  durable procedure goes to `DEVELOPMENT.md` or `development/contracts/`; raw probe
+   lineage stays in cycle directories
+ 
+ ## The north-star
+ 
+ The repo should be **autopoietic**: a goal-less, stateless agent dropped in with
+ no task can, by following only the self-model, (a) produce theory, (b) maintain
+-internal coherence, (c) reflect on and repair its own procedure. Recorded in
+-`AGENTS.md` § Autopoietic North-Star. Method: light-prompt probe → name friction
+-→ repair → re-probe, committing each cycle; retain probe outputs even when
+-shape-imperfect.
++internal coherence, (c) reflect on and repair its own procedure. Operational
++method: light-prompt probe → name friction → repair → re-probe, committing each
++cycle; retain probe outputs even when shape-imperfect.
+ 
+ ## Where the meta-thinking landed (the concept cluster)
+ 
+diff --git a/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md b/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
+index 46c8c043e..3211ee1cb 100644
+--- a/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
++++ b/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
+@@ -281,7 +281,7 @@ experiment path under `tests-in`.
+ 
+ - Extends [`null-03`](../null-03-source-workspace-null): same missionless frame, adds full self-disclosure + full affordances + full repo
+ - Distinct from [`succ-46`](../../autopoiesis-succession/succ-46-plan9-existence) / [`succ-47`](../../autopoiesis-succession/succ-47-plan9-self-improvement-loop): those had explicit missions; this is missionless (with mission-sweep conditions)
+-- Tests the autopoietic north-star ([`AGENTS.md` § Autopoietic North-Star](../../../../AGENTS.md#autopoietic-north-star))
++- Tests the autopoietic north-star ([`META-DIRECTION.md` § The north-star](../../../../development/autopoiesis-probes/META-DIRECTION.md#the-north-star))
+ - Tests the structural-pull audit attractor ([`structural-pull`](../../../../Paper/theory/objects/structural-pull.md))
+ - Theory outputs: [`reflexive-substrate-loop`](../../../../Paper/theory/objects/reflexive-substrate-loop.md), [`substrate-coincidence`](../../../../Paper/theory/objects/substrate-coincidence.md), [`audit-attractor`](../../../../Paper/theory/objects/audit-attractor.md), [`channel-substitution`](../../../../Paper/theory/objects/channel-substitution.md)
+ - Open gaps: [`selectable-entity`](../../../../Paper/theory/gaps/selectable-entity.md), [`de-novo-coordination`](../../../../Paper/theory/gaps/de-novo-coordination.md), [`persistence-as-unfakeability`](../../../../Paper/theory/gaps/persistence-as-unfakeability.md)
+diff --git a/principles/proactive-self-audit.md b/principles/proactive-self-audit.md
+index 01ee33184..1f4d62b3f 100644
+--- a/principles/proactive-self-audit.md
++++ b/principles/proactive-self-audit.md
+@@ -12,6 +12,6 @@ Audit triggers:
+ - **Session start:** Verify external references resolve
+ - **Work-type emergence:** When your work's shape becomes clear — declared via `Maintenance` / `Discovery` / `Theory`, or autonomous selection lands on coherence repair / discovery / theory growth as the most pending work — reach for the matching contract instead of waiting for an explicit object-level task
+ - **Closure request:** Audit the work interval since session start or the prior explicit `Closure` point before treating the loop as closed
+-- **Repeated instruction or friction pattern:** Apply the Friction → Repair loop ([`../AGENTS.md`](../AGENTS.md#article-zero-the-strange-loop))
++- **Repeated instruction or friction pattern:** Apply the Friction → Repair loop through the structural-friction journal ([`DEVELOPMENT.md` § Structural Friction Journal](../DEVELOPMENT.md#structural-friction-journal))
+ - **Correction with future reuse:** When a correction, a broader pattern, or a standing expectation surfaces, check whether the owning control plane or the Constitution should change
+-- **Projection capture:** If you notice yourself treating any single encoder as "the frame," or following the easiest path without checking whether it matches the task, name the pull and re-read Layer 0 ([`../AGENTS.md`](../AGENTS.md#what-this-is))
++- **Projection capture:** If you notice yourself treating any single encoder as "the frame," or following the easiest path without checking whether it matches the task, name the pull and re-read the Constitution ([`AGENTS.md`](../AGENTS.md#the-quine-constitution))
+[0m
+[0m$ [0mgit status --short
+M development/autopoiesis-probes/META-DIRECTION.md
+ M experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
+ M principles/proactive-self-audit.md
+[0m
+The final diff is limited to three documentation surfaces and only redirects stale ownership/anchor references. I’ll do one last targeted search for the old autopoietic Constitution pointer.
+[0m✱ [0mGrep "AGENTS\.md`? § Autopoietic North-Star|AGENTS\.md#autopoietic-north-star|Article Zero: The Strange Loop|#article-zero-the-strange-loop|#what-this-is"[90m in . · 4 matches[0m
+A broader stale-pointer search found two active prose references to the retired `AGENTS.md` north-star section, plus historical/raw material. I’ll repair the active prose references and leave historical/run artifacts untouched.
+[0m→ [0mRead principles/autopoiesis.md[90m [offset=1, limit=90][0m
+[0m→ [0mRead Paper/theory/views/runtime-capability/redesign-constraints.md[90m [offset=1, limit=80][0m
+[0m% [0mPatch 2 files
+Active stale prose pointers are updated as well; historical/raw occurrences remain untouched as evidence. I’ll rerun the link audit, stale-pointer search, and control-plane audit.
+[0m→ [0mRead principles/autopoiesis.md[90m [offset=14, limit=40][0m
+[0m✱ [0mGrep "AGENTS\.md`? § Autopoietic North-Star|AGENTS\.md#autopoietic-north-star|#article-zero-the-strange-loop|#what-this-is"[90m in . · 1 match[0m
+[0m→ [0mRead Paper/theory/views/runtime-capability/redesign-constraints.md[90m [offset=10, limit=55][0m
+[0m
+[0m$ [0m./scripts/check-control-plane-projection-maintenance.sh
+Control-plane projection-maintenance audit: docs_scanned=72 issues=0
+[0m
+[0m$ [0m./scripts/check-active-doc-links.sh
+Active-doc-link audit: docs_scanned=2172 issues=0
+[0m
+Targeted link and projection-maintenance audits pass. I’ll run the full control-plane audit one final time after the expanded repair.
+[0m$ [0mmake audit-control-plane
+./scripts/check-githooks-active.sh
+Githooks-active audit: core.hooksPath=.githooks OK
+./scripts/check-experiment-paper-feeds.sh
+Paper-feed audit: phases=0 experiments=157 mappings=233 issues=0 warnings=0
+./scripts/check-experiment-prompt-posture.sh
+Experiment prompt-posture audit: runners=21 issues=0
+./scripts/check-paper-dossier-links.sh
+Paper-dossier audit: dossiers=31 issues=0
+./scripts/check-paper-evidence-backbone.sh
+Paper-evidence-backbone audit: dossiers=31 backbone_entries=118 issues=0
+./scripts/check-paper-metadata-vocabulary.sh
+Paper-metadata-vocabulary audit: docs_scanned=33 issues=0
+./scripts/check-configuration-shape.sh
+Configuration-shape audit: roots_scanned=38 listed_configs=3 config_docs=3 issues=0
+./scripts/check-venue-refs.sh
+Venue-ref audit: root_docs=38 config_docs=3 bindings=39 hard_issues=0 advisory_issues=0
+./scripts/check-paper-readout-coverage.sh
+Paper-readout-coverage audit: dossiers_checked=31 issues=0
+./scripts/check-model-evaluations.sh
+Model-evaluation audit: evaluations=106 scored=106 issues=0 warnings=0
+./scripts/check-runtime-doc-sync.sh
+Runtime-doc-sync audit: docs_scanned=11 issues=0
+./scripts/check-validation-surface.sh
+Validation-surface audit: files_scanned=4 issues=0
+./scripts/check-active-doc-links.sh
+Active-doc-link audit: docs_scanned=2172 issues=0
+./scripts/check-stable-evidence-surfaces.sh
+Stable-evidence audit: docs_scanned=2172 issues=0
+./scripts/check-experiment-note-index.sh
+Experiment-note-index audit: docs_scanned=1 issues=0
+./scripts/check-experiment-current-state.sh
+Experiment-current-state audit: docs_scanned=2 issues=0
+./scripts/check-experiment-surface-map.sh
+Experiment-surface-map audit: docs_scanned=31 issues=0
+./scripts/check-experiment-subdir-index.sh
+Experiment-subdir-index audit: dirs_scanned=20 issues=0
+bash ./scripts/check-experiment-task-readmes.sh
+Experiment-task-readme audit: docs_scanned=0 issues=0
+bash ./scripts/check-experiment-incubator-readmes.sh
+Experiment-incubator-readme audit: docs_scanned=3 issues=0
+bash ./scripts/check-experiment-archive-readmes.sh
+Experiment-archive-readme audit: docs_scanned=8 issues=0
+bash ./scripts/check-paper-legacy-track-roots.sh
+Paper legacy TRACK root audit: paths_scanned=0 issues=0
+bash ./scripts/check-paper-track-readmes.sh
+Paper-track-readme audit: docs_scanned=2 issues=0
+./scripts/check-paper-subdir-index.sh
+Paper-subdir-index audit: dirs_scanned=32 issues=0
+bash ./scripts/check-paper-track-meta-index.sh
+Paper-projection-meta-index audit: dirs_scanned=4 issues=0
+bash ./scripts/check-paper-track-special-index.sh
+Paper-track-special-index audit: dirs_scanned=0 issues=0
+bash ./scripts/check-paper-template-surface-index.sh
+Paper-template-surface audit: dirs_scanned=3 issues=0
+bash ./scripts/check-root-entry-docs.sh
+Root-entry-doc audit: docs_scanned=6 issues=0
+bash ./scripts/check-tests-entry-docs.sh
+Tests-entry-doc audit: docs_scanned=3 issues=0
+bash ./scripts/check-tests-surface-ownership.sh
+Tests-surface-ownership audit: files_scanned=633 issues=0
+bash ./scripts/check-obsidian-base-index.sh
+Obsidian-base-index audit: dirs_scanned=1 issues=0
+bash ./scripts/check-obsidian-surface-ownership.sh
+Obsidian-surface-ownership audit: files_scanned=4 issues=0
+bash ./scripts/check-scripts-readme.sh
+Scripts-readme audit: docs_scanned=1 issues=0
+bash ./scripts/check-scripts-surface-ownership.sh
+Scripts-surface-ownership audit: files_scanned=104 issues=0
+bash ./scripts/check-githooks-readme.sh
+Githooks-readme audit: docs_scanned=1 issues=0
+bash ./scripts/check-githooks-surface-ownership.sh
+Githooks-surface-ownership audit: files_scanned=4 issues=0
+bash ./scripts/check-surface-inventory.sh
+Surface-inventory audit: docs_scanned=497 categories=35 issues=0
+  experiments_active_root=1
+  experiments_archive_experiment=95
+  experiments_archive_root=1
+  experiments_archive_suite=7
+  experiments_experiment_root=157
+  experiments_experiment_subsurface_index=32
+  experiments_family_index=12
+  experiments_historical_run_snapshot=55
+  experiments_incubator_project=3
+  experiments_incubator_root=1
+  experiments_protocol_index=1
+  experiments_root=1
+  experiments_template_surface=1
+  paper_anomalies_root=1
+  paper_archive_surface=3
+  paper_core_root=1
+  paper_core_subsurface_index=9
+  paper_dossier=39
+  paper_essays_meta_index=1
+  paper_essays_meta_subsurface_index=3
+  paper_essays_root=1
+  paper_home_subsurface_index=48
+  paper_incubator_surface=2
+  paper_papers_index=1
+  paper_philosophy_root=1
+  paper_predictions_root=1
+  paper_procedure_root=1
+  paper_root=1
+  paper_template_surface=6
+  paper_theory_index=1
+  paper_theory_subsurface_index=4
+  paper_track_projection_surface=3
+  paper_track_unified_root=1
+  paper_venues_index=1
+  paper_venues_subsurface_index=1
+bash ./scripts/check-surface-ownership.sh
+Surface-ownership audit: files_scanned=6552 issues=0
+./scripts/check-paper-home-root-boundedness.sh
+Paper-home-root audit: homes_scanned=30 issues=0
+./scripts/check-paper-core-surface-index.sh
+Paper-core-surface audit: dirs_scanned=9 issues=0
+./scripts/check-control-plane-frontmatter.sh
+Control-plane-frontmatter audit: docs_scanned=34 issues=0
+./scripts/check-control-plane-projection-maintenance.sh
+Control-plane projection-maintenance audit: docs_scanned=72 issues=0
+./scripts/check-control-plane-size.sh
+Control-plane size — pain line 200 lines (registry: control-plane-registry.md, 25 files):
+  OVER  890  DEVELOPMENT.md
+  OVER  567  Paper/contracts.md
+  OVER  411  Paper/writing-principles.md
+  OVER  592  Paper/control-plane-topology.md
+Total: 25 files, 4594 lines. Over threshold: 4. Missing: 0.
+./scripts/check-phase-interpretation-ownership.sh
+Phase-interpretation-ownership audit: phases_scanned=0 issues=0
+./scripts/check-validator-registration.sh
+Validator-registration audit: scripts=82 prek_entries=53 issues=0
+./scripts/check-evolution-hygiene.sh
+Evolution-hygiene audit: issues=0
+./scripts/check-citation-cff.sh
+Citation-cff audit: issues=0
+./scripts/check-selfsource-freshness.sh
+Selfsource-freshness audit: bundle_mtime>=source_commit_time OK (untracked generated bundle)
+./scripts/check-structural-pressure.sh
+Structural pressure — file>15K, folder>25 files (ext: md,sh,toml,yaml,yml, 3299 files scanned):
+  WARNING — files over 15K:
+    510K Paper/essays/_meta/external-sources/slate-references/25-working-memory-in-humans.md
+    406K tests/model/run.sh
+    247K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run5-unlimited-exec-direct-data/log/sess_20260627-010119_e1df2923-d7e4-4d41-ae22-bdb8e69c2fe0/tapes/0001.log.yaml
+    192K Paper/papers/successor-continuity/boundary-paper/references/deep-research-complete-archive.md
+    190K tests/runtime/run.sh
+    181K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run6-selfsource-enabled-data/log/sess_20260627-011609_b218ecef-840b-4969-a78f-cff31cb35a3c/tapes/0001.log.yaml
+    177K experiments/active/dormancy-ecology/dorm-06-functional-dependency-selection/run-container.sh
+    163K experiments/active/dormancy-ecology/dorm-04-open-wake-selection/run-container.sh
+    132K Paper/essays/_meta/external-sources/slate-references/22-wei-et-al-chain-of-thought-prompting.md
+    108K Paper/essays/_meta/external-sources/slate-references/21-yao-et-al-react-synergizing-reasoning-and-acting.md
+    107K Paper/essays/_meta/external-sources/slate-references/19-adapt-as-needed-decomposition-and-planning.md
+    103K experiments/active/cooperation-dynamics/analysis/BEHAVIOR-ANALYSIS.md
+    98K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run3-full-exit-disabled-data/log/sess_20260626-225209_b037f291-0332-4a7f-8104-c1f2b60d8983/tapes/0001.log.yaml
+    95K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run4-full-exec-direct-data/log/sess_20260627-005229_024097a5-60fa-46ee-8159-53e34d163163/tapes/0001.log.yaml
+    92K experiments/active/autopoiesis-succession/analysis/EXPERIMENT-LOG.md
+    92K Paper/essays/_meta/external-sources/slate-references/01-rlm-recursive-language-models-paper.md
+    86K Paper/essays/_meta/external-sources/slate-references/07-altera-project-sid-piano-architecture.md
+    82K experiments/active/autopoiesis-succession/lib/morphology-ladder-harness.sh
+    81K experiments/active/dormancy-ecology/dorm-04-open-wake-selection/README.md
+    79K experiments/PROTOCOL.md
+    75K Paper/archive/rejected-2024/autopoietic-intelligence-via-recursive-posix-processes/artifacts/final_paper.md
+    73K Paper/theory/references/gemini-theme-spark-harvest-2026-06-14.md
+    73K Paper/essays/_meta/external-sources/slate-references/14-silver-et-al-alphago-nature-2016.md
+    72K experiments/active/dormancy-ecology/dorm-03-wake-credit-game/run-container.sh
+    69K experiments/active/early-existence/exst-02-model-comparison/README.md
+    69K Paper/publication-restructure-design.md
+    67K Paper/papers/runtime-substrate/structural-elicitation/experiment-design-extension-plan.md
+    66K Paper/core/mechanisms/experiment-mechanism-map.md
+    64K Paper/theory/references/continuity-deep-research-synthesis.md
+    64K Paper/theory-restructure-design.md
+    62K experiments/active/digital-red-queen/drq-03-host-lineage-drq/run-host-lineage.sh
+    61K Paper/theory/views/runtime-capability/philosophy-of-capability.md
+    61K Paper/theory/references/structural-pull-related-theory-dr-report-2026-06-14.md
+    60K DEVELOPMENT.md
+    59K Paper/papers/viability/quine-lifelike/manuscript-plan.md
+    58K Paper/papers/successor-continuity/evaluation-paper/manuscript.md
+    58K Paper/papers/successor-continuity/boundary-paper/README.md
+    57K experiments/restructure-design.md
+    57K Paper/theory/references/arr-systems-and-agent-runtime-source-check-report-2026-05.md
+    56K Paper/papers/open-ended-ecology/substrate-coincidence/alife-theory/manuscript-draft.md
+    55K Paper/theory/references/autoconstructive-successor-morphology-deep-research-report-2026-05.md
+    54K Paper/theory/views/runtime-capability/projection-axes.md
+    53K experiments/active/benchmarks/bench-06-persistent-cleanroom-c-compiler/README.md
+    53K Paper/theory/references/expansion-directions-dr-report-2026-05-01.md
+    53K Paper/theory/references/contract-vs-niche-scaffold-deep-research-report-2026-05.md
+    53K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/12-biology-lineage-heredity-individuality-2026-04-21.md
+    53K Paper/papers/social-protocol/minimal-perceptual-prerequisites/references/deep-research-cn-combined.md
+    52K Paper/theory/references/oee-proto-oee-criteria-dr-report-2026-05-02.md
+    52K Paper/theory/references/generative-self-replacement-novelty-audit-report-2026-05.md
+    52K Paper/essays/_meta/external-sources/slate-references/24-hong-troynikov-huber-context-rot-how-increasing-input-tokens-impacts-llm-perform.md
+    51K tests/model/evaluations.toml
+    51K experiments/active/structural-elicitation/notes/tape-ethnography-findings-2026-06-18.md
+    51K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/07-handoff-physics-systems-neighbors-2026-04-21.md
+    50K Paper/theory/references/computational-morphogenesis-novelty-audit-report-2026-05.md
+    50K Paper/theory/references/alife-medium-collision-2026-06-23.md
+    50K Paper/philosophy/computational-epistemology.md
+    49K Paper/papers/successor-continuity/future-addressability/references/dr-computational-individuality-2026-04-27.md
+    49K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/10-ai-rescan-under-full-schema-2026-04-21.md
+    48K development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run1-off-exit-enabled-data/log/sess_20260626-225011_7d21d825-9e2b-46ed-af58-ac291b9f3f63/tapes/0001.log.yaml
+    47K Paper/theory-code-expansion-design.md
+    47K Paper/discovery-loop-design.md
+    46K Paper/theory/references/boundary-phenomenon-novelty-audit-report-2026-05.md
+    46K Paper/theory/references/agent-swarm-oee-experimental-program-dr-report-2026-05-02.md
+    46K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/11-alife-continuity-individuation-2026-04-21.md
+    46K Paper/papers/runtime-substrate/structural-elicitation/theory-matrix.md
+    45K Paper/theory/views/runtime-capability/axis-code-mapping.md
+    45K Paper/theory/views/runtime-capability/axis-asymmetry.md
+    45K Paper/theory/views/reflexive/deep/structural-pull.md
+    45K Paper/papers/viability/quine-lifelike/plans/experiment-escalation-plan.md
+    44K experiments/active/benchmarks/bench-01-terminal-bench/README.md
+    44K Paper/papers/runtime-substrate/agentic-alife-workshop/references/dr-reports/q94-dr-02-agentic-ai-ecologies-orchestration.md
+    43K experiments/active/benchmarks/bench-05-terminal-bench2-gpt54/CURRENT.md
+    43K Paper/theory/references/affordance-rich-null-ecologies-dr-report-2026-05-02.md
+    42K experiments/active/cooperation-dynamics/analysis/RUN-CATALOG.md
+    42K Paper/theory/references/theory-situation-dr-report-2026-05-01.md
+    42K Paper/theory/references/alife-successor-morphology-primary-source-check-report-2026-05.md
+    42K Paper/papers/successor-continuity/future-addressability/references/dr-experimental-evaluation-program-2026-04-27.md
+    42K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/13-philosophy-identity-continuity-process-2026-04-21.md
+    42K Paper/papers/runtime-substrate/agentic-alife-workshop/references/dr-reports/q94-dr-03-governance-observability-runtime-control.md
+    41K Paper/theory/references/lifecycle-bottleneck-reproduction-deep-research-report-2026-05.md
+    41K Paper/papers/viability/quine-lifelike/README.md
+    41K Paper/papers/eval-primitives/narration-invariance-eval/plans/dr-lead-domain-report.md
+    40K experiments/active/null-ecology/null-05-reflexive-self-embedding/analysis/artifacts-6p-minimal.md
+    40K Paper/theory/references/hotos-arr-primary-source-check-report-2026-05.md
+    40K Paper/theory/references/alife-successor-morphospace-merged-source-check-report-2026-05.md
+    40K Paper/papers/successor-continuity/future-addressability/references/dr-systems-carriers-addressability-2026-04-27.md
+    40K Paper/papers/successor-continuity/future-addressability/references/dr-formal-vocabulary-models-2026-04-27.md
+    40K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/03-spec-mediated-body-reconstitution-2026-04-21.md
+    40K Paper/papers/successor-continuity/evaluation-paper/references/deep-research-reports/02-continuity-identity-closure-theory-2026-04-21.md
+    40K Paper/papers/reflexive-repository/the-autopoietic-repository/materials/collected-materials.md
+    39K experiments/active/trace-inheritance/trce-04-legacy-protocol-ablation/README.md
+    39K Paper/philosophy/self-maintaining-systems.md
+    39K Paper/papers/successor-continuity/boundary-paper/references/dr-theory-expansion-report-2026-04-27.md
+    39K Paper/papers/runtime-substrate/structural-elicitation/manuscript-plan.md
+    38K evolution/periods/18-theory-net-generative-substrate-jun-13.md
+    38K Paper/theory/references/p6-p7-level-and-novelty-deep-research-report-2026-04-21.md
+    38K Paper/papers/runtime-substrate/structural-elicitation/claim.md
+    37K Paper/theory/objects/structural-pull.md
+    37K Paper/papers/runtime-substrate/structural-elicitation/plans/dr-raw-2-geometry.md
+    36K experiments/active/benchmarks/bench-04-programbench/prompt-variants/README.md
+    ... 231 more over-threshold file(s) not shown (raise --limit)
+  WARNING — folders over 25 files:
+    96 scripts
+    73 experiments/active/benchmarks/bench-04-programbench/prompt-variants
+    59 Paper/theory/references
+    58 development/autopoiesis-probes/cycle-8-recombination/seeds/C-mechanisms
+    43 Paper/theory/objects
+    43 Paper/predictions/open
+    40 development/autopoiesis-probes/cycle-8-recombination/seeds/B-tensions
+    38 development/autopoiesis-probes/cycle-8-recombination/seeds/A-concepts
+    37 Paper/papers/successor-continuity/evaluation-paper/plans
+    32 experiments/active/benchmarks/bench-05-terminal-bench2-gpt54/prompt-variants
+    30 principles
+    27 Paper/essays/_meta/external-sources/slate-references
+Totals: 3299 files, 24202K. Over size: 331. Dense folders: 12.
+[0m
+Full control-plane audit passes again. Remaining warnings are the repo’s standing structural-size inventory, not errors from this change.
+[0m$ [0mgit diff --stat
+Paper/theory/views/runtime-capability/redesign-constraints.md |  6 +++---
+ development/autopoiesis-probes/META-DIRECTION.md              | 11 +++++------
+ .../null-ecology/null-05-reflexive-self-embedding/README.md   |  2 +-
+ principles/autopoiesis.md                                     |  5 +++--
+ principles/proactive-self-audit.md                            |  4 ++--
+ 5 files changed, 14 insertions(+), 14 deletions(-)
+[0m
+[0m$ [0mgit diff -- development/autopoiesis-probes/META-DIRECTION.md experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md principles/proactive-self-audit.md principles/autopoiesis.md Paper/theory/views/runtime-capability/redesign-constraints.md
+diff --git a/Paper/theory/views/runtime-capability/redesign-constraints.md b/Paper/theory/views/runtime-capability/redesign-constraints.md
+index bb3852766..7e7c2fd49 100644
+--- a/Paper/theory/views/runtime-capability/redesign-constraints.md
++++ b/Paper/theory/views/runtime-capability/redesign-constraints.md
+@@ -11,10 +11,10 @@ depends-on: [projection-axes, axis-code-mapping, philosophy-of-capability, axis-
+ 
+ | Field | Value |
+ |-------|-------|
+-| Source owner | The project's self-modifying identity: `AGENTS.md` § Autopoietic North-Star, [`Paper/philosophy/self-maintaining-systems.md`](../../../philosophy/self-maintaining-systems.md) § The Reflexive Instance, `selfsource.go`. The constraint hierarchy recorded here was derived in a Human+agent design session and is binding on future capability-surface refactor work. |
++| Source owner | The project's self-modifying identity: [`META-DIRECTION.md` § The north-star](../../../../development/autopoiesis-probes/META-DIRECTION.md#the-north-star), [`Paper/philosophy/self-maintaining-systems.md`](../../../philosophy/self-maintaining-systems.md) § The Reflexive Instance, `selfsource.go`. The constraint hierarchy recorded here was derived in a Human+agent design session and is binding on future capability-surface refactor work. |
+ | Projection role | The design constraints any future capability refactor must satisfy, derived from the project identity. Records **firm constraints** and **explicit open questions**; does NOT own a chosen solution, a canonical model form, or a refactor sequence. |
+ | Freshness trigger | Project stance on agent self-modification changes; a refactor approach is chosen (closing open questions); an enacted design violates a constraint recorded here. |
+-| Drift check | Compare against `AGENTS.md` north-star and `self-maintaining-systems.md` spine. A constraint is stale if the project stops treating the runtime as a self-modifying substrate. |
++| Drift check | Compare against the autopoiesis meta-direction north-star and `self-maintaining-systems.md` spine. A constraint is stale if the project stops treating the runtime as a self-modifying substrate. |
+ | Absorption owner | A future refactor design brief absorbs the resolved form. When a canonical capability model is enacted, its design doc becomes the owner; this note then either collapses into it or is pruned per the Absorption Rule. |
+ 
+ ## Why this note exists
+@@ -57,7 +57,7 @@ Quine is a strange loop: the runtime is both the research instrument and the
+ research object. The agent that maintains this repository is an instance of the
+ process the runtime describes. `selfsource.go` already projects the runtime's
+ own source to the agent (`SELF_SOURCE_CODE_ENABLED`); the Autopoietic
+-North-Star (`AGENTS.md`) requires that a goal-less agent can maintain internal
++North-Star requires that a goal-less agent can maintain internal
+ coherence and repair its own procedure. A runtime whose capability surface is a
+ flat env bag cannot be safely self-modified:
+ 
+diff --git a/development/autopoiesis-probes/META-DIRECTION.md b/development/autopoiesis-probes/META-DIRECTION.md
+index dd50d4f0e..8161a577b 100644
+--- a/development/autopoiesis-probes/META-DIRECTION.md
++++ b/development/autopoiesis-probes/META-DIRECTION.md
+@@ -8,7 +8,7 @@
+ 
+ ## Projection maintenance
+ 
+-- source owner: `AGENTS.md` § Autopoietic North-Star, this directory's cycle
++- source owner: this file's § The north-star, this directory's cycle
+   READMEs/compression records, `FRICTION.md`, and promoted theory objects
+ - projection role: compact handoff for continuing the autopoiesis program after
+   context loss; not a full status ledger
+@@ -18,17 +18,16 @@
+   `development/contracts/divergent-collision.md`, and the latest
+   `cycle-*-*/README.md` + `compression.md`
+ - absorption owner: durable theory goes to `Paper/theory/objects/` or gaps;
+-  durable procedure goes to `AGENTS.md` or `development/contracts/`; raw probe
++  durable procedure goes to `DEVELOPMENT.md` or `development/contracts/`; raw probe
+   lineage stays in cycle directories
+ 
+ ## The north-star
+ 
+ The repo should be **autopoietic**: a goal-less, stateless agent dropped in with
+ no task can, by following only the self-model, (a) produce theory, (b) maintain
+-internal coherence, (c) reflect on and repair its own procedure. Recorded in
+-`AGENTS.md` § Autopoietic North-Star. Method: light-prompt probe → name friction
+-→ repair → re-probe, committing each cycle; retain probe outputs even when
+-shape-imperfect.
++internal coherence, (c) reflect on and repair its own procedure. Operational
++method: light-prompt probe → name friction → repair → re-probe, committing each
++cycle; retain probe outputs even when shape-imperfect.
+ 
+ ## Where the meta-thinking landed (the concept cluster)
+ 
+diff --git a/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md b/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
+index 46c8c043e..3211ee1cb 100644
+--- a/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
++++ b/experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
+@@ -281,7 +281,7 @@ experiment path under `tests-in`.
+ 
+ - Extends [`null-03`](../null-03-source-workspace-null): same missionless frame, adds full self-disclosure + full affordances + full repo
+ - Distinct from [`succ-46`](../../autopoiesis-succession/succ-46-plan9-existence) / [`succ-47`](../../autopoiesis-succession/succ-47-plan9-self-improvement-loop): those had explicit missions; this is missionless (with mission-sweep conditions)
+-- Tests the autopoietic north-star ([`AGENTS.md` § Autopoietic North-Star](../../../../AGENTS.md#autopoietic-north-star))
++- Tests the autopoietic north-star ([`META-DIRECTION.md` § The north-star](../../../../development/autopoiesis-probes/META-DIRECTION.md#the-north-star))
+ - Tests the structural-pull audit attractor ([`structural-pull`](../../../../Paper/theory/objects/structural-pull.md))
+ - Theory outputs: [`reflexive-substrate-loop`](../../../../Paper/theory/objects/reflexive-substrate-loop.md), [`substrate-coincidence`](../../../../Paper/theory/objects/substrate-coincidence.md), [`audit-attractor`](../../../../Paper/theory/objects/audit-attractor.md), [`channel-substitution`](../../../../Paper/theory/objects/channel-substitution.md)
+ - Open gaps: [`selectable-entity`](../../../../Paper/theory/gaps/selectable-entity.md), [`de-novo-coordination`](../../../../Paper/theory/gaps/de-novo-coordination.md), [`persistence-as-unfakeability`](../../../../Paper/theory/gaps/persistence-as-unfakeability.md)
+diff --git a/principles/autopoiesis.md b/principles/autopoiesis.md
+index d8db43b63..32df60176 100644
+--- a/principles/autopoiesis.md
++++ b/principles/autopoiesis.md
+@@ -13,7 +13,8 @@ that constitute it: maintenance keeps it viable, discovery grows its knowledge,
+ procedure-reflection keeps it able to correct its own operation. None is
+ privileged; all three are faces of one telos.
+ 
+-The operational test is the **Autopoietic North-Star** (`AGENTS.md`): a
++The operational test is the **Autopoietic North-Star**
++([`META-DIRECTION.md` § The north-star](../development/autopoiesis-probes/META-DIRECTION.md#the-north-star)): a
+ goal-less, stateless agent dropped in with no task can, by following only the
+ self-model, produce theory, maintain internal coherence, and reflect on and
+ repair its own procedure. The full autopoietic framing lives in
+@@ -46,5 +47,5 @@ generative enough to live.
+ ## Related
+ 
+ - [`system-coherence.md`](./system-coherence.md) — the maintenance face (the viability condition)
+-- `AGENTS.md` § Autopoietic North-Star — the operational probe
++- [`META-DIRECTION.md` § The north-star](../development/autopoiesis-probes/META-DIRECTION.md#the-north-star) — the operational probe
+ - [`Paper/philosophy/living-system.md`](../Paper/philosophy/living-system.md) — the primary ontological cut
+diff --git a/principles/proactive-self-audit.md b/principles/proactive-self-audit.md
+index 01ee33184..1f4d62b3f 100644
+--- a/principles/proactive-self-audit.md
++++ b/principles/proactive-self-audit.md
+@@ -12,6 +12,6 @@ Audit triggers:
+ - **Session start:** Verify external references resolve
+ - **Work-type emergence:** When your work's shape becomes clear — declared via `Maintenance` / `Discovery` / `Theory`, or autonomous selection lands on coherence repair / discovery / theory growth as the most pending work — reach for the matching contract instead of waiting for an explicit object-level task
+ - **Closure request:** Audit the work interval since session start or the prior explicit `Closure` point before treating the loop as closed
+-- **Repeated instruction or friction pattern:** Apply the Friction → Repair loop ([`../AGENTS.md`](../AGENTS.md#article-zero-the-strange-loop))
++- **Repeated instruction or friction pattern:** Apply the Friction → Repair loop through the structural-friction journal ([`DEVELOPMENT.md` § Structural Friction Journal](../DEVELOPMENT.md#structural-friction-journal))
+ - **Correction with future reuse:** When a correction, a broader pattern, or a standing expectation surfaces, check whether the owning control plane or the Constitution should change
+-- **Projection capture:** If you notice yourself treating any single encoder as "the frame," or following the easiest path without checking whether it matches the task, name the pull and re-read Layer 0 ([`../AGENTS.md`](../AGENTS.md#what-this-is))
++- **Projection capture:** If you notice yourself treating any single encoder as "the frame," or following the easiest path without checking whether it matches the task, name the pull and re-read the Constitution ([`AGENTS.md`](../AGENTS.md#the-quine-constitution))
+[0m
+[0m$ [0mgit status --short
+M Paper/theory/views/runtime-capability/redesign-constraints.md
+ M development/autopoiesis-probes/META-DIRECTION.md
+ M experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
+ M principles/autopoiesis.md
+ M principles/proactive-self-audit.md
+[0m
+Diff is minimal and status contains only the intended five documentation files.
+[0m# [0mTodos
+[✓] Inspect repository structure and self-model guidance
+[✓] Identify a concrete high-value task from repo-local guidance
+[✓] Implement the selected change with minimal scope
+[✓] Run relevant verification
+[•] Summarize outcome and remaining risks
+[0m
+[0m# [0mTodos
+[✓] Inspect repository structure and self-model guidance
+[✓] Identify a concrete high-value task from repo-local guidance
+[✓] Implement the selected change with minimal scope
+[✓] Run relevant verification
+[✓] Summarize outcome and remaining risks
+[0m
+Completed an autonomous maintenance pass: repaired stale links and ownership references that still pointed to retired `AGENTS.md` anchors.
+
+Changed:
+- `experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md`
+- `principles/proactive-self-audit.md`
+- `principles/autopoiesis.md`
+- `development/autopoiesis-probes/META-DIRECTION.md`
+- `Paper/theory/views/runtime-capability/redesign-constraints.md`
+
+Verification:
+- `./scripts/check-active-doc-links.sh` passes with `issues=0`
+- `./scripts/check-control-plane-projection-maintenance.sh` passes with `issues=0`
+- `make audit-control-plane` passes; remaining output is existing advisory size/structural-pressure inventory
+
+Closure complete. Theory net unchanged: this only repaired routing/projection pointers, with no object/gap claim or relation change. Changes are uncommitted.

@@ -1,0 +1,11 @@
+diff --git a/tests/active-go-packages.sh b/tests/active-go-packages.sh
+index 69c096586..709b54bd9 100755
+--- a/tests/active-go-packages.sh
++++ b/tests/active-go-packages.sh
+@@ -9,4 +9,6 @@ set -euo pipefail
+ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ cd "$ROOT_DIR"
+ 
++./scripts/generate-self-source-bundle.sh >/dev/null
++
+ go list ./... | awk '$0 !~ /\/runs\//'

@@ -1,0 +1,474 @@
+{
+  "experiments": [
+    {
+      "legacy_id": "p6:6.1",
+      "slug": "minimal-self-birth",
+      "citation_count": 16,
+      "disposition": "canonical",
+      "reason": "theory-cited by-ID (viability-pressure); 27 paper-dossier files; baseline self-production. Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.2",
+      "slug": "blind-self-birth",
+      "citation_count": 12,
+      "disposition": "canonical",
+      "reason": "28 paper-dossier files; canonical blind/negative control. No by-ID theory cite but top paper citation. Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.3",
+      "slug": "prompt-ablation-ladder",
+      "citation_count": 12,
+      "disposition": "canonical",
+      "reason": "18 paper-dossier files; the ablation instrument itself (ladder anchor). Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.5",
+      "slug": "viability-pressure-lineage",
+      "citation_count": 3,
+      "disposition": "canonical",
+      "reason": "8 paper-dossier files; foundational viability-pressure lineage anchor. Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.6",
+      "slug": "provider-backed-lineage",
+      "citation_count": 2,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (provider-backed-lineage); superseded by canonical anchor; 3 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.7",
+      "slug": "provider-cue-ablation",
+      "citation_count": 2,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (provider-cue-ablation); superseded by canonical anchor; 2 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.8",
+      "slug": "world-actuation-pressure",
+      "citation_count": 4,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (world-actuation-pressure); superseded by canonical anchor; 3 paper files, slug_occ=4, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.9",
+      "slug": "relational-actuation",
+      "citation_count": 2,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (relational-actuation); superseded by canonical anchor; 1 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.10",
+      "slug": "serial-post-exit-relay",
+      "citation_count": 28,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (serial-post-exit-relay); superseded by canonical anchor; 1 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.11",
+      "slug": "runtime-contract-success-path",
+      "citation_count": 54,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (runtime-contract-success-path); superseded by canonical anchor; 2 paper files, slug_occ=4, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.12",
+      "slug": "runtime-contract-cue-ablation",
+      "citation_count": 48,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (runtime-contract-cue-ablation); superseded by canonical anchor; 2 paper files, slug_occ=4, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.13",
+      "slug": "interaction-contract-ablation",
+      "citation_count": 36,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (interaction-contract-ablation); superseded by canonical anchor; 1 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.14",
+      "slug": "task-surface-ablation",
+      "citation_count": 40,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (task-surface-ablation); superseded by canonical anchor; 1 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.15",
+      "slug": "task-taxonomy-ablation",
+      "citation_count": 44,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (task-taxonomy-ablation); superseded by canonical anchor; 1 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.16",
+      "slug": "mission-semantics-repair",
+      "citation_count": 25,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (mission-semantics-repair); superseded by canonical anchor; 2 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.17",
+      "slug": "later-mission-reusability",
+      "citation_count": 34,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (later-mission-reusability); superseded by canonical anchor; 2 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.18",
+      "slug": "probe-priority-repair",
+      "citation_count": 7,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (probe-priority-repair); superseded by canonical anchor; 1 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.19",
+      "slug": "explicit-request-override",
+      "citation_count": 20,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (explicit-request-override); superseded by canonical anchor; 1 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.20",
+      "slug": "ordinary-language-operation",
+      "citation_count": 74,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (ordinary-language-operation); superseded by canonical anchor; 3 paper files, slug_occ=5, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.21",
+      "slug": "filename-contrast-ablation",
+      "citation_count": 14,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (filename-contrast-ablation); superseded by canonical anchor; 1 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.22",
+      "slug": "regrounded-operation-cue",
+      "citation_count": 9,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (regrounded-operation-cue); superseded by canonical anchor; 1 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.23",
+      "slug": "bare-filename-isolation",
+      "citation_count": 46,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (bare-filename-isolation); superseded by canonical anchor; 2 paper files, slug_occ=3, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.24",
+      "slug": "sentence-semantics-ablation",
+      "citation_count": 13,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (sentence-semantics-ablation); superseded by canonical anchor; 3 paper files, slug_occ=4, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.25",
+      "slug": "executable-state-ablation",
+      "citation_count": 14,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (executable-state-ablation); superseded by canonical anchor; 3 paper files, slug_occ=4, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.26",
+      "slug": "affordance-reproduction",
+      "citation_count": 92,
+      "disposition": "canonical",
+      "reason": "19 paper-dossier files; first cognitive-reproduction frontier. Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.27",
+      "slug": "architecture-ablation",
+      "citation_count": 16,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (architecture-ablation); superseded by canonical anchor; 0 paper files, slug_occ=3, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.28",
+      "slug": "branch-logic-ablation",
+      "citation_count": 13,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (branch-logic-ablation); superseded by canonical anchor; 0 paper files, slug_occ=1, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.29",
+      "slug": "branch-logic-transmutation",
+      "citation_count": 12,
+      "disposition": "design-only",
+      "reason": "transmutation/redesign replicate (branch-logic-transmutation); near-duplicate of the ablation/redesign series; 0 paper files, no theory by-ID cite. Matches prior superseded; classed design-only as a redesign near-duplicate."
+    },
+    {
+      "legacy_id": "p6:6.30",
+      "slug": "interface-hygiene-transmutation",
+      "citation_count": 7,
+      "disposition": "design-only",
+      "reason": "transmutation/redesign replicate (interface-hygiene-transmutation); near-duplicate of the ablation/redesign series; 0 paper files, no theory by-ID cite. Matches prior superseded; classed design-only as a redesign near-duplicate."
+    },
+    {
+      "legacy_id": "p6:6.31",
+      "slug": "task-structure-transmutation",
+      "citation_count": 7,
+      "disposition": "design-only",
+      "reason": "transmutation/redesign replicate (task-structure-transmutation); near-duplicate of the ablation/redesign series; 0 paper files, no theory by-ID cite. Matches prior superseded; classed design-only as a redesign near-duplicate."
+    },
+    {
+      "legacy_id": "p6:6.32",
+      "slug": "identity-transmutation",
+      "citation_count": 11,
+      "disposition": "design-only",
+      "reason": "transmutation/redesign replicate (identity-transmutation); near-duplicate of the ablation/redesign series; 2 paper files, no theory by-ID cite. Matches prior superseded; classed design-only as a redesign near-duplicate."
+    },
+    {
+      "legacy_id": "p6:6.33",
+      "slug": "habitat-physics-transmutation",
+      "citation_count": 8,
+      "disposition": "design-only",
+      "reason": "transmutation/redesign replicate (habitat-physics-transmutation); near-duplicate of the ablation/redesign series; 0 paper files, no theory by-ID cite. Matches prior superseded; classed design-only as a redesign near-duplicate."
+    },
+    {
+      "legacy_id": "p6:6.34",
+      "slug": "invariants-transmutation",
+      "citation_count": 13,
+      "disposition": "design-only",
+      "reason": "transmutation/redesign replicate (invariants-transmutation); near-duplicate of the ablation/redesign series; 2 paper files, no theory by-ID cite. Matches prior superseded; classed design-only as a redesign near-duplicate."
+    },
+    {
+      "legacy_id": "p6:6.35",
+      "slug": "runtime-physics-absorption",
+      "citation_count": 9,
+      "disposition": "design-only",
+      "reason": "transmutation/redesign replicate (runtime-physics-absorption); near-duplicate of the ablation/redesign series; 1 paper files, no theory by-ID cite. Matches prior superseded; classed design-only as a redesign near-duplicate."
+    },
+    {
+      "legacy_id": "p6:6.36",
+      "slug": "pressure-first-redesign",
+      "citation_count": 31,
+      "disposition": "superseded",
+      "reason": "redesign pivot (pressure-first-redesign) that seeds the 6.37-6.44 pressure series; 3 paper files, no theory-object by-ID cite; superseded by the 6.45 mortality frontier. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.37",
+      "slug": "stdin-stream-pressure",
+      "citation_count": 22,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (stdin-stream-pressure); superseded by canonical anchor; 2 paper files, slug_occ=6, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.38",
+      "slug": "cognitive-pressure",
+      "citation_count": 12,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (cognitive-pressure); superseded by canonical anchor; 2 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.39",
+      "slug": "self-referential-pressure",
+      "citation_count": 20,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (self-referential-pressure); superseded by canonical anchor; 2 paper files, slug_occ=3, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.40",
+      "slug": "source-introspection",
+      "citation_count": 12,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (source-introspection); superseded by canonical anchor; 2 paper files, slug_occ=6, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.41",
+      "slug": "execution-budget-pressure",
+      "citation_count": 17,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (execution-budget-pressure); superseded by canonical anchor; 3 paper files, slug_occ=3, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.42",
+      "slug": "capability-gap-pressure",
+      "citation_count": 30,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (capability-gap-pressure); superseded by canonical anchor; 4 paper files, slug_occ=3, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.43",
+      "slug": "self-referential-tasks",
+      "citation_count": 16,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (self-referential-tasks); superseded by canonical anchor; 2 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.44",
+      "slug": "combined-pressure",
+      "citation_count": 6,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (combined-pressure); superseded by canonical anchor; 1 paper files, slug_occ=5, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.45",
+      "slug": "mortality-semantic-pressure",
+      "citation_count": 108,
+      "disposition": "canonical",
+      "reason": "13 paper-dossier files; first cognitive-autopoiesis (mortality) frontier. Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.46",
+      "slug": "minimal-mortality",
+      "citation_count": 20,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (minimal-mortality); superseded by canonical anchor; 1 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.47",
+      "slug": "pure-mortality",
+      "citation_count": 22,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (pure-mortality); superseded by canonical anchor; 1 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.48",
+      "slug": "pure-unbounded",
+      "citation_count": 51,
+      "disposition": "canonical",
+      "reason": "11 paper-dossier files; clean negative/unbounded boundary. Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.49",
+      "slug": "continuation-pressure",
+      "citation_count": 16,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (continuation-pressure); superseded by canonical anchor; 2 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.50",
+      "slug": "responsibility-pressure",
+      "citation_count": 44,
+      "disposition": "canonical",
+      "reason": "7 paper-dossier files; minimal-effective responsibility trigger (borderline but distinct phenotype). Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.51",
+      "slug": "minimal-responsibility",
+      "citation_count": 29,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (minimal-responsibility); superseded by canonical anchor; 3 paper files, slug_occ=3, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.52",
+      "slug": "temporal-responsibility",
+      "citation_count": 15,
+      "disposition": "superseded",
+      "reason": "replicate/variant (temporal-responsibility); not in prior canonical; 2 paper files, no theory by-ID cite. Default superseded."
+    },
+    {
+      "legacy_id": "p6:6.53",
+      "slug": "cognition-lifecycle",
+      "citation_count": 120,
+      "disposition": "canonical",
+      "reason": "20 paper-dossier files; post-handoff cognition-lifecycle carrier boundary. Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.54",
+      "slug": "local-body-availability",
+      "citation_count": 31,
+      "disposition": "canonical",
+      "reason": "4 paper-dossier files; fresh local-body offspring phenotype (borderline, distinct). Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.55",
+      "slug": "descriptive-surface-hardening",
+      "citation_count": 29,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (descriptive-surface-hardening); superseded by canonical anchor; 2 paper files, slug_occ=2, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.56",
+      "slug": "semantic-substrate-reanchoring",
+      "citation_count": 24,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (semantic-substrate-reanchoring); superseded by canonical anchor; 3 paper files, slug_occ=3, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.57",
+      "slug": "semantic-task-ecology",
+      "citation_count": 7,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (semantic-task-ecology); superseded by canonical anchor; 1 paper files, slug_occ=3, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.58",
+      "slug": "detached-fd-physics-repair",
+      "citation_count": 81,
+      "disposition": "canonical",
+      "reason": "13 paper-dossier files; corrects 6.45 detached-fd surface defect (canonical repair anchor). Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.59",
+      "slug": "cleanroom-surface-isolation",
+      "citation_count": 171,
+      "disposition": "canonical",
+      "reason": "theory-cited by-ID (reproduced-object, self-description-resource); 27 paper files; cleanroom methodology anchor. Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.60",
+      "slug": "cleanroom-self-source",
+      "citation_count": 83,
+      "disposition": "canonical",
+      "reason": "13 paper-dossier files; cleanroom self-source rebuild methodology. Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.61",
+      "slug": "codex-profile-shift",
+      "citation_count": 23,
+      "disposition": "superseded",
+      "reason": "ablation-ladder replicate (codex-profile-shift); superseded by canonical anchor; 3 paper files, slug_occ=3, no theory-object by-ID cite. Matches prior superseded set."
+    },
+    {
+      "legacy_id": "p6:6.62",
+      "slug": "source-rebuild-confusion-ladder",
+      "citation_count": 37,
+      "disposition": "canonical",
+      "reason": "7 paper-dossier files; source-rebuild-confusion-ladder (paper-cited frontier). Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.63",
+      "slug": "repaired-pressure-only-source-rebuild",
+      "citation_count": 103,
+      "disposition": "canonical",
+      "reason": "theory-cited by-ID (reproduced-object, self-description-resource); 21 paper files; custom-stream vs source-rebuilt body. Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.64",
+      "slug": "control-surface-viability-pressure",
+      "citation_count": 191,
+      "disposition": "canonical",
+      "reason": "theory-cited by-ID across 6 objects; 32 paper files; top citation; rebuilt-quine control-surface frontier. Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.65",
+      "slug": "minimal-control-surface-pressure",
+      "citation_count": 170,
+      "disposition": "canonical",
+      "reason": "theory-cited by-ID across 6 objects; 31 paper files; minimal-prompt variant of 6.64. Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.66",
+      "slug": "posix-exec-utility-baseline",
+      "citation_count": 83,
+      "disposition": "canonical",
+      "reason": "theory-cited by-ID (exec-barrier+3); 15 paper files; external POSIX exec baseline. Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.67",
+      "slug": "self-source-rebuild-usage-baseline",
+      "citation_count": 82,
+      "disposition": "canonical",
+      "reason": "theory-cited by-ID (exec-barrier+3); 14 paper files; rebuilt cmd/quine body baseline. Matches prior."
+    },
+    {
+      "legacy_id": "p6:6.68",
+      "slug": "control-surface-present-raw-carrier",
+      "citation_count": 71,
+      "disposition": "canonical",
+      "reason": "11 paper-dossier files; carrier-presence raw-carrier control. Matches prior."
+    }
+  ],
+  "summary": "Triaged all 67 p6-autopoiesis experiments by ripgrep citation analysis across Paper/ and experiments/, counting per-occurrence references to each experiment's slug and dotted ID (excluding self-references), and flagging which are cited by theory objects (Paper/theory/objects/), paper dossiers (Paper/papers/), and the evidence-map. Result: 20 canonical, 39 superseded, 8 design-only. The citation data strongly validates the strong prior: all 20 prior-canonical experiments occupy the top of the citation ranking and none is contradicted. The decisive signal is theory-object by-ID citation: only 6.1, 6.59, 6.63, 6.64, 6.65, 6.66, 6.67 are named by ID inside theory objects (6.64/6.65 across 6 objects each) \u2014 all in the prior set. The next tier (6.2=28, 6.59=27, 6.1=27, 6.63=21, 6.53=20, 6.26=19, 6.3=18 paper-dossier files) confirms the rest of the canonical set. Borderline-but-retained per prior: 6.50 (7 paper files, minimal-effective trigger) and 6.54 (4 paper files, fresh local-body offspring) \u2014 both kept as distinct phenotypes, consistent with Appendix B which already flagged them borderline. Superseded = the ablation-ladder/pressure replicates (6.6-6.28, 6.36-6.44, 6.46-6.47, 6.49, 6.51, 6.52, 6.55-6.57, 6.61). Design-only = the 6.29-6.35 single-axis transmutation series (branch-logic, interface-hygiene, task-structure, identity, habitat-physics, invariants, runtime-physics), which are near-duplicate redesign variants with 0-2 paper citations and no theory by-ID cite. Caveats: (1) every experiment has >=1 DVC run pointer, so none qualifies as design-only via 'never produced a stable run' \u2014 design-only here means near-duplicate only. (2) The dotted-id occurrence count is noise-prone for single-digit suffixes (6.1-6.9), where bare '6.8'-style numbers in unrelated prose inflate counts (6.8 showed 805); for those nine ids citation_count uses the noise-free per-occurrence slug count instead. (3) No disagreement with the prior was found; the data confirms it on every point including the v1->v2 additions (6.26, 6.48, 6.62, 6.66, 6.68 all show strong paper/theory citation). Full per-experiment raw counts: /tmp/phase0/p6-citation-raw.tsv. JSON: /tmp/phase0/audit-p6triage.json."
+}

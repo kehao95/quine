@@ -1,0 +1,573 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`message renders markdown with code fence 1`] = `
+"                                                                                                    
+agent      │ The novelty gate missed empty packages:                                                
+           │                                                                                        
+           │ if len(pkg.Decls) == 0 {                                                               
+           │   return false                                                                         
+           │ }                                                                                      
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`human_post renders action tag, ladder and body 1`] = `
+"                                                                                                    
+you        │ ◀ inject [▷✓··]                                                                        
+           │ look at the empty-package bug                                                          
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`receipt ladder renders each stage distinctly 1`] = `
+"                                                                                                    
+you        │ ◀ post [▷···]                                                                          
+           │ queued-only                                                                            
+                                                                                                    
+you        │ ◀ post [▷✓··]                                                                          
+           │ received                                                                               
+                                                                                                    
+you        │ ◀ post [▷✓⚡·]                                                                         
+           │ woke                                                                                   
+                                                                                                    
+you        │ ◀ post [▷✓⚡▣]                                                                         
+           │ delivered                                                                              
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`reply renders with distinct accent rail 1`] = `
+"                                                                                                    
+ess_peer_3 │ ◀ reply                                                                                
+           │ pasted diff to peer-3                                                                  
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`reasoning collapses to summary with expand affordance 1`] = `
+"                                                                                                    
+agent      │ ▸ reasoning · 3 lines — the novelty gate seems to skip empty pkgs  (→ expand)          
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`reasoning expanded shows the full text 1`] = `
+"                                                                                                    
+agent      │ ▾ reasoning  (← collapse)                                                              
+           │ first line                                                                             
+           │ second line                                                                            
+           │ third line                                                                             
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`outcome renders the termination line 1`] = `
+"                                                                                                    
+           │ ■ outcome · exit · exit=0 · turns=12 · tokens=900/210                                  
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`unknown kind renders raw block 1`] = `
+"                                                                                                    
+           │ ▸ novel_kind                                                                           
+           │ {"kind":"novel_kind","payload":42}                                                     
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`tool pair collapsed: call header + result preview 1`] = `
+"                                                                                                    
+agent      │ ▸ bash  {"command":"awk -f scorer.awk gen-*/decls"}  (→ expand)                        
+           │ └ ✓ ok · 3/5 packages flagged empty ⏎ line2 ⏎ line3                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`tool pair expanded: args as code + full output 1`] = `
+"                                                                                                    
+agent      │ ▾ bash  (← collapse)                                                                   
+           │ {                                                                                      
+           │   "command": "awk -f scorer.awk gen-*/decls"                                           
+           │ }                                                                                      
+           │ └ ✓ ok                                                                                 
+           │   3/5 packages flagged empty                                                           
+           │   line2                                                                                
+           │   line3                                                                                
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`orphaned tool_call renders without result and without spinner 1`] = `
+"                                                                                                    
+agent      │ ▸ bash  {"command":"awk -f scorer.awk gen-*/decls"}  (→ expand)                        
+           │ └ · no result                                                                          
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`streaming register renders rail, thinking line and cursor block 1`] = `
+"                                                                                                    
+▒          │ ▒ streaming · gen 3                                                                    
+           │ ▸ thinking: the gate seems wrong                                                       
+           │ checking the score no▊                                                                 
+           │ ▸ bash forming… {"command":"awk                                                        
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`interrupted generation flips into an interrupted cell 1`] = `
+"                                                                                                    
+agent      │ ▒ interrupted — not persisted                                                          
+           │ half-finished thought                                                                  
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`compaction divider demotes prior cells 1`] = `
+" qcli · o_aaaa1111 · pid=42 · gpt-5.5 · depth=2 · inc=2 ●                                 connected 
+                                                                                                    
+                                                                                                    
+                                                                                                    
+ ── context compaction · 1 cell above is no longer the agent's working memory ──                    
+                                                                                                    
+ agent      │ old cognition                                                                         
+                                                                                                    
+ ── live context ──                                                                                 
+                                                                                                    
+ agent      │ fresh cognition                                                                       
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ working · pending=0 ·      [enter] send · [alt+enter] newline · [tab] action=inject · [ctrl+p]     
+ tokens: n/a                peers · [?] help                                                        
+                                                                                                    
+ inject > type a message — enter sends                                                              
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`app renders header, lane, footer and composer 1`] = `
+" qcli · o_aaaa1111 · pid=42 · gpt-5.5 · depth=2 · inc=2 ●                                 connected 
+                                                                                                    
+                                                                                                    
+ you        │ ◀ inject [▷✓⚡▣]                                                                      
+            │ look at the empty-package bug                                                         
+                                                                                                    
+ agent      │ I'll check the novelty gate.                                                          
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ working · pending=0 ·      [enter] send · [alt+enter] newline · [tab] action=inject · [ctrl+p]     
+ tokens: n/a                peers · [?] help                                                        
+                                                                                                    
+ inject > type a message — enter sends                                                              
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;
+
+exports[`narrow terminal (60 cols) still renders coherently 1`] = `
+" qcli · o_aaaa1111 · gpt-5.5 ●                            ● 
+                                                            
+                                                            
+ agent      │ a moderately long line of cognition that      
+            │ must wrap on narrow terminals                 
+                                                            
+ agent      │ ▸ bash  {"command":"echo narrow"}  (→ expand) 
+            │ └ · no result                                 
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+────────────────────────────────────────────────────────────
+ working · pending=0 ·[enter] send · [alt+enter] newline ·  
+ tokens: n/a          [tab] action=inject · [ctrl+p] peers  
+                      · [?] help                            
+                                                            
+ inject > type a message — enter sends                      
+                                                            
+                                                            
+                                                            
+"
+`;
+
+exports[`CJK content renders with correct width handling 1`] = `
+" qcli · o_aaaa1111 · pid=42 · gpt-5.5 · depth=2 · inc=2 ●                                 connected 
+                                                                                                    
+                                                                                                    
+ you        │ ◀ inject [▷✓··]                                                                       
+            │ 看一下空包 bug，novelty gate 漏了空包                                                 
+                                                                                                    
+ agent      │ 我来查 novelty gate 的空包问题——先跑 scorer 复核。                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ working · pending=0 ·      [enter] send · [alt+enter] newline · [tab] action=inject · [ctrl+p]     
+ tokens: n/a                peers · [?] help                                                        
+                                                                                                    
+ inject > type a message — enter sends                                                              
+                                                                                                    
+                                                                                                    
+                                                                                                    
+"
+`;

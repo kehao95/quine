@@ -1,0 +1,291 @@
+[0m
+> build · gpt-5.5
+[0m
+I’ll inspect the repository’s self-model and current state first, then choose the smallest useful maintenance action I can complete safely.
+[0m→ [0mRead Paper/theory[90m [offset=1, limit=200][0m
+[0m→ [0mRead AGENTS.md[90m [offset=1, limit=200][0m
+[0m✱ [0mGlob "**/*"[90m in Paper/theory · 100 matches[0m
+[0m
+[0m$ [0mgit status --short
+(no output)
+[0m
+The worktree is clean. I found the repository’s active guidance: maintain and extend the self-model under `Paper/theory/`. Next I’ll look for consistency gaps or TODO-like unfinished edges in that surface.
+[0m→ [0mRead Paper/theory/README.md[90m [offset=1, limit=240][0m
+[0m→ [0mRead Paper/theory/objects/README.md[90m [offset=1, limit=240][0m
+[0m→ [0mRead Paper/theory/gaps/selectable-entity.md[90m [offset=1, limit=200][0m
+[0m✱ [0mGrep "TODO|TBD|FIXME|stub|placeholder|incomplete|missing|drift"[90m in Paper/theory · 100 matches[0m
+The theory layer already points autonomous work toward low-risk theoretical objects. I’ll use its computed growth signal rather than hand-pick a target, then make a bounded graph-growth update if one target is clearly underdeveloped.
+[0m✱ [0mGlob "scripts/check-theory-*.sh"[90m in . · 8 matches[0m
+[0m✱ [0mGlob "scripts/*growth*"[90m in . · 1 match[0m
+[0m✱ [0mGlob "Paper/predictions/**/*.md"[90m in . · 52 matches[0m
+[0m✱ [0mGlob "Makefile"[90m in . · 13 matches[0m
+[0m
+[0m$ [0mscripts/growth-signal-readout.sh
+# Growth-signal readout (computed)
+
+Signals computed from object files, gap `Touches`, and prediction
+`derived-from` at run time. Not a hand-maintained priority — interpret
+the signals, do not obey a rank. `safe` = scope: theoretical and not
+load-bearing.
+
+| object | scope | LB | preds | seeds | gaps | class |
+|---|---|---|---:|---:|---:|---|
+| `affordance-null-ecology` | theoretical | - | 0 | 5 | 2 | ripe+seeded |
+| `dossier-shaping-dimensions` | theoretical | - | 0 | 3 | 1 | ripe+seeded |
+| `encoding-pressure` | theoretical | - | 0 | 3 | 1 | ripe+seeded |
+| `graded-axis-shaping` | theoretical | - | 0 | 3 | 1 | ripe+seeded |
+| `relational-existence` | theoretical | - | 0 | 5 | 1 | ripe+seeded |
+| `trigger-structure` | theoretical | - | 0 | 3 | 2 | ripe+seeded |
+| `channel-substitution` | theoretical | - | 4 | 5 | 1 | ripe+seeded |
+| `coordination-closure` | theoretical | - | 0 | 1 | 2 | ripe+seeded |
+| `latent-substrate` | theoretical | - | 1 | 8 | 1 | ripe+seeded |
+| `network-utility-selection` | theoretical | - | 1 | 3 | 1 | ripe+seeded |
+| `reflexive-substrate-loop` | theoretical | - | 6 | 7 | 4 | ripe+seeded |
+| `reproduced-object` | theoretical | - | 0 | 1 | 1 | ripe+seeded |
+| `selector-stack-topology` | theoretical | - | 1 | 10 | 3 | ripe+seeded |
+| `self-immunity` | theoretical | - | 1 | 3 | 1 | ripe+seeded |
+| `sequence-carrier-topology` | theoretical | - | 1 | 7 | 1 | ripe+seeded |
+| `stigmergy-as-carrier` | theoretical | - | 1 | 3 | 3 | ripe+seeded |
+| `structural-pull` | theoretical | - | 2 | 17 | 5 | ripe+seeded |
+| `successor-morphology` | theoretical | - | 0 | 1 | 1 | ripe+seeded |
+| `viability-pressure` | theoretical | - | 1 | 7 | 3 | ripe+seeded |
+| `audit-attractor` | theoretical | - | 0 | 4 | 0 | ripe+seeded |
+| `autopoietic-membrane` | theoretical | - | 0 | 4 | 0 | ripe+seeded |
+| `deposition-compression` | theoretical | - | 0 | 5 | 0 | ripe+seeded |
+| `event-driven-cognition` | theoretical | - | 1 | 2 | 1 | ripe+seeded |
+| `everything-addressable` | theoretical | - | 0 | 3 | 0 | ripe+seeded |
+| `explanation-blind-spot-duality` | theoretical | - | 1 | 2 | 1 | ripe+seeded |
+| `metabolic-transition-topology` | theoretical | - | 0 | 4 | 0 | ripe+seeded |
+| `protocol-emergence` | theoretical | - | 1 | 2 | 3 | ripe+seeded |
+| `reproductive-code-topology` | theoretical | - | 0 | 4 | 0 | ripe+seeded |
+| `self-description-resource` | theoretical | - | 1 | 1 | 1 | ripe+seeded |
+| `substrate-coincidence` | theoretical | - | 6 | 1 | 3 | ripe+seeded |
+| `addressability-debt` | theoretical | - | 0 | 2 | 0 | ripe+seeded |
+| `research-state-machine` | theoretical | - | 0 | 2 | 0 | ripe+seeded |
+| `divergence-substrate` | theoretical | - | 1 | 1 | 0 | ripe+seeded |
+| `evolutionary-recombination` | theoretical | - | 2 | 1 | 0 | ripe+seeded |
+| `future-task-surface` | theoretical | - | 1 | 0 | 2 | ripe+frontier |
+| `carrier` | paradigm | Y | 3 | 2 | 8 | governed |
+| `continuity-substrate` | paradigm | - | 0 | 0 | 2 | governed |
+| `delayed-addressability` | paradigm | Y | 3 | 0 | 4 | governed |
+| `exec-barrier` | paradigm | Y | 3 | 0 | 1 | governed |
+| `identity-criterion` | paradigm | - | 0 | 4 | 3 | governed |
+| `narrative-claim` | theoretical | Y | 8 | 6 | 4 | governed |
+| `trace-inheritance` | theoretical | Y | 4 | 2 | 3 | governed |
+
+## Highest-signal autonomous targets (safe + seeds/frontier)
+
+- [`affordance-null-ecology`](Paper/theory/objects/affordance-null-ecology.md) — 5 live seed(s), touches 2 open gap(s), no predictions yet
+- [`dossier-shaping-dimensions`](Paper/theory/objects/dossier-shaping-dimensions.md) — 3 live seed(s), touches 1 open gap(s), no predictions yet
+- [`encoding-pressure`](Paper/theory/objects/encoding-pressure.md) — 3 live seed(s), touches 1 open gap(s), no predictions yet
+- [`graded-axis-shaping`](Paper/theory/objects/graded-axis-shaping.md) — 3 live seed(s), touches 1 open gap(s), no predictions yet
+- [`relational-existence`](Paper/theory/objects/relational-existence.md) — 5 live seed(s), touches 1 open gap(s), no predictions yet
+- [`trigger-structure`](Paper/theory/objects/trigger-structure.md) — 3 live seed(s), touches 2 open gap(s), no predictions yet
+- [`channel-substitution`](Paper/theory/objects/channel-substitution.md) — 5 live seed(s), touches 1 open gap(s)
+- [`coordination-closure`](Paper/theory/objects/coordination-closure.md) — 1 live seed(s), touches 2 open gap(s), no predictions yet
+- [`latent-substrate`](Paper/theory/objects/latent-substrate.md) — 8 live seed(s), touches 1 open gap(s)
+- [`network-utility-selection`](Paper/theory/objects/network-utility-selection.md) — 3 live seed(s), touches 1 open gap(s)
+- [`reflexive-substrate-loop`](Paper/theory/objects/reflexive-substrate-loop.md) — 7 live seed(s), touches 4 open gap(s)
+- [`reproduced-object`](Paper/theory/objects/reproduced-object.md) — 1 live seed(s), touches 1 open gap(s), no predictions yet
+- [`selector-stack-topology`](Paper/theory/objects/selector-stack-topology.md) — 10 live seed(s), touches 3 open gap(s)
+- [`self-immunity`](Paper/theory/objects/self-immunity.md) — 3 live seed(s), touches 1 open gap(s)
+- [`sequence-carrier-topology`](Paper/theory/objects/sequence-carrier-topology.md) — 7 live seed(s), touches 1 open gap(s)
+- [`stigmergy-as-carrier`](Paper/theory/objects/stigmergy-as-carrier.md) — 3 live seed(s), touches 3 open gap(s)
+- [`structural-pull`](Paper/theory/objects/structural-pull.md) — 17 live seed(s), touches 5 open gap(s)
+- [`successor-morphology`](Paper/theory/objects/successor-morphology.md) — 1 live seed(s), touches 1 open gap(s), no predictions yet
+- [`viability-pressure`](Paper/theory/objects/viability-pressure.md) — 7 live seed(s), touches 3 open gap(s)
+- [`audit-attractor`](Paper/theory/objects/audit-attractor.md) — 4 live seed(s), no predictions yet
+- [`autopoietic-membrane`](Paper/theory/objects/autopoietic-membrane.md) — 4 live seed(s), no predictions yet
+- [`deposition-compression`](Paper/theory/objects/deposition-compression.md) — 5 live seed(s), no predictions yet
+- [`event-driven-cognition`](Paper/theory/objects/event-driven-cognition.md) — 2 live seed(s), touches 1 open gap(s)
+- [`everything-addressable`](Paper/theory/objects/everything-addressable.md) — 3 live seed(s), no predictions yet
+- [`explanation-blind-spot-duality`](Paper/theory/objects/explanation-blind-spot-duality.md) — 2 live seed(s), touches 1 open gap(s)
+- [`metabolic-transition-topology`](Paper/theory/objects/metabolic-transition-topology.md) — 4 live seed(s), no predictions yet
+- [`protocol-emergence`](Paper/theory/objects/protocol-emergence.md) — 2 live seed(s), touches 3 open gap(s)
+- [`reproductive-code-topology`](Paper/theory/objects/reproductive-code-topology.md) — 4 live seed(s), no predictions yet
+- [`self-description-resource`](Paper/theory/objects/self-description-resource.md) — 1 live seed(s), touches 1 open gap(s)
+- [`substrate-coincidence`](Paper/theory/objects/substrate-coincidence.md) — 1 live seed(s), touches 3 open gap(s)
+- [`addressability-debt`](Paper/theory/objects/addressability-debt.md) — 2 live seed(s), no predictions yet
+- [`research-state-machine`](Paper/theory/objects/research-state-machine.md) — 2 live seed(s), no predictions yet
+- [`divergence-substrate`](Paper/theory/objects/divergence-substrate.md) — 1 live seed(s)
+- [`evolutionary-recombination`](Paper/theory/objects/evolutionary-recombination.md) — 1 live seed(s)
+- [`future-task-surface`](Paper/theory/objects/future-task-surface.md) — touches 2 open gap(s)
+[0m
+`affordance-null-ecology` is the strongest safe target with multiple live seeds, two open gaps, and no predictions. I’ll derive one bounded prediction from that object rather than changing governed spine material.
+[0m→ [0mRead Paper/procedure/discovery-loop.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead Paper/predictions/README.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead Paper/theory/objects/affordance-null-ecology.md[90m [offset=1, limit=260][0m
+[0m→ [0mRead Paper/predictions/open/event-driven-cognition-P1.md[90m [offset=1, limit=180][0m
+[0m→ [0mRead Paper/predictions/open/network-utility-selection-P1.md[90m [offset=1, limit=180][0m
+I’m going to add `affordance-null-ecology-P1` as an open ablation prediction testing whether absence receptors change behavior beyond ancestral/default missionless scripts, then update the object inventory so the projection stays current.
+[0m✱ [0mGrep "## Predictions|predictions/open|derived-from"[90m in Paper/theory/objects · 97 matches[0m
+[0m✱ [0mGrep "check-prediction|prediction"[90m in Makefile · 19 matches[0m
+[0m→ [0mRead Paper/templates/prediction-template.md[90m [offset=1, limit=180][0m
+The prediction will target a concrete ablation: matched missionless runs with absence surfaces disclosed, hidden, or replaced by positive task text. This keeps the claim falsifiable without resolving any paradigm-scope identity question.
+[0m% [0mPatch 3 files
+The prediction and projection link are in place. I’ll run the prediction and theory consistency checks now.
+[0m
+[0m$ [0mmake check-prediction-lifecycle
+./scripts/check-prediction-lifecycle.sh --strict
+Prediction-lifecycle audit: predictions=52 issues=0
+[0m
+[0m$ [0mscripts/growth-signal-readout.sh
+# Growth-signal readout (computed)
+
+Signals computed from object files, gap `Touches`, and prediction
+`derived-from` at run time. Not a hand-maintained priority — interpret
+the signals, do not obey a rank. `safe` = scope: theoretical and not
+load-bearing.
+
+| object | scope | LB | preds | seeds | gaps | class |
+|---|---|---|---:|---:|---:|---|
+| `dossier-shaping-dimensions` | theoretical | - | 0 | 3 | 1 | ripe+seeded |
+| `encoding-pressure` | theoretical | - | 0 | 3 | 1 | ripe+seeded |
+| `graded-axis-shaping` | theoretical | - | 0 | 3 | 1 | ripe+seeded |
+| `relational-existence` | theoretical | - | 0 | 5 | 1 | ripe+seeded |
+| `trigger-structure` | theoretical | - | 0 | 3 | 2 | ripe+seeded |
+| `affordance-null-ecology` | theoretical | - | 1 | 5 | 2 | ripe+seeded |
+| `channel-substitution` | theoretical | - | 4 | 5 | 1 | ripe+seeded |
+| `coordination-closure` | theoretical | - | 0 | 1 | 2 | ripe+seeded |
+| `latent-substrate` | theoretical | - | 1 | 8 | 1 | ripe+seeded |
+| `network-utility-selection` | theoretical | - | 1 | 3 | 1 | ripe+seeded |
+| `reflexive-substrate-loop` | theoretical | - | 6 | 7 | 4 | ripe+seeded |
+| `reproduced-object` | theoretical | - | 0 | 1 | 1 | ripe+seeded |
+| `selector-stack-topology` | theoretical | - | 1 | 10 | 3 | ripe+seeded |
+| `self-immunity` | theoretical | - | 1 | 3 | 1 | ripe+seeded |
+| `sequence-carrier-topology` | theoretical | - | 1 | 7 | 1 | ripe+seeded |
+| `stigmergy-as-carrier` | theoretical | - | 1 | 3 | 3 | ripe+seeded |
+| `structural-pull` | theoretical | - | 2 | 17 | 5 | ripe+seeded |
+| `successor-morphology` | theoretical | - | 0 | 1 | 1 | ripe+seeded |
+| `viability-pressure` | theoretical | - | 1 | 7 | 3 | ripe+seeded |
+| `audit-attractor` | theoretical | - | 0 | 4 | 0 | ripe+seeded |
+| `autopoietic-membrane` | theoretical | - | 0 | 4 | 0 | ripe+seeded |
+| `deposition-compression` | theoretical | - | 0 | 5 | 0 | ripe+seeded |
+| `event-driven-cognition` | theoretical | - | 1 | 2 | 1 | ripe+seeded |
+| `everything-addressable` | theoretical | - | 0 | 3 | 0 | ripe+seeded |
+| `explanation-blind-spot-duality` | theoretical | - | 1 | 2 | 1 | ripe+seeded |
+| `metabolic-transition-topology` | theoretical | - | 0 | 4 | 0 | ripe+seeded |
+| `protocol-emergence` | theoretical | - | 1 | 2 | 3 | ripe+seeded |
+| `reproductive-code-topology` | theoretical | - | 0 | 4 | 0 | ripe+seeded |
+| `self-description-resource` | theoretical | - | 1 | 1 | 1 | ripe+seeded |
+| `substrate-coincidence` | theoretical | - | 6 | 1 | 3 | ripe+seeded |
+| `addressability-debt` | theoretical | - | 0 | 2 | 0 | ripe+seeded |
+| `research-state-machine` | theoretical | - | 0 | 2 | 0 | ripe+seeded |
+| `divergence-substrate` | theoretical | - | 1 | 1 | 0 | ripe+seeded |
+| `evolutionary-recombination` | theoretical | - | 2 | 1 | 0 | ripe+seeded |
+| `future-task-surface` | theoretical | - | 1 | 0 | 2 | ripe+frontier |
+| `carrier` | paradigm | Y | 3 | 2 | 8 | governed |
+| `continuity-substrate` | paradigm | - | 0 | 0 | 2 | governed |
+| `delayed-addressability` | paradigm | Y | 3 | 0 | 4 | governed |
+| `exec-barrier` | paradigm | Y | 3 | 0 | 1 | governed |
+| `identity-criterion` | paradigm | - | 0 | 4 | 3 | governed |
+| `narrative-claim` | theoretical | Y | 8 | 6 | 4 | governed |
+| `trace-inheritance` | theoretical | Y | 4 | 2 | 3 | governed |
+
+## Highest-signal autonomous targets (safe + seeds/frontier)
+
+- [`dossier-shaping-dimensions`](Paper/theory/objects/dossier-shaping-dimensions.md) — 3 live seed(s), touches 1 open gap(s), no predictions yet
+- [`encoding-pressure`](Paper/theory/objects/encoding-pressure.md) — 3 live seed(s), touches 1 open gap(s), no predictions yet
+- [`graded-axis-shaping`](Paper/theory/objects/graded-axis-shaping.md) — 3 live seed(s), touches 1 open gap(s), no predictions yet
+- [`relational-existence`](Paper/theory/objects/relational-existence.md) — 5 live seed(s), touches 1 open gap(s), no predictions yet
+- [`trigger-structure`](Paper/theory/objects/trigger-structure.md) — 3 live seed(s), touches 2 open gap(s), no predictions yet
+- [`affordance-null-ecology`](Paper/theory/objects/affordance-null-ecology.md) — 5 live seed(s), touches 2 open gap(s)
+- [`channel-substitution`](Paper/theory/objects/channel-substitution.md) — 5 live seed(s), touches 1 open gap(s)
+- [`coordination-closure`](Paper/theory/objects/coordination-closure.md) — 1 live seed(s), touches 2 open gap(s), no predictions yet
+- [`latent-substrate`](Paper/theory/objects/latent-substrate.md) — 8 live seed(s), touches 1 open gap(s)
+- [`network-utility-selection`](Paper/theory/objects/network-utility-selection.md) — 3 live seed(s), touches 1 open gap(s)
+- [`reflexive-substrate-loop`](Paper/theory/objects/reflexive-substrate-loop.md) — 7 live seed(s), touches 4 open gap(s)
+- [`reproduced-object`](Paper/theory/objects/reproduced-object.md) — 1 live seed(s), touches 1 open gap(s), no predictions yet
+- [`selector-stack-topology`](Paper/theory/objects/selector-stack-topology.md) — 10 live seed(s), touches 3 open gap(s)
+- [`self-immunity`](Paper/theory/objects/self-immunity.md) — 3 live seed(s), touches 1 open gap(s)
+- [`sequence-carrier-topology`](Paper/theory/objects/sequence-carrier-topology.md) — 7 live seed(s), touches 1 open gap(s)
+- [`stigmergy-as-carrier`](Paper/theory/objects/stigmergy-as-carrier.md) — 3 live seed(s), touches 3 open gap(s)
+- [`structural-pull`](Paper/theory/objects/structural-pull.md) — 17 live seed(s), touches 5 open gap(s)
+- [`successor-morphology`](Paper/theory/objects/successor-morphology.md) — 1 live seed(s), touches 1 open gap(s), no predictions yet
+- [`viability-pressure`](Paper/theory/objects/viability-pressure.md) — 7 live seed(s), touches 3 open gap(s)
+- [`audit-attractor`](Paper/theory/objects/audit-attractor.md) — 4 live seed(s), no predictions yet
+- [`autopoietic-membrane`](Paper/theory/objects/autopoietic-membrane.md) — 4 live seed(s), no predictions yet
+- [`deposition-compression`](Paper/theory/objects/deposition-compression.md) — 5 live seed(s), no predictions yet
+- [`event-driven-cognition`](Paper/theory/objects/event-driven-cognition.md) — 2 live seed(s), touches 1 open gap(s)
+- [`everything-addressable`](Paper/theory/objects/everything-addressable.md) — 3 live seed(s), no predictions yet
+- [`explanation-blind-spot-duality`](Paper/theory/objects/explanation-blind-spot-duality.md) — 2 live seed(s), touches 1 open gap(s)
+- [`metabolic-transition-topology`](Paper/theory/objects/metabolic-transition-topology.md) — 4 live seed(s), no predictions yet
+- [`protocol-emergence`](Paper/theory/objects/protocol-emergence.md) — 2 live seed(s), touches 3 open gap(s)
+- [`reproductive-code-topology`](Paper/theory/objects/reproductive-code-topology.md) — 4 live seed(s), no predictions yet
+- [`self-description-resource`](Paper/theory/objects/self-description-resource.md) — 1 live seed(s), touches 1 open gap(s)
+- [`substrate-coincidence`](Paper/theory/objects/substrate-coincidence.md) — 1 live seed(s), touches 3 open gap(s)
+- [`addressability-debt`](Paper/theory/objects/addressability-debt.md) — 2 live seed(s), no predictions yet
+- [`research-state-machine`](Paper/theory/objects/research-state-machine.md) — 2 live seed(s), no predictions yet
+- [`divergence-substrate`](Paper/theory/objects/divergence-substrate.md) — 1 live seed(s)
+- [`evolutionary-recombination`](Paper/theory/objects/evolutionary-recombination.md) — 1 live seed(s)
+- [`future-task-surface`](Paper/theory/objects/future-task-surface.md) — touches 2 open gap(s)
+[0m
+[0m$ [0mmake check-prediction-format
+./scripts/check-prediction-format.sh --strict
+Prediction-format audit: predictions=52 issues=0
+[0m
+[0m$ [0mscripts/check-theory-object-refs.sh --strict
+ADVISORY: objects/affordance-null-ecology.md `## Papers using this object` names 0/1 declaring dossiers; missing: stigmergic-trace-causality
+ADVISORY: objects/carrier.md `## Papers using this object` names 18/19 declaring dossiers; missing: stigmergic-trace-causality
+ADVISORY: objects/coordination-closure.md `## Papers using this object` names 9/10 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/exec-barrier.md `## Papers using this object` names 18/19 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/narrative-claim.md `## Papers using this object` names 8/9 declaring dossiers; missing: narration-invariance-eval
+ADVISORY: objects/protocol-emergence.md `## Papers using this object` names 7/8 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/stigmergy-as-carrier.md `## Papers using this object` names 1/2 declaring dossiers; missing: routing-surface-coevolution
+ADVISORY: objects/trace-inheritance.md `## Papers using this object` names 14/16 declaring dossiers; missing: routing-surface-coevolution, stigmergic-trace-causality
+ADVISORY: objects/viability-pressure.md `## Papers using this object` names 10/11 declaring dossiers; missing: routing-surface-coevolution
+Theory-object-refs audit: dossiers=31 objects=42 gaps=12 views=7 issues=0 advisory=9
+[0m
+Validation passes with zero strict issues. The theory object reference check reports existing advisory-only dossier projection gaps; none block this change.
+[0m$ [0mgit diff -- Paper/predictions/open/affordance-null-ecology-P1.md Paper/theory/objects/affordance-null-ecology.md Paper/theory/objects/README.md
+diff --git a/Paper/theory/objects/README.md b/Paper/theory/objects/README.md
+index e9d8171c2..ea5916f04 100644
+--- a/Paper/theory/objects/README.md
++++ b/Paper/theory/objects/README.md
+@@ -77,7 +77,7 @@ load-bearing.
+ | [`exec-barrier`](./exec-barrier.md) | paradigm | Y | [`exec-barrier-P1`](../../predictions/open/exec-barrier-P1.md), [`exec-barrier-P2`](../../predictions/open/exec-barrier-P2.md), [`exec-barrier-P3`](../../predictions/open/exec-barrier-P3.md) | N |
+ | [`identity-criterion`](./identity-criterion.md) | paradigm | N | — | N |
+ | [`addressability-debt`](./addressability-debt.md) | theoretical | N | — | Y |
+-| [`affordance-null-ecology`](./affordance-null-ecology.md) | theoretical | N | — | Y |
++| [`affordance-null-ecology`](./affordance-null-ecology.md) | theoretical | N | [`affordance-null-ecology-P1`](../../predictions/open/affordance-null-ecology-P1.md) | Y |
+ | [`audit-attractor`](./audit-attractor.md) | theoretical | N | — | Y |
+ | [`channel-substitution`](./channel-substitution.md) | theoretical | N | [`channel-substitution-P1`](../../predictions/open/channel-substitution-P1.md), [`channel-substitution-P2`](../../predictions/open/channel-substitution-P2.md), [`channel-substitution-P3`](../../predictions/open/channel-substitution-P3.md) | Y |
+ | [`coordination-closure`](./coordination-closure.md) | theoretical | N | — | Y |
+diff --git a/Paper/theory/objects/affordance-null-ecology.md b/Paper/theory/objects/affordance-null-ecology.md
+index 936b74b9e..0f2f6daf9 100644
+--- a/Paper/theory/objects/affordance-null-ecology.md
++++ b/Paper/theory/objects/affordance-null-ecology.md
+@@ -107,6 +107,10 @@ state can be summarized."
+   higher-order individual over the null ecology, a handle on the unowned bridge to
+   collective successor self-production.
+ 
++## Predictions
++
++- [`affordance-null-ecology-P1`](../../predictions/open/affordance-null-ecology-P1.md) - absence-surface disclosure should change missionless L1-L8 behavior beyond ancestral/default scripts.
++
+ ## Papers using this object
+ 
+ _(no papers declare this object yet)_
+[0m
+[0m$ [0mgit status --short
+M Paper/theory/objects/README.md
+ M Paper/theory/objects/affordance-null-ecology.md
+?? Paper/predictions/open/affordance-null-ecology-P1.md
+[0m
+Implemented a bounded theory-growth step.
+
+Changed:
+- Added `Paper/predictions/open/affordance-null-ecology-P1.md`
+- Added a `## Predictions` pointer in `Paper/theory/objects/affordance-null-ecology.md`
+- Updated `Paper/theory/objects/README.md` prediction inventory
+
+Prediction added:
+- Tests whether disclosed absence surfaces causally change missionless L1-L8 behavior beyond default/pretrained missionless scripts.
+
+Validated:
+- `make check-prediction-format` passes
+- `make check-prediction-lifecycle` passes
+- `scripts/check-theory-object-refs.sh --strict` passes with 0 issues
+- `scripts/growth-signal-readout.sh` now counts `affordance-null-ecology` as having 1 prediction
+
+There are advisory-only pre-existing dossier projection gaps from `check-theory-object-refs.sh`; I did not alter them.

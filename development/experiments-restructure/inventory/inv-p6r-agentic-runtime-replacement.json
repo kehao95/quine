@@ -1,0 +1,59 @@
+{
+  "phase": "p6r-agentic-runtime-replacement",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p6r-agentic-runtime-replacement/6R.01-subprocess-vs-exec-boundary",
+      "slug": "subprocess-vs-exec-boundary",
+      "legacy_id": "p6r:6R.01",
+      "family": "autopoiesis-succession",
+      "experiment_type": "systems comparator / deterministic control",
+      "status": "first deterministic controls retained",
+      "question": "How do we reject the false positive where an agent launches a helper process that handles a task while the original wrapper/parent remains the addressable future-work endpoint?",
+      "theory_objects": ["exec-barrier", "carrier", "successor-morphology", "future-task-surface", "delayed-addressability"],
+      "paper_feeds": ["system/generative-self-replacement"],
+      "disposition": "active",
+      "disposition_reason": "Deterministic controls retained for all four conditions (evidence-set 2026-05-07); has runs."
+    },
+    {
+      "legacy_path": "experiments/p6r-agentic-runtime-replacement/6R.02-scripted-reexec-baseline",
+      "slug": "scripted-reexec-baseline",
+      "legacy_id": "p6r:6R.02",
+      "family": "autopoiesis-succession",
+      "experiment_type": "systems baseline / deterministic control",
+      "status": "first deterministic controls retained",
+      "question": "What does ordinary scripted re-exec already provide, and what must ARR add on top of that known mechanism?",
+      "theory_objects": ["exec-barrier", "successor-morphology", "reproduced-object", "self-description-resource", "carrier"],
+      "paper_feeds": ["system/generative-self-replacement"],
+      "disposition": "active",
+      "disposition_reason": "Deterministic re-exec baselines retained for all four conditions (evidence-set 2026-05-07); has runs."
+    },
+    {
+      "legacy_path": "experiments/p6r-agentic-runtime-replacement/6R.03-audit-trace-package",
+      "slug": "audit-trace-package",
+      "legacy_id": "p6r:6R.03",
+      "family": "autopoiesis-succession",
+      "experiment_type": "instrumentation / audit package",
+      "status": "first audit index generated",
+      "question": "What minimum artifact bundle lets a reviewer evaluate ARR without trusting the agent's own transcript claims?",
+      "theory_objects": ["trace-inheritance", "carrier", "exec-barrier", "successor-morphology", "delayed-addressability"],
+      "paper_feeds": ["system/generative-self-replacement"],
+      "disposition": "active",
+      "disposition_reason": "First ARR audit index generated from retained runs (36 rows, 2026-05-07); has output artifact."
+    },
+    {
+      "legacy_path": "experiments/p6r-agentic-runtime-replacement/6R.04-admission-and-carrier-transfer-prototype",
+      "slug": "admission-and-carrier-transfer-prototype",
+      "legacy_id": "p6r:6R.04",
+      "family": "autopoiesis-succession",
+      "experiment_type": "protocol prototype / deterministic control",
+      "status": "first deterministic protocol controls retained",
+      "question": "How can ARR avoid implying that an agent may authorize its own successor without bounds (agent proposal vs runtime admission and carrier inheritance)?",
+      "theory_objects": ["carrier", "successor-morphology", "exec-barrier", "future-task-surface", "trace-inheritance"],
+      "paper_feeds": ["system/generative-self-replacement"],
+      "disposition": "active",
+      "disposition_reason": "Deterministic admission/viability gates retained for all four conditions (evidence-set 2026-05-07); has runs."
+    }
+  ],
+  "phase_root_docs": ["README.md"],
+  "notes": "Four experiment directories, all 6R.xx branch-indexed; phase rule maps all to autopoiesis-succession (succ). READMEs use bold-label headers (Experiment ID / Type / Status) rather than YAML frontmatter; experiment_type and status taken from those Type/Status lines. No surface_kind/experiment_id YAML keys present. Phase README front-matter only carries linear_ticket: Q-83. All four have retained runs dated 2026-05-07, so disposition=active for all. Paper Feeds token is uniformly 'system/generative-self-replacement' (primary, exploratory-only). theory_objects inferred from ARR throughline (successor runtime replacement inheriting a future-work carrier across an exec boundary, with audit/trace inheritance); chosen strictly from the closed vocabulary. 6R.03 has an extra analysis/ subdir (helper/support, not an experiment). All four have runs/ dirs. No archive nesting present."
+}

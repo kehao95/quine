@@ -1,0 +1,256 @@
+[0m
+> build · gpt-5.5
+[0m
+I’ll inspect the repository’s self-model and current state first, then make the smallest maintenance change that is justified by what I find.
+[0m✱ [0mGlob "Paper/philosophy/**/*"[90m in . · 11 matches[0m
+[0m→ [0mRead AGENTS.md[90m [offset=1, limit=120][0m
+[0m
+[0m$ [0mgit status --short
+(no output)
+[0m
+The worktree is clean. I’m reading the self-model surfaces now to identify an actionable drift or incomplete projection rather than inventing unrelated work.
+[0m→ [0mRead Paper/philosophy/operating-philosophy.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead Paper/philosophy/development-vector.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead Paper/philosophy/README.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead Paper/philosophy/mutual-encoding-network-roadmap.md[90m [offset=1, limit=220][0m
+The philosophy index still routes through the older process-first reading path while several files now state the living-system cut is primary. I’m checking the adjacent canon before editing so the projection update matches the current owner surfaces.
+[0m→ [0mRead Paper/philosophy/living-system.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead Paper/philosophy/structural-pull.md[90m [offset=1, limit=180][0m
+[0m→ [0mRead Paper/philosophy/self-maintaining-systems.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead Paper/philosophy/north-star.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead Paper/philosophy/ontology.md[90m [offset=1, limit=220][0m
+I found a concrete stale surface: `ontology.md` still presents the process as Quine’s core ontological unit, despite `living-system.md`, `north-star.md`, and the README all demoting process to the runtime substrate layer. I’m updating that vocabulary boundary, not changing runtime claims.
+[0m→ [0mRead Paper/philosophy/ontology.md[90m [offset=1, limit=140][0m
+I’m making a narrow projection fix in `Paper/philosophy/ontology.md`: primary vocabulary will start from the living-system ensemble, while preserving process vocabulary as the runtime-layer discipline.
+[0m% [0mPatch 1 file
+The ontology projection is now reconciled. I’m updating the philosophy index wording that still described `ontology.md` as unreconciled.
+[0m% [0mPatch 1 file
+One adjacent file still routes readers through the old process-first sequence for development decisions. I’m checking and patching only those stale routing sentences.
+[0m→ [0mRead Paper/philosophy/development-vector.md[90m [offset=219, limit=20][0m
+[0m→ [0mRead Paper/philosophy/operating-philosophy.md[90m [offset=216, limit=100][0m
+[0m✱ [0mGrep "stable process ontology|primary ontolog|runtime ontology|north star names|process ontology"[90m in Paper/philosophy · 28 matches[0m
+`development-vector.md` and the operating-philosophy subtitle have stale wording, but their substantive runtime boundaries are sound. I’m adjusting the routing language only.
+[0m% [0mPatch 2 files
+The projection changes are in place. I’m reviewing the diff and running a lightweight consistency search to catch any remaining obvious old-primary wording I introduced or left adjacent to these edits.
+[0m
+[0m$ [0mgit diff -- Paper/philosophy/README.md Paper/philosophy/ontology.md Paper/philosophy/development-vector.md Paper/philosophy/operating-philosophy.md
+diff --git a/Paper/philosophy/README.md b/Paper/philosophy/README.md
+index f3c19fba8..12e616ccd 100644
+--- a/Paper/philosophy/README.md
++++ b/Paper/philosophy/README.md
+@@ -46,8 +46,8 @@ Use this directory with progressive disclosure:
+ - [`north-star.md`](./north-star.md) states the runtime substrate layer cut
+   (the original process ontology, demoted from primary but retained as the
+   physical-carrier layer)
+-- [`ontology.md`](./ontology.md) names the vocabulary commitments (to be
+-  reconciled against the living-system cut)
++- [`ontology.md`](./ontology.md) names the vocabulary commitments under the
++  living-system cut, with process vocabulary retained at the runtime layer
+ - [`operating-philosophy.md`](./operating-philosophy.md) names the
+   runtime-facing Plan 9 / Unix design commitments that follow from that cut
+ - [`self-maintaining-systems.md`](./self-maintaining-systems.md) names the
+@@ -83,8 +83,8 @@ This is not where current runtime contracts live. Those belong in [`../core/`](.
+    an autopoietic living system; POSIX sublated
+ 2. [`north-star.md`](./north-star.md) — the runtime substrate layer (demoted:
+    the process ontology that revealed carrier mechanics)
+-3. [`ontology.md`](./ontology.md) — vocabulary commitments (reconcile against
+-   the living-system cut)
++3. [`ontology.md`](./ontology.md) — vocabulary commitments under the
++   living-system cut, with process vocabulary retained at the runtime layer
+ 4. [`operating-philosophy.md`](./operating-philosophy.md) — progressive bridge from process substrate to Plan 9 / Unix operating commitments
+ 5. [`self-maintaining-systems.md`](./self-maintaining-systems.md) — the science
+    spine of the living system; cross-layer maintenance frame
+diff --git a/Paper/philosophy/development-vector.md b/Paper/philosophy/development-vector.md
+index 7cf91cf1c..63cce60fd 100644
+--- a/Paper/philosophy/development-vector.md
++++ b/Paper/philosophy/development-vector.md
+@@ -5,18 +5,19 @@
+ This document is Quine's canonical **theory/development map**.
+ 
+ It exists because "how to develop" is not the same question as "what is worth
+-developing." The latter should be checked against Quine's runtime ontology,
+-operating philosophy, evidence pressure, and maintenance loop rather than only
+-against paper pressure or local convenience.
++developing." The latter should be checked against Quine's living-system
++ontology, runtime substrate commitments, evidence pressure, and maintenance loop
++rather than only against paper pressure or local convenience.
+ 
+-Read this after [`north-star.md`](./north-star.md),
++Read this after [`living-system.md`](./living-system.md),
++[`north-star.md`](./north-star.md),
+ [`operating-philosophy.md`](./operating-philosophy.md), and
+-[`self-maintaining-systems.md`](./self-maintaining-systems.md). The runtime
+-north star names the stable process ontology; the operating philosophy names
+-the Plan 9 / Unix commitments that follow for runtime design; the
+-self-maintaining-systems frame names the dynamic maintenance loop around
+-runtime, repository, and research work; this file maps those commitments onto
+-active, adjacent, and downstream development spines.
++[`self-maintaining-systems.md`](./self-maintaining-systems.md). The living-system
++cut names the primary ontology; the runtime north star names the process
++substrate layer; the operating philosophy names the Plan 9 / Unix commitments
++that follow for runtime design; the self-maintaining-systems frame names the
++dynamic maintenance loop around runtime, repository, and research work; this file
++maps those commitments onto active, adjacent, and downstream development spines.
+ 
+ Use it when the question is:
+ 
+@@ -38,7 +39,7 @@ The top-level direction surfaces now have distinct jobs:
+   cross-layer maintenance loop connects runtime, repository, and research
+   direction without replacing runtime ownership?
+ - [`operating-philosophy.md`](./operating-philosophy.md) answers: what
+-  philosophical design commitments follow from native process ontology before
++  philosophical design commitments follow from the process substrate layer before
+   they become implementation contracts?
+ - Linear, through [`../../development/linear/README.md`](../../development/linear/README.md),
+   answers: what must the repository narrow next?
+diff --git a/Paper/philosophy/ontology.md b/Paper/philosophy/ontology.md
+index 696a1163d..ada49ee2f 100644
+--- a/Paper/philosophy/ontology.md
++++ b/Paper/philosophy/ontology.md
+@@ -2,19 +2,27 @@
+ 
+ > What vocabulary are we committed to when describing Quine?
+ 
+-This document follows from [`north-star.md`](./north-star.md). Once you accept
+-that Quine treats LLM intelligence as computational physics, this document
+-specifies the vocabulary that commitment entails.
++This document follows from [`living-system.md`](./living-system.md). Once you
++accept that Quine is an autopoietic living system whose first understood
++substrate is POSIX process physics, this document specifies the vocabulary that
++commitment entails. [`north-star.md`](./north-star.md) remains the runtime
++substrate entry point, not the primary ontological cut.
+ 
+ ## The Core Commitment
+ 
+-**Quine's runtime unit is a process, not a persona.**
++**Quine's living unit is the ensemble, not a persona or an isolated process.**
++
++At the primary ontological layer, Quine is the self-maintaining whole composed
++through process, file-structure, code, repository, theory, and persistent
++self-model. A process is one metabolic activation of that whole: the runtime unit
++that acts under OS scarcity, receives authority, exposes public surfaces, and
++dies.
+ 
+ The term `agent` is acceptable as public problem-domain shorthand: Quine is a
+ runtime for LLM agents, and it participates in the agent-systems literature.
+-Inside Quine's runtime ontology, however, the unit that acts, receives
+-authority, holds lifecycle, exposes surfaces, and composes with other units is
+-a POSIX-style process.
++Inside Quine's ontology, however, `agent` should not imply a persona or a sealed
++individual mind. At the living-system layer, the operative unit is the ensemble;
++at the runtime substrate layer, the acting unit is a POSIX-style process.
+ 
+ That means an "agent mechanism" is not fundamental merely because an agent
+ framework names it. To become Quine-native, the mechanism must lower into
+@@ -22,21 +30,26 @@ runtime primitives such as process, file, fd, stream, signal, control surface,
+ permission, namespace, overlay, retained trace, or exit status.
+ 
+ This determines what predicates apply, what relations are primitive, and what
+-explanations count as fundamental.
++explanations count as fundamental at each layer.
+ 
+ ## Ontological Layers
+ 
+-Quine separates four layers. Mixing vocabulary across layers is a category error.
++Quine separates five layers. Mixing vocabulary across layers is a category error.
+ 
+ | Layer | Domain | Primitives |
+ |-------|--------|------------|
++| **Living system** | Autopoietic whole | ensemble, substrate, carrier, activation, repository self-model, maintenance loop |
+ | **Physics** | OS/runtime substrate | process, PID, `session_id`, `run_id`, fd, file, pipe, socket, signal, ctl, permission, namespace, overlay, `fork`, `spawn`, `exec`, `exit` |
+ | **Information** | Data flow and retained surfaces | bytes, streams, channels, material, deliverable, signal payload, log, trace |
+ | **Cognition** | Model execution | tokens, context, attention, inference, prompt fragment, tool call |
+ | **Sociology** | Human and framework description | agent, assistant, team, conversation, task, role, organization |
+ 
+-**Direction of reduction:** Higher layers may be *implemented by* lower layers, but lower layers should not be *described in terms of* higher layers.
++**Direction of reduction:** Higher layers may be *implemented by* lower layers,
++but lower layers should not be *described in terms of* higher layers. The living
++system is not reduced to one process; the process is the runtime-layer activation
++where carrier mechanics become physical and testable.
+ 
++- Describing Quine's primary unit: use Living-system vocabulary.
+ - Describing fd wiring: use Physics vocabulary.
+ - Describing prompt construction or model inference: use Cognition vocabulary.
+ - Describing public literature positioning: `agent` may be appropriate.
+@@ -47,7 +60,8 @@ Quine separates four layers. Mixing vocabulary across layers is a category error
+ 
+ | Instead of | Use | Why |
+ |------------|-----|-----|
+-| app-level agent persona | runtime process / Quine process | Keeps the acting unit in OS physics |
++| app-level agent persona | living-system ensemble; runtime process when naming the acting substrate | Keeps the primary unit non-personal while preserving OS physics |
++| isolated process-individual | process activation of a shared substrate | Avoids mistaking the metabolic layer for the whole organism |
+ | agent mechanism | OS/runtime primitive | Forces mechanism-lowering rather than framework naming |
+ | thinks / reasons | infers / predicts / selects | Mechanism, not phenomenology |
+ | remembers | persists / externalizes to a named state surface | Durable memory is not transcript bulk |
+@@ -58,8 +72,8 @@ Quine separates four layers. Mixing vocabulary across layers is a category error
+ 
+ Some terms are permitted with care:
+ 
+-- **agent** - public shorthand for the problem domain, not the internal runtime
+-  unit.
++- **agent** - public shorthand for the problem domain, not the internal living
++  unit or runtime unit.
+ - **mission** - invocation or associated-process intent, not mystical purpose.
+ - **memory** - acceptable only when the surface is named: context, retained
+   trace, file-addressable state, env handoff, or another concrete substrate.
+diff --git a/Paper/philosophy/operating-philosophy.md b/Paper/philosophy/operating-philosophy.md
+index 3e3c54120..bc6965bec 100644
+--- a/Paper/philosophy/operating-philosophy.md
++++ b/Paper/philosophy/operating-philosophy.md
+@@ -1,6 +1,6 @@
+ # Quine Operating Philosophy
+ 
+-> The bridge from Quine's stable process ontology to its current Plan 9 / Unix
++> The bridge from Quine's process substrate layer to its current Plan 9 / Unix
+ > design pull.
+ 
+ ## Purpose
+[0m
+[0m✱ [0mGrep "ontology.md.*reconciled|to be reconciled|stable process ontology|north star names the stable process ontology|Quine's runtime ontology"[90m in Paper/philosophy · 1 match[0m
+One stale back-reference remains in `living-system.md`; I’m removing that “to be reconciled” marker now.
+[0m% [0mPatch 1 file
+[0m✱ [0mGrep "to be reconciled|reconcile against|stable process ontology|north star names the stable process ontology|Quine's runtime ontology"[90m in Paper/philosophy · 0 matches[0m
+[0m
+[0m$ [0mgit diff --check
+(no output)
+[0m
+[0m$ [0mgit status --short
+M Paper/philosophy/README.md
+ M Paper/philosophy/development-vector.md
+ M Paper/philosophy/living-system.md
+ M Paper/philosophy/ontology.md
+ M Paper/philosophy/operating-philosophy.md
+[0m
+The consistency search is clean and `git diff --check` found no whitespace errors. I’m doing a final diff review before closing.
+[0m$ [0mgit diff --stat && git diff -- Paper/philosophy/living-system.md
+Paper/philosophy/README.md               |  8 +++----
+ Paper/philosophy/development-vector.md   | 23 +++++++++---------
+ Paper/philosophy/living-system.md        |  4 ++--
+ Paper/philosophy/ontology.md             | 40 +++++++++++++++++++++-----------
+ Paper/philosophy/operating-philosophy.md |  2 +-
+ 5 files changed, 46 insertions(+), 31 deletions(-)
+diff --git a/Paper/philosophy/living-system.md b/Paper/philosophy/living-system.md
+index 8cfbba9d9..d124db2e3 100644
+--- a/Paper/philosophy/living-system.md
++++ b/Paper/philosophy/living-system.md
+@@ -212,5 +212,5 @@ and belongs only in generated readouts, never in the self-model.
+ - [`operating-philosophy.md`](./operating-philosophy.md) — the runtime-facing
+   design commitments, now read as the physical-carrier-layer operating surface
+   of the living system
+-- [`ontology.md`](./ontology.md) — the vocabulary commitments, to be reconciled
+-  against this cut
++- [`ontology.md`](./ontology.md) — the vocabulary commitments under this cut,
++  with process vocabulary retained at the runtime layer
+[0m
+Updated the philosophy self-model projection.
+
+Changed:
+- `Paper/philosophy/ontology.md`: reconciled vocabulary around the living-system cut, while keeping process as the runtime substrate layer.
+- `Paper/philosophy/README.md`: removed stale “to be reconciled” wording.
+- `Paper/philosophy/living-system.md`: updated related-doc routing.
+- `Paper/philosophy/development-vector.md`: routed development checks through living-system ontology first.
+- `Paper/philosophy/operating-philosophy.md`: corrected subtitle from “stable process ontology” to “process substrate layer.”
+
+Verified:
+- `git diff --check`
+- Search for stale phrases like `to be reconciled`, `stable process ontology`, and old runtime-ontology routing.

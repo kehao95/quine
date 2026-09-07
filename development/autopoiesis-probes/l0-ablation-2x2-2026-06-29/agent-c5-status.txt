@@ -1,0 +1,5 @@
+ M Paper/theory/objects/affordance-null-ecology.md
+ M Paper/theory/objects/coordination-closure.md
+ M Paper/theory/objects/protocol-emergence.md
+ M Paper/theory/objects/stigmergy-as-carrier.md
+ M Paper/theory/objects/viability-pressure.md

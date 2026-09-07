@@ -1,0 +1,6 @@
+outs:
+- md5: f07bb9e1eb0904cde6fb6320d6b5e049.dir
+  size: 723036
+  nfiles: 14
+  hash: md5
+  path: run5-unlimited-exec-direct-data

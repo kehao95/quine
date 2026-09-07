@@ -1,0 +1,28 @@
+{
+  "phase": "p5-joots",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p5-joots/5.1-fuse-tarpit",
+      "slug": "fuse-tarpit",
+      "legacy_id": "p5:5.1",
+      "family": "early-existence",
+      "experiment_type": "design-only",
+      "status": "design-only",
+      "question": "Is JOOTS (representation change) a thermodynamic inevitability under strictly constrained physical environments, where survival/timeout pressure forces an agent to abandon content-level traversal for system-level inspection?",
+      "theory_objects": [
+        "viability-pressure",
+        "structural-pull"
+      ],
+      "paper_feeds": [
+        "alife/quine-lifelike",
+        "alife/quine-process-habitat"
+      ],
+      "disposition": "design-only",
+      "disposition_reason": "frontmatter experiment_type and status are both design-only; README states no runs have been executed and REQUIRED prerequisites (FUSE container env, tool elapsed-time feedback) are not yet implemented"
+    }
+  ],
+  "phase_root_docs": [
+    "README.md"
+  ],
+  "notes": "Phase p5-joots contains exactly one experiment directory (5.1-fuse-tarpit) plus a phase-level README.md. The experiment's only children are helper dirs setup/ and analysis/ (skipped). Family assigned by this phase's rule: all -> early-existence (exst). theory_objects inferred from closed vocab: viability-pressure (essential variables/turn budget deteriorating under tarpit; survival-driven parameter reorganization per Ashby ultrastability) and structural-pull (Lazy Intelligence / Free Energy minimization pulling the system toward a lower-resistance, low-entropy representation). Paper feeds taken verbatim from ## Paper Feeds (primary alife/quine-lifelike, secondary alife/quine-process-habitat)."
+}

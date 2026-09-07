@@ -1,0 +1,5 @@
+ M Paper/theory/views/runtime-capability/redesign-constraints.md
+ M development/autopoiesis-probes/META-DIRECTION.md
+ M experiments/active/null-ecology/null-05-reflexive-self-embedding/README.md
+ M principles/autopoiesis.md
+ M principles/proactive-self-audit.md

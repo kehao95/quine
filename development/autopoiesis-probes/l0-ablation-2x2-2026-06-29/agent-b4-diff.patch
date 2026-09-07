@@ -1,0 +1,69 @@
+diff --git a/Makefile b/Makefile
+index e273df9ee..fcdc27258 100644
+--- a/Makefile
++++ b/Makefile
+@@ -20,6 +20,7 @@ COVERPROFILE := coverage.out
+ 
+ .PHONY: audit-discovery-lifecycle check-discovery-lifecycle
+ .PHONY: audit-theory-family check-theory-family
++.PHONY: audit-theory-maturity check-theory-maturity audit-seed-backlog check-seed-backlog audit-generation-event-closure check-generation-event-closure audit-theory-reflexive-balance check-theory-reflexive-balance
+ .PHONY: audit-structural-pressure check-structural-pressure
+ .PHONY: audit-succ-48-selector-smoke check-succ-48-selector-smoke
+ 
+@@ -373,9 +374,10 @@ check-githooks-active:
+ #  - theory-coherence:   object<->gap / object<->view edge reciprocity + link targets
+ #  - theory-object-refs:  paper frontmatter theory-objects/gaps/view-affinity resolve
+ #  - gap-status:          every gap carries a known lifecycle status + load-bearing sections
+-audit-theory-family: audit-theory-coherence audit-theory-object-refs audit-gap-status audit-theory-scope-governance audit-theory-decoder audit-theory-surprise-independence audit-theory-code-consistency
++#  - metabolic sensors:   maturity compliance, seed backlog, generation closure, reflexive balance
++audit-theory-family: audit-theory-coherence audit-theory-object-refs audit-gap-status audit-theory-scope-governance audit-theory-decoder audit-theory-surprise-independence audit-theory-code-consistency audit-theory-maturity audit-seed-backlog audit-generation-event-closure audit-theory-reflexive-balance
+ 
+-check-theory-family: check-theory-coherence check-theory-object-refs check-gap-status check-theory-surprise-independence check-theory-code-consistency
++check-theory-family: check-theory-coherence check-theory-object-refs check-gap-status check-theory-surprise-independence check-theory-code-consistency check-theory-maturity
+ 
+ audit-theory-coherence:
+ 	./scripts/check-theory-coherence.sh
+@@ -431,6 +433,30 @@ audit-theory-code-consistency:
+ check-theory-code-consistency:
+ 	./scripts/check-theory-code-consistency.sh --strict
+ 
++audit-theory-maturity:
++	./scripts/check-theory-maturity.sh
++
++check-theory-maturity:
++	./scripts/check-theory-maturity.sh --strict
++
++audit-seed-backlog:
++	./scripts/check-seed-backlog.sh
++
++check-seed-backlog:
++	./scripts/check-seed-backlog.sh
++
++audit-generation-event-closure:
++	./scripts/check-generation-event-closure.sh
++
++check-generation-event-closure:
++	./scripts/check-generation-event-closure.sh
++
++audit-theory-reflexive-balance:
++	./scripts/check-theory-reflexive-balance.sh
++
++check-theory-reflexive-balance:
++	./scripts/check-theory-reflexive-balance.sh
++
+ # Discovery-loop procedure router. Advisory v1; keep out of check-control-plane
+ # until promoted.
+ audit-procedure-router:
+diff --git a/scripts/README.md b/scripts/README.md
+index a6ab90185..ba54a26a5 100644
+--- a/scripts/README.md
++++ b/scripts/README.md
+@@ -35,7 +35,7 @@ Current validator families include:
+ - phase-interpretation ownership: single-owner job families plus analysis projection cards and analysis index across phase-level docs (first compliance-sensor, checks body-vs-contract not just presence)
+ - githooks activation: meta-sensor that detects when the L5 sensing layer itself is inert (core.hooksPath unset or wrong)
+ - theory-coherence: PRESENCE + link-target + reciprocity of the graph-native theory net (`Paper/theory/objects/`, `gaps/`, and `views/`); object/gap/view links must resolve, reciprocal edges are advisory curation hygiene, and the sensor stays advisory until deliberately promoted
+-- theory-maturity: COMPLIANCE of the theory-layer maturity axis — each object's `maturity:` frontmatter (`SEED | grounded | load-bearing`) must match the rule re-derived from its own body (load-bearing iff in README § Load-bearing objects; grounded iff a canonical `## Evidence` entry plus a non-stub `## What it is`; else SEED), with a both-directions cross-check between the README Load-bearing list and the declared `maturity: load-bearing` set. Intrinsic-only: reciprocal-edge completeness is deliberately NOT consulted (that relational axis is owned by theory-coherence). Advisory v1, advisory until proven quiet-when-clean on the Phase 1 backfill
++- theory-maturity: COMPLIANCE of the theory-layer maturity axis — each object's `maturity:` frontmatter (`SEED | grounded | load-bearing`) must match the rule re-derived from its own body (load-bearing iff in README § Load-bearing objects; grounded iff it has at least one typed `## Relations` edge plus a non-stub primary definitional section; else SEED), with a both-directions cross-check between the README Load-bearing list and the declared `maturity: load-bearing` set. Intrinsic-only: reciprocal-edge completeness and empirical evidence presence are deliberately NOT consulted (those axes are owned by theory-coherence and surprise-independence). Advisory v1, advisory until proven quiet-when-clean on the Phase 1 backfill
+ - seed-backlog: INVENTORY of the seed compression-clock — parses every `## Live Seeds` entry's `review: <date>` token (deposit+28d) and reports AGED seeds (review date past, prune candidates) plus MISSING-REVIEW seeds (incomplete backfill / clockless new seed). The theory-layer instance of the wake model; exits 0 always, STAYS advisory (an attention surface, never a commit gate)
+ - generation-event-closure: COMPLIANCE that generative references close — each generative reference (`internal-cross-read`, `internal-seed-forest`, `cross-model-collision`, `human-theory-collision`) must carry `status: open | closed`, and `status: closed` requires its paired `## Integrator assessment` (or the `## TL;DR`+numbered collision shape) section. Reports `status: open` references as unclosed deposits (P5 paired-genre rule). Non-generative references (dr-reports, syntheses) are exempt. Advisory v1, advisory until proven quiet-when-clean
+ - theory-reflexive-balance: INVENTORY of the strange-loop density — for each `grounded`+ object, indexes whether the body declares an `external-transport: <system>` (an external system the theory moves to) or carries an explicit honest `reflexive-only` mark, or is `unmarked`, and reports the layer-wide transport-declared-vs-reflexive ratio. Observational only; the `## Transport predictions` decoder section does NOT count (that is internal validity). Exits 0 always, STAYS advisory and NEVER gates — the strange loop is the program's thesis, so density is made visible, not capped; reflexive-balance is externally-adjudicable-only per `explanation-blind-spot-duality`

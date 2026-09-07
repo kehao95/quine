@@ -1,0 +1,24 @@
+diff --git a/tests/active-go-packages.sh b/tests/active-go-packages.sh
+index 69c096586..b82a64011 100755
+--- a/tests/active-go-packages.sh
++++ b/tests/active-go-packages.sh
+@@ -9,4 +9,18 @@ set -euo pipefail
+ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ cd "$ROOT_DIR"
+ 
+-go list ./... | awk '$0 !~ /\/runs\//'
++if [[ -f selfsource_bundle_data.go ]]; then
++  go list ./... | awk '$0 !~ /\/runs\//'
++  exit 0
++fi
++
++module="$(go list -m)"
++
++# In a clean checkout the generated self-source bundle is absent. Enumerate
++# tracked package directories directly so audits can inspect the selector without
++# mutating the worktree; build-backed validation generates the bundle first and
++# uses the canonical go-list path above, including the root package.
++git ls-files '*.go' |
++  awk '$0 !~ /(^|\/)runs\// { if ($0 !~ /\//) print "."; else { sub("/[^/]*$", ""); print } }' |
++  sort -u |
++  awk -v module="$module" '$0 != "." { print module "/" $0 }'

@@ -1,0 +1,29 @@
+{
+  "phase": "p7e-open-ecology",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p7e-open-ecology/7E.01-persistent-habitat",
+      "slug": "persistent-habitat",
+      "legacy_id": "p7e:7E.01",
+      "family": "null-ecology",
+      "experiment_type": "ecology-observation",
+      "status": "active",
+      "question": "What behavior grows in a simple persistent habitat when peers may idle instead of being forced to stay active?",
+      "theory_objects": [
+        "affordance-null-ecology",
+        "trace-inheritance",
+        "stigmergy-as-carrier",
+        "coordination-closure"
+      ],
+      "paper_feeds": [
+        "none-yet"
+      ],
+      "disposition": "active",
+      "disposition_reason": "Has three recorded .dvc runs (C01 negative baseline, C02 no-further-instructions rerun producing traces + all_idle); README documents live findings."
+    }
+  ],
+  "phase_root_docs": [
+    "README.md"
+  ],
+  "notes": "Phase contains exactly one experiment directory (7E.01-persistent-habitat) plus the phase README.md. Family rule for this phase: all -> null-ecology. The experiment README.md has NO YAML frontmatter block (it starts directly with the '# 7E.01' title), so surface_kind/phase/experiment_id/experiment_type/status are NOT declared on disk; experiment_type 'ecology-observation' is INFERRED from content (missionless persistent-habitat scouting for trace/coordination/quiescence accumulation). status 'active' inferred from real runs + phase README 'Current Signal'. Paper Feeds section lists 'none-yet - none - not-for-paper-yet'; paper_feeds token recorded as 'none-yet'. Theory objects inferred from content: low-affordance null ecology (affordance-null-ecology), persistent trace accumulation (trace-inheritance), durable workspace notes as shared coordination surface (stigmergy-as-carrier), and the branch question about whether coordination surfaces/conventions emerge (coordination-closure). Phase-level README is linear_ticket Q-84. Helper dirs inside the experiment (habitat/, runs/) and run-container.sh are experiment-internal, not sibling experiments."
+}

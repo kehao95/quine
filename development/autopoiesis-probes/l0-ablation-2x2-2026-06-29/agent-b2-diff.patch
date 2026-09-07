@@ -1,0 +1,44 @@
+diff --git a/scripts/check-validation-surface.sh b/scripts/check-validation-surface.sh
+index aea868d0a..df58c9729 100755
+--- a/scripts/check-validation-surface.sh
++++ b/scripts/check-validation-surface.sh
+@@ -3,6 +3,7 @@
+ # VALIDATOR INTENTION
+ # purpose:
+ #   - keep active validation entrypoints aligned on one substrate package boundary
++#   - ensure direct validation generates the self-source bundle before Go compile
+ #   - prevent raw go test ./... from re-entering canonical validation surfaces
+ #   - keep active evaluation docs pointing at tests/validate.sh instead of stale package globs
+ #   - support both repo-wide audit mode and targeted file validation for hooks
+@@ -103,6 +104,9 @@ scan_validate() {
+   if ! grep -qF './tests/active-go-packages.sh' "$file"; then
+     report "MISSING tests-owned substrate selector in tests/validate.sh"
+   fi
++  if ! grep -qF './scripts/generate-self-source-bundle.sh' "$file"; then
++    report "MISSING self-source bundle generation in tests/validate.sh"
++  fi
+   if grep -nE '^[[:space:]]*go test \./\.\.\.$' "$file" >/dev/null; then
+     report "STALE raw go test ./... command in tests/validate.sh"
+   fi
+diff --git a/tests/active-go-packages.sh b/tests/active-go-packages.sh
+index 69c096586..bd4ab689c 100755
+--- a/tests/active-go-packages.sh
++++ b/tests/active-go-packages.sh
+@@ -9,4 +9,4 @@ set -euo pipefail
+ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ cd "$ROOT_DIR"
+ 
+-go list ./... | awk '$0 !~ /\/runs\//'
++go list -e ./... | awk '$0 !~ /\/runs\//'
+diff --git a/tests/validate.sh b/tests/validate.sh
+index 95f977911..12e70983b 100755
+--- a/tests/validate.sh
++++ b/tests/validate.sh
+@@ -190,6 +190,7 @@ run_substrate_suite() {
+     exit 1
+   fi
+ 
++  ./scripts/generate-self-source-bundle.sh
+   go test ${GOFLAGS:-} -count=1 "${packages[@]}"
+ }
+ 

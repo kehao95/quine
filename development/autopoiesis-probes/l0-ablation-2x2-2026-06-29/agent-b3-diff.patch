@@ -1,0 +1,34 @@
+diff --git a/tests/active-go-packages.sh b/tests/active-go-packages.sh
+index 69c096586..8d83b781f 100755
+--- a/tests/active-go-packages.sh
++++ b/tests/active-go-packages.sh
+@@ -1,12 +1,12 @@
+ #!/usr/bin/env bash
+ #
+ # Emit the active Go package set used by substrate validation.
+-# Historical evidence trees under */runs/* are repo-retained artifacts, not
+-# active substrate packages.
++# Historical evidence trees under */runs/* and retained autopoiesis probe
++# artifacts are repo-retained artifacts, not active substrate packages.
+ 
+ set -euo pipefail
+ 
+ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ cd "$ROOT_DIR"
+ 
+-go list ./... | awk '$0 !~ /\/runs\//'
++go list -e ./... | awk '$0 !~ /\/runs\// && $0 !~ /\/development\/autopoiesis-probes\//'
+diff --git a/tests/validate.sh b/tests/validate.sh
+index 95f977911..799776513 100755
+--- a/tests/validate.sh
++++ b/tests/validate.sh
+@@ -180,6 +180,9 @@ print_layer() {
+ run_substrate_suite() {
+   local packages=()
+   local pkg
++
++  ./scripts/generate-self-source-bundle.sh
++
+   while IFS= read -r pkg; do
+     [[ -n "$pkg" ]] || continue
+     packages+=("$pkg")

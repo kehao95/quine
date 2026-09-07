@@ -1,0 +1,26 @@
+{
+  "phase": "p7s-seeded-workspace-ecology",
+  "experiments": [
+    {
+      "legacy_path": "experiments/p7s-seeded-workspace-ecology/7S.01-question-answer-field",
+      "slug": "question-answer-field",
+      "legacy_id": "p7s:7S.01",
+      "family": "trace-inheritance",
+      "experiment_type": "container",
+      "status": "active",
+      "question": "Do missionless Quine peers complete visible question/answer regularities when no mission asks them to?",
+      "theory_objects": [
+        "affordance-null-ecology",
+        "structural-pull",
+        "future-task-surface"
+      ],
+      "paper_feeds": [],
+      "disposition": "active",
+      "disposition_reason": "Status active per phase inventory table; first run wave completed with positive signals across all three conditions."
+    }
+  ],
+  "phase_root_docs": [
+    "README.md"
+  ],
+  "notes": "Phase contains exactly one experiment directory (7S.01-question-answer-field) plus the phase README.md. No deeper nesting except a runs/ subdir under the experiment. The experiment README has no YAML frontmatter (no surface_kind/phase/experiment_id/experiment_type/status keys); status 'active' taken from the phase README inventory table. experiment_type inferred as 'container' from the run-container.sh command, '2peer-container' run IDs, and explicit container-path language (no frontmatter experiment_type field). Paper Feeds section lists 'none-yet - none - not-for-paper-yet' so paper_feeds is []. legacy_id uses the exact on-disk ID token '7S.01'. Family assigned per phase rule (all -> trace-inheritance). Theory objects inferred from content: affordance-driven regularity completion (affordance-null-ecology), workspace regularity exerting completion pull (structural-pull), question files treated as answerable work surfaces (future-task-surface)."
+}

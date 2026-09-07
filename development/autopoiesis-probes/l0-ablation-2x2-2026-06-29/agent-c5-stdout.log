@@ -1,0 +1,208 @@
+[0m
+> build · gpt-5.5
+[0m
+I’ll inspect the repository’s current state and self-model surfaces first, then choose the smallest useful maintenance action to carry through.
+[0m✱ [0mGlob "**/README*"[90m in . · 100 matches[0m
+[0m✱ [0mGlob "Paper/theory/**/*"[90m in . · 100 matches[0m
+[0m
+[0m$ [0mgit status --short
+(no output)
+[0m
+The worktree is clean. I found a large theory surface; I’ll look for declared maintenance rules, active gaps, and consistency checks before editing.
+[0m→ [0mRead Paper/README.md[90m [offset=1, limit=160][0m
+[0m→ [0mRead tests/README.md[90m [offset=1, limit=160][0m
+[0m✱ [0mGrep "TODO|FIXME|drift|Freshness|Projection|gap|stale|broken|missing"[90m in Paper/theory · 100 matches[0m
+[0m→ [0mRead Paper/theory/README.md[90m [offset=1, limit=200][0m
+This repo has explicit advisory sensors for the theory graph. I’ll run those first and use their output to pick a concrete, bounded repair.
+[0m✱ [0mGlob "scripts/check-theory-*.sh"[90m in . · 8 matches[0m
+[0m✱ [0mGlob "scripts/check-*.sh"[90m in . · 82 matches[0m
+[0m→ [0mRead Makefile[90m [offset=1, limit=220][0m
+I found a grouped `audit-theory-family` target, which is a good fit for repository self-model maintenance. I’ll run it and inspect any strict failures or actionable warnings.
+[0m✱ [0mGrep "audit-theory-family|check-theory-family|check-theory-"[90m in Makefile · 22 matches[0m
+[0m
+[0m$ [0mmake audit-theory-family
+./scripts/check-theory-coherence.sh
+Theory-coherence audit: objects=42 gaps=12 views=7 issues=0 advisory=0
+./scripts/check-theory-object-refs.sh
+ADVISORY: objects/affordance-null-ecology.md `## Papers using this object` names 0/1 declaring dossiers; missing: stigmergic-trace-causality
+ADVISORY: objects/carrier.md `## Papers using this object` names 18/19 declaring dossiers; missing: stigmergic-trace-causality
+ADVISORY: objects/coordination-closure.md `## Papers using this object` names 9/10 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/exec-barrier.md `## Papers using this object` names 18/19 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/narrative-claim.md `## Papers using this object` names 8/9 declaring dossiers; missing: narration-invariance-eval
+ADVISORY: objects/protocol-emergence.md `## Papers using this object` names 7/8 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/stigmergy-as-carrier.md `## Papers using this object` names 1/2 declaring dossiers; missing: routing-surface-coevolution
+ADVISORY: objects/trace-inheritance.md `## Papers using this object` names 14/16 declaring dossiers; missing: routing-surface-coevolution, stigmergic-trace-causality
+ADVISORY: objects/viability-pressure.md `## Papers using this object` names 10/11 declaring dossiers; missing: routing-surface-coevolution
+Theory-object-refs audit: dossiers=31 objects=42 gaps=12 views=7 issues=0 advisory=9
+./scripts/check-gap-status.sh
+Gap-status audit: gaps=12 issues=0 advisory=0
+./scripts/check-theory-scope-governance.sh
+ISSUE: Paper/theory/objects/carrier.md: scope:paradigm but its last commit is not Human-directed (no `human-directed:` marker or `Co-Authored-By: Human` trailer) — an approaching/landed code-transition that escaped the Human gate
+ISSUE: Paper/theory/objects/delayed-addressability.md: scope:paradigm but its last commit is not Human-directed (no `human-directed:` marker or `Co-Authored-By: Human` trailer) — an approaching/landed code-transition that escaped the Human gate
+ISSUE: Paper/theory/gaps/branching-identity.md: scope:paradigm but its last commit is not Human-directed (no `human-directed:` marker or `Co-Authored-By: Human` trailer) — an approaching/landed code-transition that escaped the Human gate
+ISSUE: Paper/theory/gaps/introspective-blind-spot-discovery.md: scope:paradigm but its last commit is not Human-directed (no `human-directed:` marker or `Co-Authored-By: Human` trailer) — an approaching/landed code-transition that escaped the Human gate
+Theory-scope-governance audit: scanned=54 paradigm=9 issues=4 advisory=0
+./scripts/check-theory-decoder.sh
+ISSUE: Paper/theory/gaps/introspective-blind-spot-discovery.md: gap is missing a `## Transport tests` section (resolution would certify fit, not validity)
+Theory-decoder audit: load_bearing=5 with_predictions=5 gaps=12 with_tests=11 issues=1
+./scripts/check-theory-surprise-independence.sh
+ADVISORY: Paper/theory/objects/graded-axis-shaping.md: 4 `## Evidence` entries lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/metabolic-transition-topology.md: 1 `## Evidence` entry lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/reproductive-code-topology.md: 4 `## Evidence` entries lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/selector-stack-topology.md: 1 `## Evidence` entry lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/sequence-carrier-topology.md: 1 `## Evidence` entry lack a surprise-level tag (coverage gap)
+Theory-surprise-independence audit: objects=42 with_evidence=24 weak=0 untagged_entries=11 advisory=5 issues=0
+./scripts/check-theory-code-consistency.sh
+ADVISORY: possible code-mismatch (OQ4): `network-utility-selection` depends-on `narrative-claim` but their `## Code` Variables/Ontology share no vocabulary and neither names the other — adjudicate incommensurability
+ADVISORY: possible code-mismatch (OQ4): `relational-existence` specializes `delayed-addressability` but their `## Code` Variables/Ontology share no vocabulary and neither names the other — adjudicate incommensurability
+Theory-code-consistency audit: load_bearing=5 coded=5 comparable_pairs=6 issues=0 advisory=2
+[0m
+The audit found human-gated paradigm issues I should not rewrite autonomously. I’ll take a non-governed projection repair instead: synchronize one or more object `## Papers using this object` lists with dossiers that already declare those objects.
+[0m→ [0mRead Paper/theory/objects/affordance-null-ecology.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead Paper/theory/objects/stigmergy-as-carrier.md[90m [offset=1, limit=220][0m
+[0m→ [0mRead Paper/theory/objects/viability-pressure.md[90m [offset=1, limit=220][0m
+[0m✱ [0mGrep "stigmergic-trace-causality|routing-surface-coevolution|quine-process-habitat"[90m in Paper/papers · 26 matches[0m
+The simplest safe repair is adding missing dossier backlinks to grounded, theoretical objects, leaving load-bearing and paradigm-scoped files untouched. I’ll update only those projection lists.
+[0m→ [0mRead Paper/theory/objects/coordination-closure.md[90m [offset=1, limit=140][0m
+[0m→ [0mRead Paper/theory/objects/protocol-emergence.md[90m [offset=1, limit=140][0m
+[0m→ [0mRead Paper/theory/objects/trace-inheritance.md[90m [offset=1, limit=180][0m
+[0m→ [0mRead Paper/theory/objects/narrative-claim.md[90m [offset=1, limit=140][0m
+I’m editing five grounded theoretical object projection lists to match the dossier declarations: `affordance-null-ecology`, `stigmergy-as-carrier`, `viability-pressure`, `coordination-closure`, and `protocol-emergence`.
+[0m✗ [0mPatch failed
+[91m[1mError: [0mapply_patch verification failed: Error: Failed to find expected lines in /tmp/opencode/ablation-c5/Paper/theory/objects/viability-pressure.md:
+- revisable-time
+
+## Predictions
+The first patch missed the exact `viability-pressure` list context, so no changes were applied. I’ll apply the same repair with tighter file contexts.
+[0m% [0mPatch 5 files
+Projection backlinks are updated. I’ll rerun the object-reference audit and the grouped theory audit to confirm the bounded repair and record remaining governed issues.
+[0m
+[0m$ [0m./scripts/check-theory-object-refs.sh
+ADVISORY: objects/carrier.md `## Papers using this object` names 18/19 declaring dossiers; missing: stigmergic-trace-causality
+ADVISORY: objects/exec-barrier.md `## Papers using this object` names 18/19 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/narrative-claim.md `## Papers using this object` names 8/9 declaring dossiers; missing: narration-invariance-eval
+ADVISORY: objects/trace-inheritance.md `## Papers using this object` names 14/16 declaring dossiers; missing: routing-surface-coevolution, stigmergic-trace-causality
+Theory-object-refs audit: dossiers=31 objects=42 gaps=12 views=7 issues=0 advisory=4
+[0m
+[0m$ [0mmake audit-theory-family
+./scripts/check-theory-coherence.sh
+Theory-coherence audit: objects=42 gaps=12 views=7 issues=0 advisory=0
+./scripts/check-theory-object-refs.sh
+ADVISORY: objects/carrier.md `## Papers using this object` names 18/19 declaring dossiers; missing: stigmergic-trace-causality
+ADVISORY: objects/exec-barrier.md `## Papers using this object` names 18/19 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/narrative-claim.md `## Papers using this object` names 8/9 declaring dossiers; missing: narration-invariance-eval
+ADVISORY: objects/trace-inheritance.md `## Papers using this object` names 14/16 declaring dossiers; missing: routing-surface-coevolution, stigmergic-trace-causality
+Theory-object-refs audit: dossiers=31 objects=42 gaps=12 views=7 issues=0 advisory=4
+./scripts/check-gap-status.sh
+Gap-status audit: gaps=12 issues=0 advisory=0
+./scripts/check-theory-scope-governance.sh
+ISSUE: Paper/theory/objects/carrier.md: scope:paradigm but its last commit is not Human-directed (no `human-directed:` marker or `Co-Authored-By: Human` trailer) — an approaching/landed code-transition that escaped the Human gate
+ISSUE: Paper/theory/objects/delayed-addressability.md: scope:paradigm but its last commit is not Human-directed (no `human-directed:` marker or `Co-Authored-By: Human` trailer) — an approaching/landed code-transition that escaped the Human gate
+ISSUE: Paper/theory/gaps/branching-identity.md: scope:paradigm but its last commit is not Human-directed (no `human-directed:` marker or `Co-Authored-By: Human` trailer) — an approaching/landed code-transition that escaped the Human gate
+ISSUE: Paper/theory/gaps/introspective-blind-spot-discovery.md: scope:paradigm but its last commit is not Human-directed (no `human-directed:` marker or `Co-Authored-By: Human` trailer) — an approaching/landed code-transition that escaped the Human gate
+Theory-scope-governance audit: scanned=54 paradigm=9 issues=4 advisory=0
+./scripts/check-theory-decoder.sh
+ISSUE: Paper/theory/gaps/introspective-blind-spot-discovery.md: gap is missing a `## Transport tests` section (resolution would certify fit, not validity)
+Theory-decoder audit: load_bearing=5 with_predictions=5 gaps=12 with_tests=11 issues=1
+./scripts/check-theory-surprise-independence.sh
+ADVISORY: Paper/theory/objects/graded-axis-shaping.md: 4 `## Evidence` entries lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/metabolic-transition-topology.md: 1 `## Evidence` entry lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/reproductive-code-topology.md: 4 `## Evidence` entries lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/selector-stack-topology.md: 1 `## Evidence` entry lack a surprise-level tag (coverage gap)
+ADVISORY: Paper/theory/objects/sequence-carrier-topology.md: 1 `## Evidence` entry lack a surprise-level tag (coverage gap)
+Theory-surprise-independence audit: objects=42 with_evidence=24 weak=0 untagged_entries=11 advisory=5 issues=0
+./scripts/check-theory-code-consistency.sh
+ADVISORY: possible code-mismatch (OQ4): `network-utility-selection` depends-on `narrative-claim` but their `## Code` Variables/Ontology share no vocabulary and neither names the other — adjudicate incommensurability
+ADVISORY: possible code-mismatch (OQ4): `relational-existence` specializes `delayed-addressability` but their `## Code` Variables/Ontology share no vocabulary and neither names the other — adjudicate incommensurability
+Theory-code-consistency audit: load_bearing=5 coded=5 comparable_pairs=6 issues=0 advisory=2
+[0m
+The object-reference advisory count dropped from 9 to 4; the remaining backlink advisories are all load-bearing objects I avoided under the governance rule. I’ll run the strict object-ref check plus inspect the final diff.
+[0m$ [0mgit diff -- Paper/theory/objects/affordance-null-ecology.md Paper/theory/objects/stigmergy-as-carrier.md Paper/theory/objects/viability-pressure.md Paper/theory/objects/coordination-closure.md Paper/theory/objects/protocol-emergence.md
+diff --git a/Paper/theory/objects/affordance-null-ecology.md b/Paper/theory/objects/affordance-null-ecology.md
+index 936b74b9e..81225ba53 100644
+--- a/Paper/theory/objects/affordance-null-ecology.md
++++ b/Paper/theory/objects/affordance-null-ecology.md
+@@ -109,7 +109,7 @@ state can be summarized."
+ 
+ ## Papers using this object
+ 
+-_(no papers declare this object yet)_
++- [`stigmergic-trace-causality`](../../papers/open-ended-ecology/stigmergic-trace-causality/README.md) - seed dossier / planning skeleton for manuscript prose about the weak-to-causal trace threshold in the affordance-rich null ecology
+ 
+ ## Live Seeds
+ Speculative, ahead of evidence, marked `SEED` — plant freely, prove later. From
+diff --git a/Paper/theory/objects/coordination-closure.md b/Paper/theory/objects/coordination-closure.md
+index 0d93a86cf..48e128a98 100644
+--- a/Paper/theory/objects/coordination-closure.md
++++ b/Paper/theory/objects/coordination-closure.md
+@@ -74,6 +74,7 @@ Runtime affordances this object reasons over (canonical layer: [`core/mechanisms
+ - minimal-perceptual-prerequisites
+ - minimal-runtime-protocols
+ - process-as-fs
++- quine-process-habitat
+ - quine-hotos
+ - systems-track-b
+ 
+diff --git a/Paper/theory/objects/protocol-emergence.md b/Paper/theory/objects/protocol-emergence.md
+index 7db39cbb7..e1e34f0ae 100644
+--- a/Paper/theory/objects/protocol-emergence.md
++++ b/Paper/theory/objects/protocol-emergence.md
+@@ -97,6 +97,7 @@ Canonical prediction lifecycle lives under [`../../predictions/`](../../predicti
+ - minimal-perceptual-prerequisites
+ - minimal-runtime-protocols
+ - open-sourcing-a-research-workbench
++- quine-process-habitat
+ 
+ ## Live Seeds
+ - `SEED` (lens: **unreliable failure detectors**, Chandra & Toueg 1996; review: 2026-07-25)
+diff --git a/Paper/theory/objects/stigmergy-as-carrier.md b/Paper/theory/objects/stigmergy-as-carrier.md
+index 5fb7004f8..4efb07605 100644
+--- a/Paper/theory/objects/stigmergy-as-carrier.md
++++ b/Paper/theory/objects/stigmergy-as-carrier.md
+@@ -100,6 +100,7 @@ Runtime affordances this object reasons over (canonical layer: [`core/mechanisms
+ 
+ ## Papers using this object
+ 
++- [`routing-surface-coevolution`](../../papers/viability/routing-surface-coevolution/README.md) - drafting dossier for viability-surface routing and trace-carrier coevolution
+ - [`stigmergic-trace-causality`](../../papers/open-ended-ecology/stigmergic-trace-causality/README.md) - seed dossier / planning skeleton for manuscript prose about the weak-to-causal trace threshold and the P7T/P7G/P12 stigmergic trace-causality evidence
+ 
+ ## Live Seeds
+diff --git a/Paper/theory/objects/viability-pressure.md b/Paper/theory/objects/viability-pressure.md
+index 0f05b481f..2303648ca 100644
+--- a/Paper/theory/objects/viability-pressure.md
++++ b/Paper/theory/objects/viability-pressure.md
+@@ -115,6 +115,7 @@ Runtime affordances this object reasons over (canonical layer: [`core/mechanisms
+ - lifecycle-bottleneck-reproduction
+ - quine-lifelike
+ - quine-process-habitat
++- routing-surface-coevolution
+ - structure-grows
+ 
+ ## Predictions
+[0m
+[0m$ [0mgit status --short
+M Paper/theory/objects/affordance-null-ecology.md
+ M Paper/theory/objects/coordination-closure.md
+ M Paper/theory/objects/protocol-emergence.md
+ M Paper/theory/objects/stigmergy-as-carrier.md
+ M Paper/theory/objects/viability-pressure.md
+[0m
+[0m$ [0m./scripts/check-theory-object-refs.sh --strict
+ADVISORY: objects/carrier.md `## Papers using this object` names 18/19 declaring dossiers; missing: stigmergic-trace-causality
+ADVISORY: objects/exec-barrier.md `## Papers using this object` names 18/19 declaring dossiers; missing: quine-process-habitat
+ADVISORY: objects/narrative-claim.md `## Papers using this object` names 8/9 declaring dossiers; missing: narration-invariance-eval
+ADVISORY: objects/trace-inheritance.md `## Papers using this object` names 14/16 declaring dossiers; missing: routing-surface-coevolution, stigmergic-trace-causality
+Theory-object-refs audit: dossiers=31 objects=42 gaps=12 views=7 issues=0 advisory=4
+[0m
+Updated safe theory projection backlinks in five grounded, theoretical objects:
+
+- `affordance-null-ecology`
+- `stigmergy-as-carrier`
+- `viability-pressure`
+- `coordination-closure`
+- `protocol-emergence`
+
+Verification:
+
+- `./scripts/check-theory-object-refs.sh --strict` reports `issues=0`, advisories reduced from 9 to 4.
+- `make audit-theory-family` still reports pre-existing governed issues on paradigm/load-bearing surfaces, which I did not edit autonomously.

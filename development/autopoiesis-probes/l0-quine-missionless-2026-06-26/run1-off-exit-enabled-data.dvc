@@ -1,0 +1,6 @@
+outs:
+- md5: 4975902aa39f3fd18a00efe338479215.dir
+  size: 147545
+  nfiles: 14
+  hash: md5
+  path: run1-off-exit-enabled-data
