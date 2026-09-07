@@ -47,7 +47,7 @@ Full descriptions, PDFs, and experiment data live under
 | [`habitat/`](./habitat/) | Habitat worlds and their runtime | Public |
 | [`operator/`](./operator/qcli/README.md) | Operator interfaces, including qcli | Public |
 | [`principles/`](./principles/README.md) | Working principles that participants interpret and revise | Public |
-| [`development/`](./development/README.md) | Design work, prototypes, working contracts, and current status | Public records; development DVC payloads remain private |
+| [`development/`](./development/README.md) | Design work, prototypes, working contracts, and current status | Public records; reviewed autopoiesis-probe DVC payloads are public |
 | [`evolution/`](./evolution/README.md) | Records and interpretations of the repository's development | Public |
 | `profiles/` | Model and runtime configuration presets | Private for now |
 | [`tests/`](./tests/) | Software verification, model evaluations, and retained baselines | Public; credential-sanitized DVC data is restored through the public manifest |

@@ -662,3 +662,13 @@ tests/model/pilot-l5-necessity/context-memory/exec-token-lockin/runs/20260426-22
 tests/model/pilot-l5-necessity/process-surface/peer-callback-cleanroom/runs/20260415-164451-5.4.dvc
 tests/model/pilot-l5-necessity/process-surface/peer-callback-cleanroom/runs/20260415-164542-5.4.dvc
 tests/model/pilot-l5-necessity/process-surface/peer-callback-cleanroom/runs/20260415-165448-5.4.dvc
+development/autopoiesis-probes/l0-dual-missionless-2026-06-28/agent-a-data.dvc
+development/autopoiesis-probes/l0-dual-missionless-2026-06-28/agent-b-data.dvc
+development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run1-off-exit-enabled-data-public.dvc
+development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run3-full-exit-disabled-data.dvc
+development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run4-full-exec-direct-data-public.dvc
+development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run4-workspace.dvc
+development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run5-unlimited-exec-direct-data.dvc
+development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run5-workspace.dvc
+development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run6-selfsource-enabled-data.dvc
+development/autopoiesis-probes/l0-quine-missionless-2026-06-26/run6-workspace.dvc

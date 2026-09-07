@@ -29,11 +29,13 @@ in [operator/qcli](../operator/qcli/README.md).
 ## Evidence availability
 
 The ten `.dvc` files in the June 26 and June 28 `autopoiesis-probes/l0-*`
-directories are retained metadata. Their payloads have not been approved for
-public download and are not in `.dvc/public-manifest.txt`.
-Only the manifest-listed `public/` and `tests/` objects are public restore
-targets; use `scripts/pull-public-dvc-manifest.sh`, not a blanket `dvc pull`.
-Opening a source directory does not publish its private DVC data.
+directories are public evidence. Their payloads are credential-scanned before
+promotion and are listed in `.dvc/public-manifest.txt`; the two `*-public.dvc`
+variants replace detected credential literals with `REDACTED_PUBLIC_RELEASE_SECRET`.
+Use
+`scripts/pull-public-dvc-manifest.sh`, not a blanket `dvc pull`; the manifest is
+the exact public data boundary. Other development DVC pointers remain private
+until separately reviewed and promoted.
 
 ## Declared public-copy redactions
 

@@ -1,0 +1,6 @@
+outs:
+- md5: 2cc3639cbc902955eda64f6012f63c68.dir
+  size: 322720
+  nfiles: 27
+  hash: md5
+  path: run4-full-exec-direct-data-public
