@@ -1,0 +1,25 @@
+# Related Work
+
+## Stigmergy and Indirect Coordination in Artificial Life
+
+Coordination through environmental modification has a long history in biology and artificial life. Stigmergy---the principle that a trace left in a shared medium by one action stimulates subsequent actions---was introduced by @Grasse1959Stigmergy to explain termite construction and later surveyed as a general coordination mechanism for artificial life [@TheraulazBonabeau1999Stigmergy]. At minimum, it requires only two ingredients: agents that can act on an environment, and an environment whose local changes persist long enough to influence later behavior [@HollandMelhuish2001Stigmergy]. This minimal mechanism can support complex collective organization without planning, central control, simultaneous presence, or mutual awareness among participants [@Heylighen2016Stigmergy].
+
+This tradition establishes that mutual awareness is not *necessary* for coordination. It treats the absence of awareness, however, as a property of the mechanism rather than as a controlled condition on what agents are told: classical swarm and self-organization models are reactive to local traces and never form an explicit hypothesis that other agents exist [@Camazine2001SelfOrganization]. A complementary framing from behavioral ecology, *inadvertent social information* [@Danchin2004ISI], notes that agents pursuing their own goals unavoidably leave by-products others can read as social signals. Our setting inherits the stigmergic premise---coordination through a shared medium---but asks a question this literature leaves open: whether a general-purpose agent that is not told peers exist can *infer* their existence from environmental traces alone, and then construct coordination protocols in response.
+
+## Coordination Substrates in LLM Multi-Agent Systems
+
+The dominant line of LLM multi-agent research has generally not isolated this question, because it assumes agents already know they belong to a group. Systems such as CAMEL [@Li2023CAMEL], AutoGen [@Wu2023AutoGen], and MetaGPT [@Hong2023MetaGPT] provide explicit social scaffolding: agents are assigned roles, informed that peers exist, and coordinated through designed interaction protocols. More recent work demonstrates that direct message passing is not the only coordination substrate. EvoGit [@Chen2025EvoGit] achieves decentralized coordination through Git version graphs; CodeCRDT [@CodeCRDT2025] coordinates through observation of shared replicated state; pressure-field approaches [@PressureField2026] and blackboard systems [@LLMBlackboard2026] enable coordination through shared artifact state. These systems demonstrate that artifact-based coordination is feasible for LLM agents. However, they still instantiate an explicitly multi-agent setting and provide coordination substrates designed for that purpose.
+
+## Near-Neighbors: Reduced Partner Visibility
+
+Two recent lines of work approach settings with reduced partner visibility, making them our closest near-neighbors.
+
+@Riedl2025EmergentCoord studies emergent coordination in a guessing-game task with no direct communication, where agents receive only minimal group-level feedback and do not know group size. This work demonstrates coordination without explicit messaging. However, the task is an abstract coordination game rather than an agentic shared-workspace setting, and coordination signals come from designed group-level feedback rather than ordinary environmental traces.
+
+Our closest LLM-agent near-neighbor is the "Separate Strategy" of @SeparateStrategy2025, where multi-persona brainstorming agents work "without mutual awareness" via history filtering. This constitutes *epistemic isolation*---agents cannot see each other's outputs---but the system still explicitly defines a two-persona setup, turn-taking, and phase logic.
+
+## Positioning Our Contribution
+
+We distinguish *existential unawareness* from these settings along two axes. First, in coordination terms: whereas LLM multi-agent systems have largely advanced *direct* coordination through messaging and role assignment, our setting isolates the *indirect*, stigmergic regime---agents coordinate, if they coordinate at all, through a shared environment. Second, in awareness terms: we remove not only message access but the multi-agent frame itself, so that agents have no indication that peers or cooperation requirements exist. This places our operationalization closer to formal game-theoretic models of unawareness-of-players [@Heifetz2013Unawareness; @HalpernRego2014Unawareness] than to the epistemic isolation of the near-neighbors above.
+
+To the best of our knowledge, prior LLM multi-agent work has not jointly isolated the combination studied here: existential unawareness, coordination mediated solely by ordinary environment traces, and a subtractive ablation locating the closure boundary. Our novelty lies not in artifact-based coordination itself, but in showing that existential unawareness can be experimentally isolated and that a threshold appears, in our conditions, between anomaly-detection and artifact-detection.

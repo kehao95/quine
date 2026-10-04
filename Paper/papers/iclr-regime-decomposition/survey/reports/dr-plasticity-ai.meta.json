@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "created_at": "2026-06-30T15:22:38.206Z",
+  "updated_at": "2026-06-30T15:22:38.206Z",
+  "query": {
+    "text": "# Context\n\nWe observe that AI agents reconstructing themselves after process death produce categorically different successor forms depending on conditions. This resembles phenotypic plasticity in biology. We want to check if the specific mathematical tools from plasticity theory have been applied to AI.\n\n# Research questions\n\n1. Has anyone applied \"phenotypic plasticity\" concepts from biology to artificial neural networks, deep learning, or AI agents? Specifically: reaction norms, G×E interactions, environmental effects on phenotype expression in ML systems?\n\n2. Has anyone studied \"morphological variation\" in AI systems — how the same base model produces different runtime organizations under different conditions?\n\n3. Has anyone applied quantitative genetics frameworks (breeder's equation, G-matrix, evolvability) to AI/ML training dynamics or agent population dynamics?\n\n4. Has anyone used \"developmental systems theory\" or \"developmental constraints\" to analyze how AI agents are constructed or deployed?\n\n5. Has anyone applied \"heterochrony\" (changes in developmental timing) to AI — e.g., truncation of development producing simpler forms (paedomorphosis/neoteny in AI)?\n\n6. Has anyone studied \"canalization\" (Waddington) in deep learning — the buffering of network behavior against perturbation? This connects to robustness, flat minima, and generalization.\n\n7. Has anyone applied \"evolvability\" concepts to AI agent architectures or multi-agent systems?\n\n# Scope\n- AI/ML literature: 2018-2025\n- Biology/computational biology: any date if directly relevant\n- Include both theoretical and empirical work\n\n# Output\nFor each question: yes/no + specific papers + 1-sentence closeness assessment.",
+    "source": "file",
+    "path": "/REDACTED_HOME/quine/Paper/papers/iclr-regime-decomposition/survey/queries/dr-plasticity-ai.md",
+    "sha256": "148a0beb4f65d128eec46232914c143dc30b5fb003fd6f802d6b2174a91fee5c"
+  },
+  "latest_interaction_id": "v1_ChdQZDlEYXFiN01majlqckVQbC02NDBBTRIXUGQ5RGFxYjdNZmo5anJFUGwtNjQwQU0",
+  "interactions": [
+    {
+      "id": "v1_ChdQZDlEYXFiN01majlqckVQbC02NDBBTRIXUGQ5RGFxYjdNZmo5anJFUGwtNjQwQU0",
+      "command": "run",
+      "created_at": "2026-06-30T15:22:38.206Z",
+      "agent": "deep-research-preview-04-2026",
+      "input_role": "query",
+      "input": {
+        "text": "# Context\n\nWe observe that AI agents reconstructing themselves after process death produce categorically different successor forms depending on conditions. This resembles phenotypic plasticity in biology. We want to check if the specific mathematical tools from plasticity theory have been applied to AI.\n\n# Research questions\n\n1. Has anyone applied \"phenotypic plasticity\" concepts from biology to artificial neural networks, deep learning, or AI agents? Specifically: reaction norms, G×E interactions, environmental effects on phenotype expression in ML systems?\n\n2. Has anyone studied \"morphological variation\" in AI systems — how the same base model produces different runtime organizations under different conditions?\n\n3. Has anyone applied quantitative genetics frameworks (breeder's equation, G-matrix, evolvability) to AI/ML training dynamics or agent population dynamics?\n\n4. Has anyone used \"developmental systems theory\" or \"developmental constraints\" to analyze how AI agents are constructed or deployed?\n\n5. Has anyone applied \"heterochrony\" (changes in developmental timing) to AI — e.g., truncation of development producing simpler forms (paedomorphosis/neoteny in AI)?\n\n6. Has anyone studied \"canalization\" (Waddington) in deep learning — the buffering of network behavior against perturbation? This connects to robustness, flat minima, and generalization.\n\n7. Has anyone applied \"evolvability\" concepts to AI agent architectures or multi-agent systems?\n\n# Scope\n- AI/ML literature: 2018-2025\n- Biology/computational biology: any date if directly relevant\n- Include both theoretical and empirical work\n\n# Output\nFor each question: yes/no + specific papers + 1-sentence closeness assessment.",
+        "source": "file",
+        "path": "/REDACTED_HOME/quine/Paper/papers/iclr-regime-decomposition/survey/queries/dr-plasticity-ai.md",
+        "sha256": "148a0beb4f65d128eec46232914c143dc30b5fb003fd6f802d6b2174a91fee5c"
+      }
+    }
+  ]
+}

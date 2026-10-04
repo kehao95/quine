@@ -39,7 +39,7 @@ Full descriptions, PDFs, and experiment data live under
 
 | Path | Role | Availability |
 |------|------|--------------|
-| `Paper/` | Philosophy, developing theory, research questions, discovery procedures, and publication work | Private for now |
+| [`Paper/papers/`](./Paper/papers/README.md) | Paper dossiers, drafts, plans, and publication records | Public with [declared omissions](./Paper/papers/PUBLIC-RELEASE.md); other `Paper/` paths private |
 | `experiments/` | Experimental designs, environments, runs, and analyses | Private for now; selected materials accompany released work |
 | [`public/`](./public/README.md) | Released papers, essays, evidence, and reproduction materials | Public |
 | [`cmd/`](./cmd/) | Entrypoints for the agent runtime, habitat worlds, and operator tools | Public: `quine`, `world`, and `qcli` |

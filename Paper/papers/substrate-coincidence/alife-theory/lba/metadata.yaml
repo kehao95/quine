@@ -1,0 +1,17 @@
+---
+title: "Substrate Coincidence: Three Evolutionary Separations Collapse in a Language-Based Agent Medium"
+author_raw: |
+  Hao Ke$^{1}$ \quad Jingyun Wu$^{1}$ \\
+  \mbox{}\\
+  $^1$Independent Researcher \\
+  \texttt{i@kehao.me} \quad \texttt{joeywu021@gmail.com}
+date: "June 2026"
+numbersections: false
+reference-section-title: "References"
+submission_type: "Late Breaking Abstracts"
+copyright_holder: "Hao Ke and Jingyun Wu"
+code_url: "https://github.com/kehao95/quine"
+abstract: |
+  Classical evolutionary theory --- from Darwinian open-ended evolution to cultural-evolution models --- presupposes three structural separations: organism and environment are different substances; individuals are discrete, countable units of selection; and the Weismann barrier sequesters the germ-line from acquired change. In biology, Tierra, and Avida these separations are enforced by substrate physics and treated as universal. We identify a substrate regime in which all three collapse simultaneously into a single medium: language. In Quine, a multi-agent system where large language model agents run as native processes on a shared filesystem, reading a file inserts its tokens verbatim into the agent's context, where they become indistinguishable from the agent's own prior cognition. This operation --- read as lossless dissolution rather than translation --- is a single root cause from which all three collapses follow: agent and environment are the same substance; the individual is a temporary cut through a continuous language field rather than a membrane-bounded object; and at the persistence layer every write survives with no soma/germ filter, so acquired tools and modifications are immediately heritable. We report 27 missionless-agent runs across three model families in which each consequence is observed --- constitutive reflexivity, immediate cross-run inheritance, fuzzy individuals, and endogenous fitness. We position the regime as cultural evolution with the brain/world transmission-fidelity barrier removed and a trajectory-shaped read-selection bottleneck put in its place: a substrate class where the foundational separations of evolutionary theory do not hold.
+bibliography: references.bib
+---

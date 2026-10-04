@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 420">
+  <!-- Title -->
+  <text x="300" y="28" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="bold" fill="#000">Cognitive Hierarchy</text>
+  
+  <!-- Pyramid layers (bottom to top) - wider, gentler slope -->
+  <!-- Base width: 480 (60-540), Top width: 160 (220-380) -->
+  <!-- Each layer shrinks by 64px on each side (total 128px narrower) -->
+  
+  <!-- L0: LLM Weights (60-540 → 92-508) -->
+  <polygon points="60,380 540,380 508,320 92,320" fill="#1a1a1a" stroke="#000" stroke-width="1"/>
+  <text x="300" y="355" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#fff">LLM Weights</text>
+  <text x="300" y="372" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#aaa">Cognitive Substrate · Fixed at Training</text>
+  
+  <!-- L1: System Prompt (92-508 → 124-476) -->
+  <polygon points="92,320 508,320 476,260 124,260" fill="#404040" stroke="#000" stroke-width="1"/>
+  <text x="300" y="295" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#fff">System Prompt</text>
+  <text x="300" y="312" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#ccc">Species Genome · Fixed at Deployment</text>
+  
+  <!-- L2: Mission (124-476 → 156-444) -->
+  <polygon points="124,260 476,260 444,200 156,200" fill="#666666" stroke="#000" stroke-width="1"/>
+  <text x="300" y="235" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#fff">Mission</text>
+  <text x="300" y="252" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#ddd">Individual Genotype · Fixed at Birth (argv)</text>
+  
+  <!-- L3: Wisdom (156-444 → 188-412) -->
+  <polygon points="156,200 444,200 412,140 188,140" fill="#999999" stroke="#000" stroke-width="1"/>
+  <text x="300" y="175" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#000">Wisdom</text>
+  <text x="300" y="192" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#333">Accumulated · Survives Metamorphosis</text>
+  
+  <!-- L4: Context (Tape) (188-412 → 220-380) -->
+  <polygon points="188,140 412,140 380,80 220,80" fill="#cccccc" stroke="#000" stroke-width="1"/>
+  <text x="300" y="115" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" fill="#000">Context</text>
+  
+  <!-- Top label for Context -->
+  <text x="300" y="60" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#333">(Tape) · Immediate Cognition · Changes Every Turn</text>
+  <line x1="300" y1="65" x2="300" y2="78" stroke="#666" stroke-width="1"/>
+  
+  <!-- Left axis: Stability -->
+  <line x1="35" y1="80" x2="35" y2="380" stroke="#000" stroke-width="1.5"/>
+  <polygon points="35,80 31,95 39,95" fill="#000"/>
+  <text x="30" y="70" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#000">Volatile</text>
+  <text x="30" y="398" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#000">Stable</text>
+  
+  <!-- Right side: Biological analogy labels -->
+  <text x="580" y="355" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="10" font-style="italic" fill="#333">≈ Chemistry</text>
+  <text x="580" y="295" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="10" font-style="italic" fill="#333">≈ Species DNA</text>
+  <text x="580" y="235" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="10" font-style="italic" fill="#333">≈ Individual DNA</text>
+  <text x="580" y="175" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="10" font-style="italic" fill="#333">≈ Epigenetics</text>
+  <text x="580" y="115" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="10" font-style="italic" fill="#333">≈ Working Memory</text>
+  
+  <!-- Connecting lines to right labels (adjusted for new positions) -->
+  <line x1="508" y1="350" x2="520" y2="350" stroke="#666" stroke-width="1" stroke-dasharray="2,2"/>
+  <line x1="476" y1="290" x2="520" y2="290" stroke="#666" stroke-width="1" stroke-dasharray="2,2"/>
+  <line x1="444" y1="230" x2="520" y2="230" stroke="#666" stroke-width="1" stroke-dasharray="2,2"/>
+  <line x1="412" y1="170" x2="520" y2="170" stroke="#666" stroke-width="1" stroke-dasharray="2,2"/>
+  <line x1="380" y1="110" x2="520" y2="110" stroke="#666" stroke-width="1" stroke-dasharray="2,2"/>
+</svg>

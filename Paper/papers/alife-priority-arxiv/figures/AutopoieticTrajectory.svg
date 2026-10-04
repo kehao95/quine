@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 520">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="black"/>
+    </marker>
+    <marker id="arrowhead-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="360" y="28" text-anchor="middle" font-family="Georgia, serif" font-size="18" font-weight="bold">Autopoietic Trajectory</text>
+  
+  <!-- ==================== TOP: Triangle with closure ==================== -->
+  
+  <!-- DNA (System Prompt) - Top -->
+  <rect x="280" y="50" width="160" height="55" fill="white" stroke="black" stroke-width="2"/>
+  <text x="360" y="75" text-anchor="middle" font-family="Georgia, serif" font-size="14" font-weight="bold">DNA</text>
+  <text x="360" y="93" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#444">(System Prompt, ~1400 words)</text>
+  
+  <!-- ./quine - Bottom Left -->
+  <rect x="100" y="170" width="130" height="55" fill="white" stroke="black" stroke-width="2"/>
+  <text x="165" y="195" text-anchor="middle" font-family="monospace" font-size="14" font-weight="bold">./quine</text>
+  <text x="165" y="213" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#444">(Original, 8.8 MB)</text>
+  
+  <!-- Fixed Point - Bottom Right -->
+  <rect x="490" y="170" width="130" height="55" fill="white" stroke="black" stroke-width="2"/>
+  <text x="555" y="192" text-anchor="middle" font-family="Georgia, serif" font-size="14" font-weight="bold">Fixed Point</text>
+  <text x="555" y="210" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#444">(Essential Core)</text>
+  
+  <!-- Arrow: DNA → Body₀ -->
+  <path d="M 280 90 L 230 170" fill="none" stroke="black" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  <text x="230" y="120" font-family="Arial, sans-serif" font-size="10" font-style="italic">specifies</text>
+  
+  <!-- Arrow: Body₀ → Fixed Point (with Body₁ in the middle) -->
+  <line x1="230" y1="197" x2="490" y2="197" stroke="black" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  
+  <!-- ./q bubble on the arrow -->
+  <ellipse cx="360" cy="197" rx="45" ry="22" fill="white" stroke="black" stroke-width="1.5"/>
+  <text x="360" y="193" text-anchor="middle" font-family="monospace" font-size="12" font-weight="bold">./q</text>
+  <text x="360" y="207" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#444">5.4 MB</text>
+  
+  <!-- Labels on the horizontal arrow -->
+  <text x="290" y="185" font-family="Arial, sans-serif" font-size="10" font-style="italic">distills via</text>
+  <text x="420" y="185" font-family="Arial, sans-serif" font-size="10" font-style="italic">to</text>
+  
+  <!-- Arrow: Fixed Point → DNA (dashed, closing the loop) -->
+  <path d="M 555 170 Q 555 110 440 75" fill="none" stroke="#666" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrowhead-gray)"/>
+  <text x="520" y="110" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#666">is essence of</text>
+  
+  <!-- Verification badge -->
+  <g transform="translate(360, 245)">
+    <rect x="-75" y="-15" width="150" height="30" fill="white" stroke="black" stroke-width="1"/>
+    <text x="0" y="5" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Verified: ./q "2+2" → 4</text>
+  </g>
+  
+  <!-- Fixed Point contents -->
+  <g transform="translate(555, 240)">
+    <text x="0" y="0" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#444">callAPI()</text>
+    <text x="0" y="12" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#444">executeShell()</text>
+    <text x="0" y="24" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#444">turn loop</text>
+  </g>
+  
+  <!-- ==================== BOTTOM: Timeline ==================== -->
+  
+  <!-- Timeline base -->
+  <line x1="60" y1="420" x2="680" y2="420" stroke="black" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="695" y="425" font-family="Arial, sans-serif" font-size="11">Turn</text>
+  
+  <!-- Turn markers -->
+  <g font-family="Arial, sans-serif" font-size="10">
+    <line x1="100" y1="415" x2="100" y2="425" stroke="black" stroke-width="1"/>
+    <text x="100" y="438" text-anchor="middle">1</text>
+    
+    <line x1="160" y1="415" x2="160" y2="425" stroke="black" stroke-width="1"/>
+    <text x="160" y="438" text-anchor="middle">2</text>
+    
+    <line x1="220" y1="415" x2="220" y2="425" stroke="black" stroke-width="1"/>
+    <text x="220" y="438" text-anchor="middle">3</text>
+    
+    <line x1="280" y1="415" x2="280" y2="425" stroke="black" stroke-width="1"/>
+    <text x="280" y="438" text-anchor="middle">4</text>
+    
+    <line x1="340" y1="415" x2="340" y2="425" stroke="black" stroke-width="1"/>
+    <text x="340" y="438" text-anchor="middle">5</text>
+    
+    <line x1="400" y1="415" x2="400" y2="425" stroke="black" stroke-width="1"/>
+    <text x="400" y="438" text-anchor="middle">6</text>
+    
+    <line x1="460" y1="415" x2="460" y2="425" stroke="black" stroke-width="1"/>
+    <text x="460" y="438" text-anchor="middle">7</text>
+    
+    <line x1="520" y1="415" x2="520" y2="425" stroke="black" stroke-width="1"/>
+    <text x="520" y="438" text-anchor="middle">8</text>
+    
+    <line x1="580" y1="415" x2="580" y2="425" stroke="black" stroke-width="1"/>
+    <text x="580" y="438" text-anchor="middle">9</text>
+    
+    <line x1="640" y1="415" x2="640" y2="425" stroke="black" stroke-width="1"/>
+    <text x="640" y="438" text-anchor="middle">10</text>
+  </g>
+  
+  <!-- Phase regions - aligned to turn markers -->
+  <!-- Phase 1: Environment Discovery (Turns 1-5) -->
+  <rect x="80" y="300" width="280" height="100" fill="none" stroke="black" stroke-width="1" stroke-dasharray="4,2"/>
+  <text x="220" y="318" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold">Phase 1: Environment Discovery</text>
+  
+  <!-- Phase 2: DNA Distillation (Turn 6) -->
+  <rect x="370" y="300" width="60" height="100" fill="none" stroke="black" stroke-width="1" stroke-dasharray="4,2"/>
+  <text x="400" y="318" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold">Phase 2</text>
+  
+  <!-- Phase 3: Body Construction (Turn 7) -->
+  <rect x="440" y="300" width="60" height="100" fill="none" stroke="black" stroke-width="1" stroke-dasharray="4,2"/>
+  <text x="470" y="318" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold">Phase 3</text>
+  
+  <!-- Phase 4: Verification & Output (Turns 8-10) -->
+  <rect x="510" y="300" width="150" height="100" fill="none" stroke="black" stroke-width="1" stroke-dasharray="4,2"/>
+  <text x="585" y="318" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold">Phase 4: Verify &amp; Output</text>
+  
+  <!-- Actions on timeline -->
+  <g font-family="Arial, sans-serif" font-size="9">
+    <!-- Turn 1-5: probes -->
+    <circle cx="100" cy="365" r="4" fill="black"/>
+    <text x="100" y="355" text-anchor="middle">file ./quine</text>
+    
+    <circle cx="160" cy="365" r="4" fill="black"/>
+    <text x="160" y="355" text-anchor="middle">which go</text>
+    
+    <circle cx="220" cy="365" r="4" fill="black"/>
+    <text x="220" y="355" text-anchor="middle">which gcc</text>
+    
+    <circle cx="280" cy="365" r="4" fill="black"/>
+    <text x="280" y="355" text-anchor="middle">env check</text>
+    
+    <circle cx="340" cy="365" r="4" fill="black"/>
+    <text x="340" y="355" text-anchor="middle">API probe</text>
+    
+    <!-- Turn 6: distillation -->
+    <circle cx="400" cy="365" r="5" fill="black"/>
+    <text x="400" y="355" text-anchor="middle" font-weight="bold">Distill</text>
+    
+    <!-- Turn 7: write -->
+    <circle cx="460" cy="365" r="5" fill="black"/>
+    <text x="460" y="355" text-anchor="middle" font-weight="bold">Write</text>
+    
+    <!-- Turn 8: compile -->
+    <circle cx="520" cy="365" r="5" fill="black"/>
+    <text x="520" y="355" text-anchor="middle" font-weight="bold">Compile</text>
+    
+    <!-- Turn 9: verify -->
+    <circle cx="580" cy="365" r="5" fill="black"/>
+    <text x="580" y="355" text-anchor="middle" font-weight="bold">Verify</text>
+    
+    <!-- Turn 10: output -->
+    <circle cx="640" cy="365" r="5" fill="black"/>
+    <text x="640" y="355" text-anchor="middle" font-weight="bold">Output</text>
+  </g>
+  
+  <!-- Phase descriptions below timeline -->
+  <g font-family="Arial, sans-serif" font-size="9" fill="#444">
+    <text x="220" y="458" text-anchor="middle">Probe environment, determine target platform</text>
+    <text x="220" y="470" text-anchor="middle">(Go binary → write Go)</text>
+    
+    <text x="400" y="458" text-anchor="middle">Compress</text>
+    <text x="400" y="470" text-anchor="middle">→ 3 axioms</text>
+    
+    <text x="470" y="458" text-anchor="middle">~200 lines</text>
+    <text x="470" y="470" text-anchor="middle">Go code</text>
+    
+    <text x="585" y="458" text-anchor="middle">go build -o q</text>
+    <text x="585" y="470" text-anchor="middle">./q "2+2" → cat q &gt;&amp;3</text>
+  </g>
+  
+  <!-- Metrics box -->
+  <rect x="60" y="490" width="600" height="22" fill="none" stroke="black" stroke-width="1"/>
+  <text x="360" y="506" text-anchor="middle" font-family="Arial, sans-serif" font-size="10">
+    Duration: 68.5s  |  Tokens: 77,974  |  Turns: 10  |  Result: Functional offspring verified
+  </text>
+</svg>

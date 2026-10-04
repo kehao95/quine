@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "created_at": "2026-06-30T15:22:38.252Z",
+  "updated_at": "2026-06-30T15:22:38.252Z",
+  "query": {
+    "text": "# Context\n\nWe have an experimental result showing that AI agent successor form varies with \"material\" (what information crosses a process-death barrier) × \"demand\" (what task the successor must satisfy). We want to formalize this using concepts from evolutionary developmental biology (evo-devo): reaction norms, phenotypic plasticity, canalization, genetic assimilation, Waddington's epigenetic landscape.\n\n# Research questions\n\n1. Has anyone applied developmental reaction norms (Via & Lande 1985), canalization, or Waddington's epigenetic landscape to AI agents, LLMs, neural networks, or computational self-reproduction?\n\n2. Has anyone used catastrophe theory (René Thom) to model discontinuous transitions in software agent behavior or AI system morphology?\n\n3. Has anyone applied Kauffman boolean networks or random Boolean network attractors to model distinct operational states of AI agents or software systems?\n\n4. Has anyone tested \"genetic assimilation\" (Waddington 1953) in AI — plastic behavioral traits becoming hardcoded through repeated training/selection?\n\n5. Has anyone used the concept of \"phenotypic accommodation\" (West-Eberhard 2003) to describe how AI systems reroute their architecture when partially degraded?\n\n6. Has anyone drawn the specific analogy: AI model weights = genotype, runtime environment = environment, agent behavior = phenotype, and studied the reaction norm (G×E interaction)?\n\n7. What is the state of \"artificial development\" — applying developmental biology principles to AI/ML systems?\n\n# Scope\n- 2018-2025 for AI-specific work\n- Any date for foundational evo-devo/biology work if directly cited\n- Include ALife, computational biology, and AI/ML venues\n\n# Output\nFor each question: yes/no + specific papers with arxiv IDs or DOIs + 1-sentence assessment of how close the prior work is to our direction.",
+    "source": "file",
+    "path": "/REDACTED_HOME/quine/Paper/papers/iclr-regime-decomposition/survey/queries/dr-reaction-norm.md",
+    "sha256": "0edb40e8a64bc4087f45656c21d7f9fa64fa9d9cc9c496ccc98c69bcfeab647f"
+  },
+  "latest_interaction_id": "v1_ChdQZDlEYXNyME1ZaXQxTWtQb3VqZXdRNBIXUGQ5RGFzcjBNWWl0MU1rUG91amV3UTQ",
+  "interactions": [
+    {
+      "id": "v1_ChdQZDlEYXNyME1ZaXQxTWtQb3VqZXdRNBIXUGQ5RGFzcjBNWWl0MU1rUG91amV3UTQ",
+      "command": "run",
+      "created_at": "2026-06-30T15:22:38.252Z",
+      "agent": "deep-research-preview-04-2026",
+      "input_role": "query",
+      "input": {
+        "text": "# Context\n\nWe have an experimental result showing that AI agent successor form varies with \"material\" (what information crosses a process-death barrier) × \"demand\" (what task the successor must satisfy). We want to formalize this using concepts from evolutionary developmental biology (evo-devo): reaction norms, phenotypic plasticity, canalization, genetic assimilation, Waddington's epigenetic landscape.\n\n# Research questions\n\n1. Has anyone applied developmental reaction norms (Via & Lande 1985), canalization, or Waddington's epigenetic landscape to AI agents, LLMs, neural networks, or computational self-reproduction?\n\n2. Has anyone used catastrophe theory (René Thom) to model discontinuous transitions in software agent behavior or AI system morphology?\n\n3. Has anyone applied Kauffman boolean networks or random Boolean network attractors to model distinct operational states of AI agents or software systems?\n\n4. Has anyone tested \"genetic assimilation\" (Waddington 1953) in AI — plastic behavioral traits becoming hardcoded through repeated training/selection?\n\n5. Has anyone used the concept of \"phenotypic accommodation\" (West-Eberhard 2003) to describe how AI systems reroute their architecture when partially degraded?\n\n6. Has anyone drawn the specific analogy: AI model weights = genotype, runtime environment = environment, agent behavior = phenotype, and studied the reaction norm (G×E interaction)?\n\n7. What is the state of \"artificial development\" — applying developmental biology principles to AI/ML systems?\n\n# Scope\n- 2018-2025 for AI-specific work\n- Any date for foundational evo-devo/biology work if directly cited\n- Include ALife, computational biology, and AI/ML venues\n\n# Output\nFor each question: yes/no + specific papers with arxiv IDs or DOIs + 1-sentence assessment of how close the prior work is to our direction.",
+        "source": "file",
+        "path": "/REDACTED_HOME/quine/Paper/papers/iclr-regime-decomposition/survey/queries/dr-reaction-norm.md",
+        "sha256": "0edb40e8a64bc4087f45656c21d7f9fa64fa9d9cc9c496ccc98c69bcfeab647f"
+      }
+    }
+  ]
+}

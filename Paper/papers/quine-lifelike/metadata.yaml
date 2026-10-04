@@ -1,0 +1,22 @@
+---
+title: "Separable Viability Pressures in a Process-Native ALIFE Habitat"
+author_raw: |
+  Jingyun Wu\textsuperscript{1} \hspace{2em} Hao Ke\textsuperscript{1} \\
+  \mbox{}\\
+  \textsuperscript{1}Independent Researcher, Bloomington, IN, USA \\
+  joeywu021@gmail.com \hspace{2em} i@kehao.me
+date: "April 2026"
+numbersections: true
+reference-section-title: "References"
+abstract: |
+  Artificial Life asks not only how life works as we know it, but what life-like organization could be in other media. This paper introduces Quine as a process-native ALIFE habitat in which mortality, persistence, and maintenance become independently manipulable experimental variables. Individuals in Quine are finite-lived UNIX processes rather than framework-managed agent objects, so death, volatile memory loss, durable environmental persistence, and detached execution are substrate facts enforced by the operating-system kernel rather than orchestration conventions. Because the kernel closes the enforcement boundary, pressure contrasts cannot be undermined by implementation loopholes, making causal attribution from manipulated pressure to recruited organization more secure than in framework-managed or virtual-machine ecologies. We validate this substrate-enforced separability with three pressure-sensitive contrasts under matched task conditions. First, real death recruits cross-boundary continuity when a genuine continuity path is available and collapses single-life persistence when it is blocked. Second, persistent writable habitat supports ecological inheritance through predecessor-modified traces, while wiped or read-only conditions collapse that organization and same-habitat controls show that writable persistence alone is not sufficient. Third, longer maintenance horizons recruit more decoupled post-exit maintenance structures than neutral one-shot framing alone. The central contribution is methodological: Quine makes viability pressures experimentally tractable in a process-native medium and thereby makes bounded continuity, inheritance, and maintenance visible as selectable organizations rather than rhetorical analogies. Because the same substrate supplies kernel-level lifecycle operators (fork, exec, exit) and native process scheduling, the next scale of questions on reproduction, competition, and population-level dynamics is reachable without leaving the medium.
+code_url: "https://github.com/kehao95/quine"
+bibliography: references.bib
+header-includes:
+  - \usepackage{float}
+  - \usepackage{placeins}
+  - \usepackage{fvextra}
+  - \raggedbottom
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\},breaklines=true,breakanywhere=true,fontsize=\small}
+  - \fvset{breaklines=true,breakanywhere=true}
+---

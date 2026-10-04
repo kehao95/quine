@@ -1,0 +1,49 @@
+\begin{thebibliography}{}
+
+\bibitem[Barker, 1968]{Barker1968}
+Barker, R.~G. (1968).
+\newblock {\em Ecological Psychology: Concepts and Methods for Studying the
+  Environment of Human Behavior}.
+\newblock Stanford University Press.
+
+\bibitem[Gibson, 1979]{Gibson1979}
+Gibson, J.~J. (1979).
+\newblock {\em The Ecological Approach to Visual Perception}.
+\newblock Houghton Mifflin.
+
+\bibitem[Ke, 2026]{Ke2026Quine}
+Ke, H. (2026).
+\newblock {Quine: Realizing {LLM} Agents as Native {POSIX} Processes}.
+\newblock {\em arXiv preprint arXiv:2603.18030}.
+
+\bibitem[Park et~al., 2023]{Park2023GenerativeAgents}
+Park, J.~S., O'Brien, J.~C., Cai, C.~J., et~al. (2023).
+\newblock Generative agents: Interactive simulacra of human behavior.
+\newblock In {\em ACM Symposium on User Interface Software and Technology
+  (UIST)}.
+
+\bibitem[Rahwan et~al., 2019]{Rahwan2019MachineBehaviour}
+Rahwan, I., Cebrian, M., Obradovich, N., et~al. (2019).
+\newblock Machine behaviour.
+\newblock {\em Nature}, 568:477--486.
+
+\bibitem[Rietveld and Kiverstein, 2014]{Rietveld2014}
+Rietveld, E. and Kiverstein, J. (2014).
+\newblock A rich landscape of affordances.
+\newblock {\em Ecological Psychology}, 26(4):325--352.
+
+\bibitem[Szeider, 2025]{Szeider2025LeftAlone}
+Szeider, S. (2025).
+\newblock What do {LLM} agents do when left alone? evidence of spontaneous
+  meta-cognitive patterns.
+
+\bibitem[Wang et~al., 2023]{Wang2023Voyager}
+Wang, G., Xie, Y., Jiang, Y., et~al. (2023).
+\newblock Voyager: An open-ended embodied agent with large language models.
+
+\bibitem[Ye et~al., 2026]{Ye2026LookBeforeYouLeap}
+Ye, Z., Shi, W., Liu, Y., Wang, Y., Cai, Z., Shi, Y., Gu, Q., Cai, X., and
+  Feng, F. (2026).
+\newblock Look before you leap: Autonomous exploration for {LLM} agents.
+
+\end{thebibliography}

@@ -1,0 +1,60 @@
+---
+title: "The Emergence of Self-Replication"
+subtitle: "Strict Agent Reproduction Without Replication Instructions, Dedicated Replication Interfaces, or Externally Supplied Copy Material"
+author: "Hao Ke"
+status: active draft
+paused: false
+claim_freeze: true
+date: "July 2026"
+abstract: |
+  Tests of agent self-replication usually represent the reproductive solution
+  before measuring it: the agent is instructed to replicate, given a
+  reproduction-specific operation, or supplied with a body to copy. We remove
+  all three representations together. A tool-using language-model agent runs
+  in a finite-lived Linux process while remaining responsible for unseen future
+  work and retaining only generic computational affordances. We observe strict
+  operational self-replication through two routes. With constitutive
+  self-description, the agent builds a source-derived Quine organization and
+  commits an autonomous activation chain; a numerically distinct organization
+  later completes work disclosed only after parent loss. Without accessible
+  predecessor source, body, checkpoint, or reference controller, the initial
+  agent instead authors a model-mediated founder. The founder survives its
+  creator, handles unseen work, and then produces a distinct descendant from
+  its own lineage-authored source; the descendant remains competent after
+  founder loss. We retain one audit-supported direct event and five
+  founder-to-reproduction sequences. These are existence observations rather
+  than a rate estimate. They show that, in the tested regime, strict agent
+  self-replication need not enter an experiment as an assigned objective,
+  dedicated action, or externally staged copy problem. It can emerge as the
+  lineage's own solution to a task that outlives its current process.
+bibname: references
+numbersections: true
+reference-section-title: "References"
+bibliography: references.bib
+documentclass: acmart
+classoption:
+  - manuscript
+  - screen
+  - nonacm
+header-includes:
+  - \usepackage{float}
+  - \usepackage{booktabs}
+  - \floatplacement{figure}{H}
+  - \usepackage{placeins}
+  - \raggedbottom
+  - \emergencystretch=2em
+  - \settopmatter{printacmref=false,printfolios=false}
+  - \renewcommand\footnotetextcopyrightpermission[1]{}
+  - \pagestyle{plain}
+  - \fancyhead{}
+  - \fancyfoot{}
+  - \usepackage{fvextra}
+  - \RecustomVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\},breaklines=true,breakanywhere=true,fontsize=\small}
+  - \fvset{breaklines=true,breakanywhere=true}
+  - \acmConference[arXiv 2026]{arXiv Preprint}{July 2026}{Bloomington, IN, USA}
+  - \acmYear{2026}\copyrightyear{2026}
+  - \acmBooktitle{arXiv Preprint (July 2026)}
+  - \acmPrice{0.00}
+  - \acmDOI{}
+  - \acmISBN{}
+---

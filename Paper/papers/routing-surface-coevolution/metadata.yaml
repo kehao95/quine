@@ -1,0 +1,17 @@
+---
+title: "OS Routing Surfaces as a Red Queen Niche: Adversarial Coevolution in a Process-Native ALife Medium"
+author_raw: |
+  Hao Ke$^{1}$ \quad Jingyun Wu$^{1}$ \\
+  \mbox{}\\
+  $^1$Independent Researcher \\
+  \texttt{i@kehao.me} \quad \texttt{joeywu021@gmail.com}
+date: "2026"
+numbersections: false
+reference-section-title: "References"
+submission_type: "Late Breaking Abstracts"
+copyright_holder: "Hao Ke and Jingyun Wu"
+code_url: "https://github.com/kehao95/quine"
+abstract: |
+  Artificial life has studied coevolution almost exclusively in simulated arenas. We study adversarial coevolution in Quine, a process-native medium where LLM agents run as mortal POSIX processes. In a host-lineage regime, competing lineages evolve tactics directly on operating-system routing surfaces — draining public control FIFOs, renaming runtime routing directories, and exploiting permission boundaries — rather than executing simulated moves. The topology of the routing substrate determines the reachable attack class: the same inherited strategy produces control-channel deadlock on a legacy FIFO backend but fails or mutates under a FUSE backend where peer surfaces return Permission denied. A successful single-sided tactic also exhibits a symmetry trap: when both competitors copy it, the result is mutual functional survival rather than escalation. The OS routing substrate is therefore a Red Queen niche in which the medium of attack and the medium of survival are the same object, and backend topology is an experimentally manipulable parameter of the coevolutionary dynamics.
+bibliography: references.bib
+---

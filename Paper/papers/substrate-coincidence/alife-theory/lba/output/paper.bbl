@@ -1,0 +1,57 @@
+\begin{thebibliography}{9}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Bedau et~al.(2000)Bedau, Snyder, and Packard]{bedau2000classification}
+Mark~A. Bedau, Emile Snyder, and Norman~H. Packard.
+\newblock A classification of long-term evolutionary dynamics.
+\newblock In \emph{Artificial Life VII}, pages 228--237, Cambridge, MA, 2000.
+  MIT Press.
+
+\bibitem[Boyd and Richerson(1985)]{boyd1985culture}
+Robert Boyd and Peter~J. Richerson.
+\newblock \emph{Culture and the Evolutionary Process}.
+\newblock University of Chicago Press, Chicago, 1985.
+
+\bibitem[Ke(2026)]{ke2026quine}
+Hao Ke.
+\newblock Quine: Realizing llm agents as native posix processes, 2026.
+\newblock URL \url{https://arxiv.org/abs/2603.18030}.
+
+\bibitem[Mesoudi(2011)]{mesoudi2011cultural}
+Alex Mesoudi.
+\newblock \emph{Cultural Evolution: How Darwinian Theory Can Explain Human
+  Culture and Synthesize the Social Sciences}.
+\newblock University of Chicago Press, Chicago, 2011.
+
+\bibitem[Ofria and Wilke(2004)]{ofria2004avida}
+Charles Ofria and Claus~O. Wilke.
+\newblock Avida: A software platform for research in computational evolutionary
+  biology.
+\newblock \emph{Artificial Life}, 10\penalty0 (2):\penalty0 191--229, 2004.
+
+\bibitem[Okasha(2006)]{okasha2006levels}
+Samir Okasha.
+\newblock \emph{Evolution and the Levels of Selection}.
+\newblock Oxford University Press, Oxford, 2006.
+
+\bibitem[Pattee(1995)]{pattee1995evolving}
+Howard~H. Pattee.
+\newblock Evolving self-reference: Matter, symbols, and semantic closure.
+\newblock \emph{Communication and Cognition---Artificial Intelligence},
+  12\penalty0 (1-2):\penalty0 9--27, 1995.
+
+\bibitem[Ray(1991)]{ray1991approach}
+Thomas~S. Ray.
+\newblock An approach to the synthesis of life.
+\newblock \emph{Artificial Life II}, pages 371--408, 1991.
+
+\bibitem[Weismann(1893)]{weismann1893germ}
+August Weismann.
+\newblock \emph{The Germ-Plasm: A Theory of Heredity}.
+\newblock Charles Scribner's Sons, New York, 1893.
+
+\end{thebibliography}

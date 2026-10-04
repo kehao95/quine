@@ -1,0 +1,24 @@
+---
+title: "Quine: POSIX as Physics for Emergent Artificial Life"
+author: |
+  Hao Ke\
+  Independent Researcher, Bloomington, IN, USA\
+  i@kehao.me
+
+  Jingyun Wu\
+  joeywu021@gmail.com
+date: "March 2026"
+geometry: margin=1in
+fontsize: 11pt
+linestretch: 1.05
+mainfont: "Times New Roman"
+monofont: "Menlo"
+header-includes:
+  - \usepackage{setspace}
+  - \usepackage{xcolor}
+  - \usepackage{framed}
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+  - \definecolor{shadecolor}{RGB}{240,240,240}
+  - \renewenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+---

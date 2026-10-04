@@ -13,7 +13,7 @@ at that time; they are not current operating instructions or new empirical
 claims. A commit from private lab history may not resolve in the public clone.
 The release contains current source snapshots, not the private Git history.
 
-`Paper/`, `experiments/`, `profiles/`, `.githooks/`, `Makefile`, `prek.toml`, and
+`Paper/` outside `papers/`, `experiments/`, `profiles/`, `.githooks/`, `Makefile`, `prek.toml`, and
 most `scripts/` remain outside this release. References to those paths are
 retained for provenance and future continuity, but cannot be followed in a
 public clone. Their absence does not mean the referenced work never existed.
@@ -59,3 +59,6 @@ they are not installation instructions or access credentials.
 The deterministic transformation is owned by the lab's
 `scripts/redact-public-development.py`, invoked only on the staged public
 tree by `scripts/project-public.sh`.
+
+Paper dossiers are also public under [Paper/papers](../../Paper/papers/README.md).
+See their [scope and path normalization](../../Paper/papers/PUBLIC-RELEASE.md).

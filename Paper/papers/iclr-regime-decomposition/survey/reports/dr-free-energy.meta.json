@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "created_at": "2026-06-30T15:22:38.364Z",
+  "updated_at": "2026-06-30T15:22:38.364Z",
+  "query": {
+    "text": "# Context\n\nWe observe that AI successor form selection across a process-death barrier can be described by BOTH a Landau-type free energy (macroscopic phase transition) AND the Free Energy Principle (microscopic variational inference). We want to know if this unification has been proposed.\n\n# Research questions\n\n1. Has anyone derived Landau-type phase transition behavior FROM the Free Energy Principle / active inference? Specifically: can first-order phase transitions (discontinuous jumps in order parameter) emerge from variational free energy minimization?\n\n2. Has anyone applied the Free Energy Principle (Friston) to self-reproduction, self-repair, morphological reconstruction, or autopoiesis in AI or robotic systems?\n\n3. Has anyone described process death / system restart / memory loss in AI as a \"Markov blanket destruction and reassembly\" event?\n\n4. Has anyone used \"precision-weighting\" from predictive processing to explain why AI agents ignore available information under certain conditions?\n\n5. What is the relationship between FEP and statistical mechanics phase transitions? Is there formal work connecting variational inference to order parameters, critical phenomena, or universality classes?\n\n6. Has anyone proposed a variational principle for biological or computational self-reproduction — i.e., \"the successor form minimizes some free energy functional\"?\n\n7. Is there work on metastable states in Bayesian inference — multiple posterior modes corresponding to qualitatively different solutions?\n\n# Scope\n- Friston, Kirchhoff, Da Costa, Parr, Pezzulo and the active inference literature\n- Statistical mechanics of learning, information theory, phase transitions in ML\n- Self-organization, autopoiesis, computational neuroscience\n- 2015-2025 primarily\n\n# Output\nFor each question: yes/no + specific papers + closeness assessment.",
+    "source": "file",
+    "path": "/REDACTED_HOME/quine/Paper/papers/iclr-regime-decomposition/survey/queries/dr-free-energy.md",
+    "sha256": "79f5bd5c5f7b0196c5ab864b21287a1dbc99fef6f9b42c268136be1220c8e0f4"
+  },
+  "latest_interaction_id": "v1_ChdQZDlEYXFLbE9mYWZqTWNQcmUyLTRBTRIXUGQ5RGFxS2xPZmFmak1jUHJlMi00QU0",
+  "interactions": [
+    {
+      "id": "v1_ChdQZDlEYXFLbE9mYWZqTWNQcmUyLTRBTRIXUGQ5RGFxS2xPZmFmak1jUHJlMi00QU0",
+      "command": "run",
+      "created_at": "2026-06-30T15:22:38.364Z",
+      "agent": "deep-research-preview-04-2026",
+      "input_role": "query",
+      "input": {
+        "text": "# Context\n\nWe observe that AI successor form selection across a process-death barrier can be described by BOTH a Landau-type free energy (macroscopic phase transition) AND the Free Energy Principle (microscopic variational inference). We want to know if this unification has been proposed.\n\n# Research questions\n\n1. Has anyone derived Landau-type phase transition behavior FROM the Free Energy Principle / active inference? Specifically: can first-order phase transitions (discontinuous jumps in order parameter) emerge from variational free energy minimization?\n\n2. Has anyone applied the Free Energy Principle (Friston) to self-reproduction, self-repair, morphological reconstruction, or autopoiesis in AI or robotic systems?\n\n3. Has anyone described process death / system restart / memory loss in AI as a \"Markov blanket destruction and reassembly\" event?\n\n4. Has anyone used \"precision-weighting\" from predictive processing to explain why AI agents ignore available information under certain conditions?\n\n5. What is the relationship between FEP and statistical mechanics phase transitions? Is there formal work connecting variational inference to order parameters, critical phenomena, or universality classes?\n\n6. Has anyone proposed a variational principle for biological or computational self-reproduction — i.e., \"the successor form minimizes some free energy functional\"?\n\n7. Is there work on metastable states in Bayesian inference — multiple posterior modes corresponding to qualitatively different solutions?\n\n# Scope\n- Friston, Kirchhoff, Da Costa, Parr, Pezzulo and the active inference literature\n- Statistical mechanics of learning, information theory, phase transitions in ML\n- Self-organization, autopoiesis, computational neuroscience\n- 2015-2025 primarily\n\n# Output\nFor each question: yes/no + specific papers + closeness assessment.",
+        "source": "file",
+        "path": "/REDACTED_HOME/quine/Paper/papers/iclr-regime-decomposition/survey/queries/dr-free-energy.md",
+        "sha256": "79f5bd5c5f7b0196c5ab864b21287a1dbc99fef6f9b42c268136be1220c8e0f4"
+      }
+    }
+  ]
+}

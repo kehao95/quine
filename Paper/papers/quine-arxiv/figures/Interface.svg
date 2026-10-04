@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380">
+  <!-- Title -->
+  <text x="360" y="25" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="bold" fill="#000">Interface: Five-Channel I/O Contract</text>
+  
+  <!-- ==================== PARENT PROCESS (top) ==================== -->
+  <g transform="translate(280, 45)">
+    <rect x="0" y="0" width="160" height="40" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <text x="80" y="17" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#333">Parent Process</text>
+    <text x="80" y="32" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#666">(POSIX / Quine)</text>
+  </g>
+  
+  <!-- argv arrow (down from parent) -->
+  <path d="M 360 85 L 360 125" stroke="#000" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="395" y="110" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#333">argv</text>
+  <text x="395" y="122" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#666">(Mission)</text>
+  
+  <!-- ==================== UPSTREAM ==================== -->
+  <g transform="translate(50, 140)">
+    <rect x="0" y="0" width="120" height="60" fill="#f8f8f8" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="60" y="18" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#666">Upstream</text>
+    <text x="60" y="33" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#999">POSIX / Quine / ∅</text>
+  </g>
+  
+  <!-- stdin arrow (optional) -->
+  <path d="M 170 170 L 265 170" stroke="#666" stroke-width="1.5" stroke-dasharray="4,3" fill="none" marker-end="url(#arrowhead-gray)"/>
+  <text x="218" y="162" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#555">stdin</text>
+  <text x="218" y="188" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#888">(Material)</text>
+  
+  <!-- ==================== CORE QUINE PROCESS ==================== -->
+  <g transform="translate(275, 130)">
+    <rect x="0" y="0" width="170" height="80" fill="#fff" stroke="#000" stroke-width="2.5"/>
+    <text x="85" y="28" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#000">Quine Process</text>
+    <line x1="20" y1="42" x2="150" y2="42" stroke="#ddd" stroke-width="1"/>
+    <text x="85" y="58" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#666">PID: kernel-assigned</text>
+    <text x="85" y="72" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#666">Address space: isolated</text>
+  </g>
+  
+  <!-- ==================== DOWNSTREAM ==================== -->
+  <g transform="translate(550, 140)">
+    <rect x="0" y="0" width="120" height="60" fill="#f8f8f8" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="60" y="18" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#666">Downstream</text>
+    <text x="60" y="33" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#999">POSIX / Quine / ∅</text>
+  </g>
+  
+  <!-- stdout arrow (optional) -->
+  <path d="M 445 170 L 540 170" stroke="#666" stroke-width="1.5" stroke-dasharray="4,3" fill="none" marker-end="url(#arrowhead-gray)"/>
+  <text x="492" y="162" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#555">stdout</text>
+  <text x="492" y="188" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#888">(Deliverable)</text>
+  
+  <!-- ==================== EXIT / STDERR (down from Quine) ==================== -->
+  <!-- stderr arrow (left) -->
+  <path d="M 330 210 L 330 270" stroke="#666" stroke-width="1.5" stroke-dasharray="4,3" fill="none" marker-end="url(#arrowhead-gray)"/>
+  <text x="295" y="245" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#555">stderr</text>
+  <text x="295" y="259" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#888">(Diagnostics)</text>
+  
+  <!-- exit arrow (right) -->
+  <path d="M 390 210 L 390 270" stroke="#666" stroke-width="1.5" fill="none" marker-end="url(#arrowhead-gray)"/>
+  <text x="425" y="245" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#555">exit</text>
+  <text x="425" y="259" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#888">(Outcome)</text>
+  
+  <!-- ==================== PARENT PROCESS (bottom, dashed = optional listener) ==================== -->
+  <g transform="translate(280, 280)">
+    <rect x="0" y="0" width="160" height="40" fill="#fafafa" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="80" y="17" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#666">Parent Process</text>
+    <text x="80" y="32" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#999">(may or may not listen)</text>
+  </g>
+  
+  <!-- Arrow marker definitions -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#000"/>
+    </marker>
+    <marker id="arrowhead-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+  </defs>
+  
+  <!-- Bottom legend -->
+  <text x="360" y="355" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#888">Solid = always present (argv, exit) │ Dashed = optional (stdin, stdout, stderr, parent listener)</text>
+</svg>

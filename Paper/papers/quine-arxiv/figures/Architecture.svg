@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 440">
+  <!-- Title -->
+  <text x="250" y="22" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#000">Quine Runtime Architecture</text>
+  
+  <!-- OS Kernel (outermost box) -->
+  <rect x="20" y="35" width="460" height="280" fill="#fff" stroke="#000" stroke-width="2" rx="3"/>
+  <text x="35" y="52" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#000">Operating System (POSIX Kernel)</text>
+  <text x="35" y="66" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#333">Kernel Primitives: Process Isolation · Scheduling · Signals · Resource Limits</text>
+  
+  <!-- Quine Runtime (Host) -->
+  <rect x="35" y="75" width="430" height="175" fill="#f5f5f5" stroke="#000" stroke-width="1.5" rx="2"/>
+  <text x="50" y="92" font-family="Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#000">Quine Runtime — Host (Go, ~3,100 LOC)</text>
+  <text x="50" y="106" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#333">Constraints: Turn Budget · Context Limit · Timeout · Tool Schema</text>
+  
+  <!-- Process (Agent) -->
+  <rect x="50" y="115" width="400" height="122" fill="#fff" stroke="#000" stroke-width="2" rx="2"/>
+  <text x="410" y="130" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#666">PID: N</text>
+  <text x="65" y="132" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#000">Process (Agent Instance)</text>
+  
+  <!-- stdin/stdout/stderr channels -->
+  <text x="65" y="158" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#000">stdin</text>
+  <line x1="95" y1="154" x2="145" y2="154" stroke="#000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="150" y="158" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#555">(input data)</text>
+  
+  <text x="65" y="180" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#000">stdout</text>
+  <line x1="145" y1="176" x2="95" y2="176" stroke="#000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="150" y="180" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#555">(task output)</text>
+  
+  <text x="65" y="202" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#000">stderr</text>
+  <line x1="145" y1="198" x2="95" y2="198" stroke="#000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="150" y="202" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#555">(diagnostics)</text>
+  
+  <!-- Read-Eval-Print Loop inside process -->
+  <rect x="295" y="142" width="140" height="80" fill="#eee" stroke="#000" stroke-width="1" stroke-dasharray="3,2" rx="2"/>
+  <text x="365" y="160" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" font-style="italic" fill="#333">Read-Eval-Print Loop</text>
+  <text x="365" y="178" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#555">Context → LLM → Action</text>
+  <text x="365" y="193" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#555">→ Result → Context</text>
+  <text x="365" y="213" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#888">(no task-specific logic)</text>
+  
+  <!-- Filesystem -->
+  <rect x="35" y="260" width="430" height="45" fill="#e8e8e8" stroke="#000" stroke-width="1" rx="2"/>
+  <text x="250" y="280" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#000">Filesystem</text>
+  <text x="250" y="296" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#555">Persistent Storage · Inter-Process Communication · Shared State</text>
+  
+  <!-- File I/O arrows between Process and Filesystem -->
+  <line x1="130" y1="237" x2="130" y2="260" stroke="#000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="155" y1="260" x2="155" y2="237" stroke="#000" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="175" y="252" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#000">read / write</text>
+  
+  <!-- Deterministic label -->
+  <text x="15" y="195" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#000" transform="rotate(-90, 15, 195)">Deterministic</text>
+  
+  <!-- API Call line to LLM -->
+  <line x1="365" y1="237" x2="365" y2="315" stroke="#000" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <line x1="365" y1="320" x2="365" y2="360" stroke="#000" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+  <text x="385" y="342" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#000">API Call (HTTPS)</text>
+  
+  <!-- LLM (Guest) - outside OS -->
+  <rect x="285" y="365" width="160" height="65" fill="#fff" stroke="#000" stroke-width="2" rx="3"/>
+  <text x="365" y="387" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#000">LLM — Guest</text>
+  <text x="365" y="404" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#555">Claude / GPT / Gemini / ...</text>
+  <text x="365" y="421" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#888">Predicts next tool invocation</text>
+  
+  <!-- Probabilistic label -->
+  <text x="15" y="405" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#000" transform="rotate(-90, 15, 405)">Probabilistic</text>
+  
+  <!-- Divider line between deterministic and probabilistic -->
+  <line x1="5" y1="325" x2="25" y2="325" stroke="#000" stroke-width="1"/>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000"/>
+    </marker>
+  </defs>
+</svg>

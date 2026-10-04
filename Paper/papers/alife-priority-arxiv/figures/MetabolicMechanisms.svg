@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380">
+  <!-- Title -->
+  <text x="360" y="25" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="bold" fill="#000">Metabolic Mechanisms</text>
+  
+  <!-- Legend -->
+  <rect x="20" y="45" width="12" height="12" fill="#333" stroke="#000"/>
+  <text x="38" y="55" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#000">Mission</text>
+  <rect x="90" y="45" width="12" height="12" fill="#888" stroke="#000"/>
+  <text x="108" y="55" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#000">Wisdom</text>
+  <rect x="160" y="45" width="12" height="12" fill="#ccc" stroke="#000"/>
+  <text x="178" y="55" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#000">Context (Tape)</text>
+  <rect x="265" y="45" width="12" height="12" fill="#fff" stroke="#000"/>
+  <text x="283" y="55" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#000">Empty / Reset</text>
+  
+  <!-- ==================== FORK (Mitosis) ==================== -->
+  <text x="120" y="85" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#000">Fork (Mitosis)</text>
+  <text x="120" y="100" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#666">High-entropy reproduction</text>
+  
+  <!-- Parent process -->
+  <g transform="translate(70, 115)">
+    <rect x="0" y="0" width="100" height="60" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text x="50" y="-5" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#000">Parent (PID 1)</text>
+    <!-- Mission bar -->
+    <rect x="5" y="5" width="90" height="14" fill="#333" stroke="#000"/>
+    <text x="50" y="15" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#fff">Mission A</text>
+    <!-- Wisdom bar -->
+    <rect x="5" y="22" width="90" height="14" fill="#888" stroke="#000"/>
+    <text x="50" y="32" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#fff">Wisdom</text>
+    <!-- Context bar -->
+    <rect x="5" y="39" width="90" height="16" fill="#ccc" stroke="#000"/>
+    <text x="50" y="50" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#000">Context</text>
+  </g>
+  
+  <!-- Arrows to children -->
+  <line x1="120" y1="180" x2="50" y2="220" stroke="#000" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  <line x1="120" y1="180" x2="120" y2="220" stroke="#000" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  <line x1="120" y1="180" x2="190" y2="220" stroke="#000" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  
+  <!-- Child 1 -->
+  <g transform="translate(0, 230)">
+    <rect x="0" y="0" width="80" height="55" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <text x="40" y="-5" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#000">Child (PID 2)</text>
+    <rect x="4" y="4" width="72" height="12" fill="#333" stroke="#000"/>
+    <text x="40" y="13" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#fff">Mission B</text>
+    <rect x="4" y="18" width="72" height="12" fill="#888" stroke="#000"/>
+    <text x="40" y="27" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#fff">Wisdom ✓</text>
+    <rect x="4" y="32" width="72" height="14" fill="#ccc" stroke="#000"/>
+    <text x="40" y="42" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#000">Context ✓</text>
+  </g>
+  
+  <!-- Child 2 -->
+  <g transform="translate(80, 230)">
+    <rect x="0" y="0" width="80" height="55" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <text x="40" y="-5" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#000">Child (PID 3)</text>
+    <rect x="4" y="4" width="72" height="12" fill="#333" stroke="#000"/>
+    <text x="40" y="13" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#fff">Mission C</text>
+    <rect x="4" y="18" width="72" height="12" fill="#888" stroke="#000"/>
+    <text x="40" y="27" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#fff">Wisdom ✓</text>
+    <rect x="4" y="32" width="72" height="14" fill="#ccc" stroke="#000"/>
+    <text x="40" y="42" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#000">Context ✓</text>
+  </g>
+  
+  <!-- Child 3 -->
+  <g transform="translate(160, 230)">
+    <rect x="0" y="0" width="80" height="55" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <text x="40" y="-5" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#000">Child (PID 4)</text>
+    <rect x="4" y="4" width="72" height="12" fill="#333" stroke="#000"/>
+    <text x="40" y="13" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#fff">Mission D</text>
+    <rect x="4" y="18" width="72" height="12" fill="#888" stroke="#000"/>
+    <text x="40" y="27" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#fff">Wisdom ✓</text>
+    <rect x="4" y="32" width="72" height="14" fill="#ccc" stroke="#000"/>
+    <text x="40" y="42" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#000">Context ✓</text>
+  </g>
+  
+  <!-- Fork summary -->
+  <text x="120" y="310" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#333">New PID, New Mission</text>
+  <text x="120" y="322" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#333">Wisdom &amp; Context inherited</text>
+  
+  <!-- ==================== EXEC (Metamorphosis) ==================== -->
+  <text x="360" y="85" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#000">Exec (Metamorphosis)</text>
+  <text x="360" y="100" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#666">Identity-preserving rebirth</text>
+  
+  <!-- Before state -->
+  <g transform="translate(280, 115)">
+    <rect x="0" y="0" width="100" height="60" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text x="50" y="-5" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#000">Before (PID 1)</text>
+    <rect x="5" y="5" width="90" height="14" fill="#333" stroke="#000"/>
+    <text x="50" y="15" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#fff">Mission A</text>
+    <rect x="5" y="22" width="90" height="14" fill="#888" stroke="#000"/>
+    <text x="50" y="32" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#fff">Wisdom</text>
+    <rect x="5" y="39" width="90" height="16" fill="#ccc" stroke="#000"/>
+    <text x="50" y="50" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#000">Context (full)</text>
+  </g>
+  
+  <!-- Circular arrow for self-transformation -->
+  <path d="M 360 180 L 360 210" stroke="#000" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="390" y="200" font-family="Helvetica, Arial, sans-serif" font-size="9" font-style="italic" fill="#666">exec()</text>
+  
+  <!-- After state -->
+  <g transform="translate(280, 230)">
+    <rect x="0" y="0" width="100" height="55" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text x="50" y="-5" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#000">After (PID 1) ← same!</text>
+    <rect x="5" y="4" width="90" height="12" fill="#333" stroke="#000"/>
+    <text x="50" y="13" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#fff">Mission A ✓</text>
+    <rect x="5" y="18" width="90" height="12" fill="#888" stroke="#000"/>
+    <text x="50" y="27" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#fff">Wisdom ✓ or ↑</text>
+    <rect x="5" y="32" width="90" height="14" fill="#fff" stroke="#000" stroke-dasharray="3,2"/>
+    <text x="50" y="42" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#666">Context (reset)</text>
+  </g>
+  
+  <!-- Exec summary -->
+  <text x="360" y="310" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#333">Same PID, Same Mission</text>
+  <text x="360" y="322" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#333">Wisdom preserved or updated, Context reset</text>
+  
+  <!-- ==================== SHELL SPAWN (Sporulation) ==================== -->
+  <text x="600" y="85" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#000">Shell Spawn (Sporulation)</text>
+  <text x="600" y="100" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#666">Zero-entropy reproduction</text>
+  
+  <!-- Parent process -->
+  <g transform="translate(550, 115)">
+    <rect x="0" y="0" width="100" height="60" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text x="50" y="-5" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#000">Parent (PID 1)</text>
+    <rect x="5" y="5" width="90" height="14" fill="#333" stroke="#000"/>
+    <text x="50" y="15" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#fff">Mission A</text>
+    <rect x="5" y="22" width="90" height="14" fill="#888" stroke="#000"/>
+    <text x="50" y="32" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#fff">Wisdom</text>
+    <rect x="5" y="39" width="90" height="16" fill="#ccc" stroke="#000"/>
+    <text x="50" y="50" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#000">Context (corrupted?)</text>
+  </g>
+  
+  <!-- Arrows to children -->
+  <line x1="600" y1="180" x2="540" y2="220" stroke="#000" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  <line x1="600" y1="180" x2="660" y2="220" stroke="#000" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  <text x="620" y="200" font-family="Helvetica, Arial, sans-serif" font-size="8" font-style="italic" fill="#666">./quine 'task'</text>
+  
+  <!-- Child 1 (clean slate) -->
+  <g transform="translate(490, 230)">
+    <rect x="0" y="0" width="80" height="55" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <text x="40" y="-5" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#000">Child (PID 5)</text>
+    <rect x="4" y="4" width="72" height="12" fill="#333" stroke="#000"/>
+    <text x="40" y="13" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#fff">Mission E</text>
+    <rect x="4" y="18" width="72" height="12" fill="#fff" stroke="#000" stroke-dasharray="3,2"/>
+    <text x="40" y="27" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#666">∅</text>
+    <rect x="4" y="32" width="72" height="14" fill="#fff" stroke="#000" stroke-dasharray="3,2"/>
+    <text x="40" y="42" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#666">∅</text>
+  </g>
+  
+  <!-- Child 2 (clean slate) -->
+  <g transform="translate(610, 230)">
+    <rect x="0" y="0" width="80" height="55" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <text x="40" y="-5" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="8" fill="#000">Child (PID 6)</text>
+    <rect x="4" y="4" width="72" height="12" fill="#333" stroke="#000"/>
+    <text x="40" y="13" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#fff">Mission F</text>
+    <rect x="4" y="18" width="72" height="12" fill="#fff" stroke="#000" stroke-dasharray="3,2"/>
+    <text x="40" y="27" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#666">∅</text>
+    <rect x="4" y="32" width="72" height="14" fill="#fff" stroke="#000" stroke-dasharray="3,2"/>
+    <text x="40" y="42" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#666">∅</text>
+  </g>
+  
+  <!-- Spawn summary -->
+  <text x="600" y="310" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#333">New PID, New Mission</text>
+  <text x="600" y="322" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#333">Clean slate: no Wisdom, no Context</text>
+  
+  <!-- Divider lines -->
+  <line x1="245" y1="70" x2="245" y2="340" stroke="#ddd" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="485" y1="70" x2="485" y2="340" stroke="#ddd" stroke-width="1" stroke-dasharray="4,4"/>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#000"/>
+    </marker>
+  </defs>
+  
+  <!-- Bottom comparison table hint -->
+  <text x="360" y="355" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#666">✓ = inherited/preserved | ↑ = optionally updated | ∅ = empty | dashed = reset</text>
+</svg>

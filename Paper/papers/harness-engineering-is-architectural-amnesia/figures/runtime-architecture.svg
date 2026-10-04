@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 200">
+  <!-- Black background for 5:2 ratio -->
+  <rect x="0" y="0" width="500" height="200" fill="#0d0d0d"/>
+  
+  <!-- OS Kernel - compact, centered -->
+  <g transform="translate(45, 28)">
+    <rect x="0" y="0" width="410" height="144" fill="#1a1a1a" stroke="#444" stroke-width="1.5" rx="3"/>
+    <text x="12" y="18" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#fff">Operating System (UNIX)</text>
+    
+    <!-- Process X -->
+    <g transform="translate(10, 32)">
+      <rect x="0" y="0" width="120" height="100" fill="#252525" stroke="#555" stroke-width="1" rx="2"/>
+      <text x="6" y="12" font-family="Helvetica, Arial, sans-serif" font-size="7" font-weight="bold" fill="#eee">Runtime (POSIX)</text>
+      <text x="6" y="22" font-family="Helvetica, Arial, sans-serif" font-size="7" font-weight="bold" fill="#eee">Agent Process</text>
+      <text x="114" y="17" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#666">PID: X</text>
+      <rect x="6" y="28" width="108" height="66" fill="#1a1a1a" stroke="#555" stroke-width="1" stroke-dasharray="2,2" rx="2"/>
+      <text x="60" y="50" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" font-style="italic" fill="#aaa">Read-Eval-Print</text>
+      <text x="60" y="62" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" font-style="italic" fill="#aaa">Loop</text>
+    </g>
+    
+    <!-- Process Y -->
+    <g transform="translate(145, 32)">
+      <rect x="0" y="0" width="120" height="100" fill="#252525" stroke="#555" stroke-width="1" rx="2"/>
+      <text x="6" y="12" font-family="Helvetica, Arial, sans-serif" font-size="7" font-weight="bold" fill="#eee">Runtime (POSIX)</text>
+      <text x="6" y="22" font-family="Helvetica, Arial, sans-serif" font-size="7" font-weight="bold" fill="#eee">Agent Process</text>
+      <text x="114" y="17" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#666">PID: Y</text>
+      <rect x="6" y="28" width="108" height="66" fill="#1a1a1a" stroke="#555" stroke-width="1" stroke-dasharray="2,2" rx="2"/>
+      <text x="60" y="50" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" font-style="italic" fill="#aaa">Read-Eval-Print</text>
+      <text x="60" y="62" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" font-style="italic" fill="#aaa">Loop</text>
+    </g>
+    
+    <!-- Process Z -->
+    <g transform="translate(280, 32)">
+      <rect x="0" y="0" width="120" height="100" fill="#252525" stroke="#555" stroke-width="1" rx="2"/>
+      <text x="6" y="12" font-family="Helvetica, Arial, sans-serif" font-size="7" font-weight="bold" fill="#eee">Runtime (POSIX)</text>
+      <text x="6" y="22" font-family="Helvetica, Arial, sans-serif" font-size="7" font-weight="bold" fill="#eee">Agent Process</text>
+      <text x="114" y="17" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#666">PID: Z</text>
+      <rect x="6" y="28" width="108" height="66" fill="#1a1a1a" stroke="#555" stroke-width="1" stroke-dasharray="2,2" rx="2"/>
+      <text x="60" y="50" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" font-style="italic" fill="#aaa">Read-Eval-Print</text>
+      <text x="60" y="62" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" font-style="italic" fill="#aaa">Loop</text>
+    </g>
+  </g>
+</svg>

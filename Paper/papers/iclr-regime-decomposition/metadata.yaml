@@ -1,0 +1,43 @@
+---
+title: "Decomposing at the Wrong Level: Structural Blind Spots in AI Self-Replication Evaluation"
+author: |
+  Hao Ke\
+  Independent Researcher, Bloomington, IN, USA\
+  i@kehao.me
+date: "June 2026"
+numbersections: true
+reference-section-title: "References"
+abstract: |
+  AI self-replication evaluation is converging on a shared menu of capability benchmarks, persistence ladders, and risk scores.
+  We argue it decomposes at the wrong level.
+  Existing frameworks vary execution barriers, replication motive, persistence, and operational risk, but hold three other variables fixed at a single operating point: the heritability channel through which a successor is reconstructed, the property classes a "successful copy" must preserve, and the ecological selection signal under which a lineage competes.
+  We make this precise with a six-dimension regime reference frame and two formal results.
+  The Compression Blindness Principle shows that a benchmark fixing a dimension cannot recover discriminative power along it by adding in-regime tests: every in-regime measurement factors through the same fixed slice, so enrichment buys exactly zero information about any property supported off the slice — and the principle predicts, falsifiably, which contrasts stay visible (barrier-evasion, covert motive) and which are structurally invisible (carrier-mediated continuity, property-class survival, ecological collapse).
+  The Selection-Signal Collapse Theorem shows that a narration-satisfiable selection signal drives an agent ecology to a stable narrative-complexity equilibrium that extinguishes function-producers regardless of agent capability, and — by a double dissociation from Goodhart's law — independent of whether the signal is a faithful proxy; exec-dependent signals reverse the collapse on the same population.
+  We demonstrate the named blind spots on a process-native agent substrate (Quine), survey what the field varies versus compresses, propose five constructive evaluation-redesign protocols, and register seven falsifiable predictions.
+  The contribution is a coordinate system that makes a field's compressed dimensions visible, not a replacement for its capability benchmarks.
+documentclass: acmart
+classoption:
+  - manuscript
+  - screen
+  - nonacm
+bibliography: references.bib
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+  - \usepackage{placeins}
+  - \raggedbottom
+  - \emergencystretch=2em
+  - \settopmatter{printacmref=false,printfolios=false}
+  - \renewcommand\footnotetextcopyrightpermission[1]{}
+  - \makeatletter\let\@copyrightspace\relax\makeatother
+  - \pagestyle{plain}
+  - \fancyhead{}
+  - \fancyfoot{}
+  - \acmConference[Eval Frame Draft 2026]{Working Draft}{June 2026}{Bloomington, IN, USA}
+  - \acmYear{2026}\copyrightyear{2026}
+  - \acmBooktitle{Working Draft (June 2026)}
+  - \acmPrice{0.00}
+  - \acmDOI{}
+  - \acmISBN{}
+---

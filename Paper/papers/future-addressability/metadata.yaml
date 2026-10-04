@@ -1,0 +1,44 @@
+---
+title: "Computational Individuality Is Indexed by Future Addressability"
+author: |
+  Hao Ke\
+  Independent Researcher, Bloomington, IN, USA\
+  i@kehao.me
+date: "April 2026"
+numbersections: true
+reference-section-title: "References"
+abstract: |
+  Computational systems routinely cross boundaries: processes execute into new images, actors restart behind mailboxes, services fail over behind endpoints, and checkpointed computations return after suspension.
+  Yet continuity is often inferred from the wrong handle: source identity, process identifier, memory state, endpoint name, or behavioral similarity alone.
+  This draft proposes future addressability as an operational criterion for a narrower class of cases: obligation-bearing computational lineages.
+  A successor is continuous with such a lineage only relative to a future ecology in which later obligations can still reach it through the relevant carrier and be acted on through the required trace.
+  The claim is not that addressability alone defines digital life or universal identity.
+  It is that, when source, state, body, endpoint, and future-task carrier come apart, the continuing self-object is carrier-indexed: the minimal organization that preserves post-boundary addressability, competence, and receptive-state restoration under a specified ecology.
+  Quine, a process-native LLM-agent medium hosted by POSIX processes, provides the motivating contrast.
+  With self-source available, raw-stream future pressure can make a thin stream successor viable, while Quine-native `ctl/wake` pressure makes a wake/tool/report/idle runtime organization viable.
+  We use this contrast to separate state preservation from organizational reconstruction, to define a lightweight formal predicate for carrier-indexed continuity, and to propose an experimental program that can distinguish source rebuild, ordinary handoff, control-surface closure, substrate capture, and stronger autonomous renewal.
+documentclass: acmart
+classoption:
+  - manuscript
+  - screen
+  - nonacm
+bibliography: references.bib
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+  - \usepackage{placeins}
+  - \raggedbottom
+  - \emergencystretch=2em
+  - \settopmatter{printacmref=false,printfolios=false}
+  - \renewcommand\footnotetextcopyrightpermission[1]{}
+  - \makeatletter\let\@copyrightspace\relax\makeatother
+  - \pagestyle{plain}
+  - \fancyhead{}
+  - \fancyfoot{}
+  - \acmConference[Theory Draft 2026]{Theory Draft}{April 2026}{Bloomington, IN, USA}
+  - \acmYear{2026}\copyrightyear{2026}
+  - \acmBooktitle{Theory Draft (April 2026)}
+  - \acmPrice{0.00}
+  - \acmDOI{}
+  - \acmISBN{}
+---
