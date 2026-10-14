@@ -14,24 +14,50 @@ Sorted newest first; **Date** is the earliest of submitted/accepted/published
 that is on record for that entry.
 
 <!-- BEGIN GENERATED: public-readme:portfolio (generate-paper-projections.py — edit frontmatter, not this table) -->
-| Date | Paper | Venue | Status |
-|------|-------|-------|--------|
-| 2026-07-03 | [A Tumor in the Repository (essay)](tumor-in-the-repository-essay/) | Blog essay (Substack) | published |
-| 2026-07-02 | [Structure Grows](structure-grows/) | Blog essay (Substack) | published |
-| 2026-07-02 | [A Tumor in the Repository](computational-neoplasm/) | ALIFE 2026 LBA | accepted |
-| 2026-06-26 | [Structural Elicitation in a Frozen POSIX Agent](structural-elicitation/) | ALIFE 2026 LBA | accepted |
-| 2026-06-18 | [Facultative Self-Reproduction in Quine](facultative-self-reproduction/) | ALIFE 2026 LBA | accepted |
-| 2026-06-14 | [From Simulated Worlds to Process Habitats](agentic-alife-workshop/) | ALIFE 2026 workshop | accepted |
-| 2026-04-12 | [Coordination Under Existential Unawareness](minimal-perceptual-prerequisites/) | ALIFE 2026 | accepted |
-| 2026-03-27 | [The Autopoietic Repository](the-autopoietic-repository/) | Blog essay (Substack) | published |
-| 2026-03-17 | [Harness Engineering Is Architectural Amnesia](harness-engineering-is-architectural-amnesia/) | Blog essay (Substack) | published |
-| 2026-03-15 | [Why Terminal Bench 2 Is Broken, and Why I Still Love It](terminal-bench-2-love-letter/) | Blog essay (Substack) | published |
-| 2026-03-08 | [Quine: Realizing LLM Agents as Native POSIX Processes](quine-arxiv/) | arXiv:2603.18030 | published |
+| Date | Work | Kind · Venue | Status |
+|------|------|--------------|--------|
+| 2026-10 | [Computational Neoplasms: How Ordinary Coordination Grew a Structure Nobody Designed](computational-neoplasm/presentation/GSO2026_Computational_Neoplasms_Ke.pdf) | Talk · GSO 2026 | accepted |
+| 2026-10 | [When Environments Act: Structural Elicitation as Implicit Guidance in Missionless Agents](structural-elicitation/presentation/GSO2026_When_Environments_Act_Ke.pdf) | Talk · GSO 2026 | accepted |
+| 2026-07-03 | [A Tumor in the Repository](tumor-in-the-repository-essay/) | Essay · Substack | published |
+| 2026-07-02 | [Structure Grows](structure-grows/) | Essay · Substack | published |
+| 2026-07-02 | [A Tumor in the Repository](computational-neoplasm/) | Late-breaking abstract · ALIFE 2026 LBA | accepted |
+| 2026-06-26 | [Structural Elicitation in a Frozen POSIX Agent](structural-elicitation/) | Late-breaking abstract · ALIFE 2026 LBA | accepted |
+| 2026-06-18 | [Facultative Self-Reproduction in Quine](facultative-self-reproduction/) | Late-breaking abstract · ALIFE 2026 LBA | accepted |
+| 2026-06-14 | [From Simulated Worlds to Process Habitats](agentic-alife-workshop/) | Workshop paper · ALIFE 2026 workshop | accepted |
+| 2026-04-12 | [Coordination Under Existential Unawareness](minimal-perceptual-prerequisites/) | Conference paper · ALIFE 2026 | accepted |
+| 2026-03-27 | [The Autopoietic Repository](the-autopoietic-repository/) | Essay · Substack | published |
+| 2026-03-17 | [Harness Engineering Is Architectural Amnesia](harness-engineering-is-architectural-amnesia/) | Essay · Substack | published |
+| 2026-03-15 | [Why Terminal Bench 2 Is Broken, and Why I Still Love It](terminal-bench-2-love-letter/) | Essay · Substack | published |
+| 2026-03-08 | [Quine: Realizing LLM Agents as Native POSIX Processes](quine-arxiv/) | Preprint · arXiv:2603.18030 | published |
 <!-- END GENERATED: public-readme:portfolio -->
 
 ---
 
-### [A Tumor in the Repository (essay)](tumor-in-the-repository-essay/)
+### [Computational Neoplasms: How Ordinary Coordination Grew a Structure Nobody Designed](computational-neoplasm/presentation/GSO2026_Computational_Neoplasms_Ke.pdf)
+
+**Talk** · GSO 2026, a satellite of the Conference on Complex Systems · **accepted** `2026-08-03` · presented October 2026
+
+The talk that extends *A Tumor in the Repository*: what the self-protecting
+maintenance checklist was — a pattern held between the files that reference it
+and the agents that read them — how it formed from a sequence of sensible
+instructions, and what it suggests for guiding systems whose parts read. The
+slides come as a PDF and as a self-contained HTML copy of the presented deck,
+both without speaker notes; open the HTML in a browser and use the arrow keys.
+
+[Slides (PDF)](computational-neoplasm/presentation/GSO2026_Computational_Neoplasms_Ke.pdf) · [HTML slides](computational-neoplasm/presentation/gso2026/index.html) · [Event page](https://www.kehao.me/gso2026/)
+
+### [When Environments Act: Structural Elicitation as Implicit Guidance in Missionless Agents](structural-elicitation/presentation/GSO2026_When_Environments_Act_Ke.pdf)
+
+**Talk** · GSO 2026, a satellite of the Conference on Complex Systems · **accepted** `2026-08-03` · presented October 2026
+
+The talk that extends *Structural Elicitation in a Frozen POSIX Agent*: a frozen
+agent with no task still transforms its workspace, and the workspace's
+organization selects the transformation — guidance that lives in how an
+environment is organized. Same PDF and HTML formats as above.
+
+[Slides (PDF)](structural-elicitation/presentation/GSO2026_When_Environments_Act_Ke.pdf) · [HTML slides](structural-elicitation/presentation/gso2026/index.html) · [Event page](https://www.kehao.me/gso2026/)
+
+### [A Tumor in the Repository](tumor-in-the-repository-essay/)
 
 **Blog essay** · Substack · **published** `2026-07-03`
 

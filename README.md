@@ -14,25 +14,42 @@ A map that can become part of the terrain it maps. A collection of descriptions 
 
 This README, too, is a low-dimensional projection of the system it tries to describe. The act of description is, unavoidably, altering the future evolution of what it describes.
 
-## Published Work
+## Research and Publications
 
-Full descriptions, PDFs, and experiment data live under
-[`public/`](./public/README.md).
+Grouped by research line, newest first. Papers, posters, slides and experiment
+data live under [`public/`](./public/README.md); the event pages
+[kehao.me/alife2026](https://www.kehao.me/alife2026/) and
+[kehao.me/gso2026](https://www.kehao.me/gso2026/) collect each conference's
+materials in one place.
 
 <!-- BEGIN GENERATED: root-readme:published-work (generate-paper-projections.py — edit frontmatter, not this table) -->
-| Date | Work | Venue | Status |
-|------|------|-------|--------|
-| 2026-07-03 | [A Tumor in the Repository (essay)](./public/tumor-in-the-repository-essay/) | Blog essay (Substack) | published |
-| 2026-07-02 | [Structure Grows](./public/structure-grows/) | Blog essay (Substack) | published |
-| 2026-07-02 | [A Tumor in the Repository](./public/computational-neoplasm/) | ALIFE 2026 LBA | accepted |
-| 2026-06-26 | [Structural Elicitation in a Frozen POSIX Agent](./public/structural-elicitation/) | ALIFE 2026 LBA | accepted |
-| 2026-06-18 | [Facultative Self-Reproduction in Quine](./public/facultative-self-reproduction/) | ALIFE 2026 LBA | accepted |
-| 2026-06-14 | [From Simulated Worlds to Process Habitats](./public/agentic-alife-workshop/) | ALIFE 2026 workshop | accepted |
-| 2026-04-12 | [Coordination Under Existential Unawareness](./public/minimal-perceptual-prerequisites/) | ALIFE 2026 | accepted |
-| 2026-03-27 | [The Autopoietic Repository](./public/the-autopoietic-repository/) | Blog essay (Substack) | published |
-| 2026-03-17 | [Harness Engineering Is Architectural Amnesia](./public/harness-engineering-is-architectural-amnesia/) | Blog essay (Substack) | published |
-| 2026-03-15 | [Why Terminal Bench 2 Is Broken, and Why I Still Love It](./public/terminal-bench-2-love-letter/) | Blog essay (Substack) | published |
-| 2026-03-08 | [Quine: Realizing LLM Agents as Native POSIX Processes](./public/quine-arxiv/) | arXiv:2603.18030 | published |
+### Computational neoplasms: a tumor in the repository
+
+- Talk · [Computational Neoplasms: How Ordinary Coordination Grew a Structure Nobody Designed](./public/computational-neoplasm/presentation/GSO2026_Computational_Neoplasms_Ke.pdf) — GSO 2026 · 2026-10
+- Essay · [A Tumor in the Repository](./public/tumor-in-the-repository-essay/) · 2026-07
+- Late-breaking abstract · [A Tumor in the Repository](./public/computational-neoplasm/) — ALIFE 2026 LBA · 2026-07
+
+### Structural elicitation: when environments act
+
+- Talk · [When Environments Act: Structural Elicitation as Implicit Guidance in Missionless Agents](./public/structural-elicitation/presentation/GSO2026_When_Environments_Act_Ke.pdf) — GSO 2026 · 2026-10
+- Late-breaking abstract · [Structural Elicitation in a Frozen POSIX Agent](./public/structural-elicitation/) — ALIFE 2026 LBA · 2026-06
+
+### The living repository
+
+- Essay · [Structure Grows](./public/structure-grows/) · 2026-07
+- Essay · [The Autopoietic Repository](./public/the-autopoietic-repository/) · 2026-03
+
+### Process habitats: coordination and reproduction
+
+- Late-breaking abstract · [Facultative Self-Reproduction in Quine](./public/facultative-self-reproduction/) — ALIFE 2026 LBA · 2026-06
+- Workshop paper · [From Simulated Worlds to Process Habitats](./public/agentic-alife-workshop/) — ALIFE 2026 workshop · 2026-06
+- Conference paper · [Coordination Under Existential Unawareness](./public/minimal-perceptual-prerequisites/) — ALIFE 2026 · 2026-04
+
+### Quine runtime and agent engineering
+
+- Essay · [Harness Engineering Is Architectural Amnesia](./public/harness-engineering-is-architectural-amnesia/) · 2026-03
+- Essay · [Why Terminal Bench 2 Is Broken, and Why I Still Love It](./public/terminal-bench-2-love-letter/) · 2026-03
+- Preprint · [Quine: Realizing LLM Agents as Native POSIX Processes](./public/quine-arxiv/) — arXiv:2603.18030 · 2026-03
 <!-- END GENERATED: root-readme:published-work -->
 
 ## Repository Map
